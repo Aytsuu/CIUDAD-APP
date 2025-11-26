@@ -36,7 +36,6 @@ function AddResolution({ onSuccess }: ResolutionCreateFormProps) {
     const { data: resolutionData = { results: [], count: 0 } } = useResolution();    
     const { data: gadProposals = [], isLoading: isLoadingProposals } = useApprovedProposals();
     
-    console.log("PROPOSALS: ", gadProposals)
     
     // Extract the actual data array from paginated response
     const fetchedResolutions = resolutionData.results || [];

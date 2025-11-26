@@ -4,7 +4,7 @@ from rest_framework.exceptions import NotFound
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import *
-from datetime import datetime
+from datetime import datetime, date
 from django.db.models import Count, Max, Subquery, OuterRef, Q, F, Prefetch
 from django.db.models.functions import TruncMonth,Coalesce
 from apps.patientrecords.models import Patient,PatientRecord
@@ -19,11 +19,16 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.utils.timezone import now
 from apps.patientrecords.models import *
-from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, Inventory
+from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, Inventory, ImmunizationStock
+from django.utils import timezone
+from django.db import transaction
+import logging
+from collections import defaultdict
 from pagination import *
 from apps.healthProfiling.models import ResidentProfile, PersonalAddress
 from apps.medicalConsultation.utils import *
-
+from django.db.models import Window
+from django.db.models.functions import RowNumber
 
 class VaccineRecordView(generics.ListCreateAPIView):
     serializer_class = VaccinationRecordSerializer
@@ -43,7 +48,6 @@ class VaccinationHistoryView(generics.ListCreateAPIView):
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
     pagination_class = StandardResultsPagination
-    
     def get_queryset(self):
         # Subquery to get the latest vaccination date for each patient
         latest_vaccination_subquery = VaccinationHistory.objects.filter(
@@ -83,6 +87,14 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
         if patient_type_search and patient_type_search != 'all':
             queryset = apply_patient_type_filter(queryset, patient_type_search)
         
+        # Remove the total_count annotation to avoid window function conflicts
+        queryset = queryset.annotate(
+            index=Window(
+                expression=RowNumber(),
+                order_by=F('latest_vaccination_date').desc()
+            )
+        )
+
         return queryset
     
 # Fixed version of your TobeAdministeredVaccinationView
@@ -912,11 +924,12 @@ class ForwardedVaccinationCountView(APIView):
 
 
 
-
 # ======SCHEDULES VACCINATION LAST STEP======
 
-import logging
+
+
 logger = logging.getLogger(__name__)
+
 class VaccinationCompletionAPIView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -929,6 +942,7 @@ class VaccinationCompletionAPIView(APIView):
             follow_up_data = data.get('followUpData')  # This will be None if not provided
             patient_id = data.get('patientId')
             patrec_id = data.get('patrec_id')
+            imz_stock_id = data.get('imzStck_id')  # Immunization stock ID
             
             if not vaccination_id:
                 return Response(
@@ -939,7 +953,7 @@ class VaccinationCompletionAPIView(APIView):
             # Get the vaccination history record
             try:
                 vaccination = VaccinationHistory.objects.select_related(
-                    'followv', 'vacrec', 'vacrec__patrec_id'
+                    'followv', 'vacrec', 'vacrec__patrec_id', 'vacStck_id', 'vacStck_id__vac_id', 'staff'
                 ).get(vachist_id=vaccination_id)
             except VaccinationHistory.DoesNotExist:
                 return Response(
@@ -951,6 +965,17 @@ class VaccinationCompletionAPIView(APIView):
             sid = transaction.savepoint()
             
             try:
+                # CHECK: If it's a routine vaccine and previous follow-up was missed
+                is_routine_missed = self.check_routine_followup_missed(vaccination)
+                
+                if is_routine_missed:
+                    return Response({
+                        "success": False,
+                        "error": "Cannot complete routine vaccination - previous follow-up was missed and scheduled date has passed the interval",
+                        "patientId": patient_id,
+                        "vaccinationId": vaccination_id
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
                 # 1. Handle previous vaccination's follow-up if exists
                 previous_vaccination = VaccinationHistory.objects.filter(
                     vacrec=vaccination.vacrec,
@@ -998,7 +1023,76 @@ class VaccinationCompletionAPIView(APIView):
                         # If date parsing fails, just log it and continue without follow-up
                         logger.warning("Invalid date format in follow-up data, skipping follow-up processing")
                 
-                # 3. Update vaccination status to completed (this always happens)
+                # 3. Handle immunization stock deduction if imzStck_id is provided
+                antigen_transaction_id = None
+                if imz_stock_id:
+                    try:
+                        imz_stock = ImmunizationStock.objects.select_related('inv_id').get(imzStck_id=imz_stock_id)
+                        
+                        # Check if there's enough stock
+                        if imz_stock.imzStck_avail <= 0:
+                            transaction.savepoint_rollback(sid)
+                            return Response(
+                                {"error": "Insufficient immunization stock available"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                        
+                        # Deduct stock based on unit type
+                        unit_lower = imz_stock.imzStck_unit.lower()
+                        
+                        if 'box' in unit_lower or 'boxes' in unit_lower:
+                            # For boxes, deduct 1 piece from available pcs
+                            if imz_stock.imzStck_pcs <= 0:
+                                transaction.savepoint_rollback(sid)
+                                return Response(
+                                    {"error": "No pieces available in boxes"},
+                                    status=status.HTTP_400_BAD_REQUEST
+                                )
+                            
+                            imz_stock.imzStck_pcs -= 1
+                            imz_stock.wasted += 1
+                            imz_stock.imzStck_avail -= 1
+                            transaction_qty = "1 pcs"
+                        else:
+                            # For other units (vials, doses, etc.), deduct based on unit
+                            imz_stock.imzStck_qty = max(0, imz_stock.imzStck_qty - 1)
+                            imz_stock.wasted += 1
+                            imz_stock.imzStck_avail = max(0, imz_stock.imzStck_avail - 1)
+                            transaction_qty = f"1 {imz_stock.imzStck_unit}"
+                        
+                        imz_stock.save()
+                        logger.info(f"Immunization stock updated: {imz_stock_id}, Available: {imz_stock.imzStck_avail}")
+                        
+                        # Update inventory updated_at timestamp
+                        if imz_stock.inv_id:
+                            imz_stock.inv_id.updated_at = timezone.now()
+                            imz_stock.inv_id.save()
+                        
+                        # Create antigen transaction record
+                        antigen_transaction = AntigenTransaction.objects.create(
+                            antt_qty=transaction_qty,
+                            antt_action="Administered",
+                            imzStck_id=imz_stock,
+                            staff=vaccination.staff
+                        )
+                        antigen_transaction_id = antigen_transaction.antt_id
+                        logger.info(f"Antigen transaction created: {antigen_transaction_id}")
+                        
+                    except ImmunizationStock.DoesNotExist:
+                        transaction.savepoint_rollback(sid)
+                        return Response(
+                            {"error": f"Immunization stock with id {imz_stock_id} not found"},
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                    except Exception as e:
+                        transaction.savepoint_rollback(sid)
+                        logger.error(f"Error processing immunization stock: {str(e)}")
+                        return Response(
+                            {"error": f"Failed to process immunization stock: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        )
+                
+                # 4. Update vaccination status to completed (this always happens if not routine missed)
                 logger.info(f"Updating vaccination status to completed: {vaccination_id}")
                 vaccination.vachist_status = 'completed'
                 if follow_up_visit:
@@ -1013,7 +1107,8 @@ class VaccinationCompletionAPIView(APIView):
                     "success": True,
                     "patientId": patient_id,
                     "vaccinationId": vaccination_id,
-                    "followUpVisitId": follow_up_visit.followv_id if follow_up_visit else None
+                    "followUpVisitId": follow_up_visit.followv_id if follow_up_visit else None,
+                    "antigenTransactionId": antigen_transaction_id
                 }, status=status.HTTP_200_OK)
                 
             except Exception as e:
@@ -1031,6 +1126,86 @@ class VaccinationCompletionAPIView(APIView):
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def check_routine_followup_missed(self, vaccination):
+        """
+        Check if this is a routine vaccine where previous follow-up was missed
+        and the scheduled date has passed the set time interval
+        """
+        try:
+            # Get the vaccine information
+            vaccine = None
+            if vaccination.vacStck_id and vaccination.vacStck_id.vac_id:
+                vaccine = vaccination.vacStck_id.vac_id
+            elif vaccination.vac:
+                vaccine = vaccination.vac
+            
+            if not vaccine or vaccine.vac_type_choices != 'routine':
+                return False
+            
+            # Get routine frequency for this vaccine
+            try:
+                routine_freq = RoutineFrequency.objects.get(vac_id=vaccine.vac_id)
+            except RoutineFrequency.DoesNotExist:
+                # No frequency defined, can't check intervals
+                return False
+            
+            # Get the most recent completed vaccination for this patient and vaccine
+            previous_vaccination = VaccinationHistory.objects.filter(
+                vacrec=vaccination.vacrec,
+                vachist_status='completed'
+            ).filter(
+                Q(vacStck_id__vac_id=vaccine.vac_id) | 
+                Q(vac__vac_id=vaccine.vac_id)
+            ).exclude(vachist_id=vaccination.vachist_id).order_by('-date_administered').first()
+            
+            if not previous_vaccination:
+                # No previous vaccination, so no follow-up to miss
+                return False
+            
+            # Check if previous vaccination had a follow-up that was missed
+            if previous_vaccination.followv:
+                previous_followup = previous_vaccination.followv
+                today = timezone.now().date()
+                
+                # Calculate the expected completion date based on frequency
+                last_administered = previous_vaccination.date_administered
+                
+                if routine_freq.time_unit == 'days':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval)
+                elif routine_freq.time_unit == 'weeks':
+                    expected_completion_date = last_administered + timedelta(weeks=routine_freq.interval)
+                elif routine_freq.time_unit == 'months':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval * 30)
+                elif routine_freq.time_unit == 'years':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval * 365)
+                else:
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval)
+                
+                # Check conditions for missed follow-up:
+                # 1. Previous follow-up status is not 'completed'
+                # 2. Today is past the expected completion date
+                # 3. The scheduled follow-up date has passed
+                is_missed = (
+                    previous_followup.followv_status != 'completed' and
+                    today > expected_completion_date and
+                    previous_followup.followv_date and
+                    today > previous_followup.followv_date
+                )
+                
+                if is_missed:
+                    logger.warning(f"Routine vaccine follow-up missed: vaccine {vaccine.vac_name}, "
+                                 f"last administered {last_administered}, "
+                                 f"expected by {expected_completion_date}, "
+                                 f"scheduled for {previous_followup.followv_date}")
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error checking routine follow-up status: {str(e)}")
+            # If there's an error in checking, allow the completion to proceed
+            return False
 
 
  
@@ -1175,7 +1350,7 @@ class VaccinationSubmissionView(APIView):
             
             AntigenTransaction.objects.create(
                 antt_qty=antt_qty,
-                antt_action="Vaccination administered",
+                antt_action="Administered",
                 vacStck_id=vaccine_stock,
                 staff_id=staff_id
             )
@@ -1231,28 +1406,23 @@ class VaccinationSubmissionView(APIView):
             )
 
     def process_routine_vaccination(self, data, form_data, signature, pat_id, 
-                                  vaccine_stock, status_val, follow_up_data, 
-                                  vac_name, staff_id,assigned_to_instance):
-    
-        # Check if there's an existing vaccination record for this patient and vaccine
+                                vaccine_stock, status_val, follow_up_data, 
+                                vac_name, staff_id, assigned_to_instance):
+        
+        # Check if there's an existing vaccination record for this patient
         existing_vacrec = None
+        
         try:
             # First find patient records for this patient
             patient_records = PatientRecord.objects.filter(pat_id_id=pat_id, patrec_type="Vaccination Record")
             
-            # Look for a vaccination record that has history with the same vaccine
+            # Look for any existing vaccination record for this patient
             for patrec in patient_records:
                 try:
                     vacrec = VaccinationRecord.objects.get(patrec_id=patrec.patrec_id)
-                    # Check if this vacrec has any history with the same vaccine
-                    if VaccinationHistory.objects.filter(
-                        vacrec=vacrec, 
-                        vacStck_id__vac_id=vaccine_stock.vac_id,
-                        
-                    ).exists():
-                        existing_vacrec = vacrec
-                        existing_patrec = patrec
-                        break
+                    existing_vacrec = vacrec
+                    existing_patrec = patrec
+                    break
                 except VaccinationRecord.DoesNotExist:
                     continue
                     
@@ -1301,18 +1471,18 @@ class VaccinationSubmissionView(APIView):
                 patrec=patient_record
             )
         
-        # Create vaccination history - convert to integer
+        # Create vaccination history - always use dose 1 for routine vaccinations
         vachist = VaccinationHistory.objects.create(
             vacrec=vaccination_record,
-            vacStck_id=vaccine_stock,  # Removed assigned_to field
-            vachist_doseNo=int(form_data.get('vachist_doseNo', 1)),
+            vacStck_id=vaccine_stock,
+            vachist_doseNo=1,  # Always dose 1 for routine vaccinations
             vachist_status=status_val,
             staff_id=staff_id,
             vital=vital,
             followv=followv,
             signature=signature,
             date_administered=timezone.now().date(),
-            assigned_to= assigned_to_instance
+            assigned_to=assigned_to_instance
         )
         
         return {
@@ -1323,7 +1493,6 @@ class VaccinationSubmissionView(APIView):
             'followv_id': followv.followv_id if followv else None,
             'is_new_record': not existing_vacrec
         }
-
     def process_primary_vaccination(self, data, form_data, signature, pat_id, 
                                    vaccine_stock, status_val, follow_up_data, 
                                    vac_name, staff_id, vaccination_history,assigned_to_instance):
@@ -1572,8 +1741,9 @@ class VaccinationSubmissionView(APIView):
 
 # ======================== Monthly Vaccination REPORTS ========================
 
-
 class MonthlyVaccinationSummariesAPIView(APIView):
+    pagination_class = StandardResultsPagination
+    
     def get(self, request):
         try:
             queryset = VaccinationHistory.objects.select_related(
@@ -1588,6 +1758,7 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                 'followv'
             ).order_by('-date_administered')
 
+            search_query = request.GET.get('search', '').strip().lower()
             year_param = request.GET.get('year')  # '2025' or '2025-07'
 
             if year_param and year_param != 'all':
@@ -1622,6 +1793,22 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                     if vaccine and record.date_administered:
                         # Create month key in YYYY-MM format
                         month_key = record.date_administered.strftime('%Y-%m')
+                        month_name = record.date_administered.strftime('%B %Y')
+                        short_month_name = record.date_administered.strftime('%b %Y')
+                        year_only = record.date_administered.strftime('%Y')
+                        month_only = record.date_administered.strftime('%B')
+                        
+                        # Apply search filter if provided
+                        if search_query:
+                            matches_search = (
+                                search_query in month_name.lower() or
+                                search_query in short_month_name.lower() or
+                                search_query in year_only.lower() or
+                                search_query in month_only.lower() or
+                                search_query in month_key
+                            )
+                            if not matches_search:
+                                continue
                         
                         # Create unique key for patient-vaccine combination
                         # Using vacrec.patrec_id (patient record) + vaccine_id
@@ -1633,275 +1820,166 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                         # Add to set for this month (sets automatically handle uniqueness)
                         monthly_counts[month_key].add(unique_key)
 
-            # Format the data
+            # Format the data with additional information for search
             formatted_data = []
             for month_key in sorted(monthly_counts.keys(), reverse=True):
+                # Create month date object for additional info
+                month_date = datetime.strptime(month_key + '-01', '%Y-%m-%d')
+                month_name = month_date.strftime('%B %Y')
+                
                 formatted_data.append({
                     'month': month_key,
-                    'record_count': len(monthly_counts[month_key])
+                    'record_count': len(monthly_counts[month_key]),
+                    'month_name': month_name
                 })
 
-            return Response({
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(formatted_data, request, view=self)
+            
+            response_data = {
                 'success': True,
-                'data': formatted_data,
+                'data': paginated_data,
                 'total_months': len(formatted_data)
-            }, status=status.HTTP_200_OK)
+            }
+            
+            return paginator.get_paginated_response(response_data)
 
         except Exception as e:
             return Response({
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-class MonthlyVaccinationRecordsDetailAPIView(APIView):
-    def get(self, request, month):
+        
+
+
+
+
+
+
+class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
+    serializer_class = VaccinationHistorySerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        month = self.kwargs['month']
+        
+        # Validate month format (YYYY-MM)
         try:
-            # Validate month format (YYYY-MM)
-            try:
-                year, month_num = map(int, month.split('-'))
-                if month_num < 1 or month_num > 12:
-                    raise ValueError
-            except ValueError:
-                return Response({
-                    'success': False,
-                    'error': 'Invalid month format. Use YYYY-MM.'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            year, month_num = map(int, month.split('-'))
+            if month_num < 1 or month_num > 12:
+                raise ValueError
+        except ValueError:
+            return VaccinationHistory.objects.none()
 
-            # Create cutoff date (last day of the selected month)
-            if month_num == 12:
-                next_month_year = year + 1
-                next_month = 1
-            else:
-                next_month_year = year
-                next_month = month_num + 1
-            
-            # Cutoff date is the first day of next month (exclusive)
-            cutoff_date = date(next_month_year, next_month, 1)
+        # Base queryset
+        queryset = VaccinationHistory.objects.select_related(
+            'staff',
+            'vital',
+            'vacrec',
+            'vacrec__patrec_id',
+            'vacrec__patrec_id__pat_id',
+            'vacrec__patrec_id__pat_id__rp_id',
+            'vacrec__patrec_id__pat_id__rp_id__per',
+            'vacrec__patrec_id__pat_id__trans_id',
+            'vacrec__patrec_id__pat_id__trans_id__tradd_id',
+            'vacStck_id',
+            'vacStck_id__inv_id',
+            'vacStck_id__vac_id',
+            'vac',
+            'followv'
+        ).filter(
+            created_at__year=year,
+            created_at__month=month_num
+        ).order_by('-created_at')
 
-            # Get records for the specified month with proper prefetching
-            current_month_records = VaccinationHistory.objects.select_related(
-                'staff',
-                'vital',
-                'vacrec',
-                'vacrec__patrec_id',
-                'vacrec__patrec_id__pat_id',
-                'vacrec__patrec_id__pat_id__rp_id',
-                'vacrec__patrec_id__pat_id__rp_id__per',
-                'vacrec__patrec_id__pat_id__trans_id',
-                'vacrec__patrec_id__pat_id__trans_id__tradd_id',
-                'vacStck_id',
-                'vacStck_id__inv_id',
-                'vacStck_id__vac_id',
-                'vac',
-                'followv'
-            ).prefetch_related(
-                'vacrec__patrec_id__pat_id__rp_id__per__personal_addresses__add',
-            ).filter(
-                date_administered__year=year,
-                date_administered__month=month_num
-            ).order_by('-date_administered')
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            # Search for resident personal info
+            resident_name_query = Q(
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_mname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_lname__icontains=search_query)
+            )
 
-            # Get unique patient-vaccine combinations from current month
-            patient_vaccine_combinations = set()
-            for record in current_month_records:
-                if record.vacrec and (record.vac or (record.vacStck_id and record.vacStck_id.vac_id)):
-                    vaccine = record.vac if record.vac else record.vacStck_id.vac_id
-                    patient_vaccine_combinations.add((
-                        record.vacrec.patrec_id.patrec_id,
-                        vaccine.vac_id
-                    ))
+            # Search for transient personal info
+            transient_name_query = Q(
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_fname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_mname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_lname__icontains=search_query)
+            )
 
-            # Pre-fetch ALL doses for these patient-vaccine combinations
-            # BUT only doses administered ON OR BEFORE the selected month
-            all_related_doses = VaccinationHistory.objects.filter(
-                vacrec__patrec_id__in=[pv[0] for pv in patient_vaccine_combinations],
-                date_administered__lt=cutoff_date  # Only doses before the cutoff date
-            ).select_related('vacrec', 'vac', 'vacStck_id__vac_id').order_by('date_administered')
+            # Search for vaccine names
+            vaccine_query = Q(
+                Q(vac__vac_name__icontains=search_query) |
+                Q(vacStck_id__vac_id__vac_name__icontains=search_query)
+            )
 
-            # Organize doses by patient and vaccine - store ALL doses with their unique vachist_id
-            dose_timelines = defaultdict(lambda: defaultdict(list))
-            
-            for dose in all_related_doses:
-                vaccine = dose.vac if dose.vac else (dose.vacStck_id.vac_id if dose.vacStck_id else None)
-                
-                if dose.vacrec and vaccine:
-                    key = (dose.vacrec.patrec_id.patrec_id, vaccine.vac_id)
-                    
-                    # Only include doses that match our patient-vaccine combinations
-                    if key in patient_vaccine_combinations:
-                        dose_timelines[key]['doses'].append({
-                            'vachist_id': dose.vachist_id,
-                            'date_administered': dose.date_administered,
-                            'dose_number': dose.vachist_doseNo,
-                            'status': dose.vachist_status,
-                            'created_at': dose.created_at
-                        })
+            # Search for dose number
+            dose_query = Q(vachist_doseNo__icontains=search_query)
 
-            # Track unique patient+vaccine combinations that were administered THIS month
-            enhanced_records = []
-            processed_combinations = set()
+            # Search for status
+            status_query = Q(vachist_status__icontains=search_query)
 
-            for record in current_month_records:
-                vaccine = record.vac if record.vac else (record.vacStck_id.vac_id if record.vacStck_id else None)
-                
-                if not (record.vacrec and vaccine):
-                    continue
-                
-                key = (record.vacrec.patrec_id.patrec_id, vaccine.vac_id)
-                
-                # Only process each unique patient+vaccine combination once
-                if key in processed_combinations:
-                    continue
-                
-                processed_combinations.add(key)
-                
-                # Get the dose that was administered THIS month for this patient+vaccine
-                current_month_dose = None
-                timeline_doses = dose_timelines.get(key, {}).get('doses', [])
-                
-                for dose_info in timeline_doses:
-                    if (dose_info['date_administered'].year == year and 
-                        dose_info['date_administered'].month == month_num):
-                        current_month_dose = dose_info
-                        break
-                
-                if not current_month_dose:
-                    continue
-                
-                # Format basic record data using the current month's dose
-                record_data = {
-                    'vachist_id': current_month_dose['vachist_id'],
-                    'date_administered': current_month_dose['date_administered'].strftime('%Y-%m-%d'),
-                    'vachist_doseNo': current_month_dose['dose_number'],
-                    'vachist_status': current_month_dose['status'],
-                    'created_at': current_month_dose['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
-                    'signature': record.signature,
-                }
+            # Search for resident addresses
+            resident_address_ids = PersonalAddress.objects.filter(
+                Q(add__add_city__icontains=search_query) |
+                Q(add__add_barangay__icontains=search_query) |
+                Q(add__add_street__icontains=search_query) |
+                Q(add__add_external_sitio__icontains=search_query) |
+                Q(add__add_province__icontains=search_query) |
+                Q(add__sitio__sitio_name__icontains=search_query)
+            ).values_list('per', flat=True)
 
-                # Format vaccine information
-                record_data['vaccine_name'] = vaccine.vac_name
+            resident_address_query = Q(vacrec__patrec_id__pat_id__rp_id__per__in=resident_address_ids)
 
-                # Format patient information
-                if record.vacrec and record.vacrec.patrec_id and record.vacrec.patrec_id.pat_id:
-                    patient = record.vacrec.patrec_id.pat_id
-                    
-                    if patient.pat_type == "Resident" and patient.rp_id and patient.rp_id.per:
-                        personal_info = patient.rp_id.per
-                        
-                        name_parts = [
-                            personal_info.per_fname,
-                            personal_info.per_mname,
-                            personal_info.per_lname
-                        ]
-                        record_data['patient_name'] = ' '.join(filter(None, name_parts)) or "N/A"
-                        record_data['patient_dob'] = personal_info.per_dob.strftime('%Y-%m-%d') if personal_info.per_dob else None
-                        record_data['patient_gender'] = personal_info.per_sex if hasattr(personal_info, 'per_sex') else None
-                        
-                        address_parts = []
-                        if hasattr(personal_info, 'personal_addresses') and personal_info.personal_addresses.exists():
-                            personal_address = personal_info.personal_addresses.first()
-                            if personal_address and personal_address.add:
-                                address = personal_address.add
-                                address_parts = [
-                                    address.add_street,
-                                    address.add_barangay,
-                                    address.add_city,
-                                    address.add_province
-                                ]
-                        record_data['patient_address'] = ', '.join(filter(None, address_parts)) or "N/A"
-                        
-                    elif patient.pat_type == "Transient" and patient.trans_id:
-                        transient = patient.trans_id
-                        
-                        name_parts = [
-                            transient.tran_fname,
-                            transient.tran_mname,
-                            transient.tran_lname,
-                            transient.tran_suffix
-                        ]
-                        record_data['patient_name'] = ' '.join(filter(None, name_parts)) or "N/A"
-                        record_data['patient_dob'] = transient.tran_dob.strftime('%Y-%m-%d') if transient.tran_dob else None
-                        record_data['patient_gender'] = transient.tran_sex if hasattr(transient, 'tran_sex') else None
-                        
-                        address_parts = []
-                        if transient.tradd_id:
-                            address = transient.tradd_id
-                            address_parts = [
-                                address.tradd_street,
-                                address.tradd_barangay,
-                                address.tradd_city,
-                                address.tradd_province
-                            ]
-                        record_data['patient_address'] = ', '.join(filter(None, address_parts)) or "N/A"
-                    else:
-                        record_data['patient_name'] = "N/A"
-                        record_data['patient_dob'] = None
-                        record_data['patient_gender'] = None
-                        record_data['patient_address'] = "N/A"
-                    
-                    record_data['patient_id'] = patient.pat_id
-                    record_data['patient_type'] = patient.pat_type
-                else:
-                    record_data['patient_name'] = "N/A"
-                    record_data['patient_dob'] = None
-                    record_data['patient_gender'] = None
-                    record_data['patient_address'] = "N/A"
-                    record_data['patient_id'] = None
-                    record_data['patient_type'] = "Unknown"
+            # Search for transient addresses
+            transient_address_query = Q(
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_province__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_city__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_barangay__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_sitio__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_street__icontains=search_query)
+            )
 
-                # Format staff information
-                if record.staff:
-                    staff_info = record.staff.per if hasattr(record.staff, 'per') else None
-                    if staff_info:
-                        staff_name_parts = [
-                            staff_info.per_fname,
-                            staff_info.per_mname,
-                            staff_info.per_lname
-                        ]
-                        record_data['staff_name'] = ' '.join(filter(None, staff_name_parts)) or "N/A"
-                    else:
-                        record_data['staff_name'] = "N/A"
-                else:
-                    record_data['staff_name'] = "N/A"
+            # Combine all search queries
+            queryset = queryset.filter(
+                resident_name_query |
+                transient_name_query |
+                vaccine_query |
+                dose_query |
+                status_query |
+                resident_address_query |
+                transient_address_query
+            )
 
-                # Build complete dose timeline with ONLY doses administered on or before selected month
-                complete_dose_timeline = {}
-                sorted_doses = sorted(timeline_doses, key=lambda x: x['date_administered'])
-                
-                for dose_info in sorted_doses:
-                    dose_num = dose_info['dose_number']
-                    suffix = get_ordinal_suffix(dose_num)
-                    dose_key = f"{dose_num}{suffix}_dose"
-                    
-                    complete_dose_timeline[dose_key] = {
-                        'vachist_id': dose_info['vachist_id'],
-                        'date': dose_info['date_administered'].strftime('%m/%d/%Y'),
-                        'created_at': dose_info['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
-                        'dose_number': dose_info['dose_number'],
-                        'status': dose_info['status']
-                    }
-                
-                record_data['dose_timeline'] = complete_dose_timeline
-                record_data['total_doses'] = len([d for d in sorted_doses if d['status'] == 'completed'])
-                record_data['max_dose_number'] = max([d['dose_number'] for d in sorted_doses]) if sorted_doses else 0
-                record_data['current_dose_position'] = current_month_dose['dose_number']
-                
-                enhanced_records.append(record_data)
+        return queryset
 
-            return Response({
+    def list(self, request, *args, **kwargs):
+        month = self.kwargs['month']
+        
+        # Get paginated data
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response({
                 'success': True,
-                'data': {
-                    'month': month,
-                    'record_count': len(enhanced_records),
-                    'records': enhanced_records
-                }
-            }, status=status.HTTP_200_OK)
+                'month': month,
+                'record_count': queryset.count(),
+                'records': serializer.data
+            })
 
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'success': True,
+            'month': month,
+            'record_count': queryset.count(),
+            'records': serializer.data
+        }, status=status.HTTP_200_OK)
+
 
 
 def get_ordinal_suffix(n):
@@ -2055,7 +2133,7 @@ class MaternalVaccinationSubmissionView(APIView):
             
             AntigenTransaction.objects.create(
                 antt_qty=antt_qty,
-                antt_action="Vaccination administered",
+                antt_action="Administered",
                 vacStck_id=vaccine_stock,
                 staff_id=staff_id
             )
@@ -2111,28 +2189,23 @@ class MaternalVaccinationSubmissionView(APIView):
             )
 
     def process_routine_vaccination(self, data, form_data, signature, pat_id, 
-                                  vaccine_stock, status_val, follow_up_data, 
-                                  vac_name, staff_id,assigned_to_instance):
+                              vaccine_stock, status_val, follow_up_data, 
+                              vac_name, staff_id, assigned_to_instance):
     
-        # Check if there's an existing vaccination record for this patient and vaccine
+        # Check if there's an existing vaccination record for this patient
         existing_vacrec = None
+        
         try:
             # First find patient records for this patient
             patient_records = PatientRecord.objects.filter(pat_id_id=pat_id, patrec_type="Vaccination Record")
             
-            # Look for a vaccination record that has history with the same vaccine
+            # Look for any existing vaccination record for this patient
             for patrec in patient_records:
                 try:
                     vacrec = VaccinationRecord.objects.get(patrec_id=patrec.patrec_id)
-                    # Check if this vacrec has any history with the same vaccine
-                    if VaccinationHistory.objects.filter(
-                        vacrec=vacrec, 
-                        vacStck_id__vac_id=vaccine_stock.vac_id,
-                        
-                    ).exists():
-                        existing_vacrec = vacrec
-                        existing_patrec = patrec
-                        break
+                    existing_vacrec = vacrec
+                    existing_patrec = patrec
+                    break
                 except VaccinationRecord.DoesNotExist:
                     continue
                     
@@ -2181,18 +2254,18 @@ class MaternalVaccinationSubmissionView(APIView):
                 patrec=patient_record
             )
         
-        # Create vaccination history - convert to integer
+        # Create vaccination history - always use dose 1 for routine vaccinations
         vachist = VaccinationHistory.objects.create(
             vacrec=vaccination_record,
-            vacStck_id=vaccine_stock,  # Removed assigned_to field
-            vachist_doseNo=int(form_data.get('vachist_doseNo', 1)),
+            vacStck_id=vaccine_stock,
+            vachist_doseNo=1,  # Always dose 1 for routine vaccinations
             vachist_status=status_val,
             staff_id=staff_id,
             vital=vital,
             followv=followv,
             signature=signature,
             date_administered=timezone.now().date(),
-            assigned_to= assigned_to_instance
+            assigned_to=assigned_to_instance
         )
         
         return {

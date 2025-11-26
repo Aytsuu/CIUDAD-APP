@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
@@ -16,6 +16,7 @@ const ServiceChargeList = () => {
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Fetch service charges from API
   useEffect(() => {
@@ -70,6 +71,19 @@ const ServiceChargeList = () => {
   const handleSearch = React.useCallback(() => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
+
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const data = await getPaidServiceCharges()
+      setServiceCharges(data)
+    } catch (err) {
+      // Silently handle error
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Filter service charges based on search
   const filteredServiceCharges = useMemo(() => {
@@ -143,7 +157,18 @@ const ServiceChargeList = () => {
               </View>
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              className="flex-1 p-6" 
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+            >
               {filteredServiceCharges.length ? (
                 filteredServiceCharges.map((serviceCharge, idx) => (
                   <View key={idx} className="bg-white rounded-xl p-5 mb-4 shadow-md border border-gray-200 hover:shadow-lg transition-shadow">

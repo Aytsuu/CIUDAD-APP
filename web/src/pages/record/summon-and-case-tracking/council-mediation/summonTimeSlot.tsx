@@ -70,7 +70,6 @@ export default function SummonTimeSlot({ sd_id, onSuccess }: { sd_id?: number, o
       st_is_booked: false
     }));
 
-    console.log("Submitting raw time slots:", submissionData);
     addTimeSlot(submissionData);
   };
 

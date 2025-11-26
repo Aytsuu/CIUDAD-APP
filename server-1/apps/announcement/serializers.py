@@ -220,4 +220,4 @@ class BulkAnnouncementRecipientSerializer(serializers.ModelSerializer):
 class AnnouncementRecipientFilteredSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnnouncementRecipient
-        fields = ['ar_id', 'ann', 'ar_type', 'ar_category']
+        fields = ['ar_id', 'ann', 'ar_type', 'ar_category'] 

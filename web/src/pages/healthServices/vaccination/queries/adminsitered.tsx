@@ -15,6 +15,7 @@ interface VaccinationMutationParams {
   };
   patientId: string;
   patrec_id: string;
+  imzStck_id?: string;
 }
 
 export const useVaccinationMutation = () => {
@@ -22,7 +23,7 @@ export const useVaccinationMutation = () => {
   const navigate = useNavigate();
 
   const mutation = useMutation({
-    mutationFn: async ({ vaccination, previousVaccination, followUpData, patientId, patrec_id }: VaccinationMutationParams) => {
+    mutationFn: async ({ vaccination, previousVaccination, followUpData, patientId, patrec_id,imzStck_id}: VaccinationMutationParams) => {
       console.log("Mutation called with:", {
         vaccinationId: vaccination?.vachist_id,
         previousVaccinationId: previousVaccination?.vachist_id,
@@ -35,7 +36,8 @@ export const useVaccinationMutation = () => {
       const requestData: any = {
         vachist_id: vaccination.vachist_id,
         patientId,
-        patrec_id
+        patrec_id,
+        imzStck_id
       };
 
       // ONLY include followUpData if we have a valid date

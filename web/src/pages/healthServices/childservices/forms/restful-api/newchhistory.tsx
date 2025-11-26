@@ -3,7 +3,7 @@ import { api2 } from "@/api/api";
 import type { FormData } from "@/form-schema/chr-schema/chr-schema";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { showSuccessToast,showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 export interface AddRecordArgs {
   submittedData: FormData;
   staff: string | null;
@@ -14,13 +14,7 @@ export interface AddRecordArgs {
 export interface AddRecordResult {
   success: boolean;
   message: string;
-  data: {
-    patrec_id: string;
-    chrec_id: string;
-    chhist_id: string;
-    chvital_id?: string;
-    followv_id?: string | null;
-  };
+  data: any;
 }
 
 /**
@@ -38,7 +32,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
   }
 
   try {
-    console.log("Sending child health update data to comprehensive API endpoint...");
 
     // Transform the data to match what the backend expects
     const requestData = {
@@ -54,7 +47,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         place_of_delivery_type: submittedData.placeOfDeliveryType,
         pod_location: submittedData.placeOfDeliveryLocation,
         mother_occupation: submittedData.motherOccupation,
-        type_of_feeding: submittedData.type_of_feeding,
         father_occupation: submittedData.fatherOccupation,
         birth_order: submittedData.birth_order,
         newborn_screening: submittedData.dateNewbornScreening,
@@ -62,9 +54,6 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         nbscreening_result: submittedData.nbscreening_result,
         newbornInitiatedbf: submittedData.newbornInitiatedbf,
         selectedStaffId: submittedData.selectedStaffId,
-
-
-
 
         // Child health history
         status: submittedData.status,
@@ -76,12 +65,12 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
           ...vital,
           ht: vital.ht ? Number(vital.ht) : null,
           wt: vital.wt ? Number(vital.wt) : null,
-          temp: vital.temp ? Number(vital.temp) : null
+          temp: vital.temp ? Number(vital.temp) : null,
         })),
         nutritionalStatus: submittedData.nutritionalStatus
           ? {
               ...submittedData.nutritionalStatus,
-              muac: submittedData.nutritionalStatus.muac ? Number(submittedData.nutritionalStatus.muac) : null
+              muac: submittedData.nutritionalStatus.muac ? Number(submittedData.nutritionalStatus.muac) : null,
             }
           : null,
         childAge: submittedData.childAge,
@@ -93,20 +82,19 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         // Medicines
         medicines: submittedData.medicines?.map((med) => ({
           ...med,
-          medrec_qty: Number(med.medrec_qty)
+          medrec_qty: Number(med.medrec_qty),
         })),
 
         // Supplement statuses
         historicalSupplementStatuses: submittedData.historicalSupplementStatuses?.map((status) => ({
           ...status,
           chssupplementstat_id: status.chssupplementstat_id,
-          date_completed: status.date_completed || null
+          date_completed: status.date_completed || null,
         })),
 
         birthwt: submittedData.birthwt,
         anemic: submittedData.anemic,
 
-       
         // Transient parent information
         mother_fname: submittedData.motherFname,
         mother_lname: submittedData.motherLname,
@@ -118,16 +106,13 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         father_mname: submittedData.fatherMname,
         father_age: submittedData.fatherAge,
         father_dob: submittedData.fatherdob,
-        passed_status: submittedData.passed_status || "recorded"
+        passed_status: submittedData.passed_status || "recorded",
       },
       staff: staff,
       todaysHistoricalRecord: todaysHistoricalRecord,
-      originalRecord: originalRecord
+      originalRecord: originalRecord,
     };
 
-   
-
-    console.log("Hey", requestData);
     // Make API call to the comprehensive update endpoint
     const response = await api2.post("child-health/create-update-new-chhistory/", requestData);
 
@@ -138,16 +123,16 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         data: {
           patrec_id: response.data.data.patrec_id,
           chrec_id: response.data.data.chrec_id,
+          pat_id: submittedData.pat_id,
           chhist_id: response.data.data.chhist_id,
           chvital_id: response.data.data.chvital_id,
-          followv_id: response.data.data.followv_id
-        }
+          followv_id: response.data.data.followv_id,
+        },
       };
     } else {
       throw new Error(`Unexpected response status: ${response.status}`);
     }
   } catch (error: any) {
-    console.error("Failed to update child health record:", error);
 
     // Handle different types of errors
     if (error.response?.data?.error) {
@@ -238,7 +223,7 @@ export const useUpdateChildHealthRecordMutation = () => {
       // Comprehensive query invalidation
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.data.chrec_id] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["ChildHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
       queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
@@ -246,20 +231,19 @@ export const useUpdateChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["patientRecords"] });
       queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords"] });
       queryClient.invalidateQueries({ queryKey: ["followupVaccines"] });
-      queryClient.invalidateQueries({ queryKey: ["followupChildHealth"] });
+      queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.data.patrec_id] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
-
+      queryClient.invalidateQueries({ queryKey: ["patients5yearsbelow"] });
 
       showSuccessToast("submitted successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {
-      console.error("Child health record update mutation with validation failed:", error);
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while updating child health record";
 
-showErrorToast(`Operation Failed: ${errorMessage}`)  
-  }
+      showErrorToast(`Operation Failed: ${errorMessage}`);
+    },
   });
 };

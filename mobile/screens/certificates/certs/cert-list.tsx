@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
@@ -8,10 +8,11 @@ import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
-import { CustomDropdown } from '@/components/ui/custom-dropdown'
+import { SelectLayout } from '@/components/ui/select-layout'
 
 const CertList = () => {
   const [certificates, setCertificates] = useState<Certificate[]>([])
+  const [allCertificates, setAllCertificates] = useState<Certificate[]>([]) // Store all certificates for purpose extraction
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [residentTypeFilter, setResidentTypeFilter] = useState<'all' | 'resident' | 'nonresident'>('all')
@@ -19,17 +20,52 @@ const CertList = () => {
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  // Fetch certificates from API
+  // Fetch all certificates (without purpose filter) to extract all available purposes
+  useEffect(() => {
+    const fetchAllCertificates = async () => {
+      try {
+        // Fetch all certificates without purpose filter to get all purposes
+        const data = await getCertificates(
+          undefined, // no search
+          1,
+          1000, // Large page size to get all results
+          undefined, // status param is for request status, not resident type
+          'Paid', // Only fetch Paid certificates like web version
+          undefined // no purpose filter - get all purposes
+        )
+        setAllCertificates(data.results)
+      } catch (err) {
+        // Silently fail - purposes will just be empty
+      }
+    }
+
+    fetchAllCertificates()
+  }, []) // Only fetch once on mount
+
+  // Fetch certificates from API - matching web version (only Paid certificates)
   useEffect(() => {
     const fetchCertificates = async () => {
       try {
         setLoading(true)
-        const data = await getCertificates()
+        // Map purposeFilter to purpose parameter for backend
+        const purposeParam = purposeFilter === 'all' ? undefined : purposeFilter
+        
+        // Fetch all results (no pagination) - use large page size to get all
+        // Note: Backend doesn't support resident/non-resident filter via status param
+        // We'll filter client-side based on is_nonresident field
+        const data = await getCertificates(
+          searchQuery || undefined,
+          1,
+          1000, // Large page size to get all results
+          undefined, // status param is for request status, not resident type
+          'Paid', // Only fetch Paid certificates like web version
+          purposeParam
+        )
         setCertificates(data.results)
         setError(null)
       } catch (err) {
-        console.error('Error fetching certificates:', err)
         setError('Failed to load certificates')
       } finally {
         setLoading(false)
@@ -37,7 +73,7 @@ const CertList = () => {
     }
 
     fetchCertificates()
-  }, [])
+  }, [searchQuery, purposeFilter]) // Removed residentTypeFilter from dependencies since we filter client-side
 
   const getStatusBadge = (status?: string) => {
     const normalized = (status || "").toLowerCase();
@@ -51,14 +87,6 @@ const CertList = () => {
       return <Text className="text-[10px] px-2 py-1 rounded-full bg-blue-100 text-blue-800">Completed</Text>
     }
     return <Text className="text-[10px] px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">Pending</Text>
-  }
-
-  const getNormalizedStatus = (status?: string): 'approved' | 'pending' | 'rejected' | 'completed' => {
-    const normalized = (status || "").toLowerCase();
-    if (normalized.includes("reject")) return 'rejected';
-    if (normalized.includes("approve")) return 'approved';
-    if (normalized.includes("complete")) return 'completed';
-    return 'pending';
   }
 
   const formatDate = (d?: string) => {
@@ -85,65 +113,72 @@ const CertList = () => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
-  // Extract unique purposes from certificates
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Refetch all certificates
+      const purposeParam = purposeFilter === 'all' ? undefined : purposeFilter
+      const data = await getCertificates(
+        searchQuery || undefined,
+        1,
+        1000,
+        undefined,
+        'Paid',
+        purposeParam
+      )
+      setCertificates(data.results)
+      
+      // Refetch all certificates for purposes
+      const allData = await getCertificates(
+        undefined,
+        1,
+        1000,
+        undefined,
+        'Paid',
+        undefined
+      )
+      setAllCertificates(allData.results)
+    } catch (err) {
+      // Silently handle error
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Extract unique purposes from all certificates (not filtered) for dropdown
+  // This ensures all purposes are always available in the dropdown
   const purposes = useMemo(() => {
     const uniquePurposes = new Set<string>();
-    certificates.forEach(cert => {
+    allCertificates.forEach(cert => {
       if (cert.req_purpose) {
         uniquePurposes.add(cert.req_purpose);
       }
     });
     return Array.from(uniquePurposes).sort();
-  }, [certificates])
+  }, [allCertificates])
 
-  // Filter certificates based on resident type, purpose, and search
+  // Filter certificates client-side by resident type and purpose
   const filteredCertificates = useMemo(() => {
-    let filtered = certificates.filter(cert => {
-      // Resident type filter
-      if (residentTypeFilter !== 'all') {
+    let filtered = certificates;
+
+    // Filter by resident type (client-side since backend doesn't support this)
+    if (residentTypeFilter !== 'all') {
+      filtered = filtered.filter(cert => {
         const isNonResident = cert.is_nonresident || false;
         if (residentTypeFilter === 'resident' && isNonResident) return false;
         if (residentTypeFilter === 'nonresident' && !isNonResident) return false;
-      }
-
-      // Purpose filter
-      if (purposeFilter !== 'all' && cert.req_purpose !== purposeFilter) {
-        return false;
-      }
-
-      return true;
-    });
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(cert => {
-        const searchLower = searchQuery.toLowerCase();
-        const isNonRes = cert.is_nonresident || false;
-        
-        if (isNonRes) {
-          // Search in non-resident fields
-          return (
-            cert.cr_id?.toLowerCase().includes(searchLower) ||
-            cert.nrc_id?.toLowerCase().includes(searchLower) ||
-            cert.nrc_fname?.toLowerCase().includes(searchLower) ||
-            cert.nrc_lname?.toLowerCase().includes(searchLower) ||
-            cert.nrc_mname?.toLowerCase().includes(searchLower) ||
-            cert.req_type?.toLowerCase().includes(searchLower)
-          );
-        } else {
-          // Search in resident fields
-          return (
-            cert.cr_id?.toLowerCase().includes(searchLower) ||
-            cert.resident_details?.per_fname?.toLowerCase().includes(searchLower) ||
-            cert.resident_details?.per_lname?.toLowerCase().includes(searchLower) ||
-            cert.req_type?.toLowerCase().includes(searchLower)
-          );
-        }
+        return true;
       });
     }
 
+    // Filter by purpose (already handled by backend, but keep for consistency)
+    if (purposeFilter !== 'all') {
+      filtered = filtered.filter(cert => cert.req_purpose === purposeFilter);
+    }
+
     return filtered;
-  }, [certificates, residentTypeFilter, purposeFilter, searchQuery])
+  }, [certificates, residentTypeFilter, purposeFilter]);
 
   if (loading) {
     return (
@@ -188,28 +223,28 @@ const CertList = () => {
         <View className="bg-white px-6 py-4 border-b border-gray-200">
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Text className="text-xs font-medium text-gray-600 mb-2">Type Filter</Text>
-              <CustomDropdown
-                value={residentTypeFilter}
-                onSelect={(value: string) => setResidentTypeFilter(value as any)}
-                data={[
+              <SelectLayout
+                label="Type Filter"
+                placeholder="Select type"
+                options={[
                   { label: 'All', value: 'all' },
                   { label: 'Resident', value: 'resident' },
                   { label: 'Non-Resident', value: 'nonresident' }
                 ]}
-                placeholder="Select type"
+                selectedValue={residentTypeFilter}
+                onSelect={(option) => setResidentTypeFilter(option.value as any)}
               />
             </View>
             <View className="flex-1">
-              <Text className="text-xs font-medium text-gray-600 mb-2">Purpose Filter</Text>
-              <CustomDropdown
-                value={purposeFilter}
-                onSelect={(value: string) => setPurposeFilter(value)}
-                data={[
+              <SelectLayout
+                label="Purpose Filter"
+                placeholder="Select purpose"
+                options={[
                   { label: 'All', value: 'all' },
                   ...purposes.map(purpose => ({ label: purpose, value: purpose }))
                 ]}
-                placeholder="Select purpose"
+                selectedValue={purposeFilter}
+                onSelect={(option) => setPurposeFilter(option.value)}
               />
             </View>
           </View>
@@ -224,7 +259,18 @@ const CertList = () => {
               </View>
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              className="flex-1 p-6" 
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+            >
               {filteredCertificates.length ? (
                 filteredCertificates.map((certificate, idx) => {
                   const isNonResident = certificate.is_nonresident || false;

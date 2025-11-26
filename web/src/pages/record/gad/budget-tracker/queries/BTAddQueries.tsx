@@ -40,8 +40,8 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], _budgetEntries: Bu
               name: file.name,
               type: file.type,
               file: file.file
-            }]).catch(error => {
-              console.error("Error creating file entry:", error);
+            }]).catch(_error => {
+              // console.error("Error creating file entry:", error);
               return null;
             })
           )

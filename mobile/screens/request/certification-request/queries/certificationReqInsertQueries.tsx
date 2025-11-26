@@ -43,7 +43,6 @@ export const useAddPersonalCertification = (onSuccess?: () => void) => {
             router.back();
         },
         onError: (err) => {
-            console.error("Error submitting personal certification request:", err);
             toast.error("Failed to submit request. Please check the input data and try again.");
         }
     });
@@ -70,7 +69,6 @@ export const useAddBusinessPermit = (onSuccess?: () => void) => {
             router.back();
         },
         onError: (err) => {
-            console.error("Error submitting business permit request:", err);
             toast.error("Failed to submit request. Please check the input data and try again.");
         }
     });
@@ -103,7 +101,6 @@ export const useAddCertificationRequest = (onSuccess?: () => void) => {
             router.back();
         },
         onError: (err) => {
-            console.error("Error submitting certification request:", err);
             toast.error("Failed to submit request. Please check the input data and try again.");
         }
     });
@@ -114,10 +111,10 @@ export const useAddBusinessClearance = () => {
   return useMutation({
     mutationFn: (data: BusinessPermitFormData) => addBusinessClearance(data, undefined, user?.rp),
     onSuccess: (data) => {
-      console.log("Business clearance request submitted successfully:", data);
+      // Business clearance request submitted successfully
     },
     onError: (error) => {
-      console.error("Error submitting business clearance request:", error);
+      // Error submitting business clearance request
     },
   });
 };

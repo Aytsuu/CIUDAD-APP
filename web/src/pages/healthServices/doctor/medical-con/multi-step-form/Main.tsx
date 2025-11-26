@@ -1,3 +1,5 @@
+// Update your MedicalConsultationFlow component
+
 import { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PendingDisplayMedicalConsultation from "./pending-display";
@@ -7,10 +9,6 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { useAuth } from "@/context/AuthContext";
 
-
-
-
-// Simplified interfaces
 interface Medicine {
   minv_id: string;
   medrec_qty: number;
@@ -52,20 +50,18 @@ interface FormData {
   staff_id: string;
   patrec_id?: string;
   medrec_id?: string;
+  app_id?: string;
 }
-
-
 
 export default function MedicalConsultationFlow() {
   const { user } = useAuth();
   const staff_id = user?.staff?.staff_id || null;
-
   const location = useLocation();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const { patientData, MedicalConsultation } = location.state || {};
   
-  // Simplified state management
+  // FIX: Convert all IDs to strings
   const [formData, setFormData] = useState<FormData>(
     () => ({
       subj_summary: "",
@@ -94,25 +90,41 @@ export default function MedicalConsultationFlow() {
       is_fecal_occult_blood: false,
       is_ecg: false,
       others: "",
-      is_phrecord:  MedicalConsultation?.is_phrecord || false,
-      phil_id: MedicalConsultation?.philhealth_details?.phil_id || "",
-      staff_id: staff_id || "",
-      patrec_id: MedicalConsultation?.patrec|| "",
-      medrec_id: MedicalConsultation?.medrec_id || ""
+      is_phrecord: MedicalConsultation?.is_phrecord || false,
+      // CRITICAL FIX: Convert all IDs to strings
+      phil_id: String(MedicalConsultation?.philhealth_details?.phil_id || ""),
+      staff_id: String(staff_id || ""),
+      patrec_id: String(MedicalConsultation?.patrec || ""),
+      medrec_id: String(MedicalConsultation?.medrec_id || ""),
+      app_id: ""
     })
   );
 
+  useEffect(() => {  
+    console.log("Current form data:", formData)
+  }, [formData])
 
-useEffect (() => {  
-  console.log("fuckk", formData)
-}
-, [formData])
-
-
-  // Unified data update handler
+  // Unified data update handler with string conversion
   const updateFormData = useCallback((updates: Partial<FormData>) => {
     setFormData(prev => {
       const newData = { ...prev, ...updates };
+      
+      // Convert IDs to strings if they exist in updates
+      if (updates.phil_id !== undefined) {
+        newData.phil_id = String(updates.phil_id || "");
+      }
+      if (updates.staff_id !== undefined) {
+        newData.staff_id = String(updates.staff_id || "");
+      }
+      if (updates.patrec_id !== undefined) {
+        newData.patrec_id = String(updates.patrec_id || "");
+      }
+      if (updates.medrec_id !== undefined) {
+        newData.medrec_id = String(updates.medrec_id || "");
+      }
+      if (updates.app_id !== undefined) {
+        newData.app_id = String(updates.app_id || "");
+      }
       
       // Auto-sync medicines between selectedMedicines and medicineRequest
       if (updates.selectedMedicines) {
@@ -123,7 +135,7 @@ useEffect (() => {
       } else if (updates.medicineRequest?.medicines) {
         newData.selectedMedicines = updates.medicineRequest.medicines;
       }
-
+      
       return newData;
     });
   }, [patientData?.pat_id]);
@@ -171,7 +183,6 @@ useEffect (() => {
                 onNext={nextStep} 
               />
             )}
-
             {currentStep === 2 && (
               <SoapForm 
                 patientData={patientData} 

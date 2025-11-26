@@ -3,7 +3,7 @@
   import { Outlet, useNavigate, useLocation } from "react-router-dom";
   import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
   // import { useAuth } from "@/context/AuthContext";
-  import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+  import { ProtectedComponent } from "@/ProtectedComponent";
   import { useReportsCount } from "../count-return/count";
 
   export default function MainMedicine() {
@@ -74,8 +74,8 @@
                 All Records
               </TabsTrigger>
               
-              {/* Use ProtectedComponentButton to conditionally show requests tab */}
-              <ProtectedComponentButton  exclude={["DOCTOR"]}>
+              {/* Use ProtectedComponent to conditionally show requests tab */}
+              <ProtectedComponent  exclude={["DOCTOR"]}>
                 <TabsTrigger value="requests" className="text-xs sm:text-sm data-[state=active]:bg-primary/10 data-[state=active]:text-primary relative">
                   Medicine Requests
                   {isLoading ? (
@@ -88,7 +88,7 @@
                     )
                   )}
                 </TabsTrigger>
-              </ProtectedComponentButton>
+              </ProtectedComponent>
             </TabsList>
           </Tabs>
 

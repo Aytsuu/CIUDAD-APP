@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, ScrollView, Modal, Image, Pressable } from "react-native";
+import { Text, View, TouchableOpacity, FlatList, Modal, Image, Pressable, RefreshControl } from "react-native";
 import PageLayout from "@/screens/_PageLayout";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { ChevronRight } from "@/lib/icons/ChevronRight";
@@ -24,10 +24,18 @@ export default function HearingHistory() {
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState<{url: string, name: string}[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const {data: hearingSchedules = [], isLoading: isSchedulesLoading} = useGetScheduleList(sc_id)
-  const {data: caseDetails, isLoading: isDetailsLoading} = useGetSummonCaseDetails(sc_id)
+  const [refreshing, setRefreshing] = useState(false);
+  
+  const {data: hearingSchedules = [], isLoading: isSchedulesLoading, refetch} = useGetScheduleList(sc_id)
+  const {data: caseDetails, isLoading: isDetailsLoading, refetch: refetchCaseDetails} = useGetSummonCaseDetails(sc_id)
   const isClosed = status.toLowerCase() == "escalated" || status.toLowerCase() == "resolved"
   
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetch(), refetchCaseDetails()]);
+    setRefreshing(false);
+  };
+
   // Check if case is in final mediation (3rd mediation proceedings)
   const isFinalMediation = hearingSchedules.some(
     schedule => schedule.hs_level === "3rd MEDIATION"
@@ -57,7 +65,7 @@ export default function HearingHistory() {
   const isHandledByBarangayCouncil = !isHandledByLupon;
 
   const handleAddSchedule = () => {
-    if (hasOpenSchedule || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus) return; // Don't navigate if there's an open schedule or 3rd mediation with active status
+    if (hasOpenSchedule || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus) return;
     
     router.push({
       pathname: '/(my-request)/complaint-tracking/schedule',
@@ -81,6 +89,105 @@ export default function HearingHistory() {
     setInfoModalVisible(true);
   };
 
+  // Render individual schedule card
+  const renderScheduleCard = ({ item: schedule, index }: { item: any; index: number }) => (
+    <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white mb-3">
+      <CardContent className="p-4">
+        {/* Header with Hearing Level and Status */}
+        <View className="flex-row justify-between items-start mb-3">
+          <View className="flex flex-row items-center gap-3">
+            <Text className="text-md font-bold text-gray-900">
+              {schedule.hs_level}
+            </Text>
+          
+            <View className={`px-2 py-1 rounded-full ${
+              schedule.hs_is_closed
+                ? "bg-orange-100 border border-orange-200"
+                : "bg-green-100 border border-green-200"
+            }`}> 
+              <Text className={`text-xs font-medium ${
+                schedule.hs_is_closed ? "text-orange-700" : "text-green-700"
+              }`}>
+                {schedule.hs_is_closed ? "Closed" : "Open"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Hearing Date and Time */}
+        <View className="space-y-3 mb-4">
+          <View className="flex-row justify-between items-center">
+            <Text className="text-sm font-medium text-gray-600">Hearing Date & Time</Text>
+            <Text className="text-sm font-semibold text-gray-900">
+              {schedule.summon_date?.sd_date ? formatDate(schedule.summon_date.sd_date, "long") : "Not scheduled"},  
+              {schedule.summon_time?.st_start_time ? ` ${formatTime(schedule.summon_time.st_start_time)}` : ""}
+            </Text>
+          </View>
+        </View>
+
+        {/* Remarks Section */}
+        <View className="border-t border-gray-100 pt-3">
+          {schedule.remark && schedule.remark.rem_id ? (
+            <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+              <View className="mb-2">
+                <Text className="text-sm font-semibold text-blue-800 mb-1">
+                  Remarks
+                </Text>
+                <Text className="text-xs text-blue-600 italic">
+                  by{schedule.remark.staff_name ? ` ${schedule.remark.staff_name}` : ' Unknown'}, 
+                  {schedule.remark.rem_date ? ` on ${formatTimestamp(schedule.remark.rem_date)}` : ''}
+                </Text>
+              </View>
+              <Text className="text-sm text-gray-700 mb-2">
+                {schedule.remark.rem_remarks}
+              </Text>
+              {schedule.remark.supp_docs && schedule.remark.supp_docs.length > 0 && (
+                <View className="mt-2">
+                  <TouchableOpacity 
+                    onPress={() => handleViewImages(schedule.remark.supp_docs)}
+                    className="flex-row items-center justify-between bg-white border border-blue-200 rounded-lg p-3"
+                  >
+                    <View className="flex-row items-center">
+                      <Paperclip size={16} color="#3b82f6" />
+                      <Text className="text-blue-700 text-sm font-semibold ml-2">
+                        View Attached Files ({schedule.remark.supp_docs.length})
+                      </Text>
+                    </View>
+                    <Eye size={16} color="#3b82f6" />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View className="bg-red-50 rounded-lg p-3 border border-red-200">
+              <View className="flex-row items-center space-x-2">
+                <Text className="text-sm font-semibold text-red-800">
+                  No Remarks Available
+                </Text>
+              </View>
+              <Text className="text-xs text-red-600 mt-1">
+                Awaiting barangay staff remarks
+              </Text>
+            </View>
+          )}
+        </View>
+      </CardContent>
+    </Card>
+  );
+
+  // Empty state component
+  const renderEmptyState = () => (
+    <View className="flex-1 justify-center items-center p-6">
+      <Calendar size={48} className="text-gray-300 mb-4" />
+      <Text className="text-gray-500 text-center text-md font-medium mb-2">
+        No Hearing Schedules
+      </Text>
+      <Text className="text-gray-400 text-center text-sm">
+        No hearing schedules have been created for this case yet.
+      </Text>
+    </View>
+  );
+
   if(isSchedulesLoading || isDetailsLoading){
     return(
       <View className="flex-1 justify-center items-center bg-gray-50">
@@ -103,6 +210,7 @@ export default function HearingHistory() {
             <Info size={20} className="text-gray-700" />
           </TouchableOpacity>
         }          
+        wrapScroll={false} // Important: Disable PageLayout's internal scrolling
       >
         <View className="flex-1 bg-gray-50">
           {/* Final Mediation Banner */}
@@ -141,136 +249,53 @@ export default function HearingHistory() {
 
           {/* Main Content Area */}
           {hearingSchedules.length === 0 ? (
-            // Empty State - Centered
-            <View className="flex-1 justify-center items-center p-6">
-              <Calendar size={48} className="text-gray-300 mb-4" />
-              <Text className="text-gray-500 text-center text-md font-medium mb-2">
-                No Hearing Schedules
-              </Text>
-              <Text className="text-gray-400 text-center text-sm">
-                No hearing schedules have been created for this case yet.
-              </Text>
-            </View>
+            renderEmptyState()
           ) : (
-            // Schedules List
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-              <View className="p-6 gap-3">
-                {hearingSchedules.map((schedule: any, index: number) => {
-                  const isFinalMediationSchedule = schedule.hs_level === "3rd MEDIATION";
-                  const isFinalConciliationSchedule = schedule.hs_level === "3rd Conciliation Proceedings";
-                  
-                  return (
-                    <Card key={schedule.hs_id || index} className="border-2 border-gray-200 shadow-sm bg-white">
-                      <CardContent className="p-4">
-                        {/* Header with Hearing Level and Status */}
-                        <View className="flex-row justify-between items-start mb-3">
-                          <View className="flex flex-row items-center gap-3">
-                            <Text className="text-md font-bold text-gray-900">
-                              {schedule.hs_level}
-                            </Text>
-                          
-                            <View className={`px-2 py-1 rounded-full ${
-                              schedule.hs_is_closed
-                                ? "bg-orange-100 border border-orange-200"
-                                : "bg-green-100 border border-green-200"
-                            }`}> 
-                              <Text className={`text-xs font-medium ${
-                                schedule.hs_is_closed ? "text-orange-700" : "text-green-700"
-                              }`}>
-                                {schedule.hs_is_closed ? "Closed" : "Open"}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-
-                        {/* Hearing Date and Time */}
-                        <View className="space-y-3 mb-4">
-                          <View className="flex-row justify-between items-center">
-                            <Text className="text-sm font-medium text-gray-600">Hearing Date & Time</Text>
-                            <Text className="text-sm font-semibold text-gray-900">
-                              {schedule.summon_date?.sd_date ? formatDate(schedule.summon_date.sd_date, "long") : "Not scheduled"},  
-                              {schedule.summon_time?.st_start_time ? ` ${formatTime(schedule.summon_time.st_start_time)}` : ""}
-                            </Text>
-                          </View>
-                        </View>
-
-                        {/* Remarks Section */}
-                        <View className="border-t border-gray-100 pt-3">
-                          {schedule.remark && schedule.remark.rem_id ? (
-                            <View className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                              <View className="mb-2">
-                                <Text className="text-sm font-semibold text-blue-800 mb-1">
-                                  Remarks
-                                </Text>
-                                <Text className="text-xs text-blue-600 italic">
-                                  by{schedule.remark.staff_name ? ` ${schedule.remark.staff_name}` : ' Unknown'}, 
-                                  {schedule.remark.rem_date ? ` on ${formatTimestamp(schedule.remark.rem_date)}` : ''}
-                                </Text>
-                              </View>
-                              <Text className="text-sm text-gray-700 mb-2">
-                                {schedule.remark.rem_remarks}
-                              </Text>
-                              {schedule.remark.supp_docs && schedule.remark.supp_docs.length > 0 && (
-                                <View className="mt-2">
-                                  <TouchableOpacity 
-                                    onPress={() => handleViewImages(schedule.remark.supp_docs)}
-                                    className="flex-row items-center justify-between bg-white border border-blue-200 rounded-lg p-3"
-                                  >
-                                    <View className="flex-row items-center">
-                                      <Paperclip size={16} color="#3b82f6" />
-                                      <Text className="text-blue-700 text-sm font-semibold ml-2">
-                                        View Attached Files ({schedule.remark.supp_docs.length})
-                                      </Text>
-                                    </View>
-                                    <Eye size={16} color="#3b82f6" />
-                                  </TouchableOpacity>
-                                </View>
-                              )}
-                            </View>
-                          ) : (
-                            <View className="bg-red-50 rounded-lg p-3 border border-red-200">
-                              <View className="flex-row items-center space-x-2">
-                                <Text className="text-sm font-semibold text-red-800">
-                                  No Remarks Available
-                                </Text>
-                              </View>
-                              <Text className="text-xs text-red-600 mt-1">
-                                Awaiting barangay staff remarks
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </View>
-            </ScrollView>
+            <FlatList
+              data={hearingSchedules}
+              renderItem={renderScheduleCard}
+              keyExtractor={(item, index) => item.hs_id?.toString() || index.toString()}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={['#00a8f0']}
+                  tintColor={'#00a8f0'}
+                />
+              }
+              contentContainerStyle={{
+                paddingHorizontal: 24,
+                paddingVertical: 16,
+              }}
+              ListHeaderComponent={<View className="pt-2" />}
+              ListFooterComponent={<View className="pb-4" />}
+            />
           )}
         </View>
       </PageLayout>
 
-      {/* Floating Add Button - Always visible but conditionally disabled */}
+      {/* Floating Add Button */}
       <TouchableOpacity onPress={handleAddSchedule}
-        disabled={hasOpenSchedule || isClosed || hearingSchedules.length === 6 || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus}
-        className={`absolute bottom-6 right-6 w-16 h-16 rounded-full items-center justify-center shadow-lg z-50 ${
-          hasOpenSchedule || isClosed || hearingSchedules.length === 6 || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus ? "bg-gray-400" : "bg-blue-600"
-        }`}
-        style={{
-          shadowColor: "#000",
-          shadowOffset: {
-            width: 0,
-            height: 2,
-          },
-          shadowOpacity: 0.25,
-          shadowRadius: 3.84,
-          elevation: 5,
-        }}
-      >
-        <Plus size={24} color="white" />
+          disabled={hasOpenSchedule || isClosed || hearingSchedules.length === 6 || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus || status.toLowerCase() !== 'waiting for schedule'}
+          className={`absolute bottom-20 right-6 w-16 h-16 rounded-full items-center justify-center shadow-lg z-50 ${
+            hasOpenSchedule || isClosed || hearingSchedules.length === 6 || isThirdMediationWithActiveStatus || isThirdConciliationWithActiveStatus ? "bg-gray-400" : "bg-blue-600"
+          }`}
+          style={{
+            shadowColor: "#000",
+            shadowOffset: {
+              width: 0,
+              height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 3.84,
+            elevation: 5,
+          }}
+        >
+          <Plus size={24} color="white" />
       </TouchableOpacity>
 
-      {/* Info Modal */}
+      {/* Info Modal - Keep as is */}
       <Modal
         visible={infoModalVisible}
         transparent={true}
@@ -316,7 +341,7 @@ export default function HearingHistory() {
         </View>
       </Modal>
 
-      {/* Image Viewer Modal */}
+      {/* Image Viewer Modal - Keep as is */}
       <Modal
         visible={viewImagesModalVisible}
         transparent={true}
@@ -324,10 +349,7 @@ export default function HearingHistory() {
       >
         <View className="flex-1 bg-black/90">
           {/* Header with close button and file name */}
-          <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-between items-center">
-            <Text className="text-white text-lg font-medium w-[90%]">
-              {selectedImages[currentIndex]?.name || 'Document'}
-            </Text>
+          <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 p-4 flex-row justify-end items-center">
             <TouchableOpacity onPress={() => setViewImagesModalVisible(false)}>
               <X size={24} color="white" />
             </TouchableOpacity>

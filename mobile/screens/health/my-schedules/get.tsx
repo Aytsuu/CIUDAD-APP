@@ -166,7 +166,7 @@ export const getAllAppointments = async (filters: AppointmentFilters = {}) => {
     if (filters.time_frame) params.append('time_frame', filters.time_frame);
     if (filters.sort_by) params.append('sort_by', filters.sort_by);
     if (filters.sort_order) params.append('sort_order', filters.sort_order);
-
+    
     const queryString = params.toString();
     const url = queryString 
       ? `/patientrecords/all-appointments/?${queryString}`

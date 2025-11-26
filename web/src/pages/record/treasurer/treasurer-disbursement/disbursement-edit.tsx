@@ -181,7 +181,9 @@ export const EditDisbursementVoucher: React.FC<
     position?: string
   ) => {
     setValue(`dis_signatories.${index}.${field}`, value);
-    if (position && field === "name") {
+    
+    // Always update position when name is selected from dropdown
+    if (field === "name" && position) {
       setValue(`dis_signatories.${index}.position`, position);
     }
   };
@@ -228,12 +230,12 @@ export const EditDisbursementVoucher: React.FC<
       const newFiles: FileInput[] = files
         .filter((file) => {
           const isNewFile = !!file.file;
-          console.log("File check:", {
-            name: file.name,
-            hasFile: !!file.file,
-            hasUrl: !!file.url,
-            isNewFile: isNewFile,
-          });
+          // console.log("File check:", {
+          //   name: file.name,
+          //   hasFile: !!file.file,
+          //   hasUrl: !!file.url,
+          //   isNewFile: isNewFile,
+          // });
           return isNewFile;
         })
         .map((file) => {
@@ -258,19 +260,19 @@ export const EditDisbursementVoucher: React.FC<
             files: newFiles,
           });
         } catch (fileError) {
-          console.error("❌ Failed to add new files:", fileError);
+          // console.error("❌ Failed to add new files:", fileError);
         }
       }
 
       onSuccess();
     } catch (error: any) {
       if (error.response) {
-        console.error("❌ API Response Error:", {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data,
-          headers: error.response.headers,
-        });
+        // console.error("❌ API Response Error:", {
+        //   status: error.response.status,
+        //   statusText: error.response.statusText,
+        //   data: error.response.data,
+        //   headers: error.response.headers,
+        // });
       }
 
       let errorMessage =

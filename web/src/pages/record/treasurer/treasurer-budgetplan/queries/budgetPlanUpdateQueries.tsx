@@ -23,8 +23,8 @@ export const useUpdateBudgetHeader = (onSuccess: () => void) => {
             });
             onSuccess?.()
         },
-        onError: (err) => {
-            console.error("Error updating budget header:", err);
+        onError: () => {
+            // console.error("Error updating budget header:", err);
             toast.error(
                 "Failed to udpate budget header. Please check the input data and try again.",
                 { duration: 2000 }
@@ -52,8 +52,8 @@ export const useArchiveBudgetPlan = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error archiving budget plan:", err);
+        onError: () => {
+            // console.error("Error archiving budget plan:", err);
             toast.error("Failed to archive budget plan", {
             id: "archivePlan",
             duration: 2000
@@ -82,8 +82,8 @@ export const useRestoreBudgetPlan = (onSuccess?: () => void) => {
             
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error restoring budget plan:", err);
+        onError: () => {
+            // console.error("Error restoring budget plan:", err);
             toast.error("Failed to restore budget plan", {
             id: "restorePlan",
             duration: 2000
@@ -121,8 +121,8 @@ export const useUpdateBudgetItem = (onSuccess: () => void) => {
             });
             onSuccess?.()
         },
-        onError: (err) => {
-            console.error("Error updating budget items:", err);
+        onError: () => {
+            // console.error("Error updating budget items:", err);
             toast.error(
                 "Failed to update budget items. Please check the input data and try again.",
                 { duration: 2000 }

@@ -10,7 +10,8 @@ import { useForm } from "react-hook-form";
 import { familyFormSchema } from "@/form-schema/profiling-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { formatHouseholds, formatResidents } from "../../record/profiling/ProfilingFormats";
+import { formatHouseholds } from "../../record/profiling/ProfilingFormats";
+import { formatResidentsWithBadge } from "./family-profling/utils/formatResidentsOptimized";
 import { DependentRecord } from "../../record/profiling/ProfilingTypes";
 import { FaHome, FaUsers, FaBriefcaseMedical, FaHouseUser, FaClipboardList } from "react-icons/fa";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
@@ -58,7 +59,7 @@ export default function HealthFamilyForm() {
   // const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
   const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
   const [selectedRespondentId, setSelectedRespondentId] = React.useState<string>(""); 
-  const [famId, setFamId] = React.useState<string>(""); 
+  const [famId, setFamId] = React.useState<string>("251111000018-R"); 
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
@@ -144,7 +145,7 @@ export default function HealthFamilyForm() {
   // Optimize: Only format residents data when needed and memoize properly
   const formattedResidents = React.useMemo(() => {
     if (!residentsListHealth || currentStep >= 4) return [];
-    return formatResidents(residentsListHealth);
+    return formatResidentsWithBadge(residentsListHealth);
   }, [residentsListHealth, currentStep]);
   
   const formattedHouseholds = React.useMemo(() => {
@@ -228,16 +229,16 @@ export default function HealthFamilyForm() {
   React.useEffect(() => {
     // Only log when on steps that actually need family data
     if (currentStep >= 4) {
-      console.log('Family ID:', famId);
-      console.log('Family Members:', familyMembersHealth);
-      console.log('Family Data:', familyDataHealth);
-      console.log('Household ID (from household_no):', householdId);
-      console.log('Current Step:', currentStep);
+      // console.log('Family ID:', famId);
+      // console.log('Family Members:', familyMembersHealth);
+      // console.log('Family Data:', familyDataHealth);
+      // console.log('Household ID (from household_no):', householdId);
+      // console.log('Current Step:', currentStep);
     }
     
     // Set household ID in form when it becomes available
     if (householdId && householdId !== form.getValues('demographicInfo.householdNo')) {
-      console.log('Setting household ID in form:', householdId);
+      // console.log('Setting household ID in form:', householdId);
       form.setValue('demographicInfo.householdNo', householdId);
     }
   }, [famId, familyMembersHealth, familyDataHealth, householdId, currentStep, form]);
@@ -267,7 +268,7 @@ export default function HealthFamilyForm() {
     if (currentStep === 3 && famId && !shouldFetchFamilyData) {
       // Trigger a prefetch by temporarily enabling the queries
       // The queries will cache the results for when we actually need them on step 4
-      console.log('Prefetching family data for upcoming step 4...');
+      // console.log('Prefetching family data for upcoming step 4...');
     }
   }, [currentStep, famId, shouldFetchFamilyData]);
   
@@ -332,7 +333,7 @@ export default function HealthFamilyForm() {
   // Comprehensive submission handler for step 4 and 5 data
   const handleFinalSubmission = React.useCallback(async () => {
     if (!famId) {
-      console.log("❌ Family ID is required for submission");
+      // console.log("❌ Family ID is required for submission");
       return;
     }
 
@@ -343,11 +344,11 @@ export default function HealthFamilyForm() {
       const formData = form.getValues();
       const surveyData = surveyFormRef.current?.getFormData() || null;
       
-      console.log('=== SUBMISSION DEBUG START ===');
-      console.log('Family ID:', famId);
-      console.log('Survey form ref exists:', !!surveyFormRef.current);
-      console.log('Survey data extracted:', surveyData);
-      console.log('Form data:', formData);
+      // console.log('=== SUBMISSION DEBUG START ===');
+      // console.log('Family ID:', famId);
+      // console.log('Survey form ref exists:', !!surveyFormRef.current);
+      // console.log('Survey data extracted:', surveyData);
+      // console.log('Form data:', formData);
       
       // Validate all required fields before submission using new validation system
       const validationResult = validateForSubmission(formData, surveyData);
@@ -357,28 +358,28 @@ export default function HealthFamilyForm() {
 
         // Log grouped error messages instead of showing toasts
         if (grouped.environmentalCount > 0) {
-          console.log(`❌ Environmental Form: ${grouped.environmentalCount} field(s) required`);
+          // console.log(`❌ Environmental Form: ${grouped.environmentalCount} field(s) required`);
         }
         if (grouped.ncdCount > 0) {
-          console.log(`❌ NCD Records: ${grouped.ncdCount} validation error(s)`);
+          // console.log(`❌ NCD Records: ${grouped.ncdCount} validation error(s)`);
         }
         if (grouped.tbCount > 0) {
-          console.log(`❌ TB Records: ${grouped.tbCount} validation error(s)`);
+          // console.log(`❌ TB Records: ${grouped.tbCount} validation error(s)`);
         }
         if (grouped.surveyCount > 0) {
-          console.log(`❌ Survey Form: ${grouped.surveyCount} field(s) required`);
+          // console.log(`❌ Survey Form: ${grouped.surveyCount} field(s) required`);
         }
         
         // Trigger form validation to show field-level errors
         form.trigger();
-        console.log("❌ Please complete all required fields before submitting");
+        // console.log("❌ Please complete all required fields before submitting");
         return; // Don't proceed with submission
       }
 
       setIsSubmitting(true);
       showLoading();
 
-      console.log('Full form data for submission:', formData);
+      // console.log('Full form data for submission:', formData);
 
       // 1. Submit Environmental Form Data (Step 4)
       if (formData.environmentalForm && householdId) {
@@ -408,26 +409,26 @@ export default function HealthFamilyForm() {
           } : undefined
         };
 
-        console.log('Submitting environmental data:', environmentalPayload);
+        // console.log('Submitting environmental data:', environmentalPayload);
         await submitEnvironmentalMutation.mutateAsync(environmentalPayload);
       }
 
       // 2. Submit NCD Records (Step 4) - if any records exist
       if (formData.ncdRecords?.list && formData.ncdRecords.list.length > 0) {
-        console.log('NCD Records to submit:', formData.ncdRecords.list);
+        // console.log('NCD Records to submit:', formData.ncdRecords.list);
         
         for (const ncdRecord of formData.ncdRecords.list) {
           const ncdPayload = prepareNCDRecordForSubmission(ncdRecord);
           
           if (ncdPayload) {
-            console.log('Submitting NCD record with payload:', ncdPayload);
+            // console.log('Submitting NCD record with payload:', ncdPayload);
             
             try {
               await submitNCDMutation.mutateAsync(ncdPayload);
-              console.log('NCD record submitted successfully for resident:', ncdRecord.id);
+              // console.log('NCD record submitted successfully for resident:', ncdRecord.id);
             } catch (ncdError) {
               console.error('Error submitting NCD record for resident', ncdRecord.id, ':', ncdError);
-              console.log(`❌ Failed to submit NCD record for resident ${ncdRecord.id}`);
+              // console.log(`❌ Failed to submit NCD record for resident ${ncdRecord.id}`);
               throw ncdError; // Re-throw to stop the submission process
             }
           }
@@ -436,13 +437,13 @@ export default function HealthFamilyForm() {
 
       // 3. Submit TB Records (Step 4) - if any records exist
       if (formData.tbRecords?.list && formData.tbRecords.list.length > 0) {
-        console.log('TB Records to submit:', formData.tbRecords.list);
+        // console.log('TB Records to submit:', formData.tbRecords.list);
         
         for (const tbRecord of formData.tbRecords.list) {
           const tbPayload = prepareTBRecordForSubmission(tbRecord);
           
           if (tbPayload) {
-            console.log('Submitting TB record:', tbPayload);
+            // console.log('Submitting TB record:', tbPayload);
             await submitTBMutation.mutateAsync(tbPayload);
           }
         }
@@ -450,75 +451,75 @@ export default function HealthFamilyForm() {
 
       if (surveyFormRef.current) {
         const isFormValid = surveyFormRef.current.isFormValid();
-        console.log('Survey form validation result:', isFormValid);
+        // console.log('Survey form validation result:', isFormValid);
         
         if (surveyData && isFormValid) {
           const surveyPayload = prepareSurveyDataForSubmission(surveyData, famId);
           
           if (surveyPayload) {
-            console.log('Submitting survey data with payload:', surveyPayload);
+            // console.log('Submitting survey data with payload:', surveyPayload);
             
             try {
-              const result = await submitSurveyMutation.mutateAsync(surveyPayload);
-              console.log('✅ Survey identification submitted successfully:', result);
+              await submitSurveyMutation.mutateAsync(surveyPayload);
+              // console.log('✅ Survey identification submitted successfully');
             } catch (surveyError) {
               console.error('❌ Error submitting survey identification:', surveyError);
-              console.log("❌ Failed to submit survey identification form");
+              // console.log("❌ Failed to submit survey identification form");
               throw surveyError;
             }
           } else {
-            console.log('❌ Failed to prepare survey data for submission');
-            console.log("❌ Invalid survey data format");
+            // console.log('❌ Failed to prepare survey data for submission');
+            // console.log("❌ Invalid survey data format");
           }
         } else {
-          console.log('❌ Survey form validation failed or no data:', {
-            hasData: !!surveyData,
-            isValid: isFormValid,
-            surveyData
-          });
-          console.log("❌ Please complete the survey identification form");
+          // console.log('❌ Survey form validation failed or no data:', {
+          //   hasData: !!surveyData,
+          //   isValid: isFormValid,
+          //   surveyData
+          // });
+          // console.log("❌ Please complete the survey identification form");
         }
       } else {
-        console.log('❌ Survey form ref not available');
-        console.log("❌ Survey identification form not available");
+        // console.log('❌ Survey form ref not available');
+        // console.log("❌ Survey identification form not available");
       }
 
       // 5. Final success message and navigation
-      console.log('=== FINAL SUBMISSION SUMMARY ===');
+      // console.log('=== FINAL SUBMISSION SUMMARY ===');
       const submissionSummary = [];
       
       if (formData.environmentalForm && householdId) {
         submissionSummary.push("Environmental data");
-        console.log('✅ Environmental data was submitted');
+        // console.log('✅ Environmental data was submitted');
       } else {
-        console.log('❌ Environmental data was NOT submitted');
+        // console.log('❌ Environmental data was NOT submitted');
       }
       
       if (formData.ncdRecords?.list?.length > 0) {
         submissionSummary.push(`${formData.ncdRecords.list.length} NCD record(s)`);
-        console.log('✅ NCD records were submitted:', formData.ncdRecords.list.length);
+        // console.log('✅ NCD records were submitted:', formData.ncdRecords.list.length);
       } else {
-        console.log('❌ No NCD records to submit');
+        // console.log('❌ No NCD records to submit');
       }
       
       if (formData.tbRecords?.list?.length > 0) {
         submissionSummary.push(`${formData.tbRecords.list.length} TB surveillance record(s)`);
-        console.log('✅ TB records were submitted:', formData.tbRecords.list.length);
+        // console.log('✅ TB records were submitted:', formData.tbRecords.list.length);
       } else {
-        console.log('❌ No TB records to submit');
+        // console.log('❌ No TB records to submit');
       }
       
       const surveyFormValid = surveyFormRef.current?.isFormValid();
-      console.log('Survey form valid for summary?', surveyFormValid);
+      // console.log('Survey form valid for summary?', surveyFormValid);
       
       if (surveyFormValid) {
         submissionSummary.push("Survey identification");
-        console.log('✅ Survey identification was included in summary');
+        // console.log('✅ Survey identification was included in summary');
       } else {
-        console.log('❌ Survey identification was NOT included in summary');
+        // console.log('❌ Survey identification was NOT included in summary');
       }
       
-      console.log('Final submission summary array:', submissionSummary);
+      // console.log('Final submission summary array:', submissionSummary);
       
       if (submissionSummary.length > 0) {
         // Use the specific toast style instead of showing summary text
@@ -531,8 +532,8 @@ export default function HealthFamilyForm() {
             background: '#eff6ff',
           },
         });
-        console.log('✅ SUCCESS: Health Family Profiling completed successfully!');
-        console.log('✅ Submitted components:', submissionSummary.join(", "));
+        // console.log('✅ SUCCESS: Health Family Profiling completed successfully!');
+        // console.log('✅ Submitted components:', submissionSummary.join(", "));
         
         // Navigate back to family page after a short delay to show success message
         setTimeout(() => {
@@ -541,19 +542,19 @@ export default function HealthFamilyForm() {
           navigate("/profiling/family");
         }, 2000); // 2 second delay
       } else {
-        console.log('❌ No components were submitted successfully');
-        console.log('❌ ERROR: Please fill out the required forms before submitting');
+        // console.log('❌ No components were submitted successfully');
+        // console.log('❌ ERROR: Please fill out the required forms before submitting');
       }
       
     } catch (error) {
       console.error('❌ Error during submission:', error);
-      console.log("❌ Failed to submit health family profiling data. Please try again.");
+      // console.log("❌ Failed to submit health family profiling data. Please try again.");
     } finally {
       setIsSubmitting(false);
       setIsValidating(false);
       hideLoading();
     }
-  }, [famId, householdId, form, submitEnvironmentalMutation, submitSurveyMutation, submitNCDMutation, submitTBMutation, showLoading, hideLoading, navigate]);
+  }, [famId, householdId, form, submitEnvironmentalMutation, submitSurveyMutation, submitNCDMutation, submitTBMutation, showLoading, hideLoading, navigate, setIsSubmitting, setIsValidating]);
 
 
   // Calculate progress based on current step (4 steps)
@@ -594,11 +595,11 @@ export default function HealthFamilyForm() {
         ref={beforeUnloadRef}
         hasUnsavedChanges={hasUnsavedChanges}
         onConfirmLeave={() => {
-          console.log('User confirmed navigation despite unsaved changes');
+          // console.log('User confirmed navigation despite unsaved changes');
           setHasUnsavedChanges(false);
         }}
         onCancelLeave={() => {
-          console.log('User cancelled navigation to preserve unsaved changes');
+          // console.log('User cancelled navigation to preserve unsaved changes');
         }}
       />
       

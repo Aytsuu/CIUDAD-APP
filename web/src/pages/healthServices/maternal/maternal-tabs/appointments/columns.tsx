@@ -13,6 +13,7 @@ export interface Appointment {
   gender: "Male" | "Female"
   age: number
   dateScheduled: string
+  approvedDate: string
   requestedDate: string
   status: AppointmentStatus
   reason?: string
@@ -83,6 +84,70 @@ export const appointmentColumns: ColumnDef<Appointment>[] = [
     size: 150,
     cell: ({ row }) => {
       return <div className="text-sm">{formatDate(row.original.requestedDate)}</div>
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    size: 120,
+    cell: ({ row }) => {
+      return (
+         <div className="w-full flex justify-center">
+            {getStatusBadge(row.original.status)}
+         </div>
+      )
+    },
+  },
+]
+
+// columns for confirmed appointments
+export const appointmentConfirmedColumns: ColumnDef<Appointment>[] = [
+  {
+    accessorKey: "id",
+    header: "#",
+    size: 80,
+    cell: ({ row }) => {
+      return <div className="font-medium text-muted-foreground">{row.index + 1}</div>
+    },
+  },
+  {
+    accessorKey: "patientName",
+    header: "Patient Info",
+    size: 250,
+    cell: ({ row }) => {
+      const appointment = row.original
+      return (
+         <div className="flex flex-col justify-center">
+            <span className="font-medium text-sm leading-tight">{appointment.patientName}</span>
+            <span className="text-muted-foreground text-xs">
+               {appointment.gender}, {appointment.age} years old
+            </span>
+         </div>
+      )
+    },
+  },
+  {
+    accessorKey: "dateScheduled",
+    header: "Date Scheduled",
+    size: 150,
+    cell: ({ row }) => {
+      return <div className="text-sm">{formatDate(row.original.dateScheduled)}</div>
+    },
+  },
+  {
+    accessorKey: "requestedDate",
+    header: "Requested Date",
+    size: 150,
+    cell: ({ row }) => {
+      return <div className="text-sm">{formatDate(row.original.requestedDate)}</div>
+    },
+  },
+  {
+    accessorKey: "approvedDate",
+    header: "Confirmed Date",
+    size: 150,
+    cell: ({ row }) => {
+      return <div className="text-sm">{formatDate(row.original.approvedDate)}</div>
     },
   },
   {

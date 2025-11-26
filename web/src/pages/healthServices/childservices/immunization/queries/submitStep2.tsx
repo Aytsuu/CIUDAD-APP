@@ -12,8 +12,8 @@ export const useImmunizationMutations = () => {
     const payload = {
       data: {
         notes: data.notes || "",
-        followUpVisit: data.followUpVisit || "",
-        follov_description: data.follov_description || ""
+        followUpVisit: data.followUpVisit || undefined,
+        follov_description: data.follov_description || undefined
       },
       vital_id: vital_id,
       vaccines: vaccines.map((vaccine: any) => ({
@@ -24,7 +24,8 @@ export const useImmunizationMutations = () => {
         date: vaccine.date,
         nextFollowUpDate: vaccine.nextFollowUpDate,
         existingFollowvId: vaccine.existingFollowvId,
-        vacrec: vaccine.vacrec
+        vacrec: vaccine.vacrec,
+        imzStck_id: vaccine.imzStck_id || "" // Include immunization stock ID
       })),
       existingVaccines: existingVaccines.map((vaccine: any) => ({
         vac_id: vaccine.vac_id,
@@ -32,13 +33,14 @@ export const useImmunizationMutations = () => {
         totalDoses: vaccine.totalDoses,
         vaccineType: vaccine.vaccineType,
         date: vaccine.date,
-        vacrec: vaccine.vacrec
+        vacrec: vaccine.vacrec,
+        
       })),
       ChildHealthRecord,
       staff_id,
       pat_id
     };
-    console.log(payload);
+    
 
     // Make API call to Django backend
     const response = await api2.post("child-health/immunization-save/", payload);
@@ -87,7 +89,7 @@ export const useImmunizationMutations = () => {
       showSuccessToast("Immunization data saved successfully!");
     },
     onError: (error: any) => {
-      console.error("Error saving immunization data:", error);
+      
 
       // Extract error message from response
       const errorMessage = error?.response?.data?.error || error?.message || "Failed to save immunization data";

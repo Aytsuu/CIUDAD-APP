@@ -45,14 +45,7 @@ export const getMedicalRecord = async (params?: { page?: number; page_size?: num
   }
 };
 
-
-export const getConsultationHistory = async (
-  patientId?: string, 
-  page?: number, 
-  pageSize?: number, 
-  searchQuery?: string,
-  currentConsultationId?: number
-): Promise<any> => {
+export const getConsultationHistory = async (patientId?: string, page?: number, pageSize?: number, searchQuery?: string, currentConsultationId?: number): Promise<any> => {
   try {
     const params = new URLSearchParams();
 
@@ -70,9 +63,7 @@ export const getConsultationHistory = async (
   }
 };
 
-
-
-export const getMedConPHHistory =async(pat_id:string)=>{
+export const getMedConPHHistory = async (pat_id: string) => {
   try {
     const response = await api2.get(`patientrecords/patientPHIllnessCheck/${pat_id}/`);
     return response.data;
@@ -80,17 +71,16 @@ export const getMedConPHHistory =async(pat_id:string)=>{
     console.error("Error fetching consultation history:", error);
     throw error;
   }
-}
-
+};
 
 export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
   try {
     const params = new URLSearchParams();
     if (searchQuery) {
-      params.append('search', searchQuery);
+      params.append("search", searchQuery);
     }
-    
-    const url = `/medical-consultation/family-medhistory/${pat_id}/${searchQuery ? `?${params.toString()}` : ''}`;
+
+    const url = `/medical-consultation/family-medhistory/${pat_id}/${searchQuery ? `?${params.toString()}` : ""}`;
     const response = await api2.get(url);
     return response.data;
   } catch (error) {
@@ -98,7 +88,6 @@ export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
     throw error;
   }
 };
-
 
 export const getpendingAppointments = async (page: number, pageSize: number, search: string = "", dateFilter: string = "all"): Promise<any> => {
   try {
@@ -120,10 +109,6 @@ export const getpendingAppointments = async (page: number, pageSize: number, sea
   }
 };
 
-
-
-
-
 export const getconfirmedAppointments = async (page: number, pageSize: number, search: string = "", dateFilter: string = "all"): Promise<any> => {
   try {
     const params = new URLSearchParams();
@@ -143,4 +128,53 @@ export const getconfirmedAppointments = async (page: number, pageSize: number, s
     throw error;
   }
 };
+export const getAppointments = async (params: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  dateFilter?: string;
+  statuses?: string[] | string;
+  meridiems?: ("AM" | "PM")[] | string;
+}): Promise<any> => {
+  try {
+    const queryParams = new URLSearchParams();
 
+    if (params.page !== undefined) queryParams.append("page", params.page.toString());
+    if (params.pageSize !== undefined) queryParams.append("page_size", params.pageSize.toString());
+
+    if (params.search) {
+      queryParams.append("search", params.search);
+    }
+    if (params.dateFilter && params.dateFilter !== "all") {
+      queryParams.append("date_filter", params.dateFilter);
+    }
+
+    // Handle statuses
+    if (params.statuses) {
+      const statusArray = Array.isArray(params.statuses)
+        ? params.statuses
+        : String(params.statuses)
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean);
+      statusArray.forEach((status) => queryParams.append("status", status));
+    }
+
+    // Handle meridiems
+    if (params.meridiems) {
+      const meridiemArray = Array.isArray(params.meridiems)
+        ? params.meridiems
+        : String(params.meridiems)
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean);
+      meridiemArray.forEach((meridiem) => queryParams.append("meridiem", meridiem.toUpperCase()));
+    }
+
+    const response = await api2.get("/medical-consultation/medical-consultation-stats/", { params: queryParams });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    throw error;
+  }
+};

@@ -31,7 +31,11 @@ import LaboratoryResults, {
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 // hooks
-import { fetchVaccinesWithStock } from "../../../vaccination/queries/fetch"
+import { useFetchVaccinesWithStock } from "../../../vaccination/queries/fetch"
+import { usePrenatalLabResult } from "../../queries/maternalFetchQueries"
+
+// helpers
+import { mapApiLabResultsToFormData } from "../../helpers/labResultsMapper"
 
 
 export default function PrenatalFormSecPg({
@@ -43,6 +47,14 @@ export default function PrenatalFormSecPg({
   onSubmit: () => void
   back: () => void
 }) {
+  
+  //tt type
+  type TetanusToxoidType = {
+    vaccineType?: string
+    ttStatus?: string
+    ttDateGiven?: string
+  }
+
   // Lab results state
   const [labResults, setLabResults] = useState<LabResults>(createInitialLabResults())
   const [labErrors, setLabErrors] = useState<Record<string, string>>({})
@@ -50,7 +62,10 @@ export default function PrenatalFormSecPg({
 
   // Fetch vaccine stocks with age filtering based on patient DOB
   const patientDob = form.watch("motherPersonalInfo.motherDOB")
-  const { data: vaccineStocksData, isLoading: isVaccineLoading } = fetchVaccinesWithStock(patientDob)
+  const pregnancyId = form.watch("pregnancy_id")
+
+  const { data: vaccineStocksData, isLoading: isVaccineLoading } = useFetchVaccinesWithStock(patientDob)
+  const { data: prenatalLabResults } = usePrenatalLabResult(pregnancyId || "")
 
   // Check if selected vaccine is conditional
   const selectedVaccineType = form.watch("prenatalVaccineInfo.vaccineType")
@@ -58,7 +73,6 @@ export default function PrenatalFormSecPg({
     const stockId = `${stock.vacStck_id},${stock.vac_id},${stock.vaccinelist?.vac_name || "Unknown Vaccine"},${stock.inv_details?.expiry_date || "No Expiry"}`
     return stockId === selectedVaccineType && stock.is_conditional === true
   })
-
 
   // tt status badge
   const getTTStatusBadge = (status?: string) => {
@@ -96,52 +110,7 @@ export default function PrenatalFormSecPg({
     }
   }
 
-  // tt status fetching
-  useEffect(() => {
-    const existingTTRecords = form.getValues("prenatalVaccineInfo.ttRecordsHistory") || []
-    
-    if (existingTTRecords.length > 0 && ttRecords.length === 0) {
-      console.log("Loading existing TT records from API:", existingTTRecords)
-      setTTRecords(existingTTRecords)
-    }
-  }, [ttRecords.length, form])
-
-  // automatic edc calculation based on lmp
-  useEffect(() => {
-    const lmp = form.getValues("presentPregnancy.pf_lmp");
-    if (lmp) {
-      const edc = new Date(lmp);
-      edc.setFullYear(edc.getFullYear() + 1);
-      edc.setMonth(edc.getMonth() - 3);
-      edc.setDate(edc.getDate() + 7);
-      form.setValue("presentPregnancy.pf_edc", edc.toISOString().split("T")[0]);
-    }
-
-  }, [form.watch("presentPregnancy.pf_lmp")])
-
-  useEffect(() => {
-    // convert lab results to the format expected by your form schema
-    const convertAndSetLabResults = async () => {
-      const convertedLabResults = await convertLabResultsToSchema(labResults)
-      form.setValue("labResults.labResultsData", convertedLabResults)
-
-      // validate lab results and set errors
-      const validation = validateLabResults(labResults)
-      setLabErrors(validation.errors)
-
-      if (!validation.isValid) {
-        form.setError("labResults", {
-          type: "manual",
-          message: "Please complete all required lab result fields",
-        })
-      } else {
-        form.clearErrors("labResults")
-      }
-    }
-    
-    convertAndSetLabResults()
-  }, [labResults, form])
-
+  // handle next button click
   const handleNext = async () => {
     // validate lab results first
     const labValidation = validateLabResults(labResults)
@@ -160,7 +129,6 @@ export default function PrenatalFormSecPg({
 
     // get lab summary for logging/processing
     const labSummary = getLabResultsSummary(labResults)
-    console.log("Laboratory Results Summary: ", labSummary)
 
     // other form validation on this page
     const isValid = await form.trigger(["previousPregnancy", "prenatalVaccineInfo", "presentPregnancy"])
@@ -188,14 +156,7 @@ export default function PrenatalFormSecPg({
     form.setValue("prenatalVaccineInfo.vacrec_totaldose", undefined)
     
     console.log("Selected vaccine:", value)
-  }
-
-  //tt type
-  type TetanusToxoidType = {
-    vaccineType?: string
-    ttStatus?: string
-    ttDateGiven?: string
-  }
+  }  
 
   // tetanus toxoid history
   const addTTRecord = () => {
@@ -208,10 +169,10 @@ export default function PrenatalFormSecPg({
       return
     }
 
-    if (!vaccineType) {
-      showErrorToast("Error! Please select a vaccine type.")
-      return
-    }
+    // if (!vaccineType) {
+    //   showErrorToast("Error! Please select a vaccine type.")
+    //   return
+    // }
 
     const newTTData: TetanusToxoidType = {
       vaccineType: vaccineType,
@@ -231,6 +192,61 @@ export default function PrenatalFormSecPg({
     form.setValue("prenatalVaccineInfo.ttStatus", "")
     form.setValue("prenatalVaccineInfo.ttDateGiven", "")
   }
+
+  // tt status fetching
+  useEffect(() => {
+    const existingTTRecords = form.getValues("prenatalVaccineInfo.ttRecordsHistory") || []
+    
+    if (existingTTRecords.length > 0 && ttRecords.length === 0) {
+      console.log("Loading existing TT records from API:", existingTTRecords)
+      setTTRecords(existingTTRecords)
+    }
+  }, [ttRecords.length, form])
+
+  // automatic edc calculation based on lmp
+  useEffect(() => {
+    const lmp = form.getValues("presentPregnancy.pf_lmp");
+    if (lmp) {
+      const edc = new Date(lmp);
+      edc.setFullYear(edc.getFullYear() + 1);
+      edc.setMonth(edc.getMonth() - 3);
+      edc.setDate(edc.getDate() + 7);
+      form.setValue("presentPregnancy.pf_edc", edc.toISOString().split("T")[0]);
+    }
+
+  }, [form.watch("presentPregnancy.pf_lmp")])
+
+  // Load lab results from API when pregnancy ID changes
+  useEffect(() => {
+    if (prenatalLabResults?.lab_results && prenatalLabResults.lab_results.length > 0) {
+      console.log("Loading lab results from API:", prenatalLabResults)
+      const mappedLabResults = mapApiLabResultsToFormData(prenatalLabResults)
+      setLabResults(mappedLabResults)
+    }
+  }, [prenatalLabResults?.lab_results])
+
+  useEffect(() => {
+    // convert lab results to the format expected by your form schema
+    const convertAndSetLabResults = async () => {
+      const convertedLabResults = await convertLabResultsToSchema(labResults)
+      form.setValue("labResults.labResultsData", convertedLabResults)
+
+      // validate lab results and set errors
+      const validation = validateLabResults(labResults)
+      setLabErrors(validation.errors)
+
+      if (!validation.isValid) {
+        form.setError("labResults", {
+          type: "manual",
+          message: "Please complete all required lab result fields",
+        })
+      } else {
+        form.clearErrors("labResults")
+      }
+    }
+    
+    convertAndSetLabResults()
+  }, [labResults, form])
 
 
   return (
@@ -300,9 +316,9 @@ export default function PrenatalFormSecPg({
             <h3 className="text-md font-semibold mt-2">
               {" "}
               TETANUS TOXOID GIVEN: (DATE GIVEN){" "}
-              <p className="flex items-center text-black/50 text-[14px] ml-2">
+              <p className="flex items-center text-black/60 text-[14px] ml-2">
                 <CircleAlert size={15} className="mr-1" />
-                Note: Do not forget to add a vaccination record if a <b className="pl-1">TT</b>/<b>TD</b>/<b className="pr-1">TDAP</b> is administered by midwife on the day of visit.
+                Note: This is strictly for Tetanus Toxoid or Tetanus Diptheria vaccination only. Other vaccines should be recorded in Vaccination Service.
               </p>
             </h3>
             <div className="grid gap-3 px-5">
@@ -310,12 +326,12 @@ export default function PrenatalFormSecPg({
                 <div className="grid mt-5 mb-5">
                   <div className="">
                     <div className="mb-2">
-                      <Label className="flex text-black/70 items-center">Vaccine Type (TT/TD/TDAP)</Label>
+                      <Label className="flex text-black/70 items-center">Vaccine Type</Label>
                     </div>
                     <Combobox
                       options={vaccineStocksData?.formatted || []}
                       value={form.watch("prenatalVaccineInfo.vaccineType") || ""}
-                      placeholder={isVaccineLoading ? "Loading vaccines..." : "Select a vaccine (TT/TD/TDAP)"}
+                      placeholder={isVaccineLoading ? "Loading vaccines..." : "Select a vaccine (TT/TD)"}
                       triggerClassName="font-normal w-full"
                       emptyMessage={
                         <div className="flex gap-2 justify-center items-center">
@@ -329,7 +345,7 @@ export default function PrenatalFormSecPg({
                   </div>
                 </div>
 
-                {/* Conditional Total Dose Input - Only shown for conditional vaccines */}
+                {/* Only shown for conditional vaccines */}
                 {isConditionalVaccine && (
                   <div className="mb-3">
                     <FormInput
@@ -365,25 +381,6 @@ export default function PrenatalFormSecPg({
                     type="date"
                   />
                 </div>
-                {/* <div className="mt-4">
-                  <FormField
-                    control={form.control}
-                    name="prenatalVaccineInfo.isTDAPAdministered"
-                    render={({ field }) => (
-                      <FormItem className="flex">
-                        <FormControl>
-                          <Checkbox checked={!!field.value} onCheckedChange={field.onChange} className="mr-2 mt-2" />
-                        </FormControl>
-                        <FormLabel>TDAP (Tetanus, Diptheria, and Petussis)</FormLabel>
-                        <Label className="text-black text-opacity-50 italic ml-2">
-                          Administer in 7 months or 1 month before giving birth
-                        </Label>
-                      </FormItem>
-                    )}
-                  />
-                </div> */}
-
-                {/* <Separator className="mt-6 mb-3" /> */}
 
                 <div className="flex justify-end mt-2 mb-5">
                   <Button type="button" onClick={addTTRecord}>
@@ -392,7 +389,6 @@ export default function PrenatalFormSecPg({
                 </div>
               </div>
 
-              {/* <div className="border rounded-lg p-5"> */}
               <div>
                 <h3 className="text-sm font-semibold"> TT Records History</h3>
               </div>
@@ -406,10 +402,17 @@ export default function PrenatalFormSecPg({
                     ) : (
                       ttRecords
                         .sort((a, b) => {
-                          // Sort by date (most recent first)
-                          const dateA = a.ttDateGiven ? new Date(a.ttDateGiven).getTime() : 0
-                          const dateB = b.ttDateGiven ? new Date(b.ttDateGiven).getTime() : 0
-                          return dateB - dateA
+                          // Sort by TT status: TT5, TT4, TT3, TT2, TT1
+                          const ttOrder: Record<string, number> = {
+                            "TT5": 5,
+                            "TT4": 4,
+                            "TT3": 3,
+                            "TT2": 2,
+                            "TT1": 1,
+                          }
+                          const statusA = ttOrder[a.ttStatus || ""] || 0
+                          const statusB = ttOrder[b.ttStatus || ""] || 0
+                          return statusB - statusA
                         })
                         .map((record, index) => {
                           const statusBadge = getTTStatusBadge(record.ttStatus)
@@ -431,7 +434,17 @@ export default function PrenatalFormSecPg({
                                 </span>
                                 {record.vaccineType && (
                                   <span className="text-xs text-gray-500">
-                                    Vaccine: {record.vaccineType.split(',')[2] || record.vaccineType}
+                                    Vaccine: {(() => {
+                                      // Format: vaccineStockId,vaccineId,vaccineName,expiryDate
+                                      // Vaccine name can contain commas, so we need to extract carefully
+                                      const parts = record.vaccineType.split(',')
+                                      if (parts.length > 3) {
+                                        // Remove first 2 parts (stock ID and vaccine ID) and last part (expiry date)
+                                        // Join the remaining parts which form the vaccine name
+                                        return parts.slice(2, -1).join(',')
+                                      }
+                                      return record.vaccineType
+                                    })()}
                                   </span>
                                 )}
                               </div>
@@ -447,7 +460,6 @@ export default function PrenatalFormSecPg({
               </Card>
             </div>
           </div>
-          {/* </div> */}
 
           {/* present pregnancy */}
           <div className="border rounded-lg p-4 shadow-md mb-10">

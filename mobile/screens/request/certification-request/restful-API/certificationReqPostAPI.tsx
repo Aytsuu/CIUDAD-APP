@@ -12,40 +12,14 @@ const getValidResidentProfileId = async (userId?: string) => {
 // Test function to check server connectivity
 export const testServerConnection = async () => {
     try {
-        console.log("Testing server connection...");
-        console.log("Base URL:", api.defaults.baseURL);
-        
         // Test certificate endpoint directly (skip root URL test)
-        console.log("Testing certificate endpoint...");
         const certResponse = await api.get('clerk/certificate/');
-        console.log("Certificate endpoint accessible:", certResponse.status);
         
         // Test business permit endpoint
-        console.log("Testing business permit endpoint...");
         const permitResponse = await api.get('clerk/business-permit/');
-        console.log("Business permit endpoint accessible:", permitResponse.status);
         
-        console.log("All endpoints are accessible!");
         return true;
     } catch (err: any) {
-        console.error("Server connection test failed:", err);
-        console.error("Error details:", {
-            message: err.message,
-            status: err.response?.status,
-            statusText: err.response?.statusText,
-            config: {
-                url: err.config?.url,
-                method: err.config?.method,
-                baseURL: err.config?.baseURL
-            }
-        });
-        
-        // If it's a 404, the server is reachable but endpoint doesn't exist
-        if (err.response?.status === 404) {
-            console.log("Server is reachable but endpoint returned 404");
-            console.log("This might mean the endpoint doesn't exist or requires authentication");
-        }
-        
         return false;
     }
 };
@@ -73,12 +47,7 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
                 requester: requestInfo.requester || 'Mobile User'
             };
 
-            console.log("Personal Certification Request Payload:", payload);
-            console.log("Making POST request to: clerk/certificate/");
-            console.log("Full URL:", api.defaults.baseURL + "/clerk/certificate/");
-
             const res = await api.post('clerk/certificate/', payload);
-            console.log("Response received:", res.data);
             return res.data;
         }
         // Permit Certification (BusinessPermitRequest model)
@@ -102,43 +71,13 @@ export const addCertificationRequest = async (requestInfo: Record<string, any>, 
 
             payload.bus_id = requestInfo.business_id || null;
 
-            console.log("Business Permit Request Payload:", payload);
-            console.log("Making POST request to: clerk/business-clearance/");
-            console.log("Full URL:", api.defaults.baseURL + "/clerk/business-clearance/");
-
             const res = await api.post('clerk/business-clearance/', payload);
-            console.log("Response received:", res.data);
             return res.data;
         } else {
             throw new Error('Invalid certification type');
         }
 
     } catch (err: any) {
-        console.error("Error submitting certification request:", err);
-        console.error("Error details:", {
-            message: err.message,
-            status: err.response?.status,
-            statusText: err.response?.statusText,
-            data: err.response?.data,
-            config: {
-                url: err.config?.url,
-                method: err.config?.method,
-                baseURL: err.config?.baseURL,
-                headers: err.config?.headers
-            }
-        });
-        
-        if (err.response) {
-            
-            console.error("Server responded with error:", err.response.status, err.response.data);
-        } else if (err.request) {
-            
-            console.error("No response received from server. Request details:", err.request);
-        } else {
-            
-            console.error("Error setting up request:", err.message);
-        }
-        
         throw err;
     }
 };
@@ -164,37 +103,10 @@ export const addBusinessClearance = async (requestInfo: Record<string, any>, sta
         // Always include bus_id - use null if no business exists
         payload.bus_id = requestInfo.business_id || null;
 
-        console.log("Business Clearance Request Payload:", payload);
-        console.log("Making POST request to: clerk/business-clearance/");
-        console.log("Full URL:", api.defaults.baseURL + "/clerk/business-clearance/");
-
         const res = await api.post('clerk/business-clearance/', payload);
-        console.log("Response received:", res.data);
         return res.data;
 
     } catch (err: any) {
-        console.error("Error submitting business clearance request:", err);
-        console.error("Error details:", {
-            message: err.message,
-            status: err.response?.status,
-            statusText: err.response?.statusText,
-            data: err.response?.data,
-            config: {
-                url: err.config?.url,
-                method: err.config?.method,
-                baseURL: err.config?.baseURL,
-                headers: err.config?.headers
-            }
-        });
-        
-        if (err.response) {
-            console.error("Server responded with error:", err.response.status, err.response.data);
-        } else if (err.request) {
-            console.error("No response received from server. Request details:", err.request);
-        } else {
-            console.error("Error setting up request:", err.message);
-        }
-        
         throw err;
     }
 };

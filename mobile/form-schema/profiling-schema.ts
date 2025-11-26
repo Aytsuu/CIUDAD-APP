@@ -57,7 +57,8 @@ export const accountFormSchema = z.object({
       return domain.includes(".") && domain.split(".").pop()!.length <= 4;
     }, {
       message: "Invalid email domain",
-    }),
+    })
+    .optional().or(z.literal("")),
   phone: z.string()
     .min(1, "Contact is required")
     .regex(
@@ -67,41 +68,9 @@ export const accountFormSchema = z.object({
     .refine((val) => val.length === 11, {
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
-  // password: z.string()
-  //   .superRefine((val, ctx) => {
-  //     const errors = [];
-      
-  //     if (val.length < 6) {
-  //       errors.push("Password must be at least 6 characters long");
-  //     }
-      
-  //     if (!/[a-z]/.test(val)) {
-  //       errors.push("Password must contain at least one lowercase letter");
-  //     }
-      
-  //     if (!/[A-Z]/.test(val)) {
-  //       errors.push("Password must contain at least one uppercase letter");
-  //     }
-      
-  //     if (!/\d/.test(val)) {
-  //       errors.push("Password must contain at least one number");
-  //     }
-      
-  //     if (errors.length > 0) {
-  //       ctx.addIssue({
-  //         code: z.ZodIssueCode.custom,
-  //         message: errors.join("\n"),
-  //       });
-  //     }
-  //   }),
-
-  // confirmPassword: z.string()
-  //   .min(1, "Confirm Password is required")
-})
-// .refine((data) => data.password === data.confirmPassword, {
-//   message: "Password does not match",
-//   path: ["confirmPassword"]
-// });
+  isVerifiedEmail: z.boolean().optional(),
+  isVerifiedPhone: z.boolean().optional(),
+});
 
 // Household Schema
 export const householdFormSchema = z.object({

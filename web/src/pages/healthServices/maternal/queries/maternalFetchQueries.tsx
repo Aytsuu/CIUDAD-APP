@@ -23,6 +23,10 @@ import { getPatients,
 			getPrenatalAppointmentRequests,
 			getPrenatalRecordComparison,
 			getMaternalCharts,
+			getMaternalStaff,
+			getPrenatalAppointmentsPending,
+			getPrenatalLabResult,
+			getLatestMaternalFollowUpVisit,
 } from "../restful-api/maternalGetAPI";
 
 import { api2 } from "@/api/api";
@@ -102,9 +106,9 @@ export const usePatientPrenatalCount = (patientId: string) => {
 }
 
 // for getPregnancyDetails
-export const usePregnancyDetails = (patientId: string, page: number, pageSize: number, status: string, search: string) => {
+export const usePregnancyDetails = (patientId: string, page: number, pageSize: number, status: string) => {
 	return useQuery({
-		queryKey: ["pregnancyDetails", { patientId, page, pageSize, status, search }],
+		queryKey: ["pregnancyDetails", { patientId, page, pageSize, status }],
 		queryFn: async () => {
 			try {
 				const res = await api2.get(`maternal/pregnancy/${patientId}/details/`, {
@@ -112,7 +116,6 @@ export const usePregnancyDetails = (patientId: string, page: number, pageSize: n
 						page,
 						pageSize,
 						status,
-						search,
 					}
 				})
 				return res.data
@@ -326,5 +329,50 @@ export const useMaternalCharts = (month: string) => {
 	return useQuery({
 		queryKey: ['maternalCharts', month],
 		queryFn: () => getMaternalCharts(month),
+	})
+}
+
+// for getPrenatalAppointmentsPending
+export const usePrenatalAppointmentRequestPendings = () => {
+	return useQuery({
+		queryKey: ['prenatalAppointmentPendings'],
+		queryFn: () => getPrenatalAppointmentsPending(),
+		staleTime: 30 * 1000,
+		retry: 2,
+		refetchInterval: 2000,
+	})
+} 
+
+// for getMaternalStaff
+export const useMaternalStaff = () => {
+	return useQuery({
+		queryKey: ['maternalStaff'],
+		queryFn: getMaternalStaff,
+		staleTime: 30 * 1000,
+		retry: 2,
+	})
+}
+
+// for getPrenatalLabResult
+export const usePrenatalLabResult = (pregnancyId: string) => {
+	return useQuery({
+		queryKey: ['prenatalLabResult', pregnancyId],
+		queryFn: () => getPrenatalLabResult(pregnancyId),
+		enabled: !!pregnancyId && pregnancyId !== "undefined" && pregnancyId !== "null",
+		staleTime: 30 * 1000,
+		retry: 2,
+		refetchInterval: 2000,
+	})
+}
+
+// for getLatestMaternalFollowUpVisit
+export const useLatestFollowUpVisit = (patientId: string) => {
+	return useQuery({
+		queryKey: ['maternalLatestFollowUpVisit', patientId],
+		queryFn: () => getLatestMaternalFollowUpVisit(patientId),
+		enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+		staleTime: 30 * 1000,
+		retry: 2,
+		refetchInterval: 2000,
 	})
 }

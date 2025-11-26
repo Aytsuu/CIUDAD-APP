@@ -88,3 +88,4 @@ export function prepareEnvironmentalDataForSubmission(environmentalData: any, ho
 
   return payload;
 }
+

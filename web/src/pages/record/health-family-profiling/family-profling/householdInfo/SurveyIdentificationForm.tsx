@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 import { surveyFormSchema } from "@/form-schema/family-profiling-schema"
 import type { SurveyFormData } from "@/form-schema/health-data-types"
 import { useAuth } from "@/context/AuthContext"
-import { useHealthStaffList } from "../../queries/administrationFetchQueries"
+import { useHealthStaffList } from "../queries/administrationFetchQueries"
 import { formatHealthStaff } from "../../HealthStaffFormats"
 
 interface SurveyIdentificationFormProps {
@@ -79,14 +79,14 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
 
   // Debug logging
   useEffect(() => {
-    console.log('SurveyIdentificationForm - User:', user);
-    console.log('SurveyIdentificationForm - Staff:', user?.staff);
-    console.log('SurveyIdentificationForm - Staff Keys:', user?.staff ? Object.keys(user.staff) : 'No staff');
-    console.log('SurveyIdentificationForm - Respondent Info:', respondentInfo);
-    console.log('SurveyIdentificationForm - Family Members:', familyMembers);
-    console.log('SurveyIdentificationForm - Formatted Family Members:', formattedFamilyMembers);
-    console.log('SurveyIdentificationForm - Health Staff List:', healthStaffList);
-    console.log('SurveyIdentificationForm - Formatted Health Staff:', formattedHealthStaff);
+    // console.log('SurveyIdentificationForm - User:', user);
+    // console.log('SurveyIdentificationForm - Staff:', user?.staff);
+    // console.log('SurveyIdentificationForm - Staff Keys:', user?.staff ? Object.keys(user.staff) : 'No staff');
+    // console.log('SurveyIdentificationForm - Respondent Info:', respondentInfo);
+    // console.log('SurveyIdentificationForm - Family Members:', familyMembers);
+    // console.log('SurveyIdentificationForm - Formatted Family Members:', formattedFamilyMembers);
+    // console.log('SurveyIdentificationForm - Health Staff List:', healthStaffList);
+    // console.log('SurveyIdentificationForm - Formatted Health Staff:', formattedHealthStaff);
   }, [user, respondentInfo, familyMembers, formattedFamilyMembers, healthStaffList, formattedHealthStaff])
 
   // Format respondent display name
@@ -134,7 +134,7 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
   useImperativeHandle(ref, () => ({
     getFormData: () => {
       const formValues = form.getValues()
-      console.log('SurveyIdentificationForm - getFormData called, raw values:', formValues);
+      // console.log('SurveyIdentificationForm - getFormData called, raw values:', formValues);
       
       const extractedData = {
         ...formValues,
@@ -146,7 +146,7 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
         checkedByName: formValues.checkedBy // Keep full value for display if needed
       }
       
-      console.log('SurveyIdentificationForm - extracted data:', extractedData);
+      // console.log('SurveyIdentificationForm - extracted data:', extractedData);
       return extractedData;
     },
     isFormValid: () => {
@@ -159,15 +159,15 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
         formValues.signature
       );
       
-      console.log('SurveyIdentificationForm - isFormValid check:', {
-        filledBy: !!formValues.filledBy,
-        informant: !!formValues.informant,
-        checkedBy: !!formValues.checkedBy,
-        date: !!formValues.date,
-        signature: !!formValues.signature,
-        isValid: isValid,
-        formState: form.formState.isValid
-      });
+      // console.log('SurveyIdentificationForm - isFormValid check:', {
+      //   filledBy: !!formValues.filledBy,
+      //   informant: !!formValues.informant,
+      //   checkedBy: !!formValues.checkedBy,
+      //   date: !!formValues.date,
+      //   signature: !!formValues.signature,
+      //   isValid: isValid,
+      //   formState: form.formState.isValid
+      // });
       
       return isValid;
     }
@@ -361,4 +361,5 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
 SurveyIdentificationForm.displayName = "SurveyIdentificationForm"
 
 export default SurveyIdentificationForm
+
 

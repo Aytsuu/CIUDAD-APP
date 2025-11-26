@@ -1,25 +1,15 @@
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  getAnimalbiteDetails,
-  getAnimalBitePatientDetails,
-  getAnimalbiteReferrals,
-  getUniqueAnimalbitePatients,
-  getPatientRecordsByPatId,
-  getPatientRecordsByReferralId,
-  getAnimalBitePatientCounts,
-  getAnimalBitePatientSummary,
-} from "../api/get-api" // Updated import
+import { getAnimalbiteDetails,getAnimalBitePatientDetails,getAnimalbiteReferrals,getUniqueAnimalbitePatients,getPatientRecordsByPatId,getPatientRecordsByReferralId,getAnimalBitePatientCounts,getAnimalBitePatientSummary,} from "../api/get-api" // Updated import
 import { getAllPatients, getPatientById, createPatient } from "../api/get-api"
-
 import { submitAnimalBiteReferral } from "./postrequest"
 import { useToastContext } from "@/components/ui/toast"
+
 export const useAllPatients = () => {
   return useQuery({
     queryKey: ["all-patients"],
     queryFn: getAllPatients,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  })
+    staleTime: 0
+    })
 }
 
 export const usePatient = (patientId: string) => {
@@ -27,7 +17,7 @@ export const usePatient = (patientId: string) => {
     queryKey: ["patient", patientId],
     queryFn: () => getPatientById(patientId),
     enabled: !!patientId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, 
   })
 }
 
@@ -35,7 +25,7 @@ export const useAnimalBitePatientDetails = () => {
   return useQuery({
     queryKey: ["animalbite-patients"],
     queryFn: getAnimalBitePatientDetails,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0
   })
 }
 
@@ -53,16 +43,15 @@ export const useAnimalBitePatientCounts = () => {
   return useQuery({
     queryKey: ["animalbite-patient-counts"],
     queryFn: getAnimalBitePatientCounts,
-    staleTime: 1000 * 60 * 1, // Cache for 1 minute, adjust as needed
+    staleTime: 0
   })
 }
 
-// NEW: Hook for unique patient summary (for overall view)
 export const useAnimalBitePatientSummary = (id: string | undefined) => {
   return useQuery({
     queryKey: ["animalbite-patient-summary"],
     queryFn: getAnimalBitePatientSummary,
-    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+    staleTime: 0
   })
 }
 
@@ -72,7 +61,7 @@ export const useAnimalBitePatientHistory = (patId: string) => {
     queryKey: ["animalbite-patient-history", patId],
     queryFn: () => getPatientRecordsByPatId(patId as string),
     enabled: !!patId, // Only run query if patId is available
-    staleTime: 1000 * 60 * 1, // Cache for 1 minute
+    staleTime: 0
   })
 }
 
@@ -80,15 +69,15 @@ export const useAnimalbiteDetails = () => {
   return useQuery({
     queryKey: ["animalbite-details"],
     queryFn: getAnimalbiteDetails,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0
   })
 }
 
 export const useAnimalbiteReferrals = () => {
   return useQuery({
     queryKey: ["animalbite-referrals"],
-    queryFn: getAnimalbiteReferrals, // This now calls getAnimalBitePatientDetails
-    staleTime: 1000 * 60 * 5,
+    queryFn: getAnimalbiteReferrals,
+    staleTime: 0
   })
 }
 
@@ -96,7 +85,7 @@ export const useUniqueAnimalbitePatientsData = () => {
   return useQuery({
     queryKey: ["uniqueAnimalbitePatients"],
     queryFn: getUniqueAnimalbitePatients, // This now fetches from patient-summary endpoint
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 0
   })
 }
 
@@ -105,7 +94,7 @@ export const usePatientRecordsByPatId = (patId: string) => {
     queryKey: ["animalbitePatientHistory", patId],
     queryFn: () => getPatientRecordsByPatId(patId),
     enabled: !!patId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0
   })
 }
 
@@ -114,7 +103,7 @@ export const usePatientRecordsByReferralId = (referralId: string) => {
     queryKey: ["patientRecordsByReferralId", referralId],
     queryFn: () => getPatientRecordsByReferralId(referralId),
     enabled: !!referralId,
-    staleTime: 1000 * 60 * 30,
+    staleTime: 0
   })
 }
 

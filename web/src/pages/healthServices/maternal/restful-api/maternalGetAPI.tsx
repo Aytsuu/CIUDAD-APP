@@ -2,13 +2,23 @@
 
 import { api2 } from "@/api/api"
 
-// for get
+// for maternal 
 export const getPatients = async () => {
   try {
       const res = await api2.get("patientrecords/patient/view/create/")
       return res.data;
   } catch (error) {
       console.error("Error:", error);
+  }
+}
+
+export const getLatestMaternalFollowUpVisit = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/maternal-patients/latest-followupvisit/${patientId}/`)
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching latest maternal follow-up visit: ", error);
+    throw error;
   }
 }
 
@@ -205,13 +215,25 @@ export const getIllnessList = async () => {
 // prenatal complete table comparison
 export const getPrenatalRecordComparison = async (pregnancyId: string) => {
   try {
-    const res = await api2.get(`maternal/prenatal/records/?pregnancyId=${pregnancyId}`)
+    const res = await api2.get(`maternal/prenatal/records/?pregnancy_id=${pregnancyId}`)
     return res.data || [];
   } catch (error) {
     console.error("Error fetching prenatal record comparison: ", error);
     throw error;
   }
 }
+
+// prenatal (based on pregnancy) lab result
+export const getPrenatalLabResult = async (pregnancyId: string) => {
+  try {
+    const res = await api2.get(`maternal/lab-results/${pregnancyId}/`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal lab result: ", error);
+    throw error;
+  }
+}
+
 
 {/* *********** postpartum *********** */}
 
@@ -276,6 +298,30 @@ export const getMaternalCharts = async (month: string) => {
     return res.data || []
   } catch (error) {
     console.error("Error fetching maternal charts: ", error);
+    throw error;
+  }
+}
+
+
+{/* *********** dashboard sidebar *********** */}
+export const getPrenatalAppointmentsPending = async () => {
+  try {
+    const res = await api2.get('maternal/prenatal/appointment/requests/pendings/')
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal appointments pending: ", error);
+    throw error;
+  }
+}
+
+
+{/* *********** staffs *********** */}
+export const getMaternalStaff = async () => {
+  try {
+    const res = await api2.get("maternal/staff/")
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching maternal staff: ", error);
     throw error;
   }
 }

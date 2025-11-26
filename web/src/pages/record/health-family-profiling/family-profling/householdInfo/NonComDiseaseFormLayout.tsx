@@ -44,7 +44,7 @@ export default function NoncomDiseaseFormLayout({
   
   // Debug logging
   React.useEffect(() => {
-    console.log('NonComDiseaseFormLayout - familyMembers:', safeFamilyMembers);
+    // console.log('NonComDiseaseFormLayout - familyMembers:', safeFamilyMembers);
   }, [safeFamilyMembers]);
   
   // Updated columns with lifestyle risk and maintenance status

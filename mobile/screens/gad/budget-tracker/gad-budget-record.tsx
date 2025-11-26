@@ -124,8 +124,8 @@ const BudgetTrackerRecords = () => {
       (currentFile.gbf_type === "application/pdf" ||
         currentFile.gbf_url?.includes(".pdf"))
     ) {
-      Linking.openURL(currentFile.gbf_url).catch((err) => {
-        console.error("Failed to open PDF:", err);
+      Linking.openURL(currentFile.gbf_url).catch((_err) => {
+        // console.error("Failed to open PDF:", err);
       });
     }
   };

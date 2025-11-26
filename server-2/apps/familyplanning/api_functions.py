@@ -17,7 +17,7 @@ def get_medical_history_illnesses(request):
         for illness in illnesses:
             illness_data.append({
                 'ill_id': illness.ill_id,
-                'illname': illness.illname,
+                'illname'   : illness.illname,
                 'ill_code': illness.ill_code,
                 'checkbox_name': get_checkbox_name_from_illness(illness.illname)
             })

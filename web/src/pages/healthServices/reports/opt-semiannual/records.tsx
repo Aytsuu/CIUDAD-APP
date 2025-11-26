@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button/button";
-import { Printer, Search, Loader2 } from "lucide-react";
+import {  Search, Loader2 } from "lucide-react";
 import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
 import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -24,7 +23,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 const periodOptions = [
   { value: "both", label: "Both Periods" },
   { value: "first", label: "First Semi-Annual Only" },
-  { value: "second", label: "Second Semi-Annual Only" }
+  { value: "second", label: "Second Semi-Annual Only" },
 ];
 
 export default function SemiAnnualOPTDetails() {
@@ -52,13 +51,11 @@ export default function SemiAnnualOPTDetails() {
   }, [debouncedSitioSearch, debouncedNutritionalStatus, selectedSitios, selectedNutritionalStatuses, periodFilter]);
 
   const combinedSitioSearch = selectedSitios.length > 0 ? selectedSitios.join(",") : sitioSearch;
-
   const combinedNutritionalStatus = selectedNutritionalStatuses.length > 0 ? selectedNutritionalStatuses.join(",") : nutritionalStatus;
 
   const { data: apiResponse, isLoading, error } = useSemiAnnualOPTRecords(year, currentPage, pageSize, combinedSitioSearch, combinedNutritionalStatus);
 
   const records: SemiAnnualChildRecord[] = apiResponse?.results?.children_data || [];
-  // const summary = apiResponse?.results?.summary;
   const totalEntries: number = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalEntries / pageSize);
 
@@ -90,7 +87,6 @@ export default function SemiAnnualOPTDetails() {
       Address: item.address || "N/A",
       Sitio: item.sitio || "N/A",
       Transient: item.transient ? "Yes" : "No",
-      // First Semi-Annual Data
       "1st Semi Weighing Date": item.first_semi_annual?.date_of_weighing || "N/A",
       "1st Semi Weight (kg)": item.first_semi_annual?.weight || "N/A",
       "1st Semi Height (cm)": item.first_semi_annual?.height || "N/A",
@@ -99,7 +95,6 @@ export default function SemiAnnualOPTDetails() {
       "1st Semi WFL Status": item.first_semi_annual?.nutritional_status?.wfl || "N/A",
       "1st Semi MUAC (mm)": item.first_semi_annual?.nutritional_status?.muac || "N/A",
       "1st Semi Feeding Type": item.first_semi_annual?.type_of_feeding || "N/A",
-      // Second Semi-Annual Data
       "2nd Semi Weighing Date": item.second_semi_annual?.date_of_weighing || "N/A",
       "2nd Semi Weight (kg)": item.second_semi_annual?.weight || "N/A",
       "2nd Semi Height (cm)": item.second_semi_annual?.height || "N/A",
@@ -107,25 +102,13 @@ export default function SemiAnnualOPTDetails() {
       "2nd Semi LHFA Status": item.second_semi_annual?.nutritional_status?.lhfa || "N/A",
       "2nd Semi WFL Status": item.second_semi_annual?.nutritional_status?.wfl || "N/A",
       "2nd Semi MUAC (mm)": item.second_semi_annual?.nutritional_status?.muac || "N/A",
-      "2nd Semi Feeding Type": item.second_semi_annual?.type_of_feeding || "N/A"
+      "2nd Semi Feeding Type": item.second_semi_annual?.type_of_feeding || "N/A",
     }));
   }, [records]);
 
   const handleExportCSV = () => exportToCSV(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
-
   const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_semi_annual_records_${yearName.replace(" ", "_")}`);
-
-  const handleExportPDF = () => exportToPDF(`opt_semi_annual_records_${yearName.replace(" ", "_")}`);
-
-  const handlePrint = () => {
-    const printContent = document.getElementById("printable-area");
-    if (!printContent) return;
-    const originalContents = document.body.innerHTML;
-    document.body.innerHTML = printContent.innerHTML;
-    window.print();
-    document.body.innerHTML = originalContents;
-    window.location.reload();
-  };
+  const handleExportPDF = () => exportToPDF("landscape");
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -133,7 +116,6 @@ export default function SemiAnnualOPTDetails() {
     return date.toLocaleDateString("en-CA");
   };
 
-  // Filter handlers
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
     if (checked) {
       setSelectedSitios([...selectedSitios, sitio_name]);
@@ -177,7 +159,6 @@ export default function SemiAnnualOPTDetails() {
     }
   };
 
-
   const getStatusCategory = (status: string) => {
     if (nutritionalStatusCategories.wfa.includes(status)) return "WFA";
     if (nutritionalStatusCategories.lhfa.includes(status)) return "LHFA";
@@ -188,7 +169,6 @@ export default function SemiAnnualOPTDetails() {
 
   const groupedNutritionalStatuses = nutritionalStatusOptions.reduce((acc, option) => {
     if (option.value === "all") return acc;
-
     const category = getStatusCategory(option.value);
     if (!acc[category]) {
       acc[category] = [];
@@ -226,21 +206,38 @@ export default function SemiAnnualOPTDetails() {
             </Select>
           </div>
 
-          <FilterSitio sitios={sitios} isLoading={isLoadingSitios} selectedSitios={selectedSitios} onSitioSelection={handleSitioSelection} onSelectAll={handleSelectAllSitios} onManualSearch={handleManualSitioSearch} manualSearchValue={sitioSearch} />
+          <FilterSitio
+            sitios={sitios}
+            isLoading={isLoadingSitios}
+            selectedSitios={selectedSitios}
+            onSitioSelection={handleSitioSelection}
+            onSelectAll={handleSelectAllSitios}
+            onManualSearch={handleManualSitioSearch}
+            manualSearchValue={sitioSearch}
+          />
 
-          <FilterStatus statusOptions={nutritionalStatusOptions} groupedStatuses={groupedNutritionalStatuses} selectedStatuses={selectedNutritionalStatuses} onStatusSelection={handleNutritionalStatusSelection} onSelectAll={handleSelectAllNutritionalStatuses} />
+          <FilterStatus
+            statusOptions={nutritionalStatusOptions}
+            groupedStatuses={groupedNutritionalStatuses}
+            selectedStatuses={selectedNutritionalStatuses}
+            onStatusSelection={handleNutritionalStatusSelection}
+            onSelectAll={handleSelectAllNutritionalStatuses}
+          />
         </div>
 
         <div className="flex gap-2 items-center">
           <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
-          <Button onClick={handlePrint} className="gap-2 border-gray-200 hover:bg-gray-50">
-            <Printer className="h-4 w-4 " />
-            <span>Print</span>
-          </Button>
         </div>
       </div>
 
-      <SelectedFiltersChips items={selectedSitios} onRemove={(sitio) => handleSitioSelection(sitio, false)} onClearAll={() => setSelectedSitios([])} label="Filtered by sitios" chipColor="bg-blue-100" textColor="text-blue-800" />
+      <SelectedFiltersChips
+        items={selectedSitios}
+        onRemove={(sitio) => handleSitioSelection(sitio, false)}
+        onClearAll={() => setSelectedSitios([])}
+        label="Filtered by sitios"
+        chipColor="bg-blue-100"
+        textColor="text-blue-800"
+      />
 
       <SelectedFiltersChips
         items={selectedNutritionalStatuses}
@@ -273,8 +270,7 @@ export default function SemiAnnualOPTDetails() {
           <span className="text-sm text-gray-700">
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Loading...
+                
               </span>
             ) : (
               `Showing ${startIndex} - ${endIndex} of ${totalEntries} records`
@@ -284,53 +280,60 @@ export default function SemiAnnualOPTDetails() {
         </div>
       </div>
 
-      <div className="bg-white rounded-b-lg overflow-hidden">
-        <div
-          id="printable-area"
-          className="p-4"
-          style={{
-            minHeight: "13in",
-            margin: "0 auto",
-            fontSize: "10px",
-            lineHeight: "1.2"
-          }}
-        >
-          <div className="w-full">
-            <div className="flex mt-4 text-xs">
-              <p className="font-semibold uppercase mr-1">Semi Annual Record Growth Monitoring and Promotion</p>
+      {/* FIXED: Proper overflow container like FHIS report */}
+      <div className="overflow-x-auto">
+        {isLoading ? (
+          <div style={{ width: "100%", height: "200px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+              <span className="text-sm text-gray-600">Loading records...</span>
             </div>
-            <div className="text-start mb-4 mt-2 flex justify-between items-center text-xs">
-              <div className="flex">
-                <span className="mr-1 font-semibold">Baranagy/Sitio:</span>
-                <span className="underline">{selectedSitios.length > 0 ? selectedSitios.join(", ") : sitioSearch || "All Sitios"}</span>
+          </div>
+        ) : (
+          <div
+            className="print-area"
+            id="printable-area"
+            style={{
+              width: "19in",
+              margin: "0 auto",
+              padding: "0.5in",
+              backgroundColor: "white",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div className="w-full">
+              <div className="flex mt-4 text-xs">
+                <p className="font-semibold uppercase mr-1">Semi Annual Record Growth Monitoring and Promotion</p>
               </div>
-              <div>
-                <span className="font-semibold">Calendar Year: </span>
-                <span className="underline">{year}</span>
+              <div className="text-start mb-4 mt-2 flex justify-between items-center text-xs">
+                <div className="flex">
+                  <span className="mr-1 font-semibold">Baranagy/Sitio:</span>
+                  <span className="underline">{selectedSitios.length > 0 ? selectedSitios.join(", ") : sitioSearch || "All Sitios"}</span>
+                </div>
+                <div>
+                  <span className="font-semibold">Calendar Year: </span>
+                  <span className="underline">{year}</span>
+                </div>
+                <div>
+                  <span className="font-semibold">Period: </span>
+                  <span className="underline">{periodFilter === "both" ? "Both Periods" : periodFilter === "first" ? "First Semi-Annual" : "Second Semi-Annual"}</span>
+                </div>
               </div>
-              <div>
-                <span className="font-semibold">Period: </span>
-                <span className="underline">{periodFilter === "both" ? "Both Periods" : periodFilter === "first" ? "First Semi-Annual" : "Second Semi-Annual"}</span>
-              </div>
-            </div>
 
-            {isLoading ? (
-              <div className="w-full h-[200px] flex items-center justify-center">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                  <span className="text-sm text-gray-600">Loading records...</span>
+              {records.length === 0 ? (
+                <div style={{ width: "100%", height: "200px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div className="text-center">
+                    <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600">
+                      {sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0
+                        ? "No records found matching your filters"
+                        : "No records found for this year"}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ) : records.length === 0 ? (
-              <div className="w-full h-[200px] flex items-center justify-center">
-                <div className="text-center">
-                  <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">{sitioSearch || nutritionalStatus || selectedSitios.length > 0 || selectedNutritionalStatuses.length > 0 ? "No records found matching your filters" : "No records found for this year"}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="w-full">
-                <table className="w-full border-collapse table-fixed">
+              ) : (
+                <table className="w-full border-collapse border border-black">
                   <thead className="text-xs text-center">
                     <tr>
                       <th rowSpan={2} className="border border-black p-1 w-[18%] font-bold">
@@ -353,7 +356,7 @@ export default function SemiAnnualOPTDetails() {
                       </th>
                     </tr>
                     <tr>
-                      <th rowSpan={2} className="border border-black p-1 w-[8%] font-bold">
+                      <th className="border border-black p-1 w-[8%] font-bold">
                         Age in
                         <br />
                         Mos.
@@ -391,7 +394,7 @@ export default function SemiAnnualOPTDetails() {
                     {records.map((item, index) => (
                       <>
                         <tr key={`${index}-wfa`} className="hover:bg-gray-50">
-                          <td rowSpan={4} className="border border-black p-1 text-left align-middle break-words">
+                          <td rowSpan={4} className="border border-black p-1 text-left align-middle" style={{ wordBreak: "break-word" }}>
                             {item.child_name || ""}
                           </td>
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle">
@@ -401,12 +404,10 @@ export default function SemiAnnualOPTDetails() {
                             {item.sex}
                           </td>
 
-                          {/* 1st Weighing Age - from backend */}
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.first_semi_annual ? item.age_in_months || "" : ""}
                           </td>
 
-                          {/* 1st Weighing data */}
                           <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.first_semi_annual?.weight ? Number(item.first_semi_annual.weight).toFixed(1) : ""}
                           </td>
@@ -418,30 +419,27 @@ export default function SemiAnnualOPTDetails() {
                             <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.wfa || ""}</span>
                           </td>
 
-                          {/* 2nd Weighing data */}
-                          <td rowSpan={4} className="border border-black p-1 text-center align-middle bg-green-25">
+                          <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.second_semi_annual ? item.age_in_months || "" : ""}
                           </td>
-                          {/* 2nd Weighing data */}
-                          <td rowSpan={4} className="border border-black p-1 text-center align-middle bg-green-25">
+                          <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.second_semi_annual?.weight ? Number(item.second_semi_annual.weight).toFixed(1) : ""}
                           </td>
-                          <td rowSpan={4} className="border border-black p-1 text-center align-middle bg-green-25">
+                          <td rowSpan={4} className="border border-black p-1 text-center align-middle">
                             {item.second_semi_annual?.height ? Number(item.second_semi_annual.height).toFixed(1) : ""}
                           </td>
-                          <td className="border border-black p-1 text-left bg-green-25">
+                          <td className="border border-black p-1 text-left">
                             WFA:
                             <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.wfa || ""}</span>
                           </td>
                         </tr>
 
-                        {/* Rest of the rows remain the same */}
                         <tr key={`${index}-lhfa`} className="hover:bg-gray-50">
                           <td className="border border-black p-1 text-left">
                             L/HFA:
                             <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.lhfa || ""}</span>
                           </td>
-                          <td className="border border-black p-1 text-left bg-green-25">
+                          <td className="border border-black p-1 text-left">
                             L/HFA:
                             <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.lhfa || ""}</span>
                           </td>
@@ -451,23 +449,23 @@ export default function SemiAnnualOPTDetails() {
                             WFL/Ht:
                             <span className="ml-1 font-bold">{item.first_semi_annual?.nutritional_status?.wfl || ""}</span>
                           </td>
-                          <td className="border border-black p-1 text-left bg-green-25">
+                          <td className="border border-black p-1 text-left">
                             WFL/Ht:
                             <span className="ml-1 font-bold">{item.second_semi_annual?.nutritional_status?.wfl || ""}</span>
                           </td>
                         </tr>
                         <tr key={`${index}-remarks`} className="hover:bg-gray-50">
                           <td className="border border-black p-1 text-left">Remarks:</td>
-                          <td className="border border-black p-1 text-left bg-green-25">Remarks:</td>
+                          <td className="border border-black p-1 text-left">Remarks:</td>
                         </tr>
                       </>
                     ))}
                   </tbody>
                 </table>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </LayoutWithBack>
   );

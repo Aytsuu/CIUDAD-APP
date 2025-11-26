@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, ScrollView } from "react-native";
 import { useAntigenTransactions } from "../restful-api/transaction/fetchqueries";
 import { LoadingState } from "@/components/ui/loading-state";
 
@@ -106,6 +106,7 @@ export default function AntigenListScreen() {
   );
 
   return (
+    <ScrollView>
     <View className="flex-1 p-4 bg-gray-50">
      
 
@@ -176,5 +177,6 @@ export default function AntigenListScreen() {
         </View>
       </View>
     </View>
+  </ScrollView>
   );
 }

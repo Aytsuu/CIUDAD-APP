@@ -16,7 +16,7 @@ export const useAddParticular = () => {
             return String(res.data.incp_id); 
         }
         catch (err) {
-            console.error('Error adding particular:', err);
+            // console.error('Error adding particular:', err);
             throw err;
         }
     }
@@ -30,7 +30,8 @@ export const useAddParticular = () => {
                 onAdded(newId);
             }
         } catch (error) {
-            console.error("Failed to add particular:", error);
+            // console.error("Failed to add particular:", error);
+            throw error;
         }
     };
 

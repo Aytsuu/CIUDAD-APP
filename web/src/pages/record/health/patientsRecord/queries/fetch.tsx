@@ -6,11 +6,20 @@ import {
 	getAllTransientAddresses,
 	getChildData,
 	checkPatientExistsGet,
-	getChildren
+	getChildren,
+	getPatientCount,
+	getPatientHistory
  } from "../restful-api/get";
 
 
-
+export const usePatientCount = () => {
+	return useQuery({
+		queryKey: ['patientCount'],
+		queryFn: getPatientCount,
+		staleTime: 60000, // 1 minute
+		refetchInterval: 3000, // 
+	})
+}
 
 export const useChildData = (id: any,) => {
 	return useQuery({
@@ -147,6 +156,19 @@ export const useGetChildren = (patientId: string) => {
 		queryKey: ['getchildren', patientId],
 		queryFn: () => getChildren(patientId),
 		staleTime: 300000, // 5 minutes
+		enabled: !!patientId,
+	})
+}
+
+// patient history query (HistoricalPatient)
+export const usePatientHistory = (patientId: string) => {
+	return useQuery({
+		queryKey: ['patientHistory', patientId],
+		queryFn: () => getPatientHistory(patientId),
+		staleTime: 0, // always considered stale so refetch is instant when requested
+		refetchOnMount: 'always',
+		refetchOnWindowFocus: false,
+		retry: 2,
 		enabled: !!patientId,
 	})
 }

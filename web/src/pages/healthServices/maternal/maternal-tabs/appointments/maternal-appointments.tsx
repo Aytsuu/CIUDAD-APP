@@ -8,6 +8,7 @@ import {
   appointmentColumns, 
   appointmentColumnsWithReason, 
   createPendingAppointmentColumns, 
+  appointmentConfirmedColumns,
   type Appointment 
 } from "./columns"
 
@@ -65,10 +66,8 @@ export default function MaternalAppointmentsMain() {
     })
   }
 
-  // Map API response to Appointment interface
   const mapAppointmentData = (apiData: any[]): Appointment[] => {
     return apiData.map((item, index) => {
-      // Format patient name from personal_info
       let patientName = "Unknown Patient"
       if (item.personal_info) {
         const { per_fname, per_mname, per_lname, per_suffix } = item.personal_info
@@ -94,7 +93,8 @@ export default function MaternalAppointmentsMain() {
         patientName,
         gender: gender as "Male" | "Female",
         age,
-        dateScheduled: item.approved_at || item.requested_date || item.requested_at || "",
+        dateScheduled: item.requested_date || item.requested_at || "",
+        approvedDate: item.approved_at || "",
         requestedDate: item.requested_at || "",
         status: (item.status === "approved" ? "confirmed" : item.status) as "confirmed" | "pending" | "cancelled" | "rejected" | "missed" | "completed",
         reason: item.reason || undefined,
@@ -162,7 +162,7 @@ export default function MaternalAppointmentsMain() {
           <>
             {selectedTab === "confirmed" && (
               <div className="bg-white rounded-lg border">
-                <DataTable columns={appointmentColumns} data={filterData(confirmedAppointmentsData)} maxHeight="600px" />
+                <DataTable columns={appointmentConfirmedColumns} data={filterData(confirmedAppointmentsData)} maxHeight="600px" />
               </div>
             )}
             {selectedTab === "pending" && (

@@ -1,11 +1,11 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, ChevronDown } from "lucide-react";
+import { AlertCircle, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { useFirstAidChart } from "@/pages/healthServices/reports/firstaid-report/queries/fetch";
-import { useState } from "react";
 import { FaFirstAid } from "react-icons/fa";
 import { Link } from "react-router";
+import { Button } from "@/components/ui/button/button";
 
 const COLORS = [
   "#3b82f6", // Blue
@@ -22,8 +22,7 @@ const COLORS = [
 export function FirstAidDistributionSidebar() {
   const initialMonth = format(new Date(), "yyyy-MM");
   const { data, isLoading, error } = useFirstAidChart(initialMonth);
-  // const currentDate = parseISO(`${initialMonth}-01`);
-  const [showAll, setShowAll] = useState(false);
+  // const [showAll, setShowAll] = useState(false);
 
   // Transform and sort data with proper null checks
   const allFirstAidItems = data?.first_aid_counts
@@ -34,9 +33,18 @@ export function FirstAidDistributionSidebar() {
     : [];
 
   // Determine which items to show
-  const itemsToShow = showAll ? allFirstAidItems : allFirstAidItems.slice(0, 10);
-  const totalItems = allFirstAidItems.length;
+  const itemsToShow =allFirstAidItems.slice(0, 10);
+  // const totalItems = allFirstAidItems.length;
   const totalUses = allFirstAidItems.reduce((sum, item) => sum + item.count, 0);
+
+  // Common link state for all first aid cards and "View More" button
+  const getLinkState = (itemName?: string, itemCount?: number) => ({
+    itemName: itemName || "",
+    itemCount: itemCount || totalUses,
+    month: initialMonth,
+    monthlyrcplist_id: data?.monthly_report_id,
+    monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy"),
+  });
 
   if (error) {
     return (
@@ -55,8 +63,15 @@ export function FirstAidDistributionSidebar() {
     <Card className="rounded-md shadow-none">
       <CardContent className="pt-4">
         {isLoading ? (
-          <div className="flex items-center justify-center h-[300px]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+         <div className="p-4 space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="animate-pulse">
+                <div className="bg-gray-100 rounded-lg p-4">
+                  <div className="h-4 bg-black/20 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-black/20 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : !data?.success || allFirstAidItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">
@@ -74,24 +89,19 @@ export function FirstAidDistributionSidebar() {
                 const percentage = ((item.count / totalUses) * 100).toFixed(1);
 
                 return (
-                  <Link to="/reports/monthly-firstaid/records"
-                  state={{
-                    // Pass the same state structure as your monthly records
-                    itemName: item.name,
-                    itemCount: item.count,
-                    month: initialMonth,
-                    monthlyrcplist_id: data.monthly_report_id,
-                    monthName: format(new Date(initialMonth + "-01"), "MMMM yyyy"),
-                  }}
+                  <Link 
+                    key={item.name}
+                    to="/reports/monthly-firstaid/records"
+                    state={getLinkState(item.name, item.count)}
                   >
-                    <div key={item.name} className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: color }}>
                           #{index + 1}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">{item.count} reords</p>
+                          <p className="text-xs text-muted-foreground">{item.count} records</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -106,14 +116,19 @@ export function FirstAidDistributionSidebar() {
               })}
             </div>
 
-            {totalItems > 10 && (
-              <div className="text-center pt-4">
-                <button onClick={() => setShowAll(!showAll)} className="text-sm text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1">
-                  {showAll ? "Show Less" : `View All ${totalItems} Items`}
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
-                </button>
-              </div>
-            )}
+          
+            {/* View More Button - Always visible when data exists */}
+            <div className="pt-4 border-t border-gray-100 mt-4">
+              <Link to="/reports/monthly-firstaid/records" state={getLinkState()}>
+                <Button 
+                  variant="link" 
+                  className="w-full flex items-center justify-center gap-2 text-sm font-medium"
+                >
+                  View Monthly Used First Aid Items
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
           </>
         )}
       </CardContent>

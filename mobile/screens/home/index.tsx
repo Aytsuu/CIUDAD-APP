@@ -6,8 +6,6 @@ import {
   RefreshControl,
   Image,
   LayoutAnimation,
-  Platform,
-  UIManager,
 } from "react-native";
 import { Card } from "@/components/ui/card";
 import { features } from "./features";
@@ -15,19 +13,11 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from "../_PageLayout";
 import React from "react";
-import ShowMore from '@/assets/icons/features/showmore.svg'
-import ShowLess from '@/assets/icons/features/showless.svg'
-import Ciudad from '@/assets/icons/essentials/ciudad_logo.svg'
+import ShowMore from "@/assets/icons/features/showmore.svg";
+import ShowLess from "@/assets/icons/features/showless.svg";
+import Ciudad from "@/assets/icons/essentials/ciudad_logo.svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { capitalize } from "@/helpers/capitalize";
-
-// Enable LayoutAnimation on Android
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -53,83 +43,93 @@ export default function HomeScreen() {
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    // Add your refresh logic here
     setTimeout(() => {
       setRefreshing(false);
     }, 1000);
   }, []);
 
-  // if (isLoading) {
-  //   return <LoadingModal visible={true} />;
-  // }
-
   // Optimized feature rendering logic
-  const renderFeatureItem = (item: any, index: number, isToggleButton = false) => (
+  const renderFeatureItem = (
+    item: any,
+    index: number,
+    isToggleButton = false
+  ) => (
     <TouchableOpacity
       key={isToggleButton ? `toggle-${index}` : `feature-${index}`}
       className="w-[30%] mb-4 active:opacity-70"
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={isToggleButton ? 
-        (showMoreFeatures ? "Show Less features" : "Show More features") : 
-        `${item.name} feature`
+      accessibilityLabel={
+        isToggleButton
+          ? showMoreFeatures
+            ? "Show Less features"
+            : "Show More features"
+          : `${item.name} feature`
       }
       onPress={
-        isToggleButton
-          ? toggleFeatures
-          : () => router.push(item.route as any)
+        isToggleButton ? toggleFeatures : () => router.push(item.route as any)
       }
     >
       <View className="items-center p-3 rounded-xl">
-        <View className={`mb-2 p-2 ${
-          item.name === 'Securado' ? "bg-blue-950" : "bg-blue-50"
-        } rounded-full`}>
-          {isToggleButton ? 
-            (showMoreFeatures ? 
-              <ShowLess width={30} height={30}/> : 
-              <ShowMore width={30} height={30}/>
-            ) : 
+        <View
+          className={`mb-2 p-2 ${
+            item.name === "Securado" ? "bg-blue-950" : "bg-blue-50"
+          } rounded-full`}
+        >
+          {isToggleButton ? (
+            showMoreFeatures ? (
+              <ShowLess width={30} height={30} />
+            ) : (
+              <ShowMore width={30} height={30} />
+            )
+          ) : (
             item.icon
-          }
+          )}
         </View>
         <Text className="text-xs font-medium text-gray-900 text-center leading-4">
-          {isToggleButton ? 
-            (showMoreFeatures ? "Show Less" : "Show More") : 
-            item.name
-          }
+          {isToggleButton
+            ? showMoreFeatures
+              ? "Show Less"
+              : "Show More"
+            : item.name}
         </Text>
       </View>
     </TouchableOpacity>
   );
 
   const renderFeatures = () => {
-    const userStatus: any[] = []
+    const userStatus: any[] = [];
 
-    if(user?.rp) userStatus.push("RESIDENT")
-    if(user?.staff) userStatus.push(user?.staff?.pos)
+    if (user?.rp) userStatus.push("RESIDENT");
+    if (user?.staff) userStatus.push(user?.staff?.pos);
 
     const INITIAL_FEATURES_COUNT = 5;
     const myFeatures = features.filter((feat: Record<string, any>) => {
-      if(feat.users?.length == 0) return feat;
-      if(userStatus.some((stat: string) => feat.users.includes(stat))) return feat;
-    })
+      if (feat.users?.length == 0) return feat;
+      if (userStatus.some((stat: string) => feat.users.includes(stat)))
+        return feat;
+    });
 
     if (myFeatures.length <= 6) {
       // Show all features, no Show More/Less button
-      return myFeatures.map((feature, index) => renderFeatureItem(feature, index));
+      return myFeatures.map((feature, index) =>
+        renderFeatureItem(feature, index)
+      );
     }
 
     if (!showMoreFeatures) {
       // Show first 5 features + Show More button
       const visibleFeatures = myFeatures.slice(0, INITIAL_FEATURES_COUNT);
       const items = [
-        ...visibleFeatures.map((feature, index) => renderFeatureItem(feature, index)),
-        renderFeatureItem({}, INITIAL_FEATURES_COUNT, true) // Show More button
+        ...visibleFeatures.map((feature, index) =>
+          renderFeatureItem(feature, index)
+        ),
+        renderFeatureItem({}, INITIAL_FEATURES_COUNT, true), // Show More button
       ];
       return items;
     } else {
       // Show all features + Show Less button
-      const allFeatureItems = myFeatures.map((feature, index) => 
+      const allFeatureItems = myFeatures.map((feature, index) =>
         renderFeatureItem(feature, index)
       );
       // Add Show Less button
@@ -152,7 +152,7 @@ export default function HomeScreen() {
           />
         }
       >
-        <SafeAreaView className="flex-1 mb-16">
+        <SafeAreaView className="flex-1 mb-16 bg-white">
           <View className="px-6 flex-1">
             <Ciudad width={80} height={70} />
           </View>
@@ -170,9 +170,11 @@ export default function HomeScreen() {
             <Text className="text-md text-gray-700 font- mb-2">
               Hi,{" "}
               {capitalize(
-                user?.rp || !(user?.rp && user?.br)
+                user?.rp
                   ? user?.personal?.per_fname
-                  : user?.personal?.br_fname
+                  : user?.br
+                  ? user?.personal?.br_fname
+                  : user?.personal?.per_fname
               )}
               ! 👋
             </Text>
@@ -207,9 +209,11 @@ export default function HomeScreen() {
           </View>
 
           {/* Features Section */}
-          <Card className="p-6 bg-white rounded-none">
+          <Card className="p-6 bg-white rounded-none shadow-none">
             <View className="mb-6">
-              <Text className="text-lg font-semibold text-gray-900">Features</Text>
+              <Text className="text-lg font-semibold text-gray-900">
+                Features
+              </Text>
               <Text className="text-sm text-gray-600">
                 Quick access to your tools
               </Text>

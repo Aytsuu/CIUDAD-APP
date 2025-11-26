@@ -116,12 +116,19 @@ export interface PrenatalRecord {
   }>
   vital_bp_systolic: number | null
   vital_bp_diastolic: number | null
+  vital_temp: string | null
+  vital_RR: string | null
+  vital_pulse: string | null
+  vital_o2: string | null
   selected_medicines?: Array<{
-    minv_id: string
-    medrec_qty: number
-    reason: string
+    minv_id: string              // Medicine inventory ID from MedicineInventory model
+    medrec_qty: number           // Quantity to dispense (positive integer)
+    reason?: string              // Reason for dispensing; defaults to "Micronutrient supplementation"
   }>
-  vacrec_totaldose?: number | null 
+  vacrec_totaldose?: number | null
+  assigned_to?: string
+  status?: string
+  forwarded_status?: string | null
 }
 
 export const addPrenatalRecord = async (data: PrenatalRecord) => {
@@ -192,8 +199,23 @@ export interface PostpartumCompleteData {
   }
   vital_bp_systolic: string
   vital_bp_diastolic: string
+  vital_temp: string
+  vital_RR: string
+  vital_o2: string
+  vital_pulse: string
+  selected_medicines?: Array<{
+    minv_id: string              // Medicine inventory ID from MedicineInventory model
+    medrec_qty: number           // Quantity to dispense (positive integer)
+    reason?: string              // Reason for dispensing; defaults handled in transform helper
+  }>
+  tts_id?: number | null  // ✅ Add TT Status FK
+  staff_id?: string
   followup_date: string
   followup_description: string
+
+  assigned_to?: string
+  status?: string
+  forwarded_status?: string | null
 }
 
 // Response interface for what the API returns
@@ -247,6 +269,7 @@ export const addCompletePregnancy = async (data: CompletePregnancyData) => {
 export interface PregnancyLossData {
   pat_id: string;
   pregnancy_id: string;
+  pregnancyloss_reason?: string;
 }
 
 export const addPregnancyLoss = async (data: PregnancyLossData) => {

@@ -1,8 +1,8 @@
 // WastedAPI.ts (update these functions)
 import { api2 } from "@/api/api"; // Your axios instance
 
-// Replace the multiple API calls with single endpoints
-export const handleVaccineWasteAPI = async (id: number, data: { wastedAmount: number; staff_id?: string }) => {
+// API functions
+export const handleVaccineWasteAPI = async (id: number, data: { wastedAmount: number; staff_id?: string; action_type: string }) => {
   try {
     const response = await api2.post(`/inventory/waste/vaccine/${id}/`, data);
     return response.data;
@@ -12,7 +12,7 @@ export const handleVaccineWasteAPI = async (id: number, data: { wastedAmount: nu
   }
 };
 
-export const handleSupplyWasteAPI = async (id: number, data: { wastedAmount: number; staff_id?: string }) => {
+export const handleSupplyWasteAPI = async (id: number, data: { wastedAmount: number; staff_id?: string; action_type: string }) => {
   try {
     const response = await api2.post(`/inventory/waste/supply/${id}/`, data);
     return response.data;

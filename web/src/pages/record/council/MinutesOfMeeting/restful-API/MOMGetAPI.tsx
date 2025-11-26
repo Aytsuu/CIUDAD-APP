@@ -11,7 +11,8 @@ export const getActiveMinutesOfMeeting = async (page: number, pageSize: number, 
         })
         return res.data
     } catch (err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
@@ -26,6 +27,7 @@ export const getInactiveMinutesOfMeeting = async (page: number, pageSize: number
         })
         return res.data
     } catch (err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }

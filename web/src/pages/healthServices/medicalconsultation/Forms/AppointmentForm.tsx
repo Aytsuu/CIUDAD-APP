@@ -92,17 +92,10 @@ export default function AppointmentForm() {
 
   const { data: staffOptions, isLoading: staffLoading } = fetchStaffWithPositions();
   const [selectedStaffId, setSelectedStaffId] = useState("");
-
-  // Vitals and measurements
   const { data: latestVitals, isLoading: isVitalsLoading, error: vitalsError, refetch: refetchVitals } = useLatestVitals(pat_id);
-
   const { data: previousMeasurements, isLoading: isMeasurementsLoading, error: measurementsError, refetch: refetchMeasurements } = usePreviousBMI(pat_id);
-
   const { data: obsHistoryData } = usePrenatalPatientObsHistory(pat_id);
-
-  // Medical and Family History
   const { data: medHistoryData, isLoading: isMedHistoryLoading, error: medHistoryError, isError: isMedHistoryError, refetch: refetchMedHistory } = usePrenatalPatientMedHistory(pat_id, medHistorySearch);
-
   const { data: famHistoryData, isLoading: isFamHistoryLoading, isError: isFamHistoryError, refetch: refetchFamHistory } = useFamHistory(pat_id, famHistorySearch);
 
   const non_membersubmit = useSubmitMedicalConsultation();
@@ -271,11 +264,10 @@ export default function AppointmentForm() {
     setIsRegistering(true);
     try {
       const response = await registerPatient({
-        pat_status: "active",
+        pat_status: "Active",
         rp_id: rp_id,
-        personal_info: currentPatientData.personal_info,
-        address: currentPatientData.address,
-        pat_type: "Resident"
+        pat_type: "Resident",
+        mode:"consultation"
       });
 
       if (!response.pat_id) {

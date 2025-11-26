@@ -94,90 +94,83 @@ export function DataTable<TData, TValue>({
       setReset && setReset(false);
     }
   }, [reset]);
-
-  return (
-    <div className="w-full">
-      <div className="relative overflow-hidden">
-        {/* Fixed Header */}
-        {header && (
-          <div className="bg-white relative z-10">
-            <Table className="table-fixed">
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
+return (
+  <div className="w-full">
+    <div className="relative overflow-hidden">
+      <div
+        className="overflow-auto"
+        style={{ maxHeight: maxHeight }}
+      >
+        <Table className="table-fixed">
+          {/* Sticky Header */}
+          {header && (
+            <TableHeader className="sticky top-0 z-10 bg-white">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow
+                  key={headerGroup.id}
+                  className="bg-lightBlue hover:bg-lightBlue h-10"
+                >
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      style={{ width: header.getSize() }}
+                      className={cn("text-center bg-lightBlue", headerClassName)}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+          )}
+          <TableBody>
+            {!isLoading ? (
+              table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
                   <TableRow
-                    key={headerGroup.id}
-                    className="bg-lightBlue hover:bg-lightBlue h-10"
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={!header ? "border-none hover:bg-white" : ""}
                   >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        style={{ width: header.getSize() }} // 👈 apply size
-                        className={cn("text-center bg-lightBlue", headerClassName)}
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        style={{ width: cell.column.getSize() }}
+                        className={cn("text-center font-medium text-gray-700", cellClassName)}
                       >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
                     ))}
                   </TableRow>
-                ))}
-              </TableHeader>
-            </Table>
-          </div>
-        )}
-
-        {/* Scrollable Body */}
-        <div
-          className="overflow-auto"
-          style={{ maxHeight: maxHeight }}
-        >
-          <Table className="table-fixed">
-            <TableBody>
-              {!isLoading ? (
-                table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                      className={!header ? "border-none hover:bg-white" : ""}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          style={{ width: cell.column.getSize() }} // 👈 apply size
-                          className={cn("text-center font-medium text-gray-700", cellClassName)}
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns?.length}
-                      className="h-24 text-center"
-                    >
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )
+                ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns?.length} className="h-24">
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Loader2 className="animate-spin opacity-50" />
-                    </div>
+                  <TableCell
+                    colSpan={columns?.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              )
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns?.length} className="h-24">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Loader2 className="animate-spin opacity-50" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
-  );
+  </div>
+);
 }

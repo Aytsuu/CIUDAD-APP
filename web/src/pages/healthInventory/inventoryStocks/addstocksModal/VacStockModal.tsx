@@ -15,7 +15,7 @@ import { useSubmitVaccineStock } from "../REQUEST/Antigen/queries/VaccinePostQue
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useAuth } from "@/context/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
-import { fetchVaccines } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
+import { useFetchVaccines } from "../REQUEST/Antigen/queries/AntigenFetchQueries";
 import { useVacBatchNumber } from "../REQUEST/Antigen/restful-api/get";
 
 export default function AddVaccineStock() {
@@ -26,7 +26,6 @@ export default function AddVaccineStock() {
     defaultValues: {
       vac_id: "",
       batchNumber: "",
-      volume: undefined,
       dose_ml: undefined,
       qty: undefined,
       expiry_date: "",
@@ -36,7 +35,7 @@ export default function AddVaccineStock() {
     }
   });
 
-  const { data: vaccineOptions, isLoading: isVaccinesLoading } = fetchVaccines();
+  const { data: vaccineOptions, isLoading: isVaccinesLoading } = useFetchVaccines();
   const { mutate: submit, isPending } = useSubmitVaccineStock();
   const navigate = useNavigate();
   const solvent = form.watch("solvent");
@@ -122,19 +121,25 @@ export default function AddVaccineStock() {
               ]}
               />
             </div>
-            <FormInput control={form.control} name="volume" label="Volume (ml)" type="number" />
-            <FormInput
+           
+        
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <FormInput
               control={form.control}
               name="qty"
               label={solvent === "diluent" ? "Number of Containers" : "Number of Vials"}
               type="number"
             />
 
-            {solvent === "doses" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormInput control={form.control} name="dose_ml" label="Dose" type="number" />
+                <FormInput 
+                  control={form.control} 
+                  name="dose_ml" 
+                  label={solvent === "diluent" ? "ML" : "Doses"} 
+                  type="number" 
+                />
               </div>
-            )}
+            
 
             {solvent === "doses" && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -104,7 +104,7 @@ export default function PrenatalForm() {
       ? {
           date_of_delivery: toNullIfEmpty(data.previousPregnancy.dateOfDelivery) ?? null,
           outcome: forceCapitalize(data.previousPregnancy.outcome) || null, 
-          type_of_delivery: forceCapitalize(data.previousPregnancy.typeOfDelivery) || null,
+          type_of_delivery: data.previousPregnancy.typeOfDelivery || null,
           babys_wt: data.previousPregnancy.babysWt ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
           gender: forceCapitalize(data.previousPregnancy.gender) || null,
           ballard_score: data.previousPregnancy.ballardScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
@@ -183,16 +183,16 @@ export default function PrenatalForm() {
 
       // obstetrical history section
       obstetrical_history: {
-        obs_ch_born_alive: data.obstetricHistory?.noOfChBornAlive || null,
-        obs_living_ch: data.obstetricHistory?.noOfLivingCh || null,
-        obs_abortion: data.obstetricHistory?.noOfAbortion  || null,
-        obs_still_birth: data.obstetricHistory?.noOfStillBirths || null,
-        obs_lg_babies: data.obstetricHistory?.historyOfLBabies || null,
+        obs_ch_born_alive: data.obstetricHistory?.noOfChBornAlive || 0,
+        obs_living_ch: data.obstetricHistory?.noOfLivingCh || 0,
+        obs_abortion: data.obstetricHistory?.noOfAbortion  || 0,
+        obs_still_birth: data.obstetricHistory?.noOfStillBirths || 0,
+        obs_lg_babies: data.obstetricHistory?.historyOfLBabies || 0,
         obs_lg_babies_str: data.obstetricHistory?.historyOfLBabiesStr ?? false,
-        obs_gravida: data.presentPregnancy.gravida || null,
-        obs_para: data.presentPregnancy.para || null,
-        obs_fullterm: data.presentPregnancy.fullterm || null,
-        obs_preterm: data.presentPregnancy.preterm || null,
+        obs_gravida: data.presentPregnancy.gravida || 0,
+        obs_para: data.presentPregnancy.para || 0,
+        obs_fullterm: data.presentPregnancy.fullterm || 0,
+        obs_preterm: data.presentPregnancy.preterm || 0,
         obs_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       },
       
@@ -285,14 +285,30 @@ export default function PrenatalForm() {
       vital_bp_diastolic: (data.prenatalCare?.[0]?.bp.diastolic != null && !isNaN(data.prenatalCare?.[0]?.bp.diastolic))
         ? data.prenatalCare[0].bp.diastolic
         : null,
+      vital_temp: data.prenatalCare?.[0]?.notes?.temp || null,
+      vital_RR: data.prenatalCare?.[0]?.notes?.resRate || null,
+      vital_pulse: data.prenatalCare?.[0]?.notes?.pulseRate || null,
+      vital_o2: data.prenatalCare?.[0]?.notes?.o2 || null,
       
       // Selected medicines for micronutrient supplementation
-      selected_medicines: selectedMedicines.length > 0 ? selectedMedicines : undefined,
+      // Transform: ensure reason defaults to "Micronutrient supplementation" if not provided
+      selected_medicines: selectedMedicines.length > 0 
+        ? selectedMedicines.map(med => ({
+            minv_id: med.minv_id,
+            medrec_qty: med.medrec_qty,
+            reason: med.reason || "Micronutrient supplementation"
+          }))
+        : undefined,
       
       // Vaccination total dose for conditional vaccines
       vacrec_totaldose: data.prenatalVaccineInfo.vacrec_totaldose 
         ? parseInt(data.prenatalVaccineInfo.vacrec_totaldose.toString()) 
         : undefined,
+
+      // Forward record fields
+      assigned_to: data.assigned_to ? data.assigned_to : undefined,
+      status: data.status ? data.status : undefined,
+      forwarded_status: data.forwarded_status ? data.forwarded_status : undefined,
     }
   }
 

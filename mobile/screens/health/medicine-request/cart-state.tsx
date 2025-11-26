@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 
 // Define the comprehensive Medicine type
 export type Medicine = {
-  minv_id: number; // Mapped from minv_id (from backend)
-  name: string; // Mapped from medicine_name (from backend)
-  category: string; // Mapped from category_name (from backend)
-  med_type: string; // Mapped from medicine_type (from backend, e.g., 'Prescription', 'Over-the-Counter')
-  dosage: string; // Combined from minv_dsg and minv_dsg_unit (from backend)
-  description?: string; // Optional: from backend if available
-  availableStock: number; // Available stock from backend
+  minv_id: number;  
+  name: string; 
+  category: string; 
+  med_type: string; 
+  dosage: string; 
+  description?: string;  
+  availableStock: number; 
   reason: string;
 };
 

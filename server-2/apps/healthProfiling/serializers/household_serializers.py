@@ -2,6 +2,18 @@ from rest_framework import serializers
 from django.utils import timezone
 from django.db.models import Count
 from ..models import *
+from datetime import datetime
+
+# Import generate_hh_no from server-1's utils (shared function)
+# Note: In production, this should be imported from a shared utility module
+def generate_hh_no():
+  """Generate household ID in format HH-YYMM-COUNT"""
+  from apps.healthProfiling.models import Household
+  next_val = Household.objects.count() + 1
+  date = datetime.now()
+  year = str(date.year - 2000)
+  month = str(date.month).zfill(2)
+  return f"HH-{year}{month}-{next_val}"
 
 class HouseholdBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -50,20 +62,33 @@ class HouseholdTableSerializer(serializers.ModelSerializer):
   head = serializers.SerializerMethodField()
   head_id = serializers.CharField(source='rp.rp_id')
   date_registered = serializers.DateField(source='hh_date_registered')
+  registered_by = serializers.SerializerMethodField()
 
   class Meta:
     model = Household
     fields = ['hh_id', 'sitio', 'total_families', 'street', 'nhts', 'head', 'head_id',
-              'date_registered']
+              'date_registered', "registered_by"]
     
   def get_total_families(self, obj):
-    return Family.objects.filter(hh=obj).count()
+    return Family.objects.annotate(members=Count("family_compositions")).filter(hh=obj, members__gt=0).count()
   
   def get_head(self, obj):
     info = obj.rp.per
     return f"{info.per_lname}, {info.per_fname}" + \
         (f" {info.per_mname[0]}." if info.per_mname else "")
 
+  def get_registered_by(self, obj):
+    staff = obj.staff
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        staff_name = f'{personal.per_lname}, {personal.per_fname}{f' {personal.per_mname}' if personal.per_mname else ''}'
+
+    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+  
   
 class HouseholdCreateSerializer(serializers.ModelSerializer):
   class Meta:
@@ -73,7 +98,7 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
 
   def create(self, validated_data):
     household = Household(
-      hh_id = self.generate_hh_no(),
+      hh_id = generate_hh_no(),
       hh_nhts = validated_data['hh_nhts'],
       hh_date_registered = timezone.now().date(),
       add = validated_data['add'],
@@ -83,8 +108,3 @@ class HouseholdCreateSerializer(serializers.ModelSerializer):
 
     household.save()
     return household
-
-  def generate_hh_no(self):
-    next_val = Household.objects.count() + 1
-    house_no = f"HH-{next_val:05d}"
-    return house_no

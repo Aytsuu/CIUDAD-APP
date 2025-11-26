@@ -37,7 +37,6 @@ function WasteHotSchedEdit({wh_num, wh_date, wh_start_time, wh_end_time, wh_add_
     onSuccess?: () => void;
 }) {
 
-    console.log('waste:', wh_num)
     const {mutate: editHotspotAssignment, isPending} = useEditHotspot(onSuccess);
     const {data : fetchedWatchman = [], isLoading: isLoadingWatchman} = useGetWatchman();
     const {data: fetchedSitio = [], isLoading: isLoadingSitio} = useGetSitio();
@@ -65,7 +64,6 @@ function WasteHotSchedEdit({wh_num, wh_date, wh_start_time, wh_end_time, wh_add_
     });
 
     const onSubmit = (values: z.infer<typeof WasteHotspotEditSchema>) => {
-        console.log('Values:', values)
         editHotspotAssignment({
             ...values,
             wh_num: wh_num,

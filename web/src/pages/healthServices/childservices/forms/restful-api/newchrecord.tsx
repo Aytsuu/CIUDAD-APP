@@ -29,7 +29,6 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
   }
 
   try {
-    console.log("Sending comprehensive child health data to single API endpoint...");
 
     // Transform the data to match what the backend expects
     const requestData = {
@@ -45,7 +44,6 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         place_of_delivery_type: submittedData.placeOfDeliveryType,
         pod_location: submittedData.placeOfDeliveryLocation,
         mother_occupation: submittedData.motherOccupation,
-        type_of_feeding: submittedData.type_of_feeding,
         father_occupation: submittedData.fatherOccupation,
         birth_order: submittedData.birth_order,
         newborn_screening: localDateFormatter(submittedData.dateNewbornScreening),
@@ -53,7 +51,7 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         nbscreening_result: submittedData.nbscreening_result,
         newbornInitiatedbf: submittedData.newbornInitiatedbf,
         selectedStaffId: submittedData.selectedStaffId,
-
+        pregnancy_id: submittedData.pregnancy_id,
         // Child health history
         status: submittedData.status,
         tt_status: submittedData.tt_status,
@@ -92,20 +90,12 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
       originalRecord: originalRecord
     };
 
-    console.log("Request payload:", {
-      pat_id: requestData.submittedData.pat_id,
-      residenceType: requestData.submittedData.residenceType,
-      hasVitalSigns: !!requestData.submittedData.vitalSigns?.length,
-      hasMedicines: !!requestData.submittedData.medicines?.length,
-      hasBFdates: !!requestData.submittedData.BFchecks?.length,
-      isUpdate: !!todaysHistoricalRecord
-    });
+  
 
     // Make single API call to comprehensive endpoint
     const response = await api2.post("child-health/create-new-record/", requestData);
 
     if (response.status === 200 || response.status === 201) {
-      console.log("Child health record processed successfully:", response.data);
       return {
         success: response.data.success,
         message: response.data.message,
@@ -120,7 +110,6 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
       throw new Error(`Unexpected response status: ${response.status}`);
     }
   } catch (error: any) {
-    console.error("Failed to process child health record:", error);
 
     // Handle different types of errors
     if (error.response?.data?.error) {
@@ -186,7 +175,7 @@ export const useChildHealthRecordMutation = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory", data.chrec_id] });
-      queryClient.invalidateQueries({ queryKey: ["childHealthRecords"] });
+      queryClient.invalidateQueries({ queryKey: ["ChildHealthRecords"] });
       queryClient.invalidateQueries({ queryKey: ["childHealthHistory"] });
       queryClient.invalidateQueries({ queryKey: ["nextufc"] });
       queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
@@ -197,12 +186,12 @@ export const useChildHealthRecordMutation = () => {
       queryClient.invalidateQueries({ queryKey: ["followupChildHealth", data.pat_id] });
       queryClient.invalidateQueries({ queryKey: ["unvaccinatedVaccines"] });
       queryClient.invalidateQueries({ queryKey: ["forwardedChildHealthHistoryRecord"] });
+      queryClient.invalidateQueries({ queryKey: ["patients5yearsbelow"] });
 
       showSuccessToast("submitted successfully!");
       navigate(-1);
     },
     onError: (error: unknown) => {
-      console.error("Child health record mutation with validation failed:", error);
 
       const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while processing child health record";
 

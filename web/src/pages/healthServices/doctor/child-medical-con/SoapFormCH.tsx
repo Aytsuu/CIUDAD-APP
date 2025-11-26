@@ -11,6 +11,7 @@ import { fetchMedicinesWithStock } from "@/pages/healthServices/medicineservices
 import { useSubmitSoapForm } from "./queries.tsx/soap-submission";
 import { soapSchema, SoapFormType } from "@/form-schema/doctor/soapSchema";
 import { ExamSection } from "../types";
+import { showErrorToast } from "@/components/ui/toast";
 
 interface SoapFormProps {
   patientData: any;
@@ -34,7 +35,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         ...med,
         _tempId: med._tempId || `medicine_${Date.now()}_${index}`,
         medrec_qty: Number(med.medrec_qty) || 1, // Ensure numeric value
-        reason: med.reason || ""
+        reason: med.reason || "",
       }));
     };
 
@@ -51,7 +52,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
   const [medicineSearchParams, setMedicineSearchParams] = useState<any>({
     page: 1,
     pageSize: 10,
-    search: '',
+    search: "",
     is_temp: true,
   });
   const { data: medicineData, isLoading: isMedicineLoading } = fetchMedicinesWithStock(medicineSearchParams);
@@ -63,7 +64,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
 
   // Add handlers for search and pagination
   const handleMedicineSearch = (searchTerm: string) => {
-    setMedicineSearchParams((prev:any) => ({
+    setMedicineSearchParams((prev: any) => ({
       ...prev,
       search: searchTerm,
       page: 1, // Reset to first page when searching
@@ -71,7 +72,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
   };
 
   const handleMedicinePageChange = (page: number) => {
-    setMedicineSearchParams((prev:any )=> ({
+    setMedicineSearchParams((prev: any) => ({
       ...prev,
       page,
     }));
@@ -86,19 +87,33 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
       plantreatment_summary: initialData?.plantreatment_summary || "",
       medicineRequest: {
         pat_id: patientData?.pat_id || "",
-        medicines: selectedMedicines // Use the state directly
+        medicines: selectedMedicines,
       },
       physicalExamResults: initialData?.physicalExamResults || [],
       selectedIllnesses: initialData?.selectedIllnesses || [],
-      followv: initialData?.followv || undefined
-    }
+      followv: initialData?.followv || undefined,
+      is_cbc: initialData?.is_cbc || false,
+      is_urinalysis: initialData?.is_urinalysis || false,
+      is_fecalysis: initialData?.is_fecalysis || false,
+      is_sputum_microscopy: initialData?.is_sputum_microscopy || false,
+      is_creatine: initialData?.is_creatine || false,
+      is_hba1c: initialData?.is_hba1c || false,
+      is_chestxray: initialData?.is_chestxray || false,
+      is_papsmear: initialData?.is_papsmear || false,
+      is_fbs: initialData?.is_fbs || false,
+      is_oralglucose: initialData?.is_oralglucose || false,
+      is_lipidprofile: initialData?.is_lipidprofile || false,
+      is_ecg: initialData?.is_ecg || false,
+      is_fecal_occult_blood: initialData?.is_fecal_occult_blood || false,
+      others: initialData?.others || "",
+    },
   });
 
   // FIX: Sync form values when selectedMedicines changes
   useEffect(() => {
     form.setValue("medicineRequest", {
       pat_id: patientData?.pat_id || "",
-      medicines: selectedMedicines
+      medicines: selectedMedicines,
     });
   }, [selectedMedicines, form, patientData?.pat_id]);
 
@@ -111,11 +126,25 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         plantreatment_summary: initialData.plantreatment_summary || "",
         medicineRequest: {
           pat_id: patientData?.pat_id || "",
-          medicines: selectedMedicines
+          medicines: selectedMedicines,
         },
         physicalExamResults: initialData.physicalExamResults || [],
         selectedIllnesses: initialData.selectedIllnesses || [],
-        followv: initialData.followv || undefined
+        followv: initialData.followv || undefined,
+        is_cbc: initialData.is_cbc || false,
+        is_urinalysis: initialData.is_urinalysis || false,
+        is_fecalysis: initialData.is_fecalysis || false,
+        is_sputum_microscopy: initialData.is_sputum_microscopy || false,
+        is_creatine: initialData.is_creatine || false,
+        is_hba1c: initialData.is_hba1c || false,
+        is_chestxray: initialData.is_chestxray || false,
+        is_papsmear: initialData.is_papsmear || false,
+        is_fbs: initialData.is_fbs || false,
+        is_oralglucose: initialData.is_oralglucose || false,
+        is_lipidprofile: initialData.is_lipidprofile || false,
+        is_ecg: initialData.is_ecg || false,
+        is_fecal_occult_blood: initialData.is_fecal_occult_blood || false,
+        others: initialData.others || "",
       });
     }
   }, [initialData, form, patientData, selectedMedicines]);
@@ -127,11 +156,31 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         const currentValues = form.getValues();
         onFormDataUpdate({
           ...currentValues,
-          selectedMedicines
+          selectedMedicines,
         });
       }
     };
   }, [form, selectedMedicines, onFormDataUpdate]);
+
+  // FIX: Validation function to check required fields before submission
+  const validateRequiredFields = (data: SoapFormType): boolean => {
+    const requiredFields = [
+      { field: data.subj_summary, name: "Subjective Summary" },
+      { field: data.obj_summary, name: "Objective Summary" },
+      { field: data.assessment_summary, name: "Assessment Summary" },
+      { field: data.plantreatment_summary, name: "Plan/Treatment Summary" },
+    ];
+
+    const emptyFields = requiredFields.filter(({ field }) => !field || field.trim() === "");
+
+    if (emptyFields.length > 0) {
+      const fieldNames = emptyFields.map(f => f.name).join(", ");
+      showErrorToast(`Please fill in the following required fields: ${fieldNames}`);
+      return false;
+    }
+
+    return true;
+  };
 
   // FIX: Improved medicine update handler with better change detection
   const handleSelectedMedicinesChange = useCallback(
@@ -146,24 +195,24 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         ...med,
         _tempId: med._tempId || `medicine_${Date.now()}_${index}`,
         medrec_qty: Number(med.medrec_qty) || 1, // Ensure numeric value
-        reason: med.reason || ""
+        reason: med.reason || "",
       }));
 
       // Better change detection - compare the actual content, not just order
-      const currentMedicines = selectedMedicines.map(med => ({
+      const currentMedicines = selectedMedicines.map((med) => ({
         minv_id: med.minv_id,
         medrec_qty: med.medrec_qty,
-        reason: med.reason
+        reason: med.reason,
       }));
-      
-      const newMedicines = updatedWithIds.map(med => ({
+
+      const newMedicines = updatedWithIds.map((med) => ({
         minv_id: med.minv_id,
         medrec_qty: med.medrec_qty,
-        reason: med.reason
+        reason: med.reason,
       }));
 
       const hasChanges = JSON.stringify(currentMedicines) !== JSON.stringify(newMedicines);
-      
+
       if (!hasChanges) {
         return;
       }
@@ -179,7 +228,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         updatedWithIds.length > 0
           ? updatedWithIds.map((med) => {
               const stock = medicineStocksOptions?.find((m: any) => m.id === med.minv_id);
-              return `- ${stock?.name || 'Unknown'} ${stock?.dosage || ''} (${med.medrec_qty} ${stock?.unit || 'units'}) ${med.reason || ''}`;
+              return `- ${stock?.name || "Unknown"} ${stock?.dosage || ""} (${med.medrec_qty} ${stock?.unit || "units"}) ${med.reason || ""}`;
             })
           : [];
 
@@ -189,14 +238,14 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
       form.setValue("plantreatment_summary", newSummary);
       form.setValue("medicineRequest", {
         pat_id: patientData?.pat_id || "",
-        medicines: updatedWithIds
+        medicines: updatedWithIds,
       });
 
       if (onFormDataUpdate) {
         const currentValues = form.getValues();
         onFormDataUpdate({
           ...currentValues,
-          selectedMedicines: updatedWithIds
+          selectedMedicines: updatedWithIds,
         });
       }
     },
@@ -216,7 +265,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         onFormDataUpdate({
           ...form.getValues(),
           selectedIllnesses: ids,
-          selectedMedicines
+          selectedMedicines,
         });
       }
     },
@@ -232,7 +281,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         onFormDataUpdate({
           ...form.getValues(),
           assessment_summary: text,
-          selectedMedicines
+          selectedMedicines,
         });
       }
     },
@@ -245,7 +294,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
         pe_section_id: section.pe_section_id,
         title: section.title,
         isOpen: false,
-        options: []
+        options: [],
       }));
 
       optionsQuery.data.forEach((option: any) => {
@@ -254,7 +303,7 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
           section.options.push({
             pe_option_id: option.pe_option_id,
             text: option.text,
-            checked: form.getValues("physicalExamResults")?.includes(option.pe_option_id) || false
+            checked: form.getValues("physicalExamResults")?.includes(option.pe_option_id) || false,
           });
         }
       });
@@ -268,27 +317,47 @@ export default function SoapForm({ patientData, checkupData, onBack, initialData
       const currentValues = form.getValues();
       onFormDataUpdate({
         ...currentValues,
-        selectedMedicines
+        selectedMedicines,
       });
     }
     onBack();
   }, [form, selectedMedicines, onFormDataUpdate, onBack]);
 
+  // FIX: Updated onSubmit with validation
   const onSubmit = async (data: SoapFormType) => {
+    // Validate required fields are not empty
+    if (!validateRequiredFields(data)) {
+      return; // Stop submission if validation fails
+    }
+
     // Ensure the latest selectedMedicines are included in submission
     const submissionData = {
       ...data,
+      is_cbc: data.is_cbc,
+      is_urinalysis: data.is_urinalysis,
+      is_fecalysis: data.is_fecalysis,
+      is_sputum_microscopy: data.is_sputum_microscopy,
+      is_creatine: data.is_creatine,
+      is_hba1c: data.is_hba1c,
+      is_chestxray: data.is_chestxray,
+      is_papsmear: data.is_papsmear,
+      is_fbs: data.is_fbs,
+      is_oralglucose: data.is_oralglucose,
+      is_lipidprofile: data.is_lipidprofile,
+      is_ecg: data.is_ecg,
+      is_fecal_occult_blood: data.is_fecal_occult_blood,
+      others: data.others,
       medicineRequest: {
         ...data.medicineRequest,
-        medicines: selectedMedicines
-      }
+        medicines: selectedMedicines,
+      },
     };
 
     submitSoapForm({
       formData: submissionData,
       patientData,
       checkupData,
-      staffId: staff
+      staffId: staff,
     });
   };
 

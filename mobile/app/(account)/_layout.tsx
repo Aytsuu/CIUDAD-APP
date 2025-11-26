@@ -27,7 +27,6 @@ export default () => {
               <Stack.Screen name="settings/index" options={{ headerShown: false}}/>
               <Stack.Screen name="settings/change-phone" options={{ headerShown: false, animation: 'fade'}}/>
               <Stack.Screen name="settings/change-email" options={{ headerShown: false, animation: 'fade'}}/>
-              <Stack.Screen name="settings/change-password" options={{ headerShown: false, animation: 'fade'}}/>
               <Stack.Screen name="personal/index" options={{ headerShown: false, animation: 'slide_from_right'}}/>
               <Stack.Screen name="personal/update" options={{ headerShown: false, animation: 'fade'}}/>
               <Stack.Screen name="family" options={{ headerShown: false, animation: 'fade'}}/>

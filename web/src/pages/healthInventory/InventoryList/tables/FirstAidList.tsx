@@ -49,14 +49,13 @@ export default function FirstAidList() {
 
   // Debug: Log API response
   useEffect(() => {
-    console.log("First Aid Data Response:", firstAidData);
-    console.log("API Error:", error);
+    
   }, [firstAidData, error]);
 
   const deleteFirstAidMutation = useDeleteFirstAid();
 
   const formatFirstAidData = useCallback((): FirstAidRecords[] => {
-    console.log("Formatting first aid data:", firstAidData);
+    
 
     // Handle different response formats
     let firstAidResults = [];
@@ -199,9 +198,10 @@ export default function FirstAidList() {
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
-                handlePageSizeChange(value >= 1 ? value : 1);
+                handlePageSizeChange(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
               }}
               min="1"
+              max="50"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>

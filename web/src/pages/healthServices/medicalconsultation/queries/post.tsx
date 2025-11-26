@@ -18,7 +18,16 @@ export const useSubmitMedicalConsultation = () => {
       showSuccessToast("Medical record created successfully");
       queryClient.invalidateQueries({ queryKey: ["medicalConsultations"] });
       queryClient.invalidateQueries({ queryKey: ["combinedHealthRecords"] });
-      
+      queryClient.invalidateQueries({ queryKey: ["medicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["confirmedmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["completedmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["rejectedmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["cancelledmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["missedmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["referredmedicalapp"] });
+
       navigate(-1);
     },
     onError: (error: any) => {

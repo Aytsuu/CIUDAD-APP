@@ -7,7 +7,7 @@ export const getWasteCollectors = async () => {
         const res = await api.get('waste/waste-collectors/');
         return res.data
     } catch(err){
-        console.error(err)
+        // console.error(err)
         throw err;
     }
 }
@@ -19,7 +19,7 @@ export const getWasteDrivers = async () => {
         const res = await api.get('waste/waste-drivers/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -31,7 +31,7 @@ export const getWasteTrucks = async () => {
         const res = await api.get('waste/waste-trucks/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 }
@@ -43,7 +43,7 @@ export const getSitio = async () => {
         const res = await api.get('waste/sitio/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 }
@@ -78,8 +78,8 @@ export const getWasteCollectionSchedFull = async (
             results: Array.isArray(res.data) ? res.data : [],
             count: Array.isArray(res.data) ? res.data.length : 0
         };
-    } catch (err) {
-        console.error(err);
+    } catch (_err) {
+        // console.error(err);
         return { results: [], count: 0 };
     }
 };

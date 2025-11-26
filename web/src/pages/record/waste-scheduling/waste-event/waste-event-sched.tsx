@@ -156,7 +156,6 @@ function WasteEventSched() {
             form.reset();
             setIsDialogOpen(false);
         } catch (error) {
-            console.error('Error creating waste event:', error);
             showErrorToast("Failed to schedule event. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -199,24 +198,17 @@ function WasteEventSched() {
                                 )}
                             />
                             {/* Location (Sitio) */}
-                            <FormField
-                                control={form.control}
-                                name="location"
-                                render={() => (
-                                    <FormItem className="mb-4">
-                                        <Label className="font-medium">Sitio</Label>
-                                        <FormControl>
-                                            <FormSelect
-                                                control={form.control}
-                                                name="location"
-                                                options={sitioOptions}
-                                                isLoading={isSitioLoading}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="mb-4">
+                                <FormSelect
+                                    control={form.control}
+                                    name="location"
+                                    label="Sitio"
+                                    options={sitioOptions}
+                                    isLoading={isSitioLoading}
+                                    placeholder="Select sitio"
+                                    emptyMessage="No sitios available"
+                                />
+                            </div>
 
                             {/* Date and Time */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -258,24 +250,17 @@ function WasteEventSched() {
                             </div>
 
                             {/* Organizer */}
-                            <FormField
-                                control={form.control}
-                                name="organizer"
-                                render={() => (
-                                    <FormItem className="mb-4">
-                                        <Label className="font-medium">Organizer</Label>
-                                        <FormControl>
-                                            <FormSelect
-                                                control={form.control}
-                                                name="organizer"
-                                                options={staffOptions}
-                                                isLoading={isStaffLoading}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            <div className="mb-4">
+                                <FormSelect
+                                    control={form.control}
+                                    name="organizer"
+                                    label="Organizer"
+                                    options={staffOptions}
+                                    isLoading={isStaffLoading}
+                                    placeholder="Select organizer"
+                                    emptyMessage="No staff available"
+                                />
+                            </div>
 
                             {/* Event Description */}
                             <FormField
@@ -305,9 +290,6 @@ function WasteEventSched() {
                                         <Label className="font-medium">Announcement Settings</Label>
                                         <Card className="border border-gray-200">
                                             <CardContent className="p-4">
-                                                <p className="text-sm text-gray-600 mb-3">
-                                                    Select audience for mobile app announcement:
-                                                </p>
                                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                                     {announcementOptions.map((option) => (
                                                         <div key={option.id} className="flex items-center gap-2 bg-gray-50 p-2 rounded">

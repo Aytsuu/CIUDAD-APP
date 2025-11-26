@@ -632,9 +632,9 @@ import { useGetTemplateRecord } from "../../council/templates/queries/template-F
 import { formatTime } from "@/helpers/timeFormatter"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { useResolveCase } from "../queries/summonUpdateQueries"
-import { useGetLuponCaseDetails } from "../queries/summonFetchQueries"
-import type { HearingSchedule } from "../summon-types"
+import { useResolveCase, useReEscalateCase, useEscalateCase } from "../queries/summonUpdateQueries"
+import { useGetLuponCaseDetails, useGetFileActionPaymentLogs } from "../queries/summonFetchQueries"
+import type { HearingSchedule, PaymentRequest } from "../summon-types"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import CreateSummonSched from "../summon-create"
 import { useLoading } from "@/context/LoadingContext"
@@ -643,9 +643,9 @@ import { formatDate } from "@/helpers/dateHelper"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { InfoIcon } from "lucide-react"
 import SummonRemarksView from "../summon-remarks-view"
-import { useEscalateCase } from "../queries/summonUpdateQueries"
 import LuponPreview from "./conciliation-preview"
 import { useAuth } from "@/context/AuthContext"
+import { showErrorToast } from "@/components/ui/toast"
 
 function ResidentBadge({ hasRpId }: { hasRpId: boolean }) {
   return (
@@ -677,19 +677,21 @@ export default function LuponCaseDetails() {
   } = location.state || {}
 
   const { data: caseDetails, isLoading: isDetailLoading } = useGetLuponCaseDetails(sc_id)
+  const { data: paymentLogs = [], isLoading: isPaymentLogsLoading } = useGetFileActionPaymentLogs(caseDetails?.comp_id || "")
   const [editingRowId, setEditingRowId] = useState<string | null>(null)
   const { mutate: resolve } = useResolveCase()
   const { mutate: escalate } = useEscalateCase()
+  const { mutate: reescalate } = useReEscalateCase()
   const { data: templates = [], isLoading: isLoadingTemplate } = useGetTemplateRecord()
   const { showLoading, hideLoading } = useLoading()
 
   useEffect(() => {
-    if (isDetailLoading || isLoadingTemplate) {
+    if (isDetailLoading || isLoadingTemplate || isPaymentLogsLoading) {
       showLoading();
     } else {
       hideLoading();
     }
-  }, [isDetailLoading, isLoadingTemplate, showLoading, hideLoading]);
+  }, [isDetailLoading, isLoadingTemplate, isPaymentLogsLoading, showLoading, hideLoading]);
 
   // Template data fetching
   const templateData = templates[0] || {}
@@ -761,9 +763,20 @@ export default function LuponCaseDetails() {
 
     if (caseDetails?.comp_id) {
       escalate({sc_id, comp_id, staff_id});
-    } else {
-      console.error("Cannot escalate: comp_id is undefined");
-    }
+    } 
+  }
+
+  const handleReescalate = () => {        
+      const hasUnpaidPayment = paymentLogs?.some((log: PaymentRequest) => 
+          log.pay_status === 'Unpaid'
+      );
+      
+      if (hasUnpaidPayment) {
+          showErrorToast("Cannot re-escalate: There is a pending request for file action.");
+          return;
+      } else {
+          reescalate(String(comp_id))
+      }
   }
 
   // Function to handle minutes view click
@@ -1017,13 +1030,13 @@ export default function LuponCaseDetails() {
             <div className="flex items-start gap-2">
               <Calendar className="h-4 w-4 text-blue-600 mt-0.5" />
               <AlertDescription className="text-blue-800">
-                <strong>Resident Case:</strong> As the complainant is a resident, they have the option to choose their preferred date and time for the hearing schedule. Please coordinate with the complainant to determine their availability.
+                <strong>Resident Case:</strong> As the complainant is a resident, they can choose their preferred date and time for the hearing schedule. 
               </AlertDescription>
             </div>
           </Alert>
         )}
 
-        <Card className="w-full bg-white p-6 shadow-sm mb-8">
+        <Card className="w-full bg-white p-6 shadow-sm mb-2">
           {/* 3rd Conciliation Proceedings Action Notice - Inside the card */}
           {isThirdConciliation && !isCaseClosed && (
             <Alert className="bg-red-50 border-red-200 mb-6">
@@ -1118,6 +1131,8 @@ export default function LuponCaseDetails() {
             </div>
           </div>
 
+
+
           {/* Action Buttons or Decision Date */}
           <div className="border-t border-gray-100 flex justify-between items-center pt-4">
             {/* Left side - View Complaint button */}
@@ -1207,17 +1222,44 @@ export default function LuponCaseDetails() {
               </div>
             ) : (
               // Only show date marked if not null and case is closed
-              sc_date_marked && (
-                <p className="text-sm text-gray-500">
-                  Marked on <span className="font-semibold text-gray-800">{formatTimestamp(new Date(sc_date_marked))}</span>
-                  {staff_name && (
-                    <> • <span className="font-semibold text-gray-800">{staff_name}</span></>
-                  )}
-                </p>
-              )
+               <div className="flex gap-3">
+                {displayStatus?.toLowerCase() === 'escalated' && (
+                  <TooltipLayout
+                    content="Re-escalate this case for further action"
+                    trigger={
+                      <div>
+                        <ConfirmationModal
+                          trigger={
+                            <Button 
+                              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 flex items-center gap-2"
+                            >
+                              <AlertTriangle className="w-4 h-4" /> Re-Escalate Case
+                            </Button>
+                          }
+                          title="Confirm Re-escalation"
+                          description="Are you sure you want to re-escalate this case? This will create another request for file action."
+                          actionLabel="Confirm"
+                          onClick={handleReescalate}
+                        />
+                      </div>
+                    }
+                  />
+                )}
+              </div>
             )}
           </div>
         </Card>
+
+        {isCaseClosed && sc_date_marked && (
+          <div className="flex justify-end mb-8">
+            <p className="text-sm text-gray-500 flex items-center">
+              Marked on <span className="font-semibold text-gray-800 ml-1">{formatTimestamp(new Date(sc_date_marked))}</span>
+              {staff_name && (
+                <> • <span className="font-semibold text-gray-800 ml-1">{staff_name}</span></>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* Only show Create New Schedule button if conditions are met AND not in 3rd conciliation */}
         {shouldShowCreateButton && (

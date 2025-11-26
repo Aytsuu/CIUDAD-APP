@@ -8,17 +8,17 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
     try {
         let RepNum = null;
 
-        console.log("WASTE REPORT DATA: ", {
-            rep_date: reportInfo.rep_date,
-            rep_location: reportInfo.rep_location,
-            rep_contact: reportInfo.phone,
-            rep_matter: reportInfo.rep_matter,
-            rep_violator: reportInfo.rep_violator,
-            rep_add_details: reportInfo.rep_add_details,
-            rep_anonymous: reportInfo.rep_anonymous || "None",
-            sitio_id: reportInfo.sitio_id,    
-            rp_id: reportInfo.rp_id,
-        });        
+        // console.log("WASTE REPORT DATA: ", {
+        //     rep_date: reportInfo.rep_date,
+        //     rep_location: reportInfo.rep_location,
+        //     rep_contact: reportInfo.phone,
+        //     rep_matter: reportInfo.rep_matter,
+        //     rep_violator: reportInfo.rep_violator,
+        //     rep_add_details: reportInfo.rep_add_details,
+        //     rep_anonymous: reportInfo.rep_anonymous || "None",
+        //     sitio_id: reportInfo.sitio_id,    
+        //     rp_id: reportInfo.rp_id,
+        // });        
 
         // First API call to create the report
         const wasteReportResponse = await api.post('waste/waste-report/', {
@@ -63,7 +63,7 @@ export const addWasteReport = async (reportInfo: Record<string, any>) => {
         return wasteReportResponse.data;
 
     } catch (err) {
-        console.error("Error creating waste report");
+        // console.error("Error creating waste report");
         throw err;
     }
 };

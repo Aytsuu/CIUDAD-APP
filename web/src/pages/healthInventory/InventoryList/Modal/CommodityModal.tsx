@@ -13,6 +13,8 @@ import { useCommodities } from "../queries/commodity/CommodityFetchQueries";
 import { Loader2 } from "lucide-react";
 import { showErrorToast, } from "@/components/ui/toast";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { useAuth } from "@/context/AuthContext";
+
 
 export const user_type_options = [
   { id: "Current user", name: "Current user" },
@@ -39,6 +41,10 @@ interface CommodityModalProps {
 
 export function CommodityModal({ mode, initialData, onClose }: CommodityModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const { user } = useAuth();
+    const staff = user?.staff?.staff_id;
+
   const [commodityName, setCommodityName] = useState("");
   const { data: commodities } = useCommodities();
 
@@ -47,7 +53,8 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
     defaultValues: {
       com_name: initialData?.com_name || "",
       user_type: initialData?.user_type || "",
-      gender_type: initialData?.gender_type || ""
+      gender_type: initialData?.gender_type || "",
+      staff: staff || ""
     },
     mode: "onChange" 
   });

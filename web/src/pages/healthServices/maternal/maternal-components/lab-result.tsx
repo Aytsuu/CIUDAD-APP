@@ -191,12 +191,12 @@ const ImageUploadSection = ({ labName, labData, onImageUpload, onImageRemove }: 
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-2">
           {labData.images.map((image, index) => (
             <div key={index} className="relative group border rounded-md overflow-hidden bg-gray-50 hover:shadow-sm transition-shadow">
-              <div className="aspect-square bg-gray-100 flex items-center justify-center overflow-hidden h-16">
-                <img src={image.preview || "/placeholder.svg"} alt={`Lab result ${index + 1}`} className="w-full h-full object-contain cursor-pointer p-1" onClick={() => setShowPreview(image.preview)} />
+              <div className="flex items-center justify-center overflow-hidden">
+                <img src={image.preview || "/placeholder.svg"} alt={`Lab result ${index + 1}`} className="w-auto h-auto max-w-full max-h-32 cursor-pointer p-1" onClick={() => setShowPreview(image.preview)} />
               </div>
               <div className="p-1">
-                <p className="text-[10px] font-medium truncate">{image.name}</p>
-                <p className="text-[9px] text-gray-500">{formatFileSize(image.size)}</p>
+                <p className="text-[11px] font-medium truncate">{image.name}</p>
+                <p className="text-[10px] text-gray-500">{formatFileSize(image.size)}</p>
               </div>
               <button type="button" onClick={(e) => handleRemoveImage(e, index)} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity" title="Remove image">
                 <X size={12} className="w-3 h-3" />

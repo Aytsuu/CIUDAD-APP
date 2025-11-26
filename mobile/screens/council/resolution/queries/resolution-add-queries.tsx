@@ -39,8 +39,8 @@ export const useCreateResolution = (onSuccess?: () => void) => {
                 type: file.type,
                 file: file.file
               }
-            }).catch(error => {
-              console.error("Error creating file entry:", error);
+            }).catch(_error => {
+              // console.error("Error creating file entry:", error);
               return null;
             })
           )
@@ -58,8 +58,8 @@ export const useCreateResolution = (onSuccess?: () => void) => {
                 type: file.type,
                 file: file.file
               }
-            }).catch(error => {
-              console.error("Error creating file entry:", error);
+            }).catch(_error => {
+              // console.error("Error creating file entry:", error);
               return null;
             })
           )
@@ -77,8 +77,8 @@ export const useCreateResolution = (onSuccess?: () => void) => {
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error submitting Resolution:", err);
+    onError: (_err) => {
+      // console.error("Error submitting Resolution:", err);
       toast.error("Failed to submit Resolution. Please check the input data and try again.");
     }
   });

@@ -6,7 +6,7 @@
 export function prepareNCDRecordForSubmission(ncdRecord: any) {
   if (!ncdRecord || !ncdRecord.id) {
     console.warn('Invalid NCD record: missing id (resident ID)');
-    console.log('NCD record received:', ncdRecord);
+    // console.log('NCD record received:', ncdRecord);
     return null;
   }
 
@@ -14,7 +14,7 @@ export function prepareNCDRecordForSubmission(ncdRecord: any) {
   const ncdData = ncdRecord.ncdFormSchema;
   if (!ncdData) {
     console.warn('Invalid NCD record: missing ncdFormSchema');
-    console.log('NCD record received:', ncdRecord);
+    // console.log('NCD record received:', ncdRecord);
     return null;
   }
 
@@ -31,7 +31,7 @@ export function prepareNCDRecordForSubmission(ncdRecord: any) {
     ncd_maintenance_status: ncdData.inMaintenance || 'no'
   };
 
-  console.log('Prepared NCD payload:', payload);
+  // console.log('Prepared NCD payload:', payload);
 
   // Don't remove empty values as the backend handles optional fields
   return payload;
@@ -73,3 +73,4 @@ export function validateNCDRecord(ncdRecord: any) {
     errors
   };
 }
+

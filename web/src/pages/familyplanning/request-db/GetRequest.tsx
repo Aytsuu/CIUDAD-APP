@@ -6,6 +6,7 @@ export interface IndividualFPRecordDetail {
 
   fprecord: any
   patrec_id: string
+  patrec: string
   fprecord_id: number
   client_id: string
   patient_name: string
@@ -27,8 +28,6 @@ export interface FPPatientsCount {
   minor_fp_patients: number;
 }
 
-// Define the structure for the paginated response from the backend
-// This interface describes the object returned by your Django REST Framework's pagination
 export interface PaginatedFPRecords {
   count: number; // Total number of items across all pages
   next: string | null; // URL for the next page, or null if no next page
@@ -36,8 +35,6 @@ export interface PaginatedFPRecords {
   results: FPRecord[]; // The actual list of records for the current page
 }
 
-// Define the structure for a single FPRecord as it comes from the backend
-// This should match the structure of the objects within the 'results' array
 export interface FPRecord {
   fprecord_id: number;
   patient_id: string;
@@ -66,6 +63,8 @@ export interface GetFPRecordsParams {
   page_size?: number;
   search?: string;
   client_type?: string;
+  patient_type?: string;
+  sitio?: string;
 }
 
 export const getFPPatientsCounts = async (): Promise<FPPatientsCount> => {
@@ -97,44 +96,6 @@ export const getAllFPRecordsForPatient = async (patrec_id: any) => {
   }
 
   };  
-
-// // Updated getFPRecordsList to accept pagination and filter parameters
-// export const getFPRecordsList = async (params: GetFPRecordsParams = {}): Promise<PaginatedFPRecords> => {
-//   try {
-//     const response = await api2.get("familyplanning/overall-records/", { params });
-//     const { count, next, previous, results } = response.data;
-
-//     // The transformation logic here should match the FPRecord interface defined above
-//     // and the data structure returned by your Django backend's `list` method.
-//     const transformedResults: FPRecord[] = results.map((record: any) => {
-//       return {
-//         fprecord_id: record.fprecord_id,
-//         patient_id: record.patient_id,
-//         client_id: record.client_id || "N/A",
-//         patient_name: record.patient_name || "N/A",
-//         patient_age: record.patient_age || "N/A",
-//         patient_type: record.patient_type || "N/A",
-//         client_type: record.client_type || "N/A",
-//         method_used: record.method_used || "N/A",
-//         subtype: record.subtype || "N/A", // Ensure this matches the backend's output
-//         created_at: record.created_at || "N/A",
-//         sex: record.sex || "Unknown",
-//         record_count: record.record_count || 0,
-//       };
-//     });
-
-//     return {
-//       count,
-//       next,
-//       previous,
-//       results: transformedResults,
-//     };
-//   } catch (err) {
-//     console.error("Error fetching FP records for overall table:", err);
-//     // Return a default paginated structure on error
-//     return { count: 0, next: null, previous: null, results: [] };
-//   }
-// };
 
 export interface FullFPRecordDetail {
   fprecord_id: number;
@@ -317,15 +278,26 @@ export const getFPRecordsForPatient = async (patientId: string | number): Promis
 // NEW: Function to get the LATEST complete FP record for a patient (for pre-filling form)
 export const getLatestCompleteFPRecordForPatient = async (patientId: string): Promise<any | null> => {
   try {
-    const response = await api2.get(`familyplanning/latest-fp-record-by-patient/${patientId}/`)
-    return response.data
+    console.log("🔍 Fetching latest FP record for patient:", patientId);
+    const response = await api2.get(`familyplanning/latest-fp-record-by-patient/${patientId}/`);
+    console.log("✅ Latest FP record response:", response.data);
+    return response.data;
   } catch (err) {
-    if (axios.isAxiosError(err) && err.response?.status === 404) {
-      console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
-      return null; // Return null if no existing record, so the form can load defaults
+    if (axios.isAxiosError(err)) {
+      console.log("❌ Axios error details:", {
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+        data: err.response?.data,
+        url: err.config?.url
+      });
+      
+      if (err.response?.status === 404) {
+        console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
+        return null;
+      }
     }
     console.error(`❌ Error fetching latest complete FP record for patient ${patientId}:`, err);
-    throw err; // Re-throw other errors
+    throw err;
   }
 }
 

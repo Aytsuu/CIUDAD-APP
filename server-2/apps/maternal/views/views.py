@@ -102,7 +102,8 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
                 })
 
             medical_history_obj = MedicalHistory.objects.filter(
-                patrec__in=all_patrec_w_medhis 
+                patrec__in=all_patrec_w_medhis,
+                is_from_famhistory=False  # EXCLUDE family history records
             ).select_related('ill', 'patrec').order_by('-created_at')
             
             # Apply search filter if search query is provided
@@ -293,14 +294,10 @@ class MaternalPatientListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = Patient.objects.filter(
-            Exists(PatientRecord.objects.filter(
-                pat_id=OuterRef('pat_id'),
-                patrec_type__in=['Prenatal', 'Postpartum Care']
+            Exists(Pregnancy.objects.filter(
+                pat_id=OuterRef('pat_id')
             ))
-        ).annotate(
-            completed_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
-        ).distinct()
-
+        )
 
         params = self.request.query_params
         status = params.get('status')
@@ -334,6 +331,77 @@ class MaternalPatientListView(generics.ListAPIView):
             queryset = queryset.filter(filters)
             
         return queryset
+
+
+class ForwardedMidwifeMaternalListView(generics.ListAPIView):
+    serializer_class = PatientSerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        # Get all prenatal forms that match and strip in Python since DB has trailing spaces
+        matching_pf_ids = []
+        for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False):
+            status = (pf.status or '').strip()
+            forwarded_status = (pf.forwarded_status or '').strip()
+            if status == 'tbc_by_midwife' and forwarded_status == 'pending':
+                matching_pf_ids.append(pf.pf_id)
+        
+        logger.info(f"Debug: Found {len(matching_pf_ids)} matching prenatal forms: {matching_pf_ids}")
+        
+        # Now get patients from these forms
+        if not matching_pf_ids:
+            return Patient.objects.none()
+        
+        queryset = Patient.objects.filter(
+            Exists(PatientRecord.objects.filter(
+                pat_id=OuterRef('pat_id'),
+                prenatal_form__pf_id__in=matching_pf_ids
+            ))
+        )
+        
+        logger.info(f"Debug: ForwardedMidwifeMaternalListView returning {queryset.count()} patients")
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        """Override list to include patrec_type in response"""
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = serializer.data
+            
+            # Add patrec_type for each patient
+            for patient_data in data:
+                patient_id = patient_data.get('pat_id')
+                patrec = PatientRecord.objects.filter(
+                    pat_id=patient_id,
+                    prenatal_form__pf_id__in=[pf.pf_id for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False)]
+                ).first()
+                if patrec:
+                    patient_data['patrec_type'] = patrec.patrec_type
+                else:
+                    patient_data['patrec_type'] = None
+            
+            return self.get_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+        
+        # Add patrec_type for each patient
+        for patient_data in data:
+            patient_id = patient_data.get('pat_id')
+            patrec = PatientRecord.objects.filter(
+                pat_id=patient_id,
+                prenatal_form__pf_id__in=[pf.pf_id for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False)]
+            ).first()
+            if patrec:
+                patient_data['patrec_type'] = patrec.patrec_type
+            else:
+                patient_data['patrec_type'] = None
+        
+        return Response(data)
 
 
 # Counts
@@ -462,7 +530,7 @@ def get_latest_patient_prenatal_record(request, pat_id):
                 status__in=['completed', 'pregnancy loss']
             ).order_by('-created_at').first()
 
-            # Get latest occupation from any prenatal form for this patient
+            # GET latest occupation from any prenatal form for this patient
             latest_occupation = None
             latest_pf_with_occupation = Prenatal_Form.objects.filter(
                 patrec_id__pat_id=patient,
@@ -494,7 +562,7 @@ def get_latest_patient_prenatal_record(request, pat_id):
         ).select_related(
             'pregnancy_id', 'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'bm_id', 'staff'
         ).prefetch_related(
-            'pf_previous_hospitalization', 'lab_result__lab_result_img',
+            'pf_previous_hospitalization', #'lab_result__lab_result_img',
             'pf_anc_visit', 'pf_checklist', 'pf_birth_plan', 
             'pf_obstetric_risk_code', 'pf_prenatal_care'
         ).order_by('-created_at').first()
@@ -508,10 +576,10 @@ def get_latest_patient_prenatal_record(request, pat_id):
             }, status=status.HTTP_200_OK)
 
         serializer = PrenatalDetailSerializer(latest_pf)
-        # Attach spouse info if available
+        
         result_data = serializer.data
         if spouse_data:
-            result_data['spouse_details'] = spouse_data
+            result_data['spouse_details'] = spouse_data # spouse data if available 
 
         return Response({
             'pat_id': pat_id,
@@ -923,3 +991,31 @@ def get_illness_list(request):
         return Response({
             'error': f'Failed to fetch illness list: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_maternal_staff(request):
+    """
+    Get all staff members with roles: BARANGAY HEALTH WORKERS, ADMIN, and DOCTOR
+    """
+    try:
+        staff_members = Staff.objects.filter(
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=['ADMIN', 'MIDWIFE', 'BARANGAY HEALTH WORKERS']
+        ).select_related('rp__per', 'pos').order_by('rp__per__per_lname', 'rp__per__per_fname')
+        
+        serializer = StaffSerializer(staff_members, many=True)
+        
+        return Response({
+            'success': True,
+            'staff': serializer.data,
+            'count': staff_members.count()
+        }, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f'Error fetching maternal staff: {str(e)}')
+        return Response({
+            'success': False,
+            'error': f'Failed to fetch staff list: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    

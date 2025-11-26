@@ -31,6 +31,32 @@ class BodyMeasurementView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
     
+
+class ChildrenBodyMeasurementView(generics.ListAPIView):
+    serializer_class = BodyMeasurementSerializer
+
+    def get_queryset(self):
+        queryset = BodyMeasurement.objects.all()
+        pat_id = self.kwargs.get('pat_id')
+        if pat_id:
+            queryset = queryset.filter(pat_id=pat_id)
+        filtered = []
+        for bm in queryset.select_related('pat', 'pat__rp_id', 'pat__rp_id__per', 'pat__trans_id'):
+            dob = None
+            # Resident patient
+            if bm.pat and hasattr(bm.pat, 'rp_id') and bm.pat.rp_id and hasattr(bm.pat.rp_id, 'per') and bm.pat.rp_id.per:
+                dob = bm.pat.rp_id.per.per_dob
+            # Transient patient
+            elif bm.pat and hasattr(bm.pat, 'trans_id') and bm.pat.trans_id:
+                dob = bm.pat.trans_id.tran_dob
+            if dob and bm.created_at:
+                created = bm.created_at
+                age_months = (created.year - dob.year) * 12 + (created.month - dob.month)
+                if created.day < dob.day:
+                    age_months -= 1
+                if 0 <= age_months <= 71:
+                    filtered.append(bm)
+        return filtered
     
 class DeleteUpdateBodyMeasurementView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BodyMeasurementSerializer

@@ -5,18 +5,33 @@ import { useReportSectionCards } from "@/components/analytics/report/report-sect
 import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
 import ComplaintSectionCharts from "@/components/analytics/complaint/complaint-section-chart";
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
+
+// HEALTH SERVICES
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
-import { MedicineDistributionSidebar } from "@/components/analytics/health/medicine-sidebar";
+import { MedicineDistributionChart } from "@/components/analytics/health/medicine-chart";
 import { OPTStatusChart } from "@/components/analytics/health/opt-tracking-chart";
 import { format } from "date-fns";
 import { MedicalHistoryMonthlyChart } from "@/components/analytics/health/illness-chart";
-import { FirstAidDistributionSidebar } from "@/components/analytics/health/firstaid-sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { MaternalAgeDistributionChart } from "@/components/analytics/health/maternal-age-chart";
+// import { AnimalBiteSectionCards } from "@/components/analytics/animalbites/animal-bite-section-cards";
+import FamilyPlanningAnalytics from "@/components/analytics/famplanning/fp-analytic";
+// import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
+// import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
+import { ReferredPatientsSidebar } from "@/components/analytics/health/referred_patients";
+import { ToPickupMedicineRequestsSidebar } from "@/components/analytics/health/topickup-sidebar";
+import { VaccineResidentChart } from "@/components/analytics/health/vaccine-chart";
+// import { MedicineAlertsSidebar } from "@/components/analytics/health/invmedicine_sidebar";
+// import { AntigenAlertsSidebar } from "@/components/analytics/health/invantigen_sidebar";
+// import {FirstAidAlertsSidebar} from "@/components/analytics/health/invfirstaid_sidebar";
+// import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
+import { InventoryAlertsSidebar } from "@/components/analytics/health/inventory-alerts-sidebar";
+
 import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
-import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report"; 
-import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar"; 
+import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
+import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
 import { ProjectProposalSidebar } from "@/components/analytics/gad/projprop-sidebar";
 import { DisbursementSidebar } from "@/components/analytics/treasurer/disbursement-sidebar";
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
@@ -42,7 +57,21 @@ type DashboardItem = {
   sidebar?: { title: string; element: ReactElement }[];
   chart?: { title: string; element: ReactElement }[];
   upcomingEvents?: ReactElement;
-};
+};import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
+import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
+import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
+
+
+// import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
+import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
+import { AnimalBiteAnalyticsCharts } from "@/components/analytics/animalbites/animal-bite-analytics-charts";
+// import { PendingPrenatalAppSidebar } from "@/components/analytics/health/pending-prenatalapp-sidebar";
+import { SchedulerSidebar } from "@/components/analytics/health/scheduler-sidebar";
+import { PopulationAnalyticsTabs } from "@/components/analytics/health/health-profiling/population-analytics-tabs";
+// import { NutritionalStatusSummaryChart } from "@/components/analytics/health/health-profiling/nutritional-status-summary-chart";
+import { PendingAppointmentsSidebar } from "@/components/analytics/health/pending-appointments-sidebar";
+
+
 
 // *  OBJECT PROPERTIES: dashboard, card, sidebar, chart  * //
 export const getItemsConfig = (
@@ -62,29 +91,22 @@ export const getItemsConfig = (
 ): DashboardItem[] => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
+  const currentYear = format(new Date(), "yyyy");
   const { upcomingEvents: councilUpcomingEvents } = councilEvents;
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
-  const {
-    childHealth,
-    firstAid,
-    medicine,
-    vaccinations,
-    consultations,
-    animalBites,
-    familyPlanning,
-    maternal,
-  } = healthCards;
+
+  const { childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal, consultationsByDoctor, chilrenConsulted } = healthCards;
   const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
-  const { 
+  const {  
     pending: complaintPending, 
     cancelled: complaintCancelled, 
     accepted: complaintAccepted, 
     rejected: complaintRejected, 
     raised: complaintRaised 
   } = complaintCards;
-  const { accepted, rejected: garbRejected, completed, pending: garbPending } = garbCards;
+  const { accepted, rejected: garbRejected, completed, pending: garbPending  } = garbCards;
   const { waiting, ongoing, escalated, resolved } = conciliationCards;
   const { waiting: mediationWaiting, ongoing: mediationOngoing, forwarded, resolved: mediationResolved } = mediationCards;
   const { cashDonations } = donationCards;
@@ -201,11 +223,11 @@ export const getItemsConfig = (
         chart: [
           {
             title: "Finance Expense Overview",
-            element: <IncomeExpenseQuarterlyChart/>,
+            element: <IncomeExpenseQuarterlyChart />,
           },
           {
             title: "Finance Income Overview",
-            element: <IncomeQuarterlyChart/>,
+            element: <IncomeQuarterlyChart />,
           },
         ],
         sidebar: [
@@ -257,13 +279,16 @@ export const getItemsConfig = (
       },
       {
         dashboard: "DONATION",
+      },
+      {
+        dashboard: "WASTE",
         card: [cashDonations],
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, garbPending, garbRejected, accepted, completed], 
+        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed],
       },
-    ];
+    ]
   }
 
   if (user?.staff?.staff_type.toLowerCase() == "health staff") {
@@ -284,50 +309,114 @@ export const getItemsConfig = (
       },
       {
         dashboard: "SERVICES",
-        card: [
-          childHealth,
-          firstAid,
-          medicine,
-          vaccinations,
-          consultations,
-          animalBites,
-          familyPlanning,
-          maternal,
-        ],
+        card: [childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal],
+
         chart: [
           {
-            title: "OPT",
+            title: "Population Structure",
+            element: <PopulationAnalyticsTabs />
+          },
+          {
+            title: "0-72 mos Nutritional Status",
             element: <OPTStatusChart initialMonth={currentMonth} />,
           },
           {
-            title: "Medical History",
+            title: "Morbidity",
             element: <MedicalHistoryMonthlyChart initialMonth={currentMonth} />,
           },
           {
             title: "Maternal",
             element: <MaternalAgeDistributionChart initialMonth={currentMonth} />
           },
+         
+          // {
+          //   title: "Health Profiling Summary",
+          //   element: <NutritionalStatusSummaryChart />
+          // },
+          {
+            title: "Animal Bites",
+            element: <AnimalBiteAnalyticsCharts initialMonth={currentMonth} />,
+          },
+          {
+            title: "Family Planning",
+            element: <FamilyPlanningAnalytics initialMonth={currentMonth} />,
+          },
+          {
+            title: "Vaccination",
+            element: <VaccineResidentChart initialYear={currentYear} />,
+          },
+          {
+            title: "Medicine",
+            element: <MedicineDistributionChart initialMonth={currentMonth} />
+          },
+        ],
+
+        sidebar: [
+          {
+            title: "Weekly Schedule",
+            element: <SchedulerSidebar />,
+          },
+          // {
+          //   title: "Pending Medical Appointments",
+          //   element: <PendingMedicalAppointmentsSidebar />,
+          // },
+          // {
+          //   title: "Pending Prenatal Appointments",
+          //   element: <PendingPrenatalAppSidebar />,
+          // },
+          {
+            title: "Pending Appointments",
+            element: <PendingAppointmentsSidebar />,
+          },
+          {
+            title: "Pending Medicine Requests",
+            element: <PendingMedicineRequestsSidebar />,
+          },
+          { title: "To-Pickup Medicine Requests", 
+            element: <ToPickupMedicineRequestsSidebar /> 
+          },
         ],
       },
       {
         dashboard: "INVENTORY",
         sidebar: [
+          // {
+          //   title: "Weekly Schedule",
+          //   element: <SchedulerSidebar />,
+          // },
+          // {
+          //   title: "Medicine Alerts",
+          //   element: <MedicineAlertsSidebar />,
+          // },
+          // {
+          //   title: "Antigen Alerts",
+          //   element: <AntigenAlertsSidebar />,
+          // },
+          // { title: "First Aid Alerts",
+          //   element: <FirstAidAlertsSidebar />,
+          // },
+          // { title: "Commodity Alerts",
+          //   element: <CommodityAlertsSidebar />,
+          // }
+       
           {
-            title: "Most Requested Medicine",
-            element: <MedicineDistributionSidebar />,
+            title: "Inventory Alerts",
+            element: <InventoryAlertsSidebar />,
           },
+
+        ],
+      },
+      {
+        dashboard: "REFERRED PATIENTS",
+        card: [consultationsByDoctor, chilrenConsulted],
+
+        sidebar: [
           {
-            title: "Most used FirstAid",
-            element: <FirstAidDistributionSidebar />,
+            title: "Referred Patients",
+            element: <ReferredPatientsSidebar />,
           },
-          {
-            title: "Administered Vaccination",
-            element: <VaccinationDistributionSidebar />
-          }
         ],
       },
     ];
-  } else {
-    return [];
-  }
+  } else return [];
 };

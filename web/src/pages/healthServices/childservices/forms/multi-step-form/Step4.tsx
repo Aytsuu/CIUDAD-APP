@@ -28,6 +28,10 @@ import { Combobox } from "@/components/ui/combobox";
 import { LastPageProps } from "./types";
 import { PendingFollowupsSection } from "./followupPending";
 import { useUpdateFollowupStatus } from "../queries/update";
+import IndivMedicineRecords from "@/pages/healthServices/medicineservices/tables/IndivMedicineRecord";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog/dialog";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { showErrorToast } from "@/components/ui/toast";
 
 export default function LastPage({
   onPrevious,
@@ -41,7 +45,7 @@ export default function LastPage({
   newVitalSigns,
   setNewVitalSigns,
   passed_status,
-  chrecId
+  chrecId,
 }: LastPageProps) {
   // Local state for editing form
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
@@ -52,11 +56,10 @@ export default function LastPage({
   const [medicineSearchParams, setMedicineSearchParams] = useState<any>({ page: 1, pageSize: 10, search: "", is_temp: true });
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const [allowNotesEdit, setAllowNotesEdit] = useState(false);
-  // NEW: pending followup updates stored here (keyed by followv_id)
+  const [openHistoryDialog, setOpenHistoryDialog] = useState(false);
   const [pendingFollowupUpdates, setPendingFollowupUpdates] = useState<Record<number, string>>({});
-
-  // We'll use the updateFollowup mutation on final submit
   const updateFollowupMutation = useUpdateFollowupStatus();
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   // Fixed logic: allow notes edit when passed_status is NOT immunization
   useEffect(() => {
@@ -64,10 +67,9 @@ export default function LastPage({
   }, [passed_status]);
 
   const { data: medicineData, isLoading: isMedicinesLoading } = fetchMedicinesWithStock(medicineSearchParams);
-  const { data: latestVitalsData, isLoading: _isLatestVitalsLoading } = useChildLatestVitals(formData.pat_id || "");
+  const { data: latestVitalsData } = useChildLatestVitals(formData.pat_id || "");
   const { data: doctorOptions, isLoading: isDoctorLoading } = fetchDoctor();
   const { data: midwifeOptions, isLoading: isMidwifeLoading } = fetchMidwife();
-
   const [showVitalSignsForm, setShowVitalSignsForm] = useState(() => {
     const hasTodaysHistoricalRecord = historicalVitalSigns.some((vital) => isToday(vital.date));
     const hasTodaysNewRecord = newVitalSigns.some((vital) => isToday(vital.date));
@@ -81,14 +83,14 @@ export default function LastPage({
     setMedicineSearchParams((prev: any) => ({
       ...prev,
       search: searchTerm,
-      page: 1
+      page: 1,
     }));
   };
 
   const handleMedicinePageChange = (page: number) => {
     setMedicineSearchParams((prev: any) => ({
       ...prev,
-      page
+      page,
     }));
   };
 
@@ -105,6 +107,15 @@ export default function LastPage({
     return calculateAgeFromDOB(formData.childDob, referenceDate).ageString;
   }, [formData.childDob, newVitalSigns, historicalVitalSigns]);
 
+  // Filter out invalid medicines from formData
+  const getValidMedicines = (medicines: any[] | undefined) => {
+    if (!medicines) return [];
+    return medicines.filter(med => 
+      med.minv_id && med.minv_id.trim() !== "" && 
+      med.medrec_qty && med.medrec_qty >= 1
+    );
+  };
+
   const form = useForm<FormData>({
     resolver: zodResolver(ChildHealthFormSchema),
     defaultValues: {
@@ -114,19 +125,20 @@ export default function LastPage({
         seen: "",
         given_iron: "",
         is_anemic: false,
-        date_completed: ""
+        date_completed: "",
       },
       birthwt: formData.birthwt || {
         seen: "",
         given_iron: "",
-        date_completed: ""
+        date_completed: "",
       },
-      medicines: formData.medicines || [],
+      // Ensure medicines array only contains valid objects
+      medicines: getValidMedicines(formData.medicines),
       status: formData.status || "recorded",
       nutritionalStatus: formData.nutritionalStatus || {},
       edemaSeverity: formData.edemaSeverity || "None",
-      passed_status: passed_status
-    }
+      passed_status: passed_status,
+    },
   });
 
   const vitalSignForm = useForm<VitalSignType>({
@@ -142,8 +154,8 @@ export default function LastPage({
       followv_status: "pending",
       notes: "",
       is_opt: false,
-      remarks: ""
-    }
+      remarks: "",
+    },
   });
 
   const editVitalSignForm = useForm<VitalSignType>({
@@ -158,8 +170,8 @@ export default function LastPage({
       followUpVisit: "",
       notes: "",
       is_opt: false,
-      remarks: ""
-    }
+      remarks: "",
+    },
   });
 
   useEffect(() => {
@@ -175,12 +187,12 @@ export default function LastPage({
   }>({
     resolver: zodResolver(
       z.object({
-        date_completed: z.string().nullable().optional()
+        date_completed: z.string().nullable().optional(),
       })
     ),
     defaultValues: {
-      date_completed: null
-    }
+      date_completed: null,
+    },
   });
 
   const {
@@ -188,7 +200,7 @@ export default function LastPage({
     watch,
     setValue,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = form;
   const { control: editVitalSignFormControl, handleSubmit: editVitalSignFormHandleSubmit } = editVitalSignForm;
 
@@ -215,7 +227,7 @@ export default function LastPage({
     return newVitalSigns.map((vital, index) => ({
       ...vital,
       originalIndex: index,
-      age: vital.age || currentAge
+      age: vital.age || currentAge,
     }));
   }, [newVitalSigns, currentAge]);
 
@@ -242,8 +254,11 @@ export default function LastPage({
   }, [hasSevereMalnutrition]);
 
   const canSubmit = useMemo(() => {
+    if (currentStatus === "recorded" && newVitalSigns && newVitalSigns.length > 0) {
+      return true;
+    }
     return newVitalSigns && newVitalSigns.length > 0 && hasFormChanges;
-  }, [newVitalSigns, hasFormChanges]);
+  }, [newVitalSigns, hasFormChanges, currentStatus]);
 
   useEffect(() => {
     if (!initialFormData) {
@@ -254,17 +269,17 @@ export default function LastPage({
           seen: "",
           given_iron: "",
           is_anemic: false,
-          date_completed: ""
+          date_completed: "",
         },
         birthwt: formData.birthwt || {
           seen: "",
           given_iron: "",
-          date_completed: ""
+          date_completed: "",
         },
-        medicines: formData.medicines || [],
+        medicines: getValidMedicines(formData.medicines),
         status: formData.status || "recorded",
         nutritionalStatus: formData.nutritionalStatus || {},
-        edemaSeverity: formData.edemaSeverity || "None"
+        edemaSeverity: formData.edemaSeverity || "None",
       };
       setInitialFormData(initial);
     }
@@ -280,7 +295,7 @@ export default function LastPage({
       medicines: selectedMedicines,
       status: currentStatus,
       nutritionalStatus: nutritionalStatus,
-      edemaSeverity: edemaSeverity
+      edemaSeverity: edemaSeverity,
     };
     const hasChanges = JSON.stringify(currentFormData) !== JSON.stringify(initialFormData);
     setHasFormChanges(hasChanges);
@@ -290,7 +305,7 @@ export default function LastPage({
     if (newVitalSigns.length > 0) {
       const updatedVitalSigns = newVitalSigns.map((vital) => ({
         ...vital,
-        age: vital.age || currentAge
+        age: vital.age || currentAge,
       }));
       const hasChanges = JSON.stringify(updatedVitalSigns) !== JSON.stringify(newVitalSigns);
       if (hasChanges) {
@@ -317,20 +332,33 @@ export default function LastPage({
       medicines: selectedMedicines,
       status: currentStatus,
       nutritionalStatus: nutritionalStatus,
-      edemaSeverity: edemaSeverity
+      edemaSeverity: edemaSeverity,
     });
     vitalSignForm.setValue("age", currentAge);
     setValue(
       "historicalSupplementStatuses",
       historicalSupplementStatusesProp.map((status) => ({
-        date_completed: status.date_completed ?? undefined
+        date_completed: status.date_completed ?? undefined,
       }))
     );
     if (currentAge && latestOverallVitalSign?.ht) {
       setValue("nutritionalStatus", { ...nutritionalStatus });
       updateFormData({ nutritionalStatus: { ...nutritionalStatus } });
     }
-  }, [currentStatus, currentAge, latestOverallVitalSign, historicalSupplementStatusesProp, setValue, updateFormData, vitalSignForm, anemicData, birthwtData, selectedMedicines, nutritionalStatus, edemaSeverity]);
+  }, [
+    currentStatus,
+    currentAge,
+    latestOverallVitalSign,
+    historicalSupplementStatusesProp,
+    setValue,
+    updateFormData,
+    vitalSignForm,
+    anemicData,
+    birthwtData,
+    selectedMedicines,
+    nutritionalStatus,
+    edemaSeverity,
+  ]);
 
   const handleMedicineSelectionChange = (
     selectedMedicines: {
@@ -339,10 +367,20 @@ export default function LastPage({
       reason: string;
     }[]
   ) => {
-    const updatedMedicines = selectedMedicines.map((med) => ({
+    
+    // Filter out invalid medicines that don't have required fields
+    const validMedicines = selectedMedicines.filter(med => {
+      const isValid = med.minv_id && med.minv_id.trim() !== "" && med.medrec_qty && med.medrec_qty >= 1;
+    
+      return isValid;
+    });
+
+
+    const updatedMedicines = validMedicines.map((med) => ({
       ...med,
-      medrec_qty: med.medrec_qty && med.medrec_qty >= 1 ? med.medrec_qty : 0
+      medrec_qty: med.medrec_qty && med.medrec_qty >= 1 ? med.medrec_qty : 0,
     }));
+    
     setValue("medicines", updatedMedicines);
     updateFormData({ medicines: updatedMedicines });
   };
@@ -351,7 +389,7 @@ export default function LastPage({
     const updatedVitalSigns = [...newVitalSigns];
     updatedVitalSigns[index] = {
       ...values,
-      age: values.age || currentAge
+      age: values.age || currentAge,
     };
     setNewVitalSigns(updatedVitalSigns);
     setEditingRowIndex(null);
@@ -360,7 +398,7 @@ export default function LastPage({
   const handleAddVitalSign = (values: VitalSignType) => {
     const vitalSignWithAge = {
       ...values,
-      age: values.age || currentAge
+      age: values.age || currentAge,
     };
     if (newVitalSigns.length > 0) {
       handleUpdateVitalSign(0, vitalSignWithAge);
@@ -379,7 +417,7 @@ export default function LastPage({
       followv_status: "pending",
       notes: "",
       is_opt: false,
-      remarks: ""
+      remarks: "",
     });
   };
 
@@ -393,7 +431,7 @@ export default function LastPage({
     if (index >= 0 && index < updatedStatuses.length) {
       updatedStatuses[index] = {
         ...updatedStatuses[index],
-        date_completed: newDateCompleted
+        date_completed: newDateCompleted,
       };
       onUpdateHistoricalSupplementStatus(updatedStatuses);
     }
@@ -405,7 +443,7 @@ export default function LastPage({
     if (index >= 0 && index < updatedStatuses.length) {
       updatedStatuses[index] = {
         ...updatedStatuses[index],
-        date_completed: newDateCompleted
+        date_completed: newDateCompleted,
       };
       onUpdateHistoricalSupplementStatus(updatedStatuses);
     }
@@ -419,7 +457,7 @@ export default function LastPage({
     const updatePromises = updates.map(async ([followvId, status]) => {
       return updateFollowupMutation.mutateAsync({
         followv_id: followvId.toString(),
-        status
+        status,
       });
     });
     await Promise.all(updatePromises);
@@ -428,20 +466,19 @@ export default function LastPage({
   // UPDATE: Make handleFormSubmit async and update followups on submit
   const handleFormSubmit = handleSubmit(
     async (data) => {
-      console.log("Submitting form data:", data);
-      if (!canSubmit) {
-        console.error("Cannot submit: No vital signs added or no changes detected");
-        return;
-      }
+    // if (!canSubmit) {
+    //     console.error("Cannot submit: No vital signs added or no changes detected");
+    //     return;
+    //   }
       try {
         await submitFollowupUpdates();
-      } catch (error: any) {
-        console.error("Error updating followups:", error.message);
+      } catch  {
+        showErrorToast("Error updating followups:");
       }
       onSubmit(data);
     },
-    (errors) => {
-      console.error("Form validation failed:", errors);
+    () => {
+      showErrorToast("Form validation failed");
     }
   );
 
@@ -469,6 +506,13 @@ export default function LastPage({
     [editingAnemiaIndex, editingBirthWeightIndex, supplementStatusEditForm.control, supplementStatusEditForm.handleSubmit, supplementStatusEditForm.reset]
   );
 
+  const medicineHistory = {
+    patientData: {
+      pat_id: formData.pat_id,
+      mode: "view_history",
+    },
+  };
+
   return (
     <>
       <Form {...form}>
@@ -479,8 +523,11 @@ export default function LastPage({
               <pre className="mt-2 text-sm text-red-700">{JSON.stringify(errors, null, 2)}</pre>
             </div>
           )}
-          // In your Step4.tsx (excerpt)
-          <PendingFollowupsSection chrecId={chrecId || ""} pendingStatuses={pendingFollowupUpdates} onFollowupChange={(followvId: number, newStatus: string) => setPendingFollowupUpdates((prev) => ({ ...prev, [followvId]: newStatus }))} />
+          <PendingFollowupsSection
+            chrecId={chrecId || ""}
+            pendingStatuses={pendingFollowupUpdates}
+            onFollowupChange={(followvId: number, newStatus: string) => setPendingFollowupUpdates((prev) => ({ ...prev, [followvId]: newStatus }))}
+          />
           {/* Always show today's vital signs if they exist */}
           {hasTodaysVitalSigns && (
             <div className="pt-4">
@@ -494,7 +541,7 @@ export default function LastPage({
                   editVitalSignFormControl={editVitalSignFormControl}
                   editVitalSignFormHandleSubmit={editVitalSignFormHandleSubmit}
                   onUpdateVitalSign={handleUpdateVitalSign}
-                  onStartEdit={(index: number, __) => {
+                  onStartEdit={(index: number) => {
                     setEditingRowIndex(index);
                   }}
                   onCancelEdit={() => {
@@ -626,28 +673,51 @@ export default function LastPage({
           <div className="mb-10 rounded-lg border p-4">
             <h3 className="mb-4 text-lg font-bold">Medicine Prescription</h3>
             <div className="grid grid-cols-1 gap-6">
-              {isMedicinesLoading ? (
-                <div className="flex items-center justify-center p-8">
-                  <div className="text-center">
-                    <div className="mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                    <p className="text-sm text-gray-600">Loading medicines...</p>
+          
+                <>
+                  <div>
+                    <div>
+                      <Dialog open={openHistoryDialog} onOpenChange={setOpenHistoryDialog}>
+                        <DialogTrigger asChild>
+                          <div className="flex justify-end">
+                            <span className="text-sm italic text-blue-800 font-bold underline  cursor-pointer">View History</span>
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent
+                          className="w-full max-w-full sm:max-w-3xl px-8"
+                          style={{
+                            width: "100%",
+                            maxWidth: "100vw",
+                            height: "80vh",
+                            maxHeight: "90vh",
+                            minHeight: "350px",
+                            padding: 0,
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div className="w-full h-full overflow-auto">
+                            <IndivMedicineRecords patientDataProps={medicineHistory} />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>{" "}
                   </div>
-                </div>
-              ) : (
-                <MedicineDisplay
-                  medicines={medicineStocksOptions || []}
-                  initialSelectedMedicines={selectedMedicines || []}
-                  onSelectedMedicinesChange={handleMedicineSelectionChange}
-                  itemsPerPage={medicineSearchParams.pageSize}
-                  currentPage={medicineSearchParams.page}
-                  onPageChange={handleMedicinePageChange}
-                  onSearch={handleMedicineSearch}
-                  searchQuery={medicineSearchParams.search}
-                  totalPages={medicinePagination?.totalPages}
-                  totalItems={medicinePagination?.totalItems}
-                  isLoading={isMedicinesLoading}
-                />
-              )}
+
+                  <MedicineDisplay
+                    medicines={medicineStocksOptions || []}
+                    initialSelectedMedicines={selectedMedicines || []}
+                    onSelectedMedicinesChange={handleMedicineSelectionChange}
+                    itemsPerPage={medicineSearchParams.pageSize}
+                    currentPage={medicineSearchParams.page}
+                    onPageChange={handleMedicinePageChange}
+                    onSearch={handleMedicineSearch}
+                    searchQuery={medicineSearchParams.search}
+                    totalPages={medicinePagination?.totalPages}
+                    totalItems={medicinePagination?.totalItems}
+                    isLoading={isMedicinesLoading}
+                  />
+                </>
+              
             </div>
           </div>
           {passed_status !== "immunization" ? (
@@ -735,21 +805,60 @@ export default function LastPage({
               </div>
             </div>
           )}
+
+
+            <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-700 mt-0.5" />
+              <div>
+              <p className="font-medium text-yellow-800">Please review before submitting</p>
+              <p className="mt-1 text-sm text-yellow-700">
+                Once this record is submitted it cannot be edited. Confirm all information are correct before you proceed.
+              </p>
+              </div>
+            </div>
+            </div>
           <div className="flex w-full justify-end gap-2">
             <Button type="button" variant="outline" onClick={onPrevious} className="flex items-center gap-2 px-6 py-2 hover:bg-zinc-100 transition-colors duration-200 bg-transparent">
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            <Button type="submit" className="flex items-center gap-2 px-6" disabled={!canSubmit}>
-              {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Submitting...
+            <ConfirmationModal
+              open={isConfirmModalOpen}
+              onOpenChange={setIsConfirmModalOpen}
+              trigger={
+                <Button 
+                  type="button" 
+                  className="flex items-center gap-2 px-6" 
+                  disabled={!canSubmit || isSubmitting}
+                  onClick={() => setIsConfirmModalOpen(true)}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Submitting...
+                    </div>
+                  ) : (
+                    "Submit"
+                  )}
+                </Button>
+              }
+              title="Confirm Submission"
+              description={
+                <div className="space-y-2">
+                  <p>You are about to submit this child health record. Once submitted, it cannot be edited.</p>
+                  <p className="font-semibold">Please confirm that all information is correct</p>
+                  
                 </div>
-              ) : (
-                "Submit"
-              )}
-            </Button>
+              }
+              actionLabel="Confirm & Submit"
+              cancelLabel="Cancel"
+              onClick={() => {
+                setIsConfirmModalOpen(false);
+                handleFormSubmit();
+              }}
+              onCancel={() => setIsConfirmModalOpen(false)}
+            />
           </div>
         </form>
       </Form>

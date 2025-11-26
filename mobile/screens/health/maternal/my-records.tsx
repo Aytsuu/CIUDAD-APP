@@ -1,12 +1,13 @@
 "use client"
 
 import React, { useMemo, useState } from "react"
-import { View, TouchableOpacity, TextInput, ScrollView, RefreshControl } from "react-native"
-import { router } from "expo-router"
-import { Search, Heart, Baby, Clock, CheckCircle, HeartHandshake, ChevronLeft, Package } from "lucide-react-native"
+import { View, TouchableOpacity, ScrollView, RefreshControl } from "react-native"
+import { router, useLocalSearchParams } from "expo-router"
+import { Heart, Baby, Clock, CheckCircle, HeartHandshake, ChevronLeft, Package } from "lucide-react-native"
 
 import { Text } from "@/components/ui/text"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { LoadingState } from "@/components/ui/loading-state"
 import PageLayout from "@/screens/_PageLayout"
 
@@ -16,6 +17,7 @@ import { PregnancyAccordion } from "../admin/admin-maternal/prenatal/pregnancy-a
 import { usePregnancyDetails } from "../admin/admin-maternal/queries/maternalFETCH"
 import { useAuth } from "@/contexts/AuthContext"
 import { usePatientByResidentId } from "../patientchecker/queries"
+import { getPatientById } from "../animalbites/api/get-api"
 
 interface Patient {
   pat_id: string
@@ -163,64 +165,105 @@ const RecordTypeBadge = React.memo<{ recordType: "Prenatal" | "Postpartum Care" 
   )
 })
 
-// Filter Picker Component
-const FilterPicker = React.memo<{
-  selectedFilter: string
-  onFilterChange: (filter: string) => void
-}>(({ selectedFilter, onFilterChange }) => {
-  const filters = ["All", "Active", "Completed", "Pregnancy Loss"]
+// Pagination Component
+const PaginationFooter = React.memo<{
+  page: number;
+  totalPages: number;
+  onPageChange: (newPage: number) => void;
+}>(({ page, totalPages, onPageChange }) => {
+  if (totalPages <= 1) return null;
 
   return (
-    <View className="flex-row bg-gray-100 rounded-lg p-1">
-      {filters.map((filter) => (
-        <TouchableOpacity
-          key={filter}
-          onPress={() => onFilterChange(filter)}
-          className={`flex-1 py-2 px-3 rounded-md ${selectedFilter === filter ? "bg-white shadow-sm" : ""}`}
-        >
-          <Text
-            className={`text-center text-sm font-medium ${
-              selectedFilter === filter ? "text-blue-600" : "text-gray-600"
-            }`}
-          >
-            {filter}
-          </Text>
-        </TouchableOpacity>
-      ))}
+    <View className="px-4 mb-4">
+      <Card className="bg-white border-gray-200">
+        <CardContent className="p-4">
+          <View className="flex-row items-center justify-between">
+            <Button
+              onPress={() => onPageChange(page - 1)}
+              disabled={page === 1}
+              variant={page === 1 ? "secondary" : "default"}
+              className={page === 1 ? "bg-gray-200" : "bg-blue-600"}
+            >
+              <Text className={`font-medium ${page === 1 ? "text-gray-400" : "text-white"}`}>
+                Previous
+              </Text>
+            </Button>
+
+            <Text className="text-gray-600 font-medium">
+              Page {page} of {totalPages}
+            </Text>
+
+            <Button
+              onPress={() => onPageChange(page + 1)}
+              disabled={page === totalPages}
+              variant={page === totalPages ? "secondary" : "default"}
+              className={page === totalPages ? "bg-gray-200" : "bg-blue-600"}
+            >
+              <Text className={`font-medium ${page === totalPages ? "text-gray-400" : "text-white"}`}>
+                Next
+              </Text>
+            </Button>
+          </View>
+        </CardContent>
+      </Card>
     </View>
-  )
-})
+  );
+});
 
 export default function MyMaternalRecordScreen() {
   const { user } = useAuth()
+  const { pat_id: authPatId } = useAuth()
+  const params = useLocalSearchParams<{ pat_id?: string; mode?: string }>()
+  
+  // Determine which patient ID to use: admin-passed pat_id or current user's pat_id
+  const patId = params.pat_id || authPatId
+  const mode = params.mode || "user"
+  const isAdminMode = mode === "admin"
+  
   const rp_id = user?.rp
-  const { pat_id } = useAuth()
-  const patId  = pat_id
-  console.log("Patient ID in My Records Screen:", patId)
 
-  const [selectedFilter, setSelectedFilter] = useState("All")
-  const [searchQuery, setSearchQuery] = useState("")
   const [refreshing, setRefreshing] = useState(false)
+  const [selectedPatientData, setSelectedPatientData] = useState<any>(null)
+  const [isLoadingSelectedPatient, setIsLoadingSelectedPatient] = useState(false)
+  const [page, setPage] = useState(1)
+  const pageSize = 10
 
   const { data: patientData, isLoading: isPatientLoading } = usePatientByResidentId(rp_id || "")
 
+  // Fetch selected patient data in admin mode using patient ID directly
+  React.useEffect(() => {
+    if (isAdminMode && patId && patId !== authPatId) {
+      setIsLoadingSelectedPatient(true)
+      getPatientById(patId)
+        .then((data) => {
+          setSelectedPatientData(data)
+          setIsLoadingSelectedPatient(false)
+        })
+        .catch((error) => {
+          console.error("Error fetching selected patient:", error)
+          setIsLoadingSelectedPatient(false)
+        })
+    } else {
+      setSelectedPatientData(null)
+    }
+  }, [isAdminMode, patId, authPatId])
+
+  const displayPatientData = isAdminMode && selectedPatientData ? selectedPatientData : patientData
+
   const {
     data: pregnancyData,
-    isLoading: pregnancyDataLoading,
     refetch,
-  } = usePregnancyDetails(patId || "")
+  } = usePregnancyDetails(patId || "", page, pageSize, "All")
 
   const getLatestFollowupVisit = () => {
     let followUpData = []
 
     if (pregnancyData && typeof pregnancyData === "object" && "results" in pregnancyData) {
-      // Handle paginated response structure: { count, next, previous, results: [...] }
       const results = (pregnancyData as any).results
       if (Array.isArray(results) && results.length > 0) {
         followUpData = results[0]?.follow_up || []
       }
     } else if (Array.isArray(pregnancyData) && pregnancyData.length > 0) {
-      // Handle direct array response
       followUpData = pregnancyData[0]?.follow_up || []
     }
 
@@ -360,7 +403,7 @@ export default function MyMaternalRecordScreen() {
   }
 
   const pregnancyGroups: PregnancyGroup[] = useMemo(() => {
-    if (pregnancyData && patientData) {
+    if (pregnancyData && displayPatientData) {
       let pregnanciesArray: PregnancyDataDetails[] = []
 
       if (pregnancyData && typeof pregnancyData === "object" && "results" in pregnancyData) {
@@ -374,26 +417,20 @@ export default function MyMaternalRecordScreen() {
         pregnanciesArray = [pregnancyData as PregnancyDataDetails]
       }
 
-      const grouped = groupPregnancies(pregnanciesArray, patientData.pat_type, patientData.address)
+      const grouped = groupPregnancies(pregnanciesArray, displayPatientData.pat_type, displayPatientData.address)
       return grouped
     }
     return []
-  }, [pregnancyData, patientData])
+  }, [pregnancyData, displayPatientData])
 
-  const filteredGroups = pregnancyGroups.filter((group) => {
-    switch (selectedFilter) {
-      case "All":
-        return true
-      case "Active":
-        return group.status === "Active"
-      case "Completed":
-        return group.status === "Completed"
-      case "Pregnancy Loss":
-        return group.status === "Pregnancy Loss"
-      default:
-        return true
+  const totalCount = pregnancyData?.count || pregnancyGroups.length
+  const totalPages = Math.ceil(totalCount / pageSize)
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage)
     }
-  })
+  }
 
   const onRefresh = async () => {
     setRefreshing(true)
@@ -418,35 +455,10 @@ export default function MyMaternalRecordScreen() {
     )
   }
 
-  if (isPatientLoading) {
+  if (isPatientLoading || isLoadingSelectedPatient) {
     return <LoadingState />
   }
 
-  // if (!patientData?.pat_id) {
-  //   return (
-  //     <PageLayout
-  //       leftAction={
-  //         <TouchableOpacity
-  //           onPress={() => router.back()}
-  //           className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-  //         >
-  //           <ChevronLeft size={24} color="#374151" />
-  //         </TouchableOpacity>
-  //       }
-  //       headerTitle={<Text className="text-gray-900 text-lg font-semibold">Maternal Records</Text>}
-  //       rightAction={<View className="w-10 h-10" />}
-  //     >
-  //       <View className="flex-1 justify-center items-center bg-gray-50 px-6">
-  //         <Package size={64} color="#EF4444" />
-  //         <Text className="text-xl font-semibold text-gray-900 mt-4 text-center">Patient Not Found</Text>
-  //         <Text className="text-gray-600 text-center mt-2 mb-6">No patient data was found for your account.</Text>
-  //         <TouchableOpacity onPress={() => refetchPatientData()} className="bg-blue-600 px-6 py-3 rounded-lg">
-  //           <Text className="text-white font-medium">Retry</Text>
-  //         </TouchableOpacity>
-  //       </View>
-  //     </PageLayout>
-  //   )
-  // }
 
   return (
     <PageLayout
@@ -458,7 +470,9 @@ export default function MyMaternalRecordScreen() {
           <ChevronLeft size={24} color="#374151" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-lg font-semibold">Maternal Records</Text>}
+      headerTitle={
+          <Text className="text-gray-900 text-lg font-semibold">Maternal Records</Text>
+      }
       rightAction={<View className="w-10 h-10" />}
     >
       <ScrollView
@@ -466,13 +480,13 @@ export default function MyMaternalRecordScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View className="p-4">
-          {patientData ? (
+          {displayPatientData ? (
             <View className="mb-5">
               <View className="mb-4">
                 <Card className="bg-white border-gray-200">
                   <CardContent className="p-4">
                     <Text className="text-lg font-semibold text-gray-900 mb-2">
-                      {patientData.personal_info?.per_fname} {patientData.personal_info?.per_lname}
+                      {displayPatientData.personal_info?.per_fname} {displayPatientData.personal_info?.per_lname}
                     </Text>
                     <Text className="text-gray-600 text-sm">ID: {patId}</Text>
                   </CardContent>
@@ -496,47 +510,13 @@ export default function MyMaternalRecordScreen() {
             </View>
           )}
 
-          <View className="flex rounded-md w-full border border-blue-400 mb-5 bg-blue-200 shadow-md">
-            {nextFollowVisit ? (
-              <View className="p-3 flex-row justify-between items-center w-full">
-                <View className="flex-row items-center">
-                  <Clock size={18} color="#2563eb" style={{ marginRight: 5 }} />
-                  <Text className="font-semibold text-blue-700">Upcoming follow-up visit</Text>
-                </View>
-                <View className="items-center">
-                  <Text className="font-semibold italic text-blue-700">{dateWords()}</Text>
-                  <Text className="text-blue-700 text-sm">{nextFollowVisit.followv_description}</Text>
-                </View>
-              </View>
-            ) : (
-              <View className="p-3">
-                <Text className="font-semibold text-white">No follow-up visit</Text>
-              </View>
-            )}
-          </View>
-
-          <View className="mb-4 space-y-3">
-            <View className="flex-row items-center space-x-2">
-              <View className="flex-1 flex-row items-center bg-white border border-gray-200 rounded-lg px-3 py-2">
-                <Search size={17} color="#6B7280" />
-                <TextInput
-                  placeholder="Search..."
-                  className="flex-1 ml-2 text-gray-800"
-                  placeholderTextColor="#9CA3AF"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
-            </View>
-          </View>
-
           <View className="bg-white rounded-lg border border-gray-200">
             <View className="flex-row justify-between p-4 border-b border-gray-200">
               <Text className="text-sm text-gray-600">
                 Showing{" "}
-                {filteredGroups.length === 1
-                  ? filteredGroups.length + " pregnancy"
-                  : filteredGroups.length + " pregnancies"}
+                {pregnancyGroups.length === 1
+                  ? pregnancyGroups.length + " pregnancy"
+                  : pregnancyGroups.length + " pregnancies"}
               </Text>
               <View className="flex-row gap-2">
                 <View className="flex-row items-center bg-pink-50 border border-pink-200 px-2 py-1 rounded-full">
@@ -550,19 +530,25 @@ export default function MyMaternalRecordScreen() {
               </View>
             </View>
 
-            {filteredGroups.length === 0 ? (
+            {pregnancyGroups.length === 0 ? (
               <View className="p-8 items-center">
                 <Text className="text-gray-500 text-center">No pregnancy records found</Text>
               </View>
             ) : (
               <PregnancyAccordion
-                pregnancyGroups={filteredGroups}
-                selectedPatient={patientData}
+                pregnancyGroups={pregnancyGroups}
+                selectedPatient={displayPatientData}
                 getStatusBadge={(status) => <StatusBadge status={status} />}
                 getRecordTypeBadge={(recordType) => <RecordTypeBadge recordType={recordType} />}
               />
             )}
           </View>
+
+          <PaginationFooter
+            page={page}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
         </View>
       </ScrollView>
     </PageLayout>

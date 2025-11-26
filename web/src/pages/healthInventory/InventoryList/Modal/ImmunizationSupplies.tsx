@@ -13,6 +13,7 @@ import { useUpdateImzSupply } from "../queries/Antigen/put-queries";
 import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { useImzSupList } from "../queries/Antigen/fetch-queries";
+import {useAuth} from "@/context/AuthContext";
 
 interface ImmunizationData {
   id: number;
@@ -26,6 +27,9 @@ interface ImmunizationModalProps {
 }
 
 export default function AddImmunizationSupplies({ mode = "add", initialData, onClose }: ImmunizationModalProps) {
+
+    const { user } = useAuth();
+  const staff = user?.staff?.staff_id;
   const location = useLocation();
   const navigate = useNavigate();
   const [supplyName, setSupplyName] = useState<string>("");
@@ -43,7 +47,9 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
   const form = useForm<ImmunizationType>({
     resolver: zodResolver(ImmunizationSchema),
     defaultValues: {
-      imz_name: effectiveInitialData?.supplyName || ""
+      imz_name: effectiveInitialData?.supplyName || "",
+      staff: staff || ""
+      
     }
   });
 

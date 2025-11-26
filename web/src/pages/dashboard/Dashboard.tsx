@@ -16,6 +16,7 @@ import { useConciliationSectionCards } from "@/components/analytics/summon/conci
 import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
 import { Label } from "@/components/ui/label";
+import { ProtectedComponent } from "@/ProtectedComponent";
 
 export default function Dashboard() {
   // ================ STATE INITIALIZATION ================
@@ -55,11 +56,7 @@ export default function Dashboard() {
 
   // Filter items based on user access
   const cardsWithAccess = React.useMemo(() => {
-    return (instance ?? []).flatMap((item) =>
-      validateFeature(item.dashboard) && Array.isArray(item.card)
-        ? item.card
-        : []
-    );
+    return (instance ?? []).flatMap((item) => (validateFeature(item.dashboard) && Array.isArray(item.card) ? item.card : []));
   }, [instance, user]);
 
   const chartsWithAccess = React.useMemo(() => {
@@ -77,9 +74,7 @@ export default function Dashboard() {
   }, [instance, user]);
 
   const sidebarsWithAccess = React.useMemo(() => {
-    return (instance ?? []).filter(
-      (item) => item.sidebar && validateFeature(item.dashboard)
-    );
+    return (instance ?? []).filter((item) => item.sidebar && validateFeature(item.dashboard));
   }, [instance, user]);
 
   // Carousel pagination
@@ -127,9 +122,7 @@ export default function Dashboard() {
     <div className="pb-8 space-y-5">
       <div className="">
         <p className="text-darkBlue1 font-bold text-xl">Dashboard</p>
-        <p className="text-gray-600 text-sm">
-          Easy view of important updates and key information.
-        </p>
+        <p className="text-gray-600 text-sm">Easy view of important updates and key information.</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 h-[calc(105vh)] overflow-hidden">
@@ -137,19 +130,18 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
-            {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
-              <div className="w-2/3 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
+           {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
+              <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
                 <div className="mb-4">
                   <Label className="text-white text-xl font-bold">Upcoming Events</Label>
                 </div>
+                {instance.find(item => item.upcomingEvents)?.upcomingEvents}
               </div>
             )}
             {cardsWithAccess.length > 0 && (
               <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm w-full">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Analytics Overview
-                  </h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Analytics Overview</h2>
                   {totalPages > 1 && (
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">
@@ -178,9 +170,7 @@ export default function Dashboard() {
                 {/* Cards Grid - 3 columns × 2 rows */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[280px]">
                   {getCurrentPageCards().map((item: any, index: number) => (
-                    <React.Fragment key={`card-${currentCardPage}-${index}`}>
-                      {item}
-                    </React.Fragment>
+                    <React.Fragment key={`card-${currentCardPage}-${index}`}>{item}</React.Fragment>
                   ))}
                 </div>
 
@@ -191,11 +181,7 @@ export default function Dashboard() {
                       <button
                         key={index}
                         onClick={() => setCurrentCardPage(index)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          currentCardPage === index
-                            ? "bg-blue-600 w-6"
-                            : "bg-gray-300 hover:bg-gray-400"
-                        }`}
+                        className={`w-2 h-2 rounded-full transition-all ${currentCardPage === index ? "bg-blue-600 w-6" : "bg-gray-300 hover:bg-gray-400"}`}
                         aria-label={`Go to page ${index + 1}`}
                       />
                     ))}
@@ -217,15 +203,11 @@ export default function Dashboard() {
                         key={`${chartItem.dashboard}-${chartItem.title}-${index}`}
                         onClick={() => setActiveChartTab(chartItem.title)}
                         className={`pb-3 px-1 text-sm font-medium transition-all duration-200 relative whitespace-nowrap ${
-                          activeChartTab === chartItem.title
-                            ? "text-blue-600"
-                            : "text-gray-600 hover:text-gray-900"
+                          activeChartTab === chartItem.title ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
                         }`}
                       >
                         {chartItem.title}
-                        {activeChartTab === chartItem.title && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"></div>
-                        )}
+                        {activeChartTab === chartItem.title && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"></div>}
                       </button>
                     ))}
                   </div>
@@ -235,14 +217,7 @@ export default function Dashboard() {
               {/* Chart Content */}
               <div className="flex-1 overflow-y-auto">
                 {chartsWithAccess.map((chartItem: any, index: number) => (
-                  <div
-                    key={`${chartItem.dashboard}-chart-content-${index}`}
-                    className={
-                      activeChartTab === chartItem.title
-                        ? "block h-full"
-                        : "hidden"
-                    }
-                  >
+                  <div key={`${chartItem.dashboard}-chart-content-${index}`} className={activeChartTab === chartItem.title ? "block h-full" : "hidden"}>
                     {chartItem.element}
                   </div>
                 ))}
@@ -256,27 +231,42 @@ export default function Dashboard() {
           <div className="w-full lg:w-96 flex flex-col gap-4 overflow-y-auto flex-shrink-0 pr-1">
             {sidebarsWithAccess.map((item: any, index: number) =>
               item.sidebar.map((component: any, sidebarIndex: number) => (
-                <div
-                  key={`${item.dashboard}-sidebar-${index}-${sidebarIndex}`}
-                  className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex-shrink-0"
-                >
-                  {/* Sidebar Header */}
-                  <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">
-                          {component.title}
-                        </h3>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Latest updates and activity
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                <React.Fragment key={`${item.dashboard}-sidebar-${index}-${sidebarIndex}`}>
+                  {/* Conditionally render specific sidebar items */}
+                  {component.title === "Pending Medical Appointments" || component.title == "Pending Medicine Requests" || component.title === "To-Pickup Medicine Requests" ? (
+                    <ProtectedComponent exclude={["DOCTOR"]}>
+                      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex-shrink-0">
+                        {/* Sidebar Header */}
+                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-lg font-bold text-gray-900">{component.title}</h3>
+                              <p className="text-xs text-gray-600 mt-1">Latest updates and activity</p>
+                            </div>
+                          </div>
+                        </div>
 
-                  {/* Sidebar Content */}
-                  <div>{component.element}</div>
-                </div>
+                        {/* Sidebar Content */}
+                        <div>{component.element}</div>
+                      </div>
+                    </ProtectedComponent>
+                  ) : (
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex-shrink-0">
+                      {/* Sidebar Header */}
+                      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900">{component.title}</h3>
+                            <p className="text-xs text-gray-600 mt-1">Latest updates and activity</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sidebar Content */}
+                      <div>{component.element}</div>
+                    </div>
+                  )}
+                </React.Fragment>
               ))
             )}
           </div>

@@ -2,6 +2,18 @@ import { ColumnDef } from "@tanstack/react-table";
 
 export const getArchivedStockColumns = (): ColumnDef<any>[] => [
   {
+    accessorKey: "archivedDate",
+    header: "Archived Date",
+    cell: ({ row }) => {
+      const archivedDate = row.original.archivedDate;
+      return (
+        <div className="text-center">
+          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "batchNumber",
     header: "Batch Number",
     cell: ({ row }) => {
@@ -65,7 +77,7 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
             <span>
               {fullVials} vial{fullVials !== 1 ? "s" : ""}
             </span>
-            <span className="text-blue-500">
+            <span className="">
               ({availableDoses} dose{availableDoses !== 1 ? "s" : ""})
             </span>
           </div>
@@ -110,7 +122,7 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
     header: "Qty Used",
     cell: ({ row }) => {
       return (
-        <div className="text-center text-red-600">
+        <div className="text-center ">
           {row.original.administered}
         </div>
       );
@@ -139,18 +151,7 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
       );
     },
   },
-  {
-    accessorKey: "archivedDate",
-    header: "Archived Date",
-    cell: ({ row }) => {
-      const archivedDate = row.original.archivedDate;
-      return (
-        <div className="text-center">
-          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
-        </div>
-      );
-    },
-  },
+
   {
     accessorKey: "reason",
     header: "Reason",

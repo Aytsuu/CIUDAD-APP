@@ -27,7 +27,6 @@ export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => 
         staff_id: values.staff_id
       });
       
-      console.log("GAWAS SA QUERY: ", values.files)
       // 2. Upload all resolution images
       if (values.files && values.files.length > 0) {
         await Promise.all(
@@ -39,8 +38,8 @@ export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => 
                 type: file.type,
                 file: file.file
               }
-            }).catch(error => {
-              console.error("Error creating file entry:", error);
+            }).catch(_error => {
+              // console.error("Error creating file entry:", error);
               return null;
             })
           )
@@ -64,8 +63,8 @@ export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => 
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error updating waste report:", err);
+    onError: (_err) => {
+      // console.error("Error updating waste report:", err);
       toast.error(
         "Failed to update report. Please try again.",
         { duration: 2000 }

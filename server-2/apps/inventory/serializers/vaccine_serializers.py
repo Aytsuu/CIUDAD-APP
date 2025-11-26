@@ -79,4 +79,11 @@ class AntigenTransactionSerializer(serializers.ModelSerializer):
     staff_detail = StaffFullSerializer(source='staff', read_only=True)
     class Meta:
         model = AntigenTransaction
-        fields = '__all__' 
+        fields = '__all__'
+        
+class ImmunizationStockSerializer(serializers.ModelSerializer):
+    imz_detail = ImmunizationSuppliesSerializer(source='imz_id', read_only=True)
+    inv_detail = InventorySerializers(source='inv_id', read_only=True)  
+    class Meta:
+        model = ImmunizationStock
+        fields = '__all__'

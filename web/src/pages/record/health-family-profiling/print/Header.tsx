@@ -1,6 +1,6 @@
-import cityHealthLogo from "../logo/city-health-logo.svg"
-import officialSealCebu from "../logo/official-seal-cebu.svg"
-import { equalsCI, inSetCI, norm } from "./utils"
+import cityHealthLogo from "../print/logo/city-health-logo.svg"
+import officialSealCebu from "../print/logo/official-seal-cebu.svg"
+import { equalsCI, inSetCI, norm } from "./utils" 
 
 interface HeaderProps {
   householdData: any
@@ -85,3 +85,4 @@ const Header = ({ householdData, buildingType }: HeaderProps) => {
 }
 
 export default Header
+

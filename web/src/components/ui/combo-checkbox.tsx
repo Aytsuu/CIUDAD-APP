@@ -92,18 +92,21 @@ export const ComboCheckboxStandalone = React.memo(
                 variant="outline"
                 role="combobox"
                 aria-expanded={open}
-                className={cn("w-full justify-between", !selectedValues.length && "text-muted-foreground")}
+                className={cn(
+                  "w-full justify-between h-auto min-h-10 py-2",
+                  !selectedValues.length && "text-muted-foreground"
+                )}
               >
-                <div className="flex flex-wrap items-center gap-1 overflow-hidden">
+                <div className="flex flex-wrap items-center gap-1 flex-1">
                   {showBadges && selectedOptions.length > 0 ? (
-                    <div className="flex flex-wrap gap-1 max-w-[90%]">
+                    <div className="flex flex-wrap gap-1">
                       {selectedOptions.slice(0, maxDisplayValues).map((option) => (
-                        <Badge key={option.id} variant="secondary" className="text-xs">
+                        <Badge key={option.id} variant="secondary" className="text-xs whitespace-nowrap">
                           {option.name}
                         </Badge>
                       ))}
                       {selectedOptions.length > maxDisplayValues && (
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs whitespace-nowrap">
                           +{selectedOptions.length - maxDisplayValues} more
                         </Badge>
                       )}
@@ -112,7 +115,7 @@ export const ComboCheckboxStandalone = React.memo(
                     <span className="truncate">{getDisplayText() || placeholder}</span>
                   )}
                 </div>
-                <div className="flex">
+                <div className="flex shrink-0 ml-2">
                   {selectedValues.length > 0 && (
                     <X
                       className="mr-1 h-4 w-4 shrink-0 opacity-50 hover:opacity-100"

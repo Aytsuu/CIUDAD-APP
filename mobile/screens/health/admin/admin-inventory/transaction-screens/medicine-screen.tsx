@@ -1,6 +1,6 @@
 // src/screens/MedicineListScreen.tsx (Card-Based View)
 import React from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, ScrollView } from "react-native";
 import type { MedicineRecords, ApiItemWithStaff } from "../types";
 import { useMedicineTransactions } from "../restful-api/transaction/fetchqueries";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -98,6 +98,7 @@ export default function MedicineListScreen() {
   );
 
   return (
+    <ScrollView>
     <View className="flex-1 p-4 bg-gray-50">
       <View className="mb-4">
         {/* <SearchInput
@@ -182,5 +183,6 @@ export default function MedicineListScreen() {
         </View>
       </View>
     </View>
+    </ScrollView>
   );
 }

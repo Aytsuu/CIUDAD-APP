@@ -7,7 +7,16 @@ export const unitOptions = [
   { id: "boxes", name: "boxes" },
   { id: "bottles", name: "bottles" },
   { id: "packs", name: "packs" },
-  { id: "pc/s", name: "pc/s" },
+  { id: "pcs", name: "pc/s" },
+  { id: "vials", name: "vials" },
+  { id: "sachets", name: "sachets" },
+  { id: "ampoules", name: "ampoules" },
+  { id: "tubes", name: "tubes" },
+  { id: "strips", name: "strips" },
+  { id: "cartons", name: "cartons" },
+  { id: "containers", name: "containers" },
+  { id: "syringes", name: "syringes" },
+  { id: "droppers", name: "droppers" },
 ];
 
 

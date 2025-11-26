@@ -53,7 +53,7 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
                           file: file.file
                         }
                       }).catch(error => {
-                        console.error("Error creating file entry:", error);
+                        // console.error("Error creating file entry:", error);
                         return null;
                       })
                     )
@@ -73,7 +73,7 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
 
     },
     onError: (err: Error) => {
-      console.error("Error submitting meeting minutes:", err);
+      // console.error("Error submitting meeting minutes:", err);
       toast.error("Failed to create meeting minutes. Please check the input data and try again.")
     }
   });

@@ -6,9 +6,10 @@ from django.db.models import Max
 
 from apps.maternal.models import *
 
-from apps.maternal.utils import handle_spouse_logic
+from apps.maternal.utils import handle_spouse_logic, create_medicine_request_for_maternal
 from apps.healthProfiling.models import PersonalAddress, FamilyComposition
-from apps.inventory.models import MedicineTransactions
+from apps.administration.models import Staff
+
 
 
 class SpouseCreateSerializer(serializers.ModelSerializer):
@@ -26,8 +27,8 @@ class PostpartumDetailViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PostpartumRecord
-        fields = ['ppr_id', 'ppr_lochial_discharges', 'ppr_vit_a_date_given', 'ppr_num_of_pads',
-                 'ppr_mebendazole_date_given', 'ppr_date_of_bf', 'ppr_time_of_bf', 'created_at',
+        fields = ['ppr_id', 'ppr_lochial_discharges', 'ppr_num_of_pads',
+                 'ppr_date_of_bf', 'ppr_time_of_bf', 'created_at',
                  'delivery_date', 'vital_systolic', 'vital_diastolic']
         
     def get_delivery_date(self, obj):
@@ -79,11 +80,7 @@ class PostpartumAssessmentWithVitalsSerializer(serializers.ModelSerializer):
             }
         return None
 
-
-# class PostpartumAssesmentCareSerializer(serializers.ModelSerializer):
-#     class Meta
-
-
+# for inserting of postpartum record along with nested data
 class PostpartumCompleteSerializer(serializers.ModelSerializer):
     # Nested serializers for related data
     delivery_record = PostpartumDeliveryRecordSerializer(write_only=True)
@@ -93,10 +90,17 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
     # Vital signs data
     vital_bp_systolic = serializers.CharField(write_only=True)
     vital_bp_diastolic = serializers.CharField(write_only=True)
+    vital_temp = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    vital_RR = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    vital_o2 = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    vital_pulse = serializers.CharField(write_only=True, required=False, allow_blank=True)
     
     # Follow-up visit data
     followup_date = serializers.DateField(write_only=True)
     followup_description = serializers.CharField(default="Postpartum follow-up visit", write_only=True)
+    
+    # TT Status FK
+    tts_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     
     # Medicine data - for micronutrient supplementation
     selected_medicines = serializers.ListField(
@@ -144,11 +148,12 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostpartumRecord
         fields = [
-            'ppr_lochial_discharges', 'ppr_vit_a_date_given',
-            'ppr_num_of_pads', 'ppr_mebendazole_date_given', 'ppr_date_of_bf',
+            'ppr_lochial_discharges',
+            'ppr_num_of_pads', 'ppr_date_of_bf',
             'ppr_time_of_bf', 'pat_id', 'patrec_type', 'delivery_record', 'assessments',
-            'spouse_data', 'vital_bp_systolic', 'vital_bp_diastolic', 'followup_date',
-            'followup_description', 'selected_medicines', 'staff_id'
+            'spouse_data', 'vital_bp_systolic', 'vital_bp_diastolic', 'vital_temp', 
+            'vital_RR', 'vital_o2', 'vital_pulse', 'followup_date',
+            'followup_description', 'selected_medicines', 'staff_id', 'tts_id'
         ]
 
     def validate_ppr_lochial_discharges(self, value):
@@ -437,6 +442,10 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         
         vital_bp_systolic = validated_data.pop('vital_bp_systolic')
         vital_bp_diastolic = validated_data.pop('vital_bp_diastolic')
+        vital_temp = validated_data.pop('vital_temp', "N/A")
+        vital_RR = validated_data.pop('vital_RR', "N/A")
+        vital_o2 = validated_data.pop('vital_o2', "N/A")
+        vital_pulse = validated_data.pop('vital_pulse', "N/A")
         
         followup_date = validated_data.pop('followup_date')
         followup_description = validated_data.pop('followup_description')
@@ -444,6 +453,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         pat_id = validated_data.pop('pat_id')
         patrec_type = validated_data.pop('patrec_type')
         staff_id = validated_data.pop('staff_id', None)
+        tts_id = validated_data.pop('tts_id', None)  # ✅ Extract TT Status FK
 
         try:
             with transaction.atomic():
@@ -519,14 +529,25 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 )
                 print(f"Created patient record: {patient_record.patrec_id}")
                 
+                # Get staff instance early for vital signs and other records
+                staff_instance = None
+                if staff_id:
+                    try:
+                        staff_instance = Staff.objects.get(staff_id=staff_id)
+                        print(f"Found staff: {staff_instance.staff_id}")
+                    except Staff.DoesNotExist:
+                        print(f"Staff with ID {staff_id} not found")
+                
                 # Create VitalSigns with only BP data
                 vital_signs = VitalSigns.objects.create(
                     vital_bp_systolic=vital_bp_systolic,
                     vital_bp_diastolic=vital_bp_diastolic,
-                    vital_temp="N/A",
-                    vital_RR="N/A",
-                    vital_o2="N/A",
-                    vital_pulse="N/A"
+                    vital_temp=vital_temp,
+                    vital_RR=vital_RR,
+                    vital_o2=vital_o2,
+                    vital_pulse=vital_pulse,
+                    patrec=patient_record,
+                    staff=staff_instance
                 )
                 print(f"Created vital signs: {vital_signs.vital_id}")
                 
@@ -546,16 +567,29 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                 )
                 print(f"Created follow-up visit: {follow_up_visit.followv_id}")
 
-                # create postpartum record
+                # create postpartum record - only pass model fields, not write_only fields
                 postpartum_data = {
                     'patrec_id': patient_record,
                     'vital_id': vital_signs,
                     'spouse_id': spouse,
                     'followv_id': follow_up_visit,
                     'pregnancy_id': pregnancy,
-                    # **validated_data
+                    'ppr_lochial_discharges': validated_data.get('ppr_lochial_discharges'),
+                    'ppr_vit_a_date_given': validated_data.get('ppr_vit_a_date_given'),
+                    'ppr_num_of_pads': validated_data.get('ppr_num_of_pads'),
+                    'ppr_date_of_bf': validated_data.get('ppr_date_of_bf'),
+                    'ppr_time_of_bf': validated_data.get('ppr_time_of_bf'),
+                    'staff_id': staff_instance,
                 }
-                postpartum_data.update(validated_data)
+                
+                # Handle TT Status FK - fetch the object and pass it
+                if tts_id:
+                    try:
+                        tts_record = TT_Status.objects.get(tts_id=tts_id)
+                        postpartum_data['tts_id'] = tts_record  # ✅ Pass the TT_Status object
+                        print(f"Linked TT Status: {tts_id}")
+                    except TT_Status.DoesNotExist:
+                        print(f"Warning: TT Status with ID {tts_id} not found, skipping FK link")
                 
                 postpartum_record = PostpartumRecord.objects.create(**postpartum_data)
                 print(f"Created postpartum record: {postpartum_record.ppr_id}")
@@ -579,80 +613,20 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                     )
                     print(f"Created assessment {i+1}: {assessment.ppa_id}")
                 
-                # Process selected medicines for micronutrient supplementation
-                medicine_record = None
+                # Process selected medicines using shared utility -> creates MedicineRequest & allocations
                 if selected_medicines:
-                    from apps.medicineservices.models import MedicineRecord, MedicineInventory, MedicineTransactions
-                    from apps.administration.models import Staff
-                    
-                    print(f"Processing {len(selected_medicines)} selected medicines")
-                    
-                    # Get staff instance once for all medicine transactions
-                    staff_instance = None
-                    if staff_id:
-                        try:
-                            staff_instance = Staff.objects.get(staff_id=staff_id)
-                        except Staff.DoesNotExist:
-                            print(f"Staff with ID {staff_id} not found")
-                    
-                    # Create medicine records for each selected medicine
-                    for i, medicine_data in enumerate(selected_medicines):
-                        minv_id = medicine_data.get('minv_id')
-                        medrec_qty = medicine_data.get('medrec_qty')
-                        reason = medicine_data.get('reason', 'Postpartum micronutrient supplementation')
-                        
-                        try:
-                            # Get medicine inventory
-                            medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
-                            
-                            # Check stock availability (already validated but double-check)
-                            if medicine_inv.minv_qty_avail < medrec_qty:
-                                raise Exception(f"Insufficient stock for {medicine_inv.med_id.med_name}")
-                            
-                            # Update inventory stock
-                            medicine_inv.minv_qty_avail -= medrec_qty
-                            medicine_inv.save()
-                            print(f"Updated medicine inventory: {medicine_inv.med_id.med_name}, new stock: {medicine_inv.minv_qty_avail}")
-                            
-                            # Create medicine record
-                            medicine_record = MedicineRecord.objects.create(
-                                medrec_qty=medrec_qty,
-                                reason=reason,
-                                requested_at=timezone.now(),
-                                fulfilled_at=timezone.now(),
-                                patrec_id=patient_record,
-                                minv_id=medicine_inv,
-                                staff=staff_instance
-                            )
-                            print(f"Created medicine record {i+1}: {medicine_record.medrec_id}")
-                            
-                            # Create medicine transaction for audit trail
-                            unit = medicine_inv.minv_qty_unit or 'pcs'
-                            if unit.lower() == 'boxes':
-                                mdt_qty = f"{medrec_qty} pcs"  # Convert boxes to pieces
-                            else:
-                                mdt_qty = f"{medrec_qty} {unit}"
-                            
-                            MedicineTransactions.objects.create(
-                                mdt_qty=mdt_qty,
-                                mdt_action="Deducted",
-                                minv_id=medicine_inv,
-                                staff=staff_instance
-                            )
-                            print(f"Created medicine transaction for {medicine_inv.med_id.med_name}")
-                            
-                        except MedicineInventory.DoesNotExist:
-                            print(f"Medicine with ID {minv_id} not found")
-                            continue
-                        except Exception as e:
-                            print(f"Error processing medicine {minv_id}: {str(e)}")
-                            continue
-                
-                # Link the first medicine record to postpartum record if created
-                if medicine_record:
-                    postpartum_record.medrec_id = medicine_record
-                    postpartum_record.save()
-                    print(f"Linked medicine record {medicine_record.medrec_id} to postpartum record")
+                    try:
+                        med_request = create_medicine_request_for_maternal(
+                            patient_record=patient_record,
+                            selected_medicines=selected_medicines,
+                            staff_instance=staff_instance
+                        )
+                        if med_request:
+                            postpartum_record.medreq_id = med_request
+                            postpartum_record.save()
+                            print(f"Linked MedicineRequest {med_request.medreq_id} to postpartum record")
+                    except Exception as e:
+                        print(f"Error creating MedicineRequest for postpartum record: {str(e)}")
                 
                 print(f"Successfully created complete postpartum record: {postpartum_record.ppr_id}")
                 return postpartum_record
@@ -664,6 +638,7 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         except Exception as e:
             error_msg = f"Error creating postpartum record: {str(e)}"
             print(error_msg)
+            # Transaction automatically rolls back on exception exit
             raise serializers.ValidationError(error_msg)
 
     def to_representation(self, instance):
@@ -679,18 +654,18 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
         else:
             representation['patient_details'] = None
         
-        # only include fields that actually exist on the PostpartumRecord instance
-        for field_name, field in self.fields.items():
-            if field_name in ['delivery_record', 'assessments', 'spouse_data', 
-				'vital_bp_systolic', 'vital_bp_diastolic', 
-				'followup_date', 'followup_description', 
-				'pat_id', 'patrec_type']:
-                continue
-            
-            if hasattr(instance, field_name):
-                attribute = field.get_attribute(instance)
-                if attribute is not None:
-                    representation[field_name] = field.to_representation(attribute)
+        # Exclude write-only fields and nested objects from representation
+        # These should not be in the serialized output
+        write_only_fields = [
+            'delivery_record', 'assessments', 'spouse_data',
+            'vital_bp_systolic', 'vital_bp_diastolic', 'vital_temp', 'vital_RR', 'vital_o2', 'vital_pulse',
+            'followup_date', 'followup_description',
+            'pat_id', 'patrec_type', 'selected_medicines', 'staff_id', 'tts_id'
+        ]
+        
+        # Remove write-only fields from representation to prevent serialization errors
+        for field_name in write_only_fields:
+            representation.pop(field_name, None)
         
         if instance.pregnancy_id:
             representation['pregnancy'] = {
@@ -731,7 +706,11 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             representation['vital_signs'] = {
                 'vital_id': instance.vital_id.vital_id,
                 'vital_bp_systolic': instance.vital_id.vital_bp_systolic,
-                'vital_bp_diastolic': instance.vital_id.vital_bp_diastolic
+                'vital_bp_diastolic': instance.vital_id.vital_bp_diastolic,
+                'vital_temp': instance.vital_id.vital_temp,
+                'vital_RR': instance.vital_id.vital_RR,
+                'vital_o2': instance.vital_id.vital_o2,
+                'vital_pulse': instance.vital_id.vital_pulse
             }
         else:
             representation['vital_signs'] = None
@@ -759,6 +738,16 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             }
         else:
             representation['follow_up_visit'] = None
+        
+        # Add TT Status FK data
+        if instance.tts_id:
+            representation['tts_info'] = {
+                'tts_id': instance.tts_id.tts_id,
+                'tts_status': instance.tts_id.tts_status,
+                'tts_date_given': str(instance.tts_id.tts_date_given) if hasattr(instance.tts_id, 'tts_date_given') else None,
+            }
+        else:
+            representation['tts_info'] = None
         
         return representation
     

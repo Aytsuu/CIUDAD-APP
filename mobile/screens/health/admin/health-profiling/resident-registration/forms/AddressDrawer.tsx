@@ -12,7 +12,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { useGetSitio } from "@/screens/_global_queries/Retrieve";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { formatSitio } from "@/helpers/formatSitio";
-import { Drawer } from "@/components/ui/drawer";
+import { Drawer } from "@/components/ui/drawer-deprecated";
 
 export const AddressDrawer = ({
   visible,
@@ -32,6 +32,7 @@ export const AddressDrawer = ({
   setValue: any;
 }) => {
   // ===================== STATE INITIALIZATION =====================
+  const isMounted = React.useRef(true);
   const { height: screenHeight } = Dimensions.get("window");
   const { data: sitioList, isLoading } = useGetSitio();
   const [isInternalAddress, setIsInternalAddress] =
@@ -52,11 +53,20 @@ export const AddressDrawer = ({
   })
   
   // ===================== SIDE EFFECTS =====================
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   React.useEffect(() => {
     if (barangay?.trim().toLowerCase() === "san roque" || 
         barangay?.trim().toLowerCase() === "ciudad") {
       setValue('personalSchema.per_addresses.new.add_barangay', "SAN ROQUE (CIUDAD)");
     }
+
+    if (!isMounted.current) return;
 
     if (barangay?.trim().toLowerCase() === "san roque (ciudad)") {
       setIsInternalAddress(true);
@@ -66,7 +76,9 @@ export const AddressDrawer = ({
   }, [barangay]);
 
   React.useEffect(() => {
-    setIsInternalAddress(true)
+    if (isMounted.current) {
+      setIsInternalAddress(true);
+    }
   }, []);
 
   // ===================== HANDLERS =====================
@@ -132,19 +144,16 @@ export const AddressDrawer = ({
             control={control}
             label="Province"
             name="personalSchema.per_addresses.new.add_province"
-            upper={true}
           />
           <FormInput
             control={control}
             label="City"
             name="personalSchema.per_addresses.new.add_city"
-            upper={true}
           />
           <FormInput
             control={control}
             label="Barangay"
             name="personalSchema.per_addresses.new.add_barangay"
-            upper={true}
           />
           {isInternalAddress ? (
             <FormSelect
@@ -164,7 +173,6 @@ export const AddressDrawer = ({
             control={control}
             label="Street"
             name="personalSchema.per_addresses.new.add_street"
-            upper={true}
           />
         </View>
       </ScrollView>
@@ -189,3 +197,4 @@ export const AddressDrawer = ({
     </Drawer>
   );
 };
+

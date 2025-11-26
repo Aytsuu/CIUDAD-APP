@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Search, RefreshCw, FileInput } from "lucide-react";
+import { ArrowUpDown, Search, RefreshCw } from "lucide-react";
 import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
 import PregnantWomanIcon from "@mui/icons-material/PregnantWoman";
 
@@ -20,11 +20,13 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import TableLoading from "../../table-loading";
+import { ExportButton } from "@/components/ui/export";
+import TableLoading from "@/components/ui/table-loading";
 
 import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
 import { capitalize } from "@/helpers/capitalize";
 import { useDebounce } from "@/hooks/use-debounce";
+import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
 
 interface maternalRecords {
     pat_id: string;
@@ -50,7 +52,11 @@ interface maternalRecords {
 
     pat_type: "Transient" | "Resident";
     patrec_type?: string;
-    pregnancy_count?: number;
+    additional_info?: {
+      latest_pregnancy?: {
+        pregnancy_status?: string
+      }
+    }
   }
 
 export default function MaternalAllRecords() {
@@ -157,6 +163,11 @@ export default function MaternalAllRecords() {
           add_sitio: address?.add_sitio || "Not Provided",
         },
         pat_type: record.pat_type || "N/A",
+        additional_info: {
+          latest_pregnancy: {
+            pregnancy_status: record.additional_info?.latest_pregnancy?.pregnancy_status || "N/A"
+          }
+        }
       };
     });
   }, [maternalRecordsData]);
@@ -204,7 +215,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "address",
-      size: 300,
+      size: 280,
       header: ({ column }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -251,9 +262,30 @@ export default function MaternalAllRecords() {
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
+          <div className={getPatType(row.original.pat_type)}>{row.original.pat_type}</div>
         </div>
       ),
+    },
+    {
+      accessorKey: "pregnancy_status",
+      header: "Current Pregnancy Status",
+      cell: ({ row }) => {
+        const status = row.original.additional_info?.latest_pregnancy?.pregnancy_status || "N/A";
+        
+        return (
+          <div className="flex justify-center">
+            {capitalize(status) === "Active" ? (
+              <div className="bg-pink-500 rounded-xl w-24 text-white px-2 py-1">
+              {capitalize(status)}
+            </div>
+            ) : ( 
+              <div className="bg-green-500 rounded-xl w-24 text-white px-2 py-1">
+                {capitalize(status)}
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       accessorKey: "action",
@@ -297,6 +329,45 @@ export default function MaternalAllRecords() {
         </>
       ),
     },
+  ];
+
+  // export columns
+  const exportColumns = [
+    { key: "pat_id", header: "Patient ID" },
+    { 
+      key: "patient", 
+      header: "Patient Name",
+      format: (row: maternalRecords) => 
+        `${row.personal_info.per_lname}, ${row.personal_info.per_fname} ${row.personal_info.per_mname}`.trim()
+    },
+    { 
+      key: "age", 
+      header: "Age",
+      format: (row: maternalRecords) => `${row.age} ${row.personal_info.ageTime}`
+    },
+    { 
+      key: "sex", 
+      header: "Sex",
+      format: (row: maternalRecords) => row.personal_info.per_sex
+    },
+    { 
+      key: "address", 
+      header: "Address",
+      format: (row: maternalRecords) => {
+        const addressObj = row.address;
+        return addressObj
+          ? [addressObj.add_street, addressObj.add_barangay, addressObj.add_city, addressObj.add_province]
+              .filter(Boolean)
+              .join(", ") || "Unknown"
+          : "Unknown";
+      }
+    },
+    { 
+      key: "sitio", 
+      header: "Sitio",
+      format: (row: maternalRecords) => row.address?.add_sitio || "Not Provided"
+    },
+    { key: "pat_type", header: "Type" }
   ];
   
   // refetch handler
@@ -374,14 +445,16 @@ export default function MaternalAllRecords() {
                   onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
-              <SelectLayout
-                placeholder="Select filter"
-                label="All"
-                className="w-full md:w-[200px] bg-white text-black"
-                options={filter}
-                value={selectedFilter}
-                onChange={handleFilterChange}
-              />
+              <div className="">
+                  <SelectLayout
+                    placeholder="Select filter"
+                    className="w-full md:w-[200px] bg-white text-black"
+                    options={filter}
+                    value={selectedFilter}
+                    onChange={handleFilterChange}
+                  />
+              </div>
+              
             </div>
           </div>
 
@@ -418,19 +491,11 @@ export default function MaternalAllRecords() {
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ExportButton
+                data={transformData}
+                filename={`maternal-records-${new Date().toISOString().split("T")[0]}`}
+                columns={exportColumns}
+              />
             </div>
           </div>
           <div className="bg-white w-full min-h-20 overflow-x-auto">

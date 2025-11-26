@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useUpdateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combo-box-search";
@@ -32,9 +32,14 @@ const getClientOptions = () => (
 
 export default function AnnualDevelopmentPlanEdit() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const staffId = user?.staff?.staff_id as string | undefined;
+  
+  // Check if we came from the view page
+  const fromView = (location.state as any)?.fromView || false;
+  const viewYear = (location.state as any)?.year || null;
   
   const form = useForm<GADAnnualDevPlanCreateInput>({
     resolver: zodResolver(GADAnnualDevPlanCreateSchema),
@@ -89,7 +94,7 @@ export default function AnnualDevelopmentPlanEdit() {
         const data = await getStaffList();
         setStaffOptions(data || []);
       } catch (e) {
-        console.error("Failed to fetch staff list", e);
+        // Failed to fetch staff list
       } finally {
         setStaffLoading(false);
       }
@@ -117,8 +122,12 @@ export default function AnnualDevelopmentPlanEdit() {
   const fetchPlansForYear = async (year: string) => {
     try {
       setPlansLoading(true);
-      const list = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for edit
-      const normalized = (Array.isArray(list) ? list : []).map((p: any) => ({ dev_id: p.dev_id, dev_project: p.dev_project }));
+      const response = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for edit
+      // Handle both array and paginated response formats
+      const plansData = Array.isArray(response) ? response : response?.results || [];
+      // Filter out archived plans just to be sure
+      const nonArchivedPlans = plansData.filter((p: any) => !p.dev_archived);
+      const normalized = nonArchivedPlans.map((p: any) => ({ dev_id: p.dev_id, dev_project: p.dev_project }));
       setPlansForYear(normalized);
     } catch (e) {
       setPlansForYear([]);
@@ -234,9 +243,15 @@ export default function AnnualDevelopmentPlanEdit() {
         budgetItems: budgetItems as BudgetItemType[],
       });
       showSuccessToast("Annual development plan updated successfully!");
-      navigate(-1);
+      
+      // Navigate to view page with the year
+      const year = selectedYear ? parseInt(selectedYear) : (data.dev_date ? new Date(data.dev_date).getFullYear() : null);
+      if (year) {
+        navigate("/gad-annual-development-plan", { state: { openedYear: year } });
+      } else {
+        navigate("/gad-annual-development-plan");
+      }
     } catch (error) {
-      console.error("Error updating annual development plan:", error);
       showErrorToast("Failed to update annual development plan");
     } finally {
       setIsLoading(false);
@@ -251,7 +266,14 @@ export default function AnnualDevelopmentPlanEdit() {
             variant="ghost" 
             size="icon" 
             className="rounded-full hover:bg-gray-100" 
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              // If we came from view page, navigate back to view with the year
+              if (fromView && viewYear) {
+                navigate("/gad-annual-development-plan", { state: { openedYear: viewYear } });
+              } else {
+                navigate(-1);
+              }
+            }}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -836,7 +858,14 @@ export default function AnnualDevelopmentPlanEdit() {
         <div className="flex justify-end gap-4 pt-6">
           <Button 
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              // If we came from view page, navigate back to view with the year
+              if (fromView && viewYear) {
+                navigate("/gad-annual-development-plan", { state: { openedYear: viewYear } });
+              } else {
+                navigate(-1);
+              }
+            }}
             className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
           >
             Cancel

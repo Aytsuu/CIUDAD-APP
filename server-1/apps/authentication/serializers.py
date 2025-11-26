@@ -33,7 +33,6 @@ class UserAccountSerializer(serializers.ModelSerializer):
             'req',
         ]
 
-
     def get_staff(self, obj):
         rp = getattr(obj, 'rp', None)
         if not rp:

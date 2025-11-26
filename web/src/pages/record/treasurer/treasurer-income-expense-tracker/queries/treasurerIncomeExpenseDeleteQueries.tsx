@@ -40,11 +40,11 @@ export const useDeleteIncomeExpense = () => {
       });
     },
     onError: (err) => {
-      toast.error("Failed to delete entry", {
+      toast.error(`Failed to delete entry: ${err.message}`, {
         id: "deleteToast",
         duration: 1000
       });
-      console.error("Failed to delete entry:", err);
+      // console.error("Failed to delete entry:", err);
     }
   });
 };
@@ -110,7 +110,7 @@ export const useArchiveOrRestoreExpense = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err: any) => {
-      console.error('Error archiving entry:', err);
+      // console.error('Error archiving entry:', err);
       toast.error(err.message || 'Failed to archive entry');
     },
   });
@@ -143,11 +143,11 @@ export const useDeleteIncome = () => {
       });
     },
     onError: (err) => {
-      toast.error("Failed to delete entry", {
+      toast.error(`Failed to delete income entry: ${err.message}`, {
         id: "deleteToast",
         duration: 1000
       });
-      console.error("Failed to delete entry:", err);
+      // console.error("Failed to delete entry:", err);
     }
   });
 };
@@ -235,7 +235,7 @@ export const useArchiveOrRestoreIncome = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err: any) => {
-      console.error('Error archiving entry:', err);
+      // console.error('Error archiving entry:', err);
       toast.error(err.message || 'Failed to archive entry');
     },
   });

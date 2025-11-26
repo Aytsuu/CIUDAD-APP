@@ -53,8 +53,8 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
       
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error updating resolution:", err);
+    onError: (_err) => {
+      // console.error("Error updating resolution:", err);
       toast.error("Failed to update resolution");
     }
   });
@@ -94,7 +94,7 @@ const handleResolutionFileUpdates = async (res_num: string, mediaFiles: any[]) =
       return api.post('council/resolution-file/', payload);
     }));
   } catch (err) {
-    console.error("Error updating resolution files:", err);
+    // console.error("Error updating resolution files:", err);
     throw err;
   }
 };
@@ -131,7 +131,7 @@ const handleSuppDocUpdates = async (res_num: string, mediaFiles: any[]) => {
       })
     ));
   } catch (err) {
-    console.error("Error updating files:", err);
+    // console.error("Error updating files:", err);
     throw err;
   }
 };

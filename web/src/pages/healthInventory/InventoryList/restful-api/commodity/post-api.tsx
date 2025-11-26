@@ -8,6 +8,7 @@ export const addCommodity = async (data: Record<string, string>) => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       user_type: data.user_type,
+      staff: data.staff,
       gender_type: data.gender_type
     });
     return res.data;

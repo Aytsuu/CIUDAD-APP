@@ -140,18 +140,36 @@ def reminder_notification(
 #  INTERNAL PUSH SENDER 
 # ===============================================================
 def _send_push(notification, recipient_accounts):
+    logger.info(f"🔔 Starting _send_push for notification {notification.notif_id}")
+    logger.info(f"👥 Processing {len(recipient_accounts)} recipient accounts")
+    
     total_sent = 0
     total_failed = 0
     device_tokens = {}
 
-    # Collect device tokens
+    # Collect device tokens with proper account filtering
     for acc in recipient_accounts:
+        logger.info(f"🔍 Looking for FCM tokens for account ID: {acc.acc_id}")
+        
+        # CORRECTED: Filter by account object directly
         tokens = FCMToken.objects.filter(acc=acc)
+        token_count = tokens.count()
+        logger.info(f"📱 Found {token_count} FCM tokens for account {acc.acc_id}")
+        
         for token_obj in tokens:
+            logger.info(f"🔑 Token found - Device ID: {token_obj.fcm_device_id}, Token: {token_obj.fcm_token[:20]}...")
             if token_obj.fcm_device_id and token_obj.fcm_device_id not in device_tokens:
                 device_tokens[token_obj.fcm_device_id] = token_obj.fcm_token
+            else:
+                logger.warning(f"⚠️ Duplicate device ID skipped: {token_obj.fcm_device_id}")
 
-    # FCM payload
+    logger.info(f"📊 Total unique device tokens collected: {len(device_tokens)}")
+
+    if not device_tokens:
+        logger.warning("❌ No FCM tokens found for any recipients")
+        return {'success': False, 'sent_count': 0, 'failed_count': 0}
+
+    # FCM payload - match what frontend expects
     fcm_payload = {
         "notification_id": str(notification.notif_id),
         "notif_type": notification.notif_type,
@@ -161,9 +179,10 @@ def _send_push(notification, recipient_accounts):
         "mobile_params": json.dumps(notification.mobile_params or {}),
     }
 
-    # Send push
+    # Send push with detailed logging
     for device_id, token in device_tokens.items():
         try:
+            logger.info(f"🚀 Sending FCM to device {device_id} with token {token[:20]}...")
             result = send_push_notification(
                 token=token,
                 title=notification.notif_title,
@@ -171,14 +190,18 @@ def _send_push(notification, recipient_accounts):
                 data=fcm_payload,
             )
             if result:
+                logger.info(f"✅ FCM sent successfully to device {device_id}")
                 total_sent += 1
             else:
+                logger.error(f"❌ FCM send failed for device {device_id}")
                 total_failed += 1
         except Exception as e:
-            logger.error(f"❌ Error sending to device {device_id}: {str(e)}")
+            logger.error(f"💥 Exception sending to device {device_id}: {str(e)}")
             total_failed += 1
 
-    logger.info(f"📊 Push notification: {total_sent} sent, {total_failed} failed")
+    logger.info(f"📊 FCM Final result: {total_sent} sent, {total_failed} failed")
+    return {'success': total_sent > 0, 'sent_count': total_sent, 'failed_count': total_failed}
+
 
 
 # ===============================================================

@@ -142,7 +142,6 @@ function IncomeTracking() {
         };
 
         archiveRestore(allValues);
-        console.log("ARCHIVE INC: ", allValues)
     };
 
     const handleRestore = (inc_num: number, inc_amount: number) => {
@@ -160,7 +159,6 @@ function IncomeTracking() {
         };
 
         archiveRestore(allValues);
-        console.log("RESTORE INC: ", allValues)
     };
 
     // Common columns for both tabs (rest of your columns remain the same)
