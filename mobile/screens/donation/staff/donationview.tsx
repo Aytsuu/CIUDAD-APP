@@ -23,7 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const DonationView = () => {
   const { user } = useAuth();
-  const isSecretary = user?.staff?.pos?.toLowerCase() === "secretary"; 
+  const isSecretary = ["admin", "secretary"].includes(user?.staff?.pos?.toLowerCase());
   const router = useRouter();
   const { don_num } = useLocalSearchParams();
   const { data: donationsData = { results: [], count: 0 }, isLoading } = useGetDonations();
