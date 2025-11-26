@@ -48,7 +48,6 @@ import { ReactElement } from "react";
 import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
 import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
-import { VaccinationDistributionSidebar } from "@/components/analytics/health/vaccination-sidebar";
 
 type DashboardItem = {
   dashboard: string;
