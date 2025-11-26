@@ -23,15 +23,11 @@ export const calculateAge = (dateOfBirth: string, type?: string): string => {
   months = Math.max(0, months);
 
   if (years > 0) {
-    return `${years} ${
-      type == "long" ? `year${years > 1 ? "s" : ""} old` : ""
-    }`;
+    return `${years} ${type == "long" ? `year${years > 1 ? "s" : ""} old` : "y/o"}`;
   }
 
   if (months > 0) {
-    return `${months} ${
-      type == "long" ? `month${months > 1 ? "s" : ""} old` : ""
-    }`;
+    return `${months} ${type == "long" ? `month${months > 1 ? "s" : ""} old` : "mos"}`;
   }
 
   // For ages less than 1 month
@@ -39,10 +35,10 @@ export const calculateAge = (dateOfBirth: string, type?: string): string => {
     (today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24)
   );
   if (days > 0) {
-    return `${days} ${type == "long" ? `day${days > 1 ? "s" : ""} old` : ""}`;
+    return `${days} ${type == "long" ? `day${days > 1 ? "s" : ""} old` : "days"}`;
   }
 
-  return "Newborn";
+  return type == "long" ? "Newborn" : "NB";
 };
 
 export interface AgeCalculation {
