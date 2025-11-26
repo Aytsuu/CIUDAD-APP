@@ -51,7 +51,9 @@ export const useGetWasteEvents = (isArchive?: boolean) => {
                 return Array.isArray(data) ? data : data?.results || [];
             });
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: 0, // Always consider data stale to allow immediate refetching
+        refetchOnMount: true, // Refetch when component mounts
+        refetchOnWindowFocus: true, // Refetch when window regains focus
     });
 };
 

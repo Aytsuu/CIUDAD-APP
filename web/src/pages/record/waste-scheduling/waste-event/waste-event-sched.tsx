@@ -198,9 +198,12 @@ function WasteEventSched() {
             const response = await createWasteEvent(eventData);
             
             queryClient.invalidateQueries({ queryKey: ['wasteEvents'] });
+            queryClient.invalidateQueries({ queryKey: ['wasteEvents', false] });
             queryClient.invalidateQueries({ queryKey: ['announcements'] });
             
-            // Show appropriate success message
+    
+            await queryClient.refetchQueries({ queryKey: ['wasteEvents', false] });
+            
             if (response?.announcement_created) {
                 showSuccessToast("Event scheduled and announcement sent successfully!");
             } else {
@@ -385,15 +388,18 @@ function WasteEventSched() {
                                     name="eventSubject"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <Label className="font-medium">Event Subject</Label>
+                                            <Label className="font-medium">Additional Message (Optional)</Label>
                                             <FormControl>
                                                 <Textarea 
-                                                    placeholder="Enter event subject for announcement" 
+                                                    placeholder="Enter additional message or subject for the announcement. Event details (location, date, time) will be automatically included." 
                                                     {...field} 
                                                     className="w-full" 
                                                 />
                                             </FormControl>
                                             <FormMessage />
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                This message will appear at the top of the announcement. Event location, date, time, and organizer will be automatically added below.
+                                            </p>
                                         </FormItem>
                                     )}
                                 />

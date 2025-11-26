@@ -108,6 +108,8 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                 # Calculate announcement start and end times
                 ann_start_at = timezone.now()
                 ann_end_at = None
+                ann_event_start = None
+                ann_event_end = None
                 
                 # Get date and time from event data
                 # Note: response.data contains serialized data, so dates/times are strings
@@ -154,6 +156,11 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                         naive_event_dt = datetime.combine(event_date, event_time)
                         local_event_dt = timezone.make_aware(naive_event_dt, local_tz)
                         
+                        # Set event start and end times (event datetime)
+                        ann_event_start = local_event_dt
+                        # For single-day events, set event end to same day + 2 hours (default duration)
+                        ann_event_end = local_event_dt + timedelta(hours=2)
+                        
                         # Set ann_end_at to event datetime + 1 day to keep it active until after the event
                         ann_end_at = local_event_dt + timedelta(days=1)
                         logger.info(f"Set announcement end time to: {ann_end_at} (event datetime: {local_event_dt})")
@@ -166,17 +173,111 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                     ann_end_at = ann_start_at + timedelta(days=2)
                     logger.info(f"No event date/time provided, setting announcement end to 2 days from now: {ann_end_at}")
                 
+                # Format event details with structured information
+                event_name = event_data.get('we_name', 'Waste Management Event')
+                event_location = event_data.get('we_location', 'TBD')
+                event_organizer = event_data.get('we_organizer', 'TBD')
+                event_description = event_data.get('we_description', '')
+                
+                # Format date and time for display
+                formatted_date = we_date if we_date else 'TBD'
+                formatted_time = we_time if we_time else 'TBD'
+                
+                # Format date to be more readable (e.g., "2025-11-23" -> "November 23, 2025")
+                if we_date:
+                    try:
+                        if isinstance(we_date, str):
+                            # Parse date string
+                            date_obj = datetime.strptime(we_date.split('T')[0], '%Y-%m-%d').date()
+                        elif hasattr(we_date, 'year'):
+                            date_obj = we_date
+                        else:
+                            date_obj = we_date
+                        
+                        # Format as "Month Day, Year"
+                        month_names = ['January', 'February', 'March', 'April', 'May', 'June',
+                                     'July', 'August', 'September', 'October', 'November', 'December']
+                        formatted_date = f"{month_names[date_obj.month - 1]} {date_obj.day}, {date_obj.year}"
+                    except:
+                        # Keep original format if parsing fails
+                        formatted_date = we_date if we_date else 'TBD'
+                
+                # Format time to be more readable (e.g., "14:30:00" -> "2:30 PM")
+                if we_time and isinstance(we_time, str):
+                    try:
+                        time_parts = we_time.split(':')
+                        hour = int(time_parts[0])
+                        minute = int(time_parts[1]) if len(time_parts) > 1 else 0
+                        period = "AM" if hour < 12 else "PM"
+                        display_hour = hour if hour <= 12 else hour - 12
+                        if display_hour == 0:
+                            display_hour = 12
+                        formatted_time = f"{display_hour}:{minute:02d} {period}"
+                    except:
+                        formatted_time = we_time
+                
+                # Map announcement types to display labels
+                announcement_labels = {
+                    "all": "All",
+                    "allbrgystaff": "All Barangay Staff",
+                    "residents": "Residents",
+                    "wmstaff": "Waste Committee",
+                    "drivers": "Driver Loader",
+                    "collectors": "Loaders",
+                    "watchmen": "Watchmen"
+                }
+                
+                # Build detailed announcement content - always include structured details
+                ann_details_content = ""
+                
+                # Add ATTENTION section with selected recipients
+                if selected_announcements:
+                    ann_details_content += "ATTENTION!!\n\n"
+                    recipient_list = []
+                    
+                    for ann_type in selected_announcements:
+                        if ann_type == "all":
+                            # "All" means both staff and residents
+                            recipient_list.append("All Barangay Staff")
+                            recipient_list.append("Residents")
+                        else:
+                            label = announcement_labels.get(ann_type, ann_type.title())
+                            if label not in recipient_list:  # Avoid duplicates
+                                recipient_list.append(label)
+                    
+                    # Add each recipient on a new line
+                    for recipient in recipient_list:
+                        ann_details_content += f"{recipient}\n"
+                    
+                    ann_details_content += "\n"
+                
+                # Add event subject if provided (as introduction/header)
+                if event_subject and event_subject.strip():
+                    ann_details_content += f"{event_subject}\n\n"
+                
+                # Always include structured event details
+                ann_details_content += f"EVENT: {event_name}\n\n"
+                ann_details_content += f"LOCATION: {event_location}\n"
+                ann_details_content += f"WHEN: {formatted_date} at {formatted_time}\n"
+                ann_details_content += f"ORGANIZER: {event_organizer}\n"
+                
+                # Add description if available
+                if event_description and event_description.strip():
+                    ann_details_content += f"\nDESCRIPTION:\n{event_description}"
+                
                 # Create announcement for the event
                 announcement = Announcement.objects.create(
-                    ann_title=f"WASTE EVENT: {event_data.get('we_name', 'Waste Management Event')}",
-                    ann_details=event_subject or f"Event: {event_data.get('we_name')}\nLocation: {event_data.get('we_location')}\nDate: {event_data.get('we_date')} at {event_data.get('we_time')}\nOrganizer: {event_data.get('we_organizer')}\n\n{event_data.get('we_description', '')}",
+                    ann_title=f"WASTE EVENT: {event_name}",
+                    ann_details=ann_details_content,
                     ann_created_at=timezone.now(),
                     ann_start_at=ann_start_at,
                     ann_end_at=ann_end_at,
-                    ann_type="event",
+                    ann_event_start=ann_event_start,
+                    ann_event_end=ann_event_end,
+                    ann_type="EVENT",
                     ann_to_email=True,
                     ann_to_sms=True,
-                    ann_status="Active",
+                    ann_status="ACTIVE",
                     staff_id=event_data.get('staff')
                 )
                 
