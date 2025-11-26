@@ -6,11 +6,6 @@ export const updateWasteReport = async (rep_id: string, wasteReportInfo: Record<
 
         const currentTimestamp = new Date().toISOString();
 
-        console.log("REPORT DATA REQ: ",{
-            rep_status: wasteReportInfo.rep_status,
-            rep_date_resolved: currentTimestamp,
-            staff_id: wasteReportInfo.staff_id
-        })
 
         const res = await api.put(`waste/update-waste-report/${rep_id}/`,{
             rep_status: wasteReportInfo.rep_status,
@@ -21,7 +16,8 @@ export const updateWasteReport = async (rep_id: string, wasteReportInfo: Record<
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw err;
     }
 }
 
@@ -49,7 +45,7 @@ export const uploadResolvedImage = async (data: {
     const res = await api.post('waste/waste-rep-rslv-file/', payload);
     return res.data;
   } catch (err) {
-    console.error(`Failed to create file ${data.file_data.name}:`, err);
+    // console.error(`Failed to create file ${data.file_data.name}:`, err);
     throw err;
   }
 }

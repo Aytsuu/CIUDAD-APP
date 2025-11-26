@@ -7,20 +7,6 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
     try{
 
-        const entry = incomeExpenseInfo.iet_entryType == "0" ? "Income" : "Expense";
-
-        console.log({
-            iet_datetime: incomeExpenseInfo.iet_datetime,
-            iet_entryType: "Expense",
-            iet_serial_num: incomeExpenseInfo.iet_serial_num,
-            iet_check_num: incomeExpenseInfo.iet_check_num,
-            iet_amount: parseFloatSafe(incomeExpenseInfo.iet_amount),
-            iet_is_archive: false,
-            iet_receiver: capitalize(incomeExpenseInfo.iet_receiver),
-            iet_additional_notes: incomeExpenseInfo.iet_additional_notes,
-            exp_id:  parseInt(incomeExpenseInfo.iet_particulars),
-            staff_id: incomeExpenseInfo.staff_id
-        })
 
         const res = await api.post('treasurer/income-expense-tracking/',{
 
@@ -41,8 +27,8 @@ export const income_expense_tracking = async (incomeExpenseInfo: Record<string, 
 
         return res.data.iet_num;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }
 
@@ -52,14 +38,6 @@ export const expense_log = async (iet_num: number, expenseLogInfo: Record<string
 
     try{
         const currentTimestamp = new Date().toISOString();
-
-        console.log("ADD EXPENSER LOG: ",{
-            el_datetime: currentTimestamp,
-            el_return_amount: parseFloat(expenseLogInfo.returnAmount || 0).toFixed(2),
-            el_proposed_budget: parseFloat(expenseLogInfo.el_proposed_budget || 0).toFixed(2),
-            el_actual_expense: parseFloat(expenseLogInfo.el_actual_expense || 0).toFixed(2),
-            iet_num: iet_num
-        })
 
         const res = await api.post('treasurer/expense-log/',{
 
@@ -73,8 +51,8 @@ export const expense_log = async (iet_num: number, expenseLogInfo: Record<string
 
         return res.data.iet_num;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }
 
@@ -102,7 +80,7 @@ export const income_expense_file_create = async (data: {
     const res = await api.post('treasurer/inc-exp-file/', payload);
     return res.data;
   } catch (err) {
-    console.error(`Failed to create file ${data.file_data.name}:`, err);
+    // console.error(`Failed to create file ${data.file_data.name}:`, err);
     throw err;
   }
 }
@@ -113,12 +91,6 @@ export const income_expense_file_create = async (data: {
 export const updateIncomeExpenseMain = async (ie_year_main: number, ExpenseInfo: Record<string, any>) => {
 
     try{
-        console.log("DATA OF EXPENSEEEEEEE", {
-          iea_year: ie_year_main,
-          ie_main_tot_budget: ExpenseInfo.totalBudget,
-          ie_main_exp: parseFloatSafe(ExpenseInfo.totalExpense)
-        })
-
 
         const res = await api.put(`treasurer/update-income-expense-main/${ie_year_main}/`,{
 
@@ -130,8 +102,8 @@ export const updateIncomeExpenseMain = async (ie_year_main: number, ExpenseInfo:
 
         return res.data;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }
 
@@ -139,12 +111,6 @@ export const updateIncomeExpenseMain = async (ie_year_main: number, ExpenseInfo:
 export const updateExpenseParticular = async (exp_id: number, ExpenseInfo: Record<string, any>) => {
 
     try{
-        console.log({
-          exp_id: exp_id,
-          exp_year: ExpenseInfo.years,
-          exp_proposed_budget: ExpenseInfo.exp_proposed_budget,
-        })
-
 
         const res = await api.put(`treasurer/update-expense-particular/${ExpenseInfo.years}/${exp_id}/`,{
           
@@ -154,8 +120,8 @@ export const updateExpenseParticular = async (exp_id: number, ExpenseInfo: Recor
 
         return res.data;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }
 
@@ -164,12 +130,6 @@ export const updateExpenseParticular = async (exp_id: number, ExpenseInfo: Recor
 export const updateBudgetPlanDetail = async (dtl_id: number, ExpenseInfo: Record<string, any>) => {
 
     try{
-        console.log({
-          dtl_id: dtl_id,
-          dtl_year: ExpenseInfo.years,
-          dtl_proposed_budget: ExpenseInfo.dtl_proposed_budget,
-        })
-
 
         const res = await api.put(`treasurer/update-budget-detail/${ExpenseInfo.years}/${dtl_id}/`,{
           
@@ -179,8 +139,8 @@ export const updateBudgetPlanDetail = async (dtl_id: number, ExpenseInfo: Record
 
         return res.data;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }
 
@@ -195,16 +155,6 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
 
     try{
 
-        console.log({
-            inc_datetime: incomeInfo.inc_datetime,
-            inc_serial_num: incomeInfo.inc_serial_num,
-            inc_entryType: "Income",
-            inc_amount: parseFloatSafe(incomeInfo.inc_amount),
-            inc_additional_notes: incomeInfo.inc_additional_notes,
-            incp_id:  incomeInfo.inc_particulars,
-            staff_id: incomeInfo.staff_id
-        })
-
         const res = await api.post('treasurer/income-tracking/',{
 
             inc_datetime: incomeInfo.inc_datetime,
@@ -218,8 +168,8 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
 
         return res.data.inc_num;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }
 
@@ -229,10 +179,6 @@ export const income_tracking = async (incomeInfo: Record<string, any>) => {
 export const updateIncomeMain = async (ie_year_main: number, ExpenseInfo: Record<string, any>) => {
 
     try{
-        console.log("CREATING INCOMMMMMMEEEEEE",{
-          iea_year: ie_year_main,
-          ie_main_inc: parseFloatSafe(ExpenseInfo.totalIncome)
-        })
 
 
         const res = await api.put(`treasurer/update-income-expense-main/${ie_year_main}/`,{
@@ -243,7 +189,7 @@ export const updateIncomeMain = async (ie_year_main: number, ExpenseInfo: Record
 
         return res.data;
     }
-    catch (err){
-        console.error(err);
+    catch (_err){
+        // console.error(err);
     }
 }

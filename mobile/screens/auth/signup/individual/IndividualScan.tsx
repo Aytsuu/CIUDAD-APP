@@ -119,8 +119,8 @@ export default function IndividualScan() {
           onPress={() => {
             setShowFeedback(false);  
             if(type == 'business') {
-              // reset()
-              router.replace('/(tabs)')
+              reset()
+              router.replace('/(auth)')
             } else {
               setTimeout(() => {
                 setStatus('message')

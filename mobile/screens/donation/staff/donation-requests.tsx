@@ -45,7 +45,7 @@ export const getPersonalList = async () => {
     const data = res.data?.data ?? res.data ?? [];
     return Array.isArray(data) ? data : [];
   } catch (err) {
-    console.error("API Error:", err);
+    // console.error("API Error:", err);
     return [];
   }
 };
@@ -66,7 +66,7 @@ export const postdonationreq= async (donationInfo: Record<string, any>) => {
 
         return res.data.don_num;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
     }
 };
 
@@ -88,7 +88,7 @@ export const putdonationreq = async (don_num: string, donationInfo: Record<strin
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
     }
 }
 

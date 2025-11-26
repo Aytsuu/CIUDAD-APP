@@ -13,8 +13,6 @@ import { getPaidServiceCharges, type ServiceCharge } from "@/pages/record/cleara
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import { ArrowUpDown } from "lucide-react";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
-import { useAuth } from "@/context/AuthContext";
-import React from "react";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
@@ -30,8 +28,6 @@ interface ExtendedIssuedCertificate extends IssuedCertificate {
 }
 
 function IssuedCertificates() {
-  const { user } = useAuth();
-  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [searchQuery, setSearchQuery] = useState("");
   const [filterValue, setFilterValue] = useState("");
   const [activeTab, setActiveTab] = useState<"certificates" | "businessPermits" | "serviceCharges">("certificates");
@@ -60,9 +56,6 @@ function IssuedCertificates() {
     }));
   }, [staffList]);
 
-  React.useEffect(() => {
-    console.log("IssuedCertificates: resolved staffId from useAuth:", staffId);
-  }, [staffId]);
 
   const { showLoading, hideLoading } = useLoading();
 
@@ -135,7 +128,6 @@ function IssuedCertificates() {
           const date = parseISO(dateStr);
           return <div>{format(date, "MM/dd/yyyy")}</div>;
         } catch (e) {
-          console.error("Error formatting date:", e);
           return <div>{dateStr || ""}</div>;
         }
       },
@@ -225,7 +217,6 @@ function IssuedCertificates() {
           const date = parseISO(dateStr);
           return <div>{format(date, "MM/dd/yyyy")}</div>;
         } catch (e) {
-          console.error("Error formatting date:", e);
           return <div>{dateStr || ""}</div>;
         }
       },

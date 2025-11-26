@@ -202,6 +202,7 @@ function WasteIllegalDumping() {
                     rep_contact={row.original.rep_contact}
                     rep_status={row.original.rep_status}
                     rep_date={row.original.rep_date}
+                    rep_anonymous={row.original.rep_anonymous}
                     rep_date_resolved={row.original.rep_date_resolved}   
                     rep_date_cancelled={row.original.rep_date_cancelled}
                     sitio_id={row.original.sitio_id}

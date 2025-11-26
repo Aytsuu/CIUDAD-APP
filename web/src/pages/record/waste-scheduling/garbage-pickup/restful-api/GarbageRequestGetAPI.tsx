@@ -6,7 +6,7 @@ export const getDrivers = async () => {
         const res = await api.get('waste/waste-drivers/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 };
@@ -16,7 +16,7 @@ export const getTrucks = async () => {
         const res = await api.get('waste/all-trucks/');
         return res.data;
     } catch (err) {
-        console.error(err);
+        // console.error(err);
         throw err;
     }
 }
@@ -26,7 +26,7 @@ export const getCollectors = async () => {
         const res = await api.get('waste/waste-collectors/');
         return res.data
     } catch(err){
-        console.error(err)
+        // console.error(err)
         throw err;
     }
 }
@@ -66,8 +66,8 @@ export const getGarbagePendingRequest = async ( page: number, pageSize: number, 
         count: data.count || 0,
       };
     } catch (err) {
-      console.error("Failed to fetch garbage requests:", err);
-      return { results: [], count: 0 };
+    //   console.error("Failed to fetch garbage requests:", err);
+      throw err
     }
   };
   
@@ -111,8 +111,8 @@ export const getGarbageRejectedRequest = async (page: number, pageSize: number, 
             count: data.count || 0
         };
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
-        return { results: [], count: 0 };
+        // console.error('Failed to fetch garbage requests:', err);
+        throw err
     }
 }
 
@@ -165,8 +165,8 @@ export const getGarbageAcceptedRequest = async (page: number, pageSize: number, 
         };
 
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
-        return { results: [], count: 0 };
+        // console.error('Failed to fetch garbage requests:', err);
+        throw err
     }
 }
 
@@ -218,7 +218,7 @@ export const getGarbageCompletedRequest = async (page: number, pageSize: number,
             count: data.count || 0
         };
     } catch (err) {
-        console.error('Failed to fetch garbage requests:', err);
-        return { results: [], count: 0 };
+        // console.error('Failed to fetch garbage requests:', err);
+        throw err
     }
 }

@@ -180,7 +180,7 @@ export default () => {
               <DropdownMenuTrigger>
                 <Ellipsis size={20} className="text-gray-700" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="mt-2 border-gray-300 bg-gray-100">
                 <DropdownMenuItem
                   onPress={() =>
                     router.push({
@@ -334,44 +334,44 @@ export default () => {
 
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <View className="h-9 px-4 rounded-full border border-gray-400 flex-row items-center justify-center">
+                <View className="h-9 px-4 rounded-full border border-gray-400 bg-white flex-row items-center justify-center">
                   <Text className="text-xs text-gray-700">{sortBy}</Text>
                 </View>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="mt-2">
+              <DropdownMenuContent className="mt-2 border-gray-300 bg-gray-100">
                 <DropdownMenuItem onPress={() => handleSortBy("Newest")}>
                   <Text className="text-xs">Newest</Text>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-gray-300"/>
                 <DropdownMenuItem onPress={() => handleSortBy("Oldest")}>
                   <Text className="text-xs">Oldest</Text>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-gray-300"/>
                 <DropdownMenuItem onPress={() => handleSortBy("A to Z")}>
                   <Text className="text-xs">A to Z</Text>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-gray-300"/>
                 <DropdownMenuItem onPress={() => handleSortBy("Z to A")}>
                   <Text className="text-xs">Z to A</Text>
-                </DropdownMenuItem>
+                </DropdownMenuItem> 
               </DropdownMenuContent>
             </DropdownMenu>
 
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <View className="h-9 px-4 rounded-full border border-gray-400 flex-row items-center justify-center">
+                <View className="h-9 px-4 rounded-full border border-gray-400 bg-white flex-row items-center justify-center">
                   <Text className="text-xs text-gray-700">{filter}</Text>
                 </View>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="mt-2">
+              <DropdownMenuContent className="mt-2 border-gray-300 bg-gray-100">
                 <DropdownMenuItem onPress={() => handleFilter("All")}>
                   <Text className="text-xs">All</Text>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-gray-300"/>
                 <DropdownMenuItem onPress={() => handleFilter("Event")}>
                   <Text className="text-xs">Event</Text>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-gray-300"/>
                 <DropdownMenuItem onPress={() => handleFilter("General")}>
                   <Text className="text-xs">General</Text>
                 </DropdownMenuItem>
@@ -381,26 +381,27 @@ export default () => {
             {user?.staff && (
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <View className="h-9 px-4 rounded-full border border-gray-400 flex-row items-center justify-center">
+                  <View className="h-9 px-4 rounded-full border border-gray-400 bg-white flex-row items-center justify-center">
                     <Text className="text-xs text-gray-700">{recipient}</Text>
                   </View>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="mt-2">
+                <DropdownMenuContent className="mt-2 border-gray-300 bg-gray-100">
                   <DropdownMenuItem onPress={() => handleRecipient("All")}>
                     <Text className="text-xs">All</Text>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-gray-300"/>
                   <DropdownMenuItem
                     onPress={() => handleRecipient("Staff")}
                   >
                     <Text className="text-xs">Staff Only</Text>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-gray-300"/>
                   <DropdownMenuItem
                     onPress={() => handleRecipient("Resident")}
                   >
                     <Text className="text-xs">Resident Only</Text>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-gray-300"/>
                   <DropdownMenuItem
                     onPress={() => handleRecipient("Public")}
                   >

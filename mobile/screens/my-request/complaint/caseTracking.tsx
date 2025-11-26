@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, ScrollView, TouchableOpacity,} from "react-native";
+import React, { useState } from "react";
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { Calendar, CheckCircle2, AlertCircle, ClipboardList, CreditCard, ChevronRight, Clock, XCircle, Check} from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { formatDate } from "@/helpers/dateHelpers";
@@ -15,56 +15,22 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
   isRaised?: string;
 }) {
   const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: tracking, isLoading, error } = useGetCaseTrackingDetails( comp_id ? comp_id : "");
+  const { data: tracking, isLoading, error, refetch } = useGetCaseTrackingDetails( comp_id ? comp_id : "");
 
-  if (isRaised !== "Raised") {
-    return (
-      <View className="flex-1 bg-gradient-to-b from-blue-50 to-white justify-center items-center p-6">
-        <View className="bg-white rounded-2xl p-10 items-center shadow-lg border border-blue-100 max-w-md w-full">
-          <View className="bg-blue-100 p-4 rounded-full mb-5">
-            <ClipboardList size={48} color="#2563eb" />
-          </View>
-          <Text className="text-2xl font-bold text-gray-800 text-center mb-3">
-            Case Tracking Not Available
-          </Text>
-          <Text className="text-gray-600 text-center mb-6 leading-6">
-            Your complaint has not been raised yet.
-          </Text>
-          <Text className="text-sm text-gray-500 text-center">
-            Once raised, you'll see real-time updates on your case progress here.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <View className="flex-1 bg-gradient-to-b from-blue-50 to-white justify-center items-center">
-        <View className="h-64 justify-center items-center">
-          <LoadingState />
-        </View>
-      </View>
-    );
-  }
-
-  // Error state
-  if (error || !tracking) {
-    return (
-      <View className="flex-1 justify-center items-center bg-gradient-to-b from-blue-50 to-white">
-        <AlertCircle size={56} color="#f59e0b" />
-        <Text className="mt-4 text-lg text-gray-700">No case data found</Text>
-      </View>
-    );
-  }
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
 
   // Get case status display
   const getCaseStatusDisplay = () => {
     return (
-      tracking.summon_case?.sc_conciliation_status ||
-      tracking.summon_case?.sc_mediation_status ||
+      tracking?.summon_case?.sc_conciliation_status ||
+      tracking?.summon_case?.sc_mediation_status ||
       "None"
     );
   };
@@ -80,7 +46,6 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
   };
 
   const handlePaymentPress = () => {
-    // Navigate to payment logs screen
     router.push({
       pathname: "/(my-request)/complaint-tracking/summon-payment-logs",
       params: {
@@ -111,8 +76,9 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
     }[] = [];
 
     // 1 – Payment
-    const payStatus = tracking.payment_request_summon?.pay_status?.toLowerCase() ?? "unpaid";
-    const amount = tracking.payment_request_summon?.pay_amount;
+    const payStatus = tracking?.payment_request_summon?.pay_status?.toLowerCase() ?? "unpaid";
+    const amount = tracking?.payment_request_summon?.pay_amount;
+    const isDeclined = payStatus === "declined";
 
     steps.push({
       id: 1,
@@ -120,6 +86,15 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       description: payStatus === "paid" ? (
         <View className="space-y-1">
           <Text className="text-gray-600 text-sm leading-5">Payment completed!</Text>
+        </View>
+      ) : isDeclined ? (
+        <View className="space-y-1">
+          <Text className="text-gray-600 text-sm leading-5">
+            Your payment request has been declined.
+          </Text>
+          <Text className="text-red-600 text-xs italic leading-4 mt-1">
+            Please contact the barangay for more information.
+          </Text>
         </View>
       ) : (
         <View className="space-y-1">
@@ -132,7 +107,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         </View>
       ),
       status: payStatus,
-      display_status: tracking.payment_request_summon?.pay_status || "Unpaid",
+      display_status: tracking?.payment_request_summon?.pay_status || "Unpaid",
       details: (
         <View className="space-y-1">
           <View className="flex flex-row items-center justify-between w-full">
@@ -143,30 +118,41 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
           </View>
           <View className="flex flex-row items-center justify-between w-full">
             <Text className="text-xs text-gray-600 font-medium">
-              {payStatus === "unpaid" ? "Due Date" : "Date Paid"}
+              {payStatus === "unpaid" ? "Due Date" : payStatus === "paid" ? "Date Paid" : "Declined Date"}
             </Text>
             <Text
               className={`text-xs font-semibold ${
-                payStatus === "paid" ? "text-green-600" : "text-red-600"
+                payStatus === "paid" ? "text-green-600" : 
+                payStatus === "declined" ? "text-red-600" : "text-red-600"
               }`}
             >
               {payStatus === "unpaid"
                 ? formatDate(tracking?.payment_request_summon?.pay_due_date || "", "long")
-                : formatTimestamp(tracking.payment_request_summon?.pay_date_paid || "")}
+                : payStatus === "paid"
+                ? formatTimestamp(tracking?.payment_request_summon?.pay_date_paid || "")
+                : formatTimestamp(tracking?.payment_request_summon?.pay_date_paid || "N/A")}
             </Text>
           </View>
+          {isDeclined && (
+            <View className="w-full">
+              <Text className="text-xs text-gray-600 font-medium mb-1">Reason</Text>
+                <Text className="text-xs text-red-600 italic">
+                  {tracking?.payment_request_summon?.pay_reason || "Request Declined"}
+                </Text>
+            </View>
+          )}
         </View>
       ),
       onPress: handlePaymentPress,
-      isActionable: true
+      isActionable: false // Step 1 is no longer pressable
     });
 
     // Helper: Schedule Hearing Description
     const getScheduleHearingDescription = () => {
       const status = getCaseStatusDisplay().toLowerCase();
 
-      if (status === "waiting for schedule" && tracking.summon_case?.hearing_schedules.length !== 6) {
-       return (
+      if (status === "waiting for schedule" && tracking?.summon_case?.hearing_schedules.length !== 6) {
+      return (
           <View className="space-y-1">
             <Text className="text-gray-600 text-sm leading-5">
               Select date and time for your hearing session.
@@ -175,8 +161,8 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         );
       }
 
-      if (status === "waiting for schedule" && tracking.summon_case?.hearing_schedules.length === 6) {
-       return (
+      if (status === "waiting for schedule" && tracking?.summon_case?.hearing_schedules.length === 6) {
+      return (
           <View className="space-y-1">
             <Text className="text-gray-600 text-sm leading-5">
               Your case has reached the final hearing session
@@ -186,7 +172,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       }
 
       if (status === "ongoing") {
-        const openSchedule = tracking.summon_case?.hearing_schedules?.find(
+        const openSchedule = tracking?.summon_case?.hearing_schedules?.find(
           (schedule) => !schedule.hs_is_closed
         );
 
@@ -245,7 +231,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
     const getScheduleHearingDetails = () => {
       const status = getCaseStatusDisplay().toLowerCase();
 
-      if (status === "waiting for schedule" && tracking.summon_case?.hearing_schedules.length !== 6) {
+      if (status === "waiting for schedule" && tracking?.summon_case?.hearing_schedules.length !== 6) {
         return (
           <Text className="text-xs text-gray-700">
             Waiting for you to select a hearing date and time.
@@ -253,7 +239,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         );
       }
 
-      if (status === "waiting for schedule" && tracking.summon_case?.hearing_schedules.length === 6) {
+      if (status === "waiting for schedule" && tracking?.summon_case?.hearing_schedules.length === 6) {
         return (
           <Text className="text-xs text-gray-700">
             Waiting for the barangay's final verdict.
@@ -262,7 +248,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       }
 
       if (status === "ongoing") {
-        const openSchedule = tracking.summon_case?.hearing_schedules?.find(
+        const openSchedule = tracking?.summon_case?.hearing_schedules?.find(
           (schedule) => !schedule.hs_is_closed
         );
 
@@ -308,41 +294,118 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
       display_status: getCaseStatusDisplay(),
       details: getScheduleHearingDetails(),
       onPress: handleSchedulePress,
-      isActionable: true
+      isActionable: true // Step 2 remains pressable
     });
+
+    // Helper: Case Completion Description
+    const getCaseCompletionDescription = () => {
+      const status = getCaseStatusDisplay().toLowerCase();
+      
+      if (status === "resolved") {
+        return (
+          <View className="space-y-1">
+            <Text className="text-gray-600 text-sm leading-5">
+              The case has been successfully resolved and closed.
+            </Text>
+          </View>
+        );
+      }
+      
+      if (status === "escalated") {
+        return (
+          <View className="space-y-1">
+            <Text className="text-gray-600 text-sm leading-5">
+              The case has been escalated to higher judicial authorities for further legal action.
+            </Text>
+          </View>
+        );
+      }
+
+      // Default description for ongoing cases
+      return (
+        <View className="space-y-1">
+          <Text className="text-gray-600 text-sm leading-5">
+            The case can be resolved at any hearing session or escalated after reaching the final session.
+          </Text>
+          <Text className="text-blue-600 text-xs italic leading-4 mt-1">
+            The final outcome depends on the progress and agreement between parties.
+          </Text>
+        </View>
+      );
+    };
+
+    // Helper: Case Completion Details
+    const getCaseCompletionDetails = () => {
+      const status = getCaseStatusDisplay().toLowerCase();
+      
+      if (status === "resolved" && tracking?.summon_case?.sc_date_marked) {
+        return (
+          <View className="space-y-2">
+            <View className="flex flex-row items-center justify-between w-full">
+              <Text className="text-xs text-gray-600 font-medium">Resolution Date</Text>
+              <Text className="text-xs font-semibold text-green-600">
+                {formatTimestamp(tracking.summon_case.sc_date_marked)}
+              </Text>
+            </View>
+            {tracking.summon_case?.staff_name && (
+              <View className="flex flex-row items-center justify-between w-full">
+                <Text className="text-xs text-gray-600 font-medium">Resolved By</Text>
+                <Text className="text-xs font-semibold text-gray-700">
+                  {tracking.summon_case.staff_name}
+                </Text>
+              </View>
+            )}
+          </View>
+        );
+      }
+      
+      if (status === "escalated" && tracking?.summon_case?.sc_date_marked) {
+        return (
+          <View className="space-y-2">
+            <View className="flex flex-row items-center justify-between w-full">
+              <Text className="text-xs text-gray-600 font-medium">Escalation Date</Text>
+              <Text className="text-xs font-semibold text-red-600">
+                {formatTimestamp(tracking.summon_case.sc_date_marked)}
+              </Text>
+            </View>
+            {tracking.summon_case?.staff_name && (
+              <View className="flex flex-row items-center justify-between w-full">
+                <Text className="text-xs text-gray-600 font-medium">Escalated By</Text>
+                <Text className="text-xs font-semibold text-gray-700">
+                  {tracking.summon_case.staff_name}
+                </Text>
+              </View>
+            )}
+          </View>
+        );
+      }
+
+      // Default details for ongoing cases
+      return (
+        <Text className="text-xs text-gray-700">
+          Waiting for the final outcome after all hearing sessions are completed.
+        </Text>
+      );
+    };
 
     // 3 – Case Completion
     steps.push({
       id: 3,
       title: "Case Completion",
-      description: (
-        <View className="space-y-1">
-          <Text className="text-gray-600 text-sm leading-5">
-            The case will be marked as resolved or escalated after mediation.
-          </Text>
-        </View>
-      ),
+      description: getCaseCompletionDescription(),
       status: getCaseStatusDisplay().toLowerCase(),
       display_status: getCaseStatusDisplay(),
-      details: tracking.summon_case?.sc_date_marked ? (
-        <Text className="text-xs text-gray-700">
-          Case resolved on {formatTimestamp(tracking.summon_case.sc_date_marked)} and marked by{" "}
-          {tracking.summon_case?.staff_name}
-        </Text>
-      ) : (
-        <Text className="text-xs text-gray-700">Pending mediation outcome.</Text>
-      ),
+      details: getCaseCompletionDetails(),
       onPress: handleCaseCompletionPress,
-      isActionable: true
+      isActionable: false // Step 3 is no longer pressable
     });
 
     return steps;
   };
 
-  const steps = getSteps();
-
   const isPreviousStepCompleted = (currentIdx: number) => {
     if (currentIdx === 0) return true;
+    const steps = getSteps();
     const prev = steps[currentIdx - 1];
     return ["paid", "scheduled", "resolved", "escalated"].includes(prev.status);
   };
@@ -381,6 +444,12 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         text: "text-amber-800",
         label: "Unpaid",
         icon: <Clock size={14} className="text-amber-600" />,
+      },
+      declined: {
+        bg: "bg-red-100",
+        text: "text-red-800",
+        label: "Declined",
+        icon: <XCircle size={14} className="text-red-600" />,
       },
       "not scheduled": {
         bg: "bg-amber-100",
@@ -461,6 +530,8 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
                 ? "text-green-600"
                 : step.status === "unpaid"
                 ? "text-red-600"
+                : step.status === "declined"
+                ? "text-red-600"
                 : "text-amber-600"
             }
           />
@@ -503,9 +574,47 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
     }
   };
 
-  return (
-    <View className="flex-1 bg-gradient-to-b from-blue-50 to-white">
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+  // Not Raised State Content
+  const renderNotRaisedState = () => (
+    <View className="flex-1 justify-center items-center p-6">
+      <View className="bg-white rounded-2xl p-10 items-center shadow-lg border border-blue-100 max-w-md w-full">
+        <View className="bg-blue-100 p-4 rounded-full mb-5">
+          <ClipboardList size={48} color="#2563eb" />
+        </View>
+        <Text className="text-2xl font-bold text-gray-800 text-center mb-3">
+          Case Tracking Not Available
+        </Text>
+        <Text className="text-gray-600 text-center mb-6 leading-6">
+          Your complaint has not been raised yet.
+        </Text>
+        <Text className="text-sm text-gray-500 text-center">
+          Once raised, you'll see real-time updates on your case progress here.
+        </Text>
+      </View>
+    </View>
+  );
+
+  // Loading State Content
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState />
+    </View>
+  );
+
+  // Error State Content
+  const renderErrorState = () => (
+    <View className="flex-1 justify-center items-center p-6">
+      <AlertCircle size={56} color="#f59e0b" />
+      <Text className="mt-4 text-lg text-gray-700">No case data found</Text>
+    </View>
+  );
+
+  // Main Content
+  const renderMainContent = () => {
+    const steps = getSteps();
+
+    return (
+      <>
         <View className="px-5 py-6 space-y-6">
           {steps.map((step, idx) => {
             const isLast = idx === steps.length - 1;
@@ -559,46 +668,82 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
                         </View>
                       </View>
                     ) : (
-                      <TouchableOpacity
-                        onPress={step.onPress}
-                        className={`bg-white rounded-xl p-5 shadow-md border-2 ${
-                          isCompleted
-                            ? "border-emerald-200 active:bg-emerald-50"
-                            : "border-blue-200 active:bg-blue-50"
-                        }`}
-                      >
-                        <View className="flex-row justify-between items-start mb-3">
-                          <View className="flex-1">
-                            <View className="flex-row items-center mb-2">
-                              <Text className="text-2xl font-bold text-gray-300 mr-3">
-                                {step.id}
-                              </Text>
-                              <Text className="text-lg font-bold text-gray-900">
-                                {step.title}
-                              </Text>
-                            </View>
-                            {getStatusBadge(step.display_status || "")}
-                          </View>
-                          <ChevronRight
-                            size={22}
-                            className={
-                              isCompleted ? "text-emerald-600 mt-1" : "text-blue-600 mt-1"
-                            }
-                          />
-                        </View>
-                        <View className="space-y-3">
-                          {step.description}
-                          {step.details && (
-                            <View className="mt-2">
-                              <View className={`p-3 rounded-lg border ${
-                                isCompleted ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
-                              }`}>
-                                {step.details}
+                      step.isActionable ? (
+                        <TouchableOpacity
+                          onPress={step.onPress}
+                          className={`bg-white rounded-xl p-5 shadow-md border-2 ${
+                            isCompleted
+                              ? "border-emerald-200 active:bg-emerald-50"
+                              : "border-blue-200 active:bg-blue-50"
+                          }`}
+                        >
+                          <View className="flex-row justify-between items-start mb-3">
+                            <View className="flex-1">
+                              <View className="flex-row items-center mb-2">
+                                <Text className="text-2xl font-bold text-gray-300 mr-3">
+                                  {step.id}
+                                </Text>
+                                <Text className="text-lg font-bold text-gray-900">
+                                  {step.title}
+                                </Text>
                               </View>
+                              {getStatusBadge(step.display_status || "")}
                             </View>
-                          )}
+                            <ChevronRight
+                              size={22}
+                              className={
+                                isCompleted ? "text-emerald-600 mt-1" : "text-blue-600 mt-1"
+                              }
+                            />
+                          </View>
+                          <View className="space-y-3">
+                            {step.description}
+                            {step.details && (
+                              <View className="mt-2">
+                                <View className={`p-3 rounded-lg border ${
+                                  isCompleted ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
+                                }`}>
+                                  {step.details}
+                                </View>
+                              </View>
+                            )}
+                          </View>
+                        </TouchableOpacity>
+                      ) : (
+                        <View
+                          className={`bg-white rounded-xl p-5 shadow-md border-2 ${
+                            isCompleted
+                              ? "border-emerald-200"
+                              : "border-blue-200"
+                          }`}
+                        >
+                          <View className="flex-row justify-between items-start mb-3">
+                            <View className="flex-1">
+                              <View className="flex-row items-center mb-2">
+                                <Text className="text-2xl font-bold text-gray-300 mr-3">
+                                  {step.id}
+                                </Text>
+                                <Text className="text-lg font-bold text-gray-900">
+                                  {step.title}
+                                </Text>
+                              </View>
+                              {getStatusBadge(step.display_status || "")}
+                            </View>
+                          </View>
+                          <View className="space-y-3">
+                            {step.description}
+                            {step.details && (
+                              <View className="mt-2">
+                                <View className={`p-3 rounded-lg border ${
+                                  isCompleted ? "bg-emerald-50 border-emerald-100" : "bg-blue-50 border-blue-100"
+                                }`}>
+                                  {step.details}
+                                </View>
+                              </View>
+                            )}
+                          </View>
                         </View>
-                      </TouchableOpacity>
+                      )
                     )}
                   </View>
                 </View>
@@ -608,7 +753,7 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
         </View>
 
         {/* Case Summary Card */}
-        {tracking.payment_request_summon?.pay_status === "Paid" && (
+        {tracking?.payment_request_summon?.pay_status === "Paid" && (
           <View className="px-5 pb-8">
             <TouchableOpacity>
               <Card className="overflow-hidden shadow-lg border-0 active:bg-gray-50">
@@ -659,6 +804,43 @@ export default function CaseTrackingScreen({ comp_id, isRaised = "Raised",
             </TouchableOpacity>
           </View>
         )}
+      </>
+    );
+  };
+
+  // Determine which content to render
+  const renderContent = () => {
+    if (isRaised !== "Raised") {
+      return renderNotRaisedState();
+    }
+
+    if (isLoading) {
+      return renderLoadingState();
+    }
+
+    if (error || !tracking) {
+      return renderErrorState();
+    }
+
+    return renderMainContent();
+  };
+
+  return (
+    <View className="flex-1 bg-gradient-to-b from-blue-50 to-white">
+      <ScrollView 
+        className="flex-1" 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={['#00a8f0']}
+            tintColor="#00a8f0"
+          />
+        }
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        {renderContent()}
       </ScrollView>
     </View>
   );

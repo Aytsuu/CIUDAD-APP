@@ -111,7 +111,7 @@ class MobileLoginView(APIView):
                 logger.info(f"Authenticating with phone: {phone}")
                 try:
                     user = Account.objects.filter(phone=phone).first()
-                    if user and user.check_password(password):
+                    if user:
                         if not user.is_active:
                             return Response(
                                 {'error': 'Account is disabled'},
@@ -127,7 +127,7 @@ class MobileLoginView(APIView):
             elif email and not phone:
                 logger.info(f"Authenticating with email: {email}")
                 # Authenticate first, then get full user object
-                auth_user = authenticate(request, username=email, password=password)
+                auth_user = authenticate(request, username=email)
                 if auth_user:
                     # Get the full user object with related data
                     user = Account.objects.select_related('rp').get(pk=auth_user.pk)

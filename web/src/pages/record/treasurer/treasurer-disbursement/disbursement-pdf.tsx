@@ -184,14 +184,14 @@ export const generateDisbursementPdf = async (
     const barangayLogoBase64 = await convertImageToBase64(sanroque_logo);
     doc.addImage(barangayLogoBase64, "JPEG", leftLogoX, yPos, logoWidth, logoHeight);
   } catch (e) {
-    console.error("Error adding barangay logo:", e);
+    // console.error("Error adding barangay logo:", e);
   }
 
   try {
     const cityLogoBase64 = await convertImageToBase64(citylogo);
     doc.addImage(cityLogoBase64, "JPEG", rightLogoX, yPos, logoWidth, logoHeight);
   } catch (e) {
-    console.error("Error adding city logo:", e);
+    // console.error("Error adding city logo:", e);
   }
 
   const headerText = [

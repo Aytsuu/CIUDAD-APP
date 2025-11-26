@@ -44,7 +44,7 @@ export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
                 description: values.description
             })
         }catch(err){
-            console.error(err)
+            throw err;
         }
     };
 
@@ -62,6 +62,7 @@ export default function BudgetPlanSuppDocForm({plan_id, onSuccess}: {
                                 activeVideoId={activeVideoId}
                                 setActiveVideoId={setActiveVideoId}
                                 maxFiles={1}
+                                acceptableFiles="image"
                             />
                         </FormControl>
                     </FormItem>

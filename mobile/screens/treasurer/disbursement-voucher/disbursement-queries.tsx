@@ -36,7 +36,7 @@ export const useGetDisbursementVoucher = (disNum: any, options = {}) => {
     queryFn: () =>
       getDisbursementVoucher(disNum).catch((error) => {
         toast.error(error.message || "Failed to fetch disbursement voucher");
-        console.error("Error fetching disbursement voucher:", error);
+        // console.error("Error fetching disbursement voucher:", error);
         throw error;
       }),
     enabled: !!disNum,
@@ -52,7 +52,7 @@ export const useGetDisbursementFiles = (disNum: any, params = {}, options = {}) 
     queryFn: () =>
       getDisbursementFiles(disNum, params).catch((error) => {
         toast.error(error.message || "Failed to fetch disbursement files");
-        console.error("Error fetching disbursement files:", error);
+        // console.error("Error fetching disbursement files:", error);
         throw error;
       }),
     enabled: !!disNum,
@@ -68,7 +68,7 @@ export const useGetStaffList = (options = {}) => {
     queryFn: () =>
       getStaffList().catch((error) => {
         toast.error(error.message || "Failed to fetch staff list");
-        console.error("Error fetching staff list:", error);
+        // console.error("Error fetching staff list:", error);
         throw error;
       }),
     staleTime: 1000 * 60 * 60,

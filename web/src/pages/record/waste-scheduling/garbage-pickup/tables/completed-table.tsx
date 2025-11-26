@@ -28,7 +28,6 @@ export default function CompletedTable() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
   const { data: completedReqData = { results: [], count: 0 }, isLoading: isLoadingCompleted } = useGetGarbageCompleteRequest( currentPage, pageSize, debouncedSearchQuery, selectedSitio)
-  console.log('comp', completedReqData)
 
   const completedRequests = completedReqData.results || []
   const totalItems = completedReqData.count || 0

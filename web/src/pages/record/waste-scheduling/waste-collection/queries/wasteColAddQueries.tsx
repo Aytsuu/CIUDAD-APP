@@ -27,8 +27,8 @@ export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => 
 
       if (onSuccess) onSuccess(wc_num);
     },
-    onError: (err) => {
-      console.error("Error creating schedule:", err);
+    onError: (_err) => {
+      // console.error("Error creating schedule:", err);
       showErrorToast("Failed to create schedule.");
     }
   });
@@ -52,8 +52,8 @@ export const useAssignCollectors = () => {
       showSuccessToast("Collectors assigned successfully");
 
     },
-    onError: (err) => {
-      console.error("Error assigning collectors:", err);
+    onError: (_err) => {
+      // console.error("Error assigning collectors:", err);
       showErrorToast("Failed to assign collectors.");
     }
   });
@@ -82,8 +82,8 @@ export const useCreateCollectionReminders = (onSuccess?: () => void) => {
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error creating collection reminders:", err);
+    onError: (_err) => {
+      // console.error("Error creating collection reminders:", err);
       toast.error(
         "Failed to create collection reminders. Please try again.",
         { 

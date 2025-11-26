@@ -26,8 +26,8 @@ export const useDeleteAnnualGrossSales = (onSuccess?: () => void) => {
 
         if (onSuccess) onSuccess();
     },
-        onError: (err) => {
-        console.error("Error archiving entry:", err);
+        onError: () => {
+        // console.error("Error archiving entry:", err);
         toast.error("Failed to archive entry");
         }
     })
@@ -53,9 +53,9 @@ export const useDeletePurposeAndRate = (onSuccess?: () => void) => {
         
         if (onSuccess) onSuccess();
     },
-        onError: (err) => {
-        console.error("Error archiving entry:", err);
-        toast.error("Failed to archive entry");
+        onError: () => {
+        // console.error("Error archiving entry:", err);
+            toast.error("Failed to archive entry");
         }
     })
 }

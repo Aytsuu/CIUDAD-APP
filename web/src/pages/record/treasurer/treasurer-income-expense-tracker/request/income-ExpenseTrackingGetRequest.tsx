@@ -129,7 +129,6 @@ export const getExpenseLog = async (
         if (selectedMonth && selectedMonth !== "All") params.month = selectedMonth;
         
         const res = await api.get('treasurer/expense-log/', { params });
-        console.log("EXPENSE LOG PO: ", res);
         
         // Handle paginated response
         if (res.data.results !== undefined) {

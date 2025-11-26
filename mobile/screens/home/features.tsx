@@ -14,7 +14,6 @@ import GAD from '@/assets/icons/features/GAD.svg'
 import CouncilMediation from '@/assets/icons/features/council mediation.svg'
 import Conciliation from '@/assets/icons/features/conciliation.svg'
 import { Feature, User } from "../_Enums";
-import { Circle } from "react-native-svg";
 
 type FeatureType = {
   name: string;
@@ -70,54 +69,54 @@ export const features: FeatureType[] = [
     name: "Council",
     icon: <Council width={30} height={30}/>,
     route: "/(council)",
-    users: []
+    users: [User.admin, Feature.council]
   },
   {
     name: "Donation",
     icon: <Donation width={30} height={30}/>,
     route: "/(donation)/staffDonationMain",
-    users: []
+    users: [User.admin, Feature.donation]
   },
   {
     name: "Finance",
     icon: <Finance width={30} height={30}/>,
     route: "/(treasurer)",
-    users: []
+    users: [User.admin, Feature.finance]
   },
   {
     name: "Waste",
     icon: <Waste width={30} height={30}/>,
     route: "/(waste)",
-    users: []
+    users: [User.admin, Feature.waste]
   },
   {
     name: "GAD",
     icon: <GAD width={30} height={30}/>,
     route: "/(gad)",
-    users: []
+    users: [User.admin, Feature.gad]
   },
   {
     name: "Certificates",
     icon: <Certificate width={30} height={30}/>,
     route: "/(certificates)/cert-main",
-    users: []
+    users: [User.admin, Feature.certificateAndClearances]
   },
   {
     name: "Summon Remarks",
     icon: <SummonRemarks width={30} height={30}/>,
     route: "/(summon)/summon-remarks-main",
-    users: []
+    users: [User.admin, Feature.summonRemarks]
   },
   {
     name: "Council Mediation",
     icon: <CouncilMediation width={30} height={30}/>,
     route: "/(summon)/council-mediation-main",
-    users: []
+    users: [User.admin, Feature.councilMediation]
   },
   {
     name: "Conciliation Proceedings",
     icon: <Conciliation width={30} height={30}/>,
     route: "/(summon)/lupon-conciliation-main",
-    users: []
+    users: [User.admin, Feature.conciliationProceedings]
   }
 ]

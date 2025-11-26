@@ -103,15 +103,14 @@ export const useDeclinePermitClearance = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
     
     return useMutation({
-        mutationFn: ({ bpr_id, reason }: { bpr_id: string; reason: string }) => 
-            declinePermitClearance(bpr_id, reason),
+        mutationFn: ({ bpr_id, reason, staffId }: { bpr_id: string; reason: string; staffId: string }) => 
+            declinePermitClearance(bpr_id, reason, staffId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['permitClearances'] });
             showSuccessToast('Request Declined!');
             onSuccess?.();
         },
-        onError: (err) => {
-            console.error("Error declining permit clearance", err);
+        onError: (_err) => {
             showErrorToast("Failed to decline request. Please check the data and try again.");
         }
     });

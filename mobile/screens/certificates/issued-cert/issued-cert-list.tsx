@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
@@ -29,6 +29,7 @@ const IssuedCertList = () => {
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Fetch data based on active tab
   useEffect(() => {
@@ -86,8 +87,40 @@ const IssuedCertList = () => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if (activeMainTab === 'certificates') {
+        const data = await getIssuedCertificates(searchQuery, 1, 10)
+        setCertificates(data.results)
+      } else if (activeMainTab === 'businessPermits') {
+        const data = await getIssuedBusinessPermits(searchQuery, 1, 10)
+        setBusinessPermits(data.results)
+      } else if (activeMainTab === 'serviceCharges') {
+        const data = await getIssuedServiceCharges(searchQuery, 1, 10)
+        setServiceCharges(data.results)
+      }
+    } catch (err) {
+      // Silently handle error
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const renderCertificates = () => (
-    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      className="flex-1 p-6" 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          colors={['#00a8f0']}
+          tintColor="#00a8f0"
+        />
+      }
+    >
       {certificates.length ? (
         certificates.map((certificate, idx) => (
           <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
@@ -109,7 +142,18 @@ const IssuedCertList = () => {
   )
 
   const renderBusinessPermits = () => (
-    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      className="flex-1 p-6" 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          colors={['#00a8f0']}
+          tintColor="#00a8f0"
+        />
+      }
+    >
       {businessPermits.length ? (
         businessPermits.map((permit, idx) => (
           <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
@@ -131,7 +175,18 @@ const IssuedCertList = () => {
   )
 
   const renderServiceCharges = () => (
-    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      className="flex-1 p-6" 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          colors={['#00a8f0']}
+          tintColor="#00a8f0"
+        />
+      }
+    >
       {serviceCharges.length ? (
         serviceCharges.map((serviceCharge, idx) => (
           <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">

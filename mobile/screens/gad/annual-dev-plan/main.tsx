@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { getAnnualDevPlanYears } from './restful-api/annualDevPlanGetAPI';
@@ -17,6 +17,7 @@ const AnnualDevPlanMain = () => {
   const [folders, setFolders] = useState<FolderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'main' | 'archive'>('main');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Get archived plans count
   const { data: archivedData } = useGetArchivedAnnualDevPlans(1, 1);
@@ -36,7 +37,6 @@ const AnnualDevPlanMain = () => {
       
       setFolders(yearFolders);
     } catch (error) {
-      console.error('Error fetching years:', error);
       Alert.alert('Error', 'Failed to load annual development plans');
     } finally {
       setIsLoading(false);
@@ -44,12 +44,17 @@ const AnnualDevPlanMain = () => {
   };
 
   const handleFolderPress = (folder: FolderItem) => {
-    console.log(`Opening year: ${folder.name}`);
     // Navigate to view plan for the selected year
     router.push({
       pathname: '/(gad)/annual-dev-plan/view-plan',
       params: { year: folder.id }
     });
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchYears();
+    setIsRefreshing(false);
   };
 
   const renderContent = () => {
@@ -62,7 +67,19 @@ const AnnualDevPlanMain = () => {
     }
 
     return (
-      <View className="flex-1 p-6">
+      <ScrollView 
+        className="flex-1" 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={['#00a8f0']}
+            tintColor="#00a8f0"
+          />
+        }
+        contentContainerStyle={{ padding: 24 }}
+      >
         <View className="flex-row flex-wrap justify-between">
           {folders.map((folder, index) => (
           <TouchableOpacity
@@ -88,7 +105,7 @@ const AnnualDevPlanMain = () => {
           </TouchableOpacity>
         ))}
         </View>
-      </View>
+      </ScrollView>
     );
   };
 
@@ -97,7 +114,7 @@ const AnnualDevPlanMain = () => {
       leftAction={
         <TouchableOpacity 
           onPress={() => router.back()} 
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          className="items-center justify-center"
         >
           <Ionicons name="chevron-back" size={20} color="#374151" />
         </TouchableOpacity>

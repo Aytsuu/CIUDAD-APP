@@ -37,7 +37,6 @@ function BudgetHeaderEditForm({balance, realtyTaxShare, taxAllotment, clearanceA
     })
 
     const onSubmit = (values: z.infer<typeof BudgetPlanStep1Schema>) => {
-        console.log('Values:', values)
         updateHeader(values)
     }
     return (

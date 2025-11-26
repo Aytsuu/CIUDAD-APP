@@ -25,9 +25,11 @@ export default () => {
                 <Stack.Screen name="garbage-pickup/staff/main-request" options={{ headerShown: false, animation: 'fade' }} />     
                 <Stack.Screen name="garbage-pickup/staff/reject-request" options={{ headerShown: false, animation: 'fade' }} />  
                 <Stack.Screen name="garbage-pickup/staff/accept-request" options={{ headerShown: false, animation: 'fade' }} /> 
-                <Stack.Screen name="garbage-pickup/staff/view-accepted-details" options={{ headerShown: false, animation: 'fade' }} /> 
                 <Stack.Screen name="garbage-pickup/staff/edit-assignment" options={{ headerShown: false, animation: 'fade' }} /> 
                 <Stack.Screen name="garbage-pickup/staff/view-completed-details" options={{ headerShown: false, animation: 'fade' }} /> 
+                <Stack.Screen name="garbage-pickup/staff/view-accepted-details" options={{ headerShown: false, animation: 'fade' }} /> 
+                <Stack.Screen name="garbage-pickup/staff/view-pending-details" options={{ headerShown: false, animation: 'fade' }} /> 
+                <Stack.Screen name="garbage-pickup/staff/view-rejected-details" options={{ headerShown: false, animation: 'fade' }} /> 
                 <Stack.Screen name="garbage-pickup/resident/garbage-pickup-create" options={{ headerShown: false, animation: 'fade' }} /> 
                 
                 <Stack.Screen name="waste-hotspot/waste-hotspot-create" options={{ headerShown: false, animation: 'fade' }} /> 

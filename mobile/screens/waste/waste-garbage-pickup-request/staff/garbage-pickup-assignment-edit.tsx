@@ -135,6 +135,7 @@ export default function EditAssignmentForm() {
                                 name="date"
                                 label="Date"
                                 type = "date"
+                                minimumDate={new Date(Date.now() + 24 * 60 * 60 * 1000)}
                             />
 
                             <FormDateTimeInput

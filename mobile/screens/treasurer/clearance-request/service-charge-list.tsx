@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
 import React, { useState, useEffect, useMemo } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
@@ -8,7 +8,7 @@ import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
-import { CustomDropdown } from '@/components/ui/custom-dropdown'
+import { SelectLayout } from '@/components/ui/select-layout'
 
 const ServiceChargeClearanceList = () => {
   const [serviceCharges, setServiceCharges] = useState<UnpaidServiceCharge[]>([])
@@ -18,14 +18,16 @@ const ServiceChargeClearanceList = () => {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  // Fetch service charges from API (fetch all, filter client-side like web)
+  // Fetch service charges from API (use tab parameter like web)
   useEffect(() => {
     const fetchServiceCharges = async () => {
       try {
         setLoading(true)
-        // Fetch all data without payment_status filter (like web does)
-        const data = await getUnpaidServiceCharges(searchQuery, 1, 1000)
+        // Pass the tab parameter to fetch the correct data (like web does)
+        const tab = paymentStatusFilter.toLowerCase() as "unpaid" | "paid" | "declined"
+        const data = await getUnpaidServiceCharges(searchQuery, 1, 1000, tab)
         setServiceCharges(data.results)
         setError(null)
       } catch (err) {
@@ -37,7 +39,7 @@ const ServiceChargeClearanceList = () => {
     }
 
     fetchServiceCharges()
-  }, [searchQuery])
+  }, [searchQuery, paymentStatusFilter])
 
   const getPaymentBadge = (serviceCharge: UnpaidServiceCharge) => {
     // Check payment status (for service charges, declined status is in payment_status)
@@ -76,44 +78,25 @@ const ServiceChargeClearanceList = () => {
     setSearchQuery(searchInputVal);
   }, [searchInputVal]);
 
-  // Filter service charges based on payment status and search (like web does)
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const tab = paymentStatusFilter.toLowerCase() as "unpaid" | "paid" | "declined"
+      const data = await getUnpaidServiceCharges(searchQuery, 1, 1000, tab)
+      setServiceCharges(data.results)
+    } catch (err) {
+      // Silently handle error
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Filter service charges based on search (backend already filters by tab)
   const filteredServiceCharges = useMemo(() => {
     let filtered = serviceCharges;
     
-    // Filter out cancelled requests first (service charges may not have cancelled status, but filter for consistency)
-    filtered = filtered.filter(sc => {
-      const paymentStatus = (sc.req_payment_status || '').toLowerCase();
-      // Service charges typically don't have "Cancelled" in payment_status, but filter it out if present
-      return paymentStatus !== 'cancelled';
-    });
-    
-    // Filter by payment status (like web component does)
-    if (paymentStatusFilter === 'Declined') {
-      // Show only declined requests
-      filtered = filtered.filter(sc => {
-        const status = (sc.req_payment_status || '').toLowerCase();
-        return status.includes('declined') || status.includes('rejected');
-      });
-    } else {
-      // For paid/unpaid, filter out declined requests
-      filtered = filtered.filter(sc => {
-        const status = (sc.req_payment_status || '').toLowerCase();
-        if (status.includes('declined') || status.includes('rejected')) {
-          return false;
-        }
-        
-        // Then filter by payment status
-        if (paymentStatusFilter === 'Paid') {
-          return status === 'paid';
-        } else if (paymentStatusFilter === 'Unpaid') {
-          return status !== 'paid';
-        }
-        // Declined already handled above
-        return false;
-      });
-    }
-    
-    // Apply search filter
+    // Apply search filter (backend already handles tab filtering)
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(sc => {
@@ -132,7 +115,7 @@ const ServiceChargeClearanceList = () => {
     }
     
     return filtered;
-  }, [serviceCharges, searchQuery, paymentStatusFilter])
+  }, [serviceCharges, searchQuery])
 
   if (loading) {
     return (
@@ -175,16 +158,16 @@ const ServiceChargeClearanceList = () => {
 
         {/* Payment Status Filter */}
         <View className="bg-white px-6 py-4 border-b border-gray-200">
-          <Text className="text-xs font-medium text-gray-600 mb-2">Payment Status Filter</Text>
-          <CustomDropdown
-            value={paymentStatusFilter}
-            onSelect={(value: string) => setPaymentStatusFilter(value as any)}
-            data={[
+          <SelectLayout
+            label="Payment Status Filter"
+            placeholder="Select payment status"
+            options={[
               { label: 'Unpaid', value: 'Unpaid' },
               { label: 'Paid', value: 'Paid' },
               { label: 'Declined', value: 'Declined' }
             ]}
-            placeholder="Select payment status"
+            selectedValue={paymentStatusFilter}
+            onSelect={(option) => setPaymentStatusFilter(option.value as any)}
           />
         </View>
 
@@ -197,7 +180,18 @@ const ServiceChargeClearanceList = () => {
               </View>
             </View>
           ) : (
-            <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              className="flex-1 p-6" 
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
+            >
               {filteredServiceCharges.length ? (
                 filteredServiceCharges.map((serviceCharge, idx) => (
                   <View key={idx} className="bg-white rounded-xl p-5 mb-4 shadow-md border border-gray-200">
@@ -231,11 +225,6 @@ const ServiceChargeClearanceList = () => {
                         <Text className="text-gray-700 text-sm font-medium">
                           {serviceCharge.accused_names.join(', ')}
                         </Text>
-                        {serviceCharge.accused_addresses && serviceCharge.accused_addresses.length > 0 && (
-                          <Text className="text-gray-600 text-xs mt-1">
-                            {serviceCharge.accused_addresses.filter(Boolean).join(', ')}
-                          </Text>
-                        )}
                       </View>
                     )}
                     

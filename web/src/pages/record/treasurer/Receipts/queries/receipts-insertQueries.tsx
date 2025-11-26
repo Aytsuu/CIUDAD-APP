@@ -29,9 +29,8 @@ export const useAddReceipt = (onSuccess?: () => void) => {
                 onSuccess?.();
             },
             onError: (err) => {
-                console.error("Error submitting record:", err);
                 toast.error(
-                    "Failed to submit record. Please check the input data and try again.",
+                    `Error submitting Receipt: ${err.message}`,
                     { duration: 2000 }
                 );
             }
@@ -61,9 +60,8 @@ export const useAddPersonalReceipt = (onSuccess?: () => void) => {
                 onSuccess?.();
             },
             onError: (err) => {
-                console.error("Error submitting record:", err);
                 toast.error(
-                    "Failed to submit record. Please check the input data and try again.",
+                    `Error submitting Receipt: ${err.message}`,
                     { duration: 2000 }
                 );
             }

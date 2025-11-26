@@ -17,7 +17,6 @@ function RejectPickupForm({garb_id, onSuccess}:{
     const{mutate: createDecision, isPending} = useAddDecision(onSuccess)
 
     const onSubmit = (value: z.infer<typeof RejectPickupRequestSchema>) => {
-        console.log("Data: ", value);
         createDecision({
             ...value,
             garb_id: garb_id,

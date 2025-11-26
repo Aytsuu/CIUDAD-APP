@@ -246,7 +246,6 @@ export const SummonSchedulePicker = () => {
   }, [selectedDate, availableDatesMap, currentQuarter]);
 
   const handleDateSelect = useCallback((day: any) => {
-    console.log("Day pressed:", day); // Debug log
     
     const dateStr = day.dateString;
     
@@ -263,7 +262,6 @@ export const SummonSchedulePicker = () => {
         setDateId(null);
       }
     } else {
-      console.log("Date not available:", dateStr);
       setSelectedDate("");
       setSelectedTimeSlot("");
       setDateId(null); 

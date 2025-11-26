@@ -28,7 +28,6 @@ function RatesEditFormPage4({pr_id, pr_purpose, pr_rate, onSuccess}: {
     const {mutate: editPurposeRate, isPending} = useEditPurposeAndRate(onSuccess)
 
     const onSubmit = (value: z.infer<typeof PurposeAndRatesEditSchema>) => {
-        console.log(value); 
         editPurposeRate({
             ...value,
             pr_id: pr_id

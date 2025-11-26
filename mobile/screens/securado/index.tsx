@@ -2,7 +2,7 @@
 import { ScrollView, TouchableOpacity, Text, View, Image } from "react-native";
 import PageLayout from "../_PageLayout";
 import React from "react";
-import MapView, { Marker, Region, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Region, PROVIDER_GOOGLE } from "react-native-maps";
 import { DEFAULT_REGION } from "./configs";
 import { DrawerView } from "@/components/ui/drawer";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
@@ -17,6 +17,7 @@ import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { Phone } from "@/lib/icons/Phone";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AlertTriangle } from "@/lib/icons/AlertTriangle";
 
 export default () => {
   const insets = useSafeAreaInsets();
@@ -44,8 +45,6 @@ export default () => {
     );
   const { data: userLocation, isLoading: isLoadingUserLoc } =
     useConvertCoordinatesToAddress(userRegion?.latitude, userRegion?.longitude);
-
-  console.log(deviceLocation);
 
   const reports = incidentReportData?.results || [];
   const totalCount = incidentReportData?.count || 0;
@@ -183,7 +182,7 @@ export default () => {
           <BottomSheetScrollView
             contentContainerStyle={{
               paddingBottom: 10,
-              gap: 10,
+              gap: 14,
             }}
             showsVerticalScrollIndicator={false}
           >
@@ -256,8 +255,9 @@ export default () => {
                   key={report.id || index}
                   activeOpacity={0.7}
                   onPress={() => goToDevice(report)}
-                  className="flex-1"
+                  className="flex-1 flex-row items-center gap-2"
                 >
+                  <AlertTriangle size={16} className="text-red-500"/>
                   <Text className="text-md text-red-500" numberOfLines={2}>
                     Report of {capitalize(report.ir_track_user_name)}
                   </Text>

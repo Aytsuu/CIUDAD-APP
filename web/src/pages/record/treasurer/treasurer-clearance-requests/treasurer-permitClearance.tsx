@@ -33,7 +33,6 @@ const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; 
         const response = await getBusinessPermitFiles(bprId);
         setFiles(response.files || []);
       } catch (err: any) {
-        console.error("Error fetching files:", err);
         setError(err.message || "Failed to load documents");
       } finally {
         setIsLoading(false);
@@ -51,7 +50,6 @@ const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; 
         const response = await getBusinessPermitFiles(bprId);
         setFiles(response.files || []);
       } catch (err: any) {
-        console.error("Error fetching files:", err);
         setError(err.message || "Failed to load documents");
       } finally {
         setIsLoading(false);
@@ -291,56 +289,6 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
             <div className="">{row.getValue("reqDate")}</div>
         )
     },
-    // {  accessorKey: "claimDate",
-    //     header: ({ column }) => (
-    //           <div
-    //             className="flex w-full justify-center items-center gap-2 cursor-pointer"
-    //             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-    //           >Date to Claim
-    //             <ArrowUpDown size={14}/>
-    //           </div>
-    //     ),
-    //     cell: ({row}) => (
-    //         <div className="">{row.getValue("claimDate")}</div>
-    //     )
-    // },
-    { accessorKey: "paymentStat", 
-      header: "Payment Status",
-      cell: ({ row }) => {
-        const value = row.getValue("paymentStat") as string;
-        const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
-        let bg = "bg-[#eaf4ff]";
-        let text = "text-[#2563eb]";
-        let border = "border border-[#b6d6f7]";
-        
-        if (capitalizedValue === "Pending") {
-            bg = "bg-[#fffbe6]";
-            text = "text-[#b59f00]";
-            border = "border border-[#f7e7b6]";
-        } else if (capitalizedValue === "Paid") {
-            bg = "bg-[#e6f7e6]";
-            text = "text-[#16a34a]";
-            border = "border border-[#d1f2d1]";
-        } else if (capitalizedValue === "Declined") {
-            bg = "bg-[#ffeaea]";
-            text = "text-[#b91c1c]";
-            border = "border border-[#f3dada]";
-        } else {
-            bg = "bg-[#f3f2f2]";
-            text = "text-black";
-            border = "border border-[#e5e7eb]";
-        }
-
-        return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {capitalizedValue}
-          </span>
-        );
-      }
-    },
     ...(activeTab === "unpaid" ? [
         { accessorKey: "action", 
           header: "Action",
@@ -394,6 +342,7 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                                 },
                                 req_payment_status: row.original.req_payment_status || "Pending",
                                 pr_id: row.original.pr_id,
+                                ags_id: row.original.ags_id, // Pass ags_id for barangay clearance
                                 business_name: row.original.businessName && row.original.businessName !== "No Business Linked" ? row.original.businessName : row.original.requestor || "Unknown Business",
                                 req_amount: (() => {
                                     const grossSalesData = row.original.grossSalesData;
@@ -413,7 +362,8 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
                                         return row.original.req_amount || 0;
                                     }
                                 })(),
-                                // req_sales_proof field removed
+                                // Pass gross sales amount for display (inputted or from business)
+                                gross_sales_amount: row.original.bus_clearance_gross_sales || row.original.businessGrossSales || 0,
                             }}
                             onSuccess={() => {}}
                         />
@@ -506,13 +456,25 @@ function PermitClearance(){
     const [pageSize, setPageSize] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
     
+    // Map activeTab to API filters
+    const getStatusFilter = () => {
+        if (activeTab === "declined") return "Declined";
+        return "";
+    };
+    
+    const getPaymentStatusFilter = () => {
+        if (activeTab === "paid") return "Paid";
+        if (activeTab === "unpaid") return "Unpaid";
+        return ""; // For declined tab, filter by status instead
+    };
+
     // Fetch data from backend using custom hooks
     const { data: permitClearances, isLoading, error } = useGetPermitClearances(
         currentPage, 
         pageSize, 
         searchTerm, 
-        '', 
-        activeTab === "paid" ? "Paid" : activeTab === "unpaid" ? "Unpaid" : ""
+        getStatusFilter(), 
+        getPaymentStatusFilter()
     );
     const { data: annualGrossSalesResponse, isLoading: grossSalesLoading } = useGetAnnualGrossSalesForPermit();
     const { data: purposesResponse, isLoading: purposesLoading } = useGetPurposesAndRates();
@@ -554,22 +516,21 @@ function PermitClearance(){
         setCurrentPage(1);
     }, [activeTab]);
 
-    const filteredData = permitClearancesData.filter((item: any) => {
+    // Server handles pagination and filtering by payment_status/status
+    // We still need to exclude declined/cancelled from paid/unpaid tabs
+    const filteredData = React.useMemo(() => {
+        if (!permitClearancesData) return [];
+        
+        // For declined tab, server already filters by status=Declined
         if (activeTab === "declined") {
-            // Show only declined/cancelled requests
-            return item.req_status === "Declined" || item.req_status === "Cancelled";
-        } else {
-            // Filter out declined/cancelled requests for paid/unpaid tabs
-            if (item.req_status === "Declined" || item.req_status === "Cancelled") {
-                return false;
-            }
-            
-            // Then filter by payment status
-            return activeTab === "paid" 
-                ? item.req_payment_status === "Paid" 
-                : item.req_payment_status !== "Paid";
+            return permitClearancesData;
         }
-    });
+        
+        // For paid/unpaid tabs, exclude declined/cancelled requests
+        return permitClearancesData.filter((item: any) => {
+            return item.req_status !== "Declined" && item.req_status !== "Cancelled";
+        });
+    }, [permitClearancesData, activeTab]);
 
     // Map backend data to frontend columns
     const mappedData = (filteredData || []).map((item: any) => {

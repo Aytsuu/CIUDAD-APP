@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   Pressable,
   FlatList,
   TouchableOpacity,
-  ScrollView
+  ScrollView,
+  RefreshControl
 } from 'react-native';
 import { Search, CheckCircle, ChevronLeft, SquareArrowOutUpRight, XCircle } from 'lucide-react-native';
 import { useWasteReport, type WasteReport } from '../queries/illegal-dump-fetch-queries';
@@ -17,13 +17,12 @@ import { router } from 'expo-router';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
 
-
-
 export default function WasteIllegalDumping() {
   const [selectedFilterId, setSelectedFilterId] = useState("0");
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSearch, setShowSearch] = React.useState<boolean>(false);  
+  const [showSearch, setShowSearch] = useState<boolean>(false);  
   const [activeTab, setActiveTab] = useState<'pending' | 'resolved' | 'cancelled'>('pending');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Map tab to status value for backend
@@ -35,10 +34,9 @@ export default function WasteIllegalDumping() {
   };
 
   // Fetch data with backend filtering and pagination
-  // Using large page size (1000) to get all data like in Resolution mobile
   const { data: wasteReportData = { results: [], count: 0 }, isLoading, isError, refetch } = useWasteReport(
-    1, // page
-    1000, // pageSize - large number to get all data
+    1,
+    1000,
     debouncedSearchQuery, 
     selectedFilterId,
     getStatusParam(activeTab)
@@ -59,10 +57,6 @@ export default function WasteIllegalDumping() {
     { id: "Illegal posting or installed signage, billboards, posters, streamers and movie ads.", name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
   ];
 
-  // const handleSearchChange = (text: string) => {
-  //   setSearchQuery(text);
-  // };
-
   const handleFilterChange = (value: string) => {
     setSelectedFilterId(value);
   };
@@ -74,30 +68,16 @@ export default function WasteIllegalDumping() {
   const handleView = async (item: any) => {
     router.push({
       pathname: '/(waste)/illegal-dumping/staff/illegal-dump-view-staff',
-      params: {
-        rep_id: item.rep_id,
-        rep_matter: item.rep_matter,
-        rep_location: item.rep_location,
-        sitio_name: item.sitio_name,
-        rep_violator: item.rep_violator,
-        rep_complainant: item.rep_complainant,
-        rep_contact: item.rep_contact,
-        rep_status: item.rep_status,
-        rep_date: item.rep_date,
-        rep_date_resolved: item.rep_date_resolved,
-        rep_date_cancelled: item.rep_date_cancelled,
-        rep_anonymous: item.rep_anonymous,
-        rep_add_details: item.rep_add_details,
-        waste_report_file: JSON.stringify(item.waste_report_file || []),
-        waste_report_rslv_file: JSON.stringify(item.waste_report_rslv_file || [])
-      }
+      params: { rep_id: item.rep_id }
     });
   };
 
-  const handleRefresh = () => {
-    refetch();
+  // Refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
-
 
   // Loading state component
   const renderLoadingState = () => (
@@ -105,7 +85,6 @@ export default function WasteIllegalDumping() {
       <LoadingState/>
     </View>
   );
-    
 
   const renderReportCard = (item: WasteReport) => (
     <Pressable
@@ -214,7 +193,7 @@ export default function WasteIllegalDumping() {
           <SearchInput 
             value={searchQuery}
             onChange={setSearchQuery}
-            onSubmit={() => {}} // Can leave empty since you're using debounce
+            onSubmit={() => {}}
           />
         )}
 
@@ -260,7 +239,7 @@ export default function WasteIllegalDumping() {
             </Text>
           </View>
 
-          {isLoading ? (
+          {isLoading && !isRefreshing ? (
             renderLoadingState()               
           ) : (
             <FlatList
@@ -269,6 +248,14 @@ export default function WasteIllegalDumping() {
               keyExtractor={(item) => item.rep_id.toString()}
               contentContainerStyle={{ paddingBottom: 20 }}
               showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={handleRefresh}
+                  colors={['#00a8f0']}
+                  tintColor="#00a8f0"
+                />
+              }
               ListEmptyComponent={
                 <View className="py-8 items-center">
                   <Text className="text-gray-500 text-center">

@@ -25,6 +25,15 @@ export const api = axios.create({
   },
 });
 
+// export const api = axios.create({
+//   baseURL: "http://10.249.197.53:8000",
+//   withCredentials: true,
+//   headers: {
+//     "Content-Type": "application/json",
+//     "Accept": "application/json",
+//   },
+// });
+
 // export const api2 = axios.create({
 //   baseURL: "http://192.168.1.3:8001",
 //   withCredentials: true,

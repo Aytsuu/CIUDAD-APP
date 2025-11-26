@@ -70,7 +70,7 @@ export default () => {
       showScrollIndicator={false}
     >
       <View className="flex-1 px-6">
-        {user?.rp || !(user?.rp && user?.br) ? (
+        {user?.rp || !user?.br ? (
           <View className="flex-1">
             <InfoRow
               label="Full Name"

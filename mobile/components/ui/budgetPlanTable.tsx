@@ -46,7 +46,7 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
     subtitle?: string
     icon: any
   }) => {
-    const iconColor = title === "Budget Obligations" ? "#B91C1C" : title === "Unappropriated Balance" ? "#15803D" : title === "Actual Income" ? "#1D4ED8" : "#0D9488";
+    const iconColor = title === "Budget Obligations" ? "#B91C1C" : title === "Unappropriated Balance" ? "#15803D" : title === "Actual Income" ? "#1D4ED8" : title === "RPT Income" ? "#1D4ED8" : "#0D9488";
     return (
       <Card className="bg-white border border-gray-200 rounded-lg">
         <CardContent className="p-4">
@@ -154,13 +154,20 @@ export default function MobileBudgetPlanView({ budgetData }: { budgetData: Budge
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView className="flex-1 px-6 py-4" showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View className="mb-6">
+      {/* Fixed Header Section - Outside of ScrollView */}
+      <View className="px-6 pt-4 pb-2 bg-white">
+        <View className="mb-4">
           <Text className="text-xl font-semibold text-gray-900 mb-1 font-sans">Budget Overview</Text>
           <Text className="text-sm text-gray-600 font-sans">Financial planning and resource allocation</Text>
         </View>
+      </View>
 
+      {/* Scrollable Content */}
+      <ScrollView 
+        className="flex-1 px-6" 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         {/* Primary Metric */}
         <View className="mb-6">
           <AvailableResourcesCard />

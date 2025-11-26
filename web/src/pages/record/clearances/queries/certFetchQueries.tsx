@@ -17,6 +17,7 @@ export type Certificate = {
       add_barangay?: string;
       add_city?: string;
       add_province?: string;
+      sitio?: string;
     }>;
     per_is_deceased?: boolean;
   } | null;
@@ -70,7 +71,7 @@ export type MarkCertificateVariables = {
   nrc_id?: string;
 };
 
-export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, purpose?: string, paymentStatus?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
+export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, purpose?: string, paymentStatus?: string, ordering?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
   try {
     // Build query parameters for the combined endpoint
     const params = new URLSearchParams();
@@ -80,6 +81,8 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
     if (status) params.append('status', status);
     if (purpose) params.append('purpose', purpose);
     if (paymentStatus) params.append('payment_status', paymentStatus);
+    // Default to latest first (descending by request date)
+    params.append('ordering', ordering || '-req_request_date');
     
     const queryString = params.toString();
     const url = `/clerk/certificate-all/${queryString ? '?' + queryString : ''}`;

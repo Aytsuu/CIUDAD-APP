@@ -39,6 +39,23 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
         )
     },
     {accessorKey: "complainant_name", header: "Complainant Name"},
+    {
+        accessorKey: "accused_names",
+        header: "Respondent",
+        cell: ({ row }: { row: any }) => {
+            const accusedNames = row.original.accused_names as string[] | null | undefined;
+            if (!accusedNames || accusedNames.length === 0) {
+                return <span className="text-gray-400">N/A</span>;
+            }
+            return (
+                <div className="max-w-md">
+                    <span className="text-sm text-gray-700">
+                        {accusedNames.join(', ')}
+                    </span>
+                </div>
+            );
+        }
+    },
     {accessorKey: "sr_type", 
         header: "Type",
         cell: ({ row }) => {
@@ -133,6 +150,21 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
             );
         }
     }] : []),
+    // Conditionally show Reason for Decline column only for declined tab
+    ...(activeTab === "declined" ? [{
+        accessorKey: "pay_reason" as const,
+        header: "Reason for Decline",
+        cell: ({ row }: { row: any }) => {
+            const reason = row.original.pay_reason as string | null | undefined;
+            return (
+                <div className="max-w-md">
+                    <span className="text-sm text-gray-700">
+                        {reason || "N/A"}
+                    </span>
+                </div>
+            );
+        }
+    }] : []),
     // Conditionally show Action column only for unpaid tab
     ...(activeTab === "unpaid" ? [{
         accessorKey: "action" as const, 
@@ -216,7 +248,12 @@ function ServiceCharge(){
     const [activeTab, setActiveTab] = useState<"unpaid" | "paid" | "declined">("unpaid");
     const [searchQuery, setSearchQuery] = useState("");
     
-    const { data, isLoading, error, refetch } = useTreasurerServiceCharges(searchQuery, currentPage, pageSize);
+    // Reset to page 1 when tab changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab]);
+    
+    const { data, isLoading, error, refetch } = useTreasurerServiceCharges(searchQuery, currentPage, pageSize, activeTab);
     const { data: rateObj } = useServiceChargeRate();
     
     // Handle loading state
@@ -231,60 +268,33 @@ function ServiceCharge(){
     // Handle errors
     useEffect(() => {
         if (error) {
-            console.error("Error fetching service charges:", error);
             showErrorToast("Failed to load service charge data. Please try again.");
         }
     }, [error]);
     
-    // Console log the fetched data
-    console.log("Fetched ServiceCharge data:", data);
-    console.log("Fetched rate data:", rateObj);
-    
     // Expose to receipt dialog content renderer (string value)
     (window as any).__serviceChargeRate = rateObj?.pr_rate != null ? String(rateObj.pr_rate) : "0";
     
+    // Use data directly from backend (already filtered by tab)
     const serviceCharges = data?.results || [];
     const totalCount = data?.count || 0;
     const totalPages = Math.ceil(totalCount / pageSize);
 
     // Function to refresh data after successful payment
     const handlePaymentSuccess = async () => {
-        console.log("Payment successful, refreshing data...");
         // Invalidate and refetch the service charges data
         await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
         await refetch();
-        console.log("Data refreshed successfully");
     };
 
     // Function to refresh data after declining a request
     const handleDeclineSuccess = async () => {
-        console.log("Request declined, refreshing data...");
         // Invalidate and refetch the service charges data
         await queryClient.invalidateQueries({ queryKey: ['treasurer-service-charges'] });
         await refetch();
-        console.log("Data refreshed successfully");
     };
 
     const columns = useMemo(() => createColumns(handlePaymentSuccess, handleDeclineSuccess, activeTab), [handlePaymentSuccess, handleDeclineSuccess, activeTab]);
-
-    // Filter data based on active tab (client-side filtering by pay_status)
-    const filteredData = useMemo(() => {
-        if (activeTab === "declined") {
-            // Filter for declined service charges using pay_req_status
-            return serviceCharges.filter(charge => 
-                charge.payment_request?.spay_status === "Declined" || charge.sr_req_status === "Declined"
-            );
-        } else if (activeTab === "paid") {
-            // Filter for paid service charges using pay_status
-            return serviceCharges.filter(charge => 
-                charge.payment_request?.spay_status === "Paid"
-            );
-        }
-        // For unpaid tab, show unpaid service charges
-        return serviceCharges.filter(charge => 
-            charge.payment_request?.spay_status === "Unpaid" || !charge.payment_request
-        );
-    }, [serviceCharges, activeTab]);
 
     // Handle search
     const handleSearch = (value: string) => {
@@ -388,7 +398,7 @@ function ServiceCharge(){
                         </div>
                     ) : error ? (
                         <div className="text-center py-4 text-red-500">Error loading data</div>
-                    ) : filteredData.length === 0 ? (
+                    ) : serviceCharges.length === 0 ? (
                         <div className="p-6 text-sm text-darkGray text-center">
                             {activeTab === "unpaid" ? "No unpaid service charge records found." : 
                              activeTab === "paid" ? "No paid service charge records found." : 
@@ -396,7 +406,7 @@ function ServiceCharge(){
                         </div>
                     ) : (
                         <div className="rounded-md border">
-                            <DataTable columns={columns} data={filteredData} header={true} />
+                            <DataTable columns={columns} data={serviceCharges} header={true} />
                         </div>
                     )}
                 </div>
