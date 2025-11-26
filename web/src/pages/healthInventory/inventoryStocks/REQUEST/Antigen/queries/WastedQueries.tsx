@@ -27,7 +27,7 @@ export const useHandleWaste = () => {
     mutationFn: async ({ record, data }: { record: any; data: { wastedAmount: number; staff_id?: string; action_type: string } }) => {
       return handleVaccineWaste(record, data);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: ( variables) => {
       queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
       queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["vaccine_stocks"] });
@@ -48,7 +48,7 @@ export const useHandleWaste = () => {
     mutationFn: async ({ record, data }: { record: any; data: { wastedAmount: number; staff_id?: string; action_type: string } }) => {
       return handleSupplyWaste(record, data);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (variables) => {
       queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
       queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["supply_stocks"] });
