@@ -65,6 +65,7 @@ export interface ComplaintData {
   comp_allegation: string;
   comp_created_at: string;
   comp_rejection_reason: string;
+  comp_cancel_reason: string;
   complainant: Complainant[];
   accused: Accused[];
   complaint_files: ComplaintFile[];
@@ -83,6 +84,8 @@ export interface ComplaintItem {
   comp_created_at: string;
   comp_incident_type: string;
   comp_rejection_reason: string;
+  comp_cancel_reason: string;
+  comp_is_archive: boolean;
 }
 
 

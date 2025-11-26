@@ -35,7 +35,7 @@ export default function ComplaintRecord() {
   // Filter for Accepted and Raised complaints that are not archived
   const acceptedAndRaisedComplaints = useMemo(() => {
     return complaints.filter(
-      (c: Complaint) => c.comp_status === "Accepted" || c.comp_status === "Raised"
+      (c: Complaint) => c.comp_status === "Accepted" || c.comp_status === "Raised" || c.comp_status === "Cancelled" || c.comp_status === "Rejected"
     );
   }, [complaints]);
 
@@ -100,7 +100,7 @@ export default function ComplaintRecord() {
         buttons={{
           filter: true,
           request: true,
-          archived: true,
+          // archived: true,
           newReport: true,
           rejected: false,
           requestCount: buttonCounts.requestCount,

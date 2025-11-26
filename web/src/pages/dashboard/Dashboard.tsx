@@ -3,6 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { getItemsConfig } from "./Item";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useProfilingSectionCards } from "@/components/analytics/profiling/profiling-section-cards";
+import { useComplaintSectionCards } from "@/components/analytics/complaint/complaint-card";
 import { useAdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
@@ -23,6 +24,7 @@ export default function Dashboard() {
   const [currentCardPage, setCurrentCardPage] = React.useState(0);
 
   const profilingCards = useProfilingSectionCards();
+  const complaintCards = useComplaintSectionCards();
   const adminCards = useAdminSectionCards();
   const reportCards = useReportSectionCards();
   const healthCards = useHealthServicesSectionCards();
@@ -35,7 +37,7 @@ export default function Dashboard() {
   const remarkCard = useNoRemarksSectionCard();
 
   const councilEvents = useCouncilUpcomingEvents();
-  const instance = getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents)
+  const instance = getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards)
   
 
   const validateFeature = (feature: string) => {

@@ -28,11 +28,12 @@ export type FilterState = {
 type ButtonConfig = {
   filter?: boolean;
   request?: boolean;
-  archived?: boolean;
   newReport?: boolean;
   rejected?: boolean;
+  cancelled?: boolean;
   requestCount?: number;
   rejectedCount?: number;
+  cancelledCount?: number;
 };
 
 type Props = {
@@ -55,11 +56,12 @@ export default function ComplaintFilterBar({
   buttons = {
     filter: true,
     request: true,
-    archived: true,
     newReport: true,
     rejected: false,
+    cancelled: false,
     requestCount: 0,
     rejectedCount: 0,
+    cancelledCount: 0,
   },
 }: Props) {
   const clearSearch = () => setSearchQuery("");
@@ -279,17 +281,7 @@ export default function ComplaintFilterBar({
         </div>
 
         <div className="flex gap-2">
-          {buttons.request && (
-            <Link to="/complaint/archive">
-              <Button
-                variant="outline"
-                className="gap-2 text-darkGray hover:text-black"
-              >
-                <FaRegQuestionCircle size={16} className="text-gray-400" />
-                <span>Archive</span>
-              </Button>
-            </Link>
-          )}
+          {/* Request Button */}
           {buttons.request && (
             <Link to="/complaint/request">
               <Button
@@ -304,6 +296,40 @@ export default function ComplaintFilterBar({
               </Button>
             </Link>
           )}
+
+          {/* Rejected Button - Only show if enabled */}
+          {buttons.rejected && (
+            <Link to="/complaint/request/rejected">
+              <Button
+                variant="outline"
+                className="gap-2 text-darkGray hover:text-black"
+              >
+                <FaRegQuestionCircle size={16} className="text-gray-400" />
+                <span>Rejected</span>
+                <span className="flex items-center justify-center h-6 font-semibold w-7 rounded-md bg-red-100 text-red-500">
+                  {buttons.rejectedCount || 0}
+                </span>
+              </Button>
+            </Link>
+          )}
+
+          {/* Cancelled Button - Only show if enabled */}
+          {buttons.cancelled && (
+            <Link to="/complaint/request/cancelled">
+              <Button
+                variant="outline"
+                className="gap-2 text-darkGray hover:text-black"
+              >
+                <FaRegQuestionCircle size={16} className="text-gray-400" />
+                <span>Cancelled</span>
+                <span className="flex items-center justify-center h-6 font-semibold w-7 rounded-md bg-gray-100 text-gray-500">
+                  {buttons.cancelledCount || 0}
+                </span>
+              </Button>
+            </Link>
+          )}
+
+          {/* New Report Button */}
           {buttons.newReport && (
             <Link to="/complaint/report" className="sm:ml-auto">
               <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 flex items-center gap-2 h-9 px-4 rounded-lg">

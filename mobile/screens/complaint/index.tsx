@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   FlatList,
   Alert,
   ActivityIndicator,
-  ScrollView,
 } from "react-native";
 import { localDateFormatter } from "@/helpers/localDateFormatter";
 import PageLayout from "../_PageLayout";
@@ -21,6 +20,9 @@ import {
   Search,
   Plus,
   MoreVertical,
+  AlertCircle,
+  Clock,
+  Lock,
 } from "lucide-react-native";
 import EmptyInbox from "@/assets/images/empty-state/EmptyInbox.svg";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -34,8 +36,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ConfirmationModal } from "../my-request/complaint/components/ComplaintConfirmationModal";
-import { Button } from "@/components/ui/button";
+import { ConfirmationModal } from "./StaffComplaintModal";
+import BottomSheet from "@gorhom/bottom-sheet";
+import { DrawerView } from "@/components/ui/drawer";
 
 interface ModalConfig {
   visible: boolean;
@@ -56,16 +59,12 @@ interface FilterOptions {
 
 const ComplaintCard = ({
   item,
-  onAccept,
-  onReject,
-  onRaise,
+  onMorePress,
   onPress,
   isProcessing,
 }: {
   item: ComplaintData;
-  onAccept: (id: number) => void;
-  onReject: (id: number) => void;
-  onRaise: (id: number) => void;
+  onMorePress: () => void;
   onPress: () => void;
   isProcessing: boolean;
 }) => {
@@ -84,67 +83,50 @@ const ComplaintCard = ({
       case "Pending":
         return {
           bgColor: "bg-orange-50",
-          iconBg: "bg-orange-400",
-          text: "Request is Pending",
-          showAcceptRejectButtons: true,
-          showRaiseButton: false,
-          showRejectionReason: false,
+          iconColor: "#ed8f2d",
+          text: "Pending",
+          icon: Clock,
         };
       case "Accepted":
         return {
           bgColor: "bg-green-50",
-          iconBg: "bg-green-400",
-          text: `Request has been Accepted on ${formatDate(
-            item.comp_datetime
-          )}`,
-          showAcceptRejectButtons: false,
-          showRaiseButton: true,
-          showRejectionReason: false,
+          iconColor: "#00e500",
+          text: "Accepted",
+          icon: CheckCircle,
         };
       case "Raised":
         return {
           bgColor: "bg-blue-50",
-          iconBg: "bg-blue-400",
-          text: `Request has been Raised on ${formatDate(item.comp_datetime)}`,
-          showAcceptRejectButtons: false,
-          showRaiseButton: false,
-          showRejectionReason: false,
+          iconColor: "#0a78db",
+          text: "Raised",
+          icon: AlertCircle,
         };
       case "Rejected":
         return {
           bgColor: "bg-red-50",
-          iconBg: "bg-red-400",
-          text: `Request has been Rejected on ${formatDate(
-            item.comp_datetime
-          )}`,
-          showAcceptRejectButtons: false,
-          showRaiseButton: false,
-          showRejectionReason: true,
+          iconColor: "#db0000",
+          text: "Rejected",
+          icon: XCircle,
         };
       case "Cancelled":
         return {
           bgColor: "bg-gray-50",
-          iconBg: "bg-gray-400",
-          text: `Request has been Cancelled by ${requesterName} on ${formatDate(
-            item.comp_datetime
-          )}`,
-          showAcceptRejectButtons: false,
-          showRaiseButton: false,
-          showRejectionReason: false,
+          iconColor: "#6B7280",
+          text: "Cancelled",
+          icon: XCircle,
         };
       default:
         return {
           bgColor: "bg-gray-50",
-          iconBg: "bg-gray-400",
+          iconColor: "#6B7280",
           text: "Status Unknown",
-          showAcceptRejectButtons: false,
-          showRaiseButton: false,
-          showRejectionReason: false,
+          icon: Clock,
         };
     }
   };
 
   const statusConfig = getStatusConfig(item.comp_status);
+  const StatusIcon = statusConfig.icon;
 
   return (
     <TouchableOpacity
@@ -160,13 +142,16 @@ const ComplaintCard = ({
             Blotter #{item.comp_id}
           </Text>
 
-          <Button
-            variant="ghost"
-            size="icon"
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              onMorePress();
+            }}
             className="h-7 w-7 p-0 items-center justify-center"
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MoreVertical size={15} />
-          </Button>
+            <MoreVertical size={15} color="#9CA3AF" />
+          </TouchableOpacity>
         </View>
 
         <View>
@@ -214,95 +199,40 @@ const ComplaintCard = ({
 
       {/* Status Section */}
       <View className={`p-4 ${statusConfig.bgColor}`}>
-        <Text className="text-base font-PoppinsSemiBold text-gray-900 mb-3">
-          Status
-        </Text>
+        <View className="flex-row justify-between items-center">
+          <Text className="text-base font-PoppinsSemiBold text-gray-900">
+            Status
+          </Text>
 
-        <View className="flex-row items-center mb-4">
-          <View className="w-12 h-12 rounded-full bg-gray-200 items-center justify-center mr-3 relative">
-            <View className="w-full h-full rounded-full bg-gray-300" />
-            <View
-              className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full ${statusConfig.iconBg} items-center justify-center border-2 border-white`}
-            >
-              {item.comp_status === "Pending" && (
-                <View className="w-2 h-2 bg-white rounded-full" />
-              )}
-              {(item.comp_status === "Accepted" ||
-                item.comp_status === "Raised") && (
-                <CheckCircle size={14} color="white" strokeWidth={3} />
-              )}
-              {(item.comp_status === "Rejected" ||
-                item.comp_status === "Cancelled") && (
-                <XCircle size={14} color="white" strokeWidth={3} />
-              )}
+          <View className="flex-row items-center">
+            <View className="w-8 h-8 items-center justify-center mr-2">
+              <StatusIcon
+                size={26}
+                color={statusConfig.iconColor}
+                strokeWidth={3}
+              />
             </View>
-          </View>
-
-          <View className="flex-1">
             <Text className="text-sm font-PoppinsRegular text-gray-700">
               {statusConfig.text}
             </Text>
-
-            {statusConfig.showRejectionReason && item.comp_rejection_reason && (
-              <View className="mt-2 p-2 bg-red-100 rounded-lg">
-                <Text className="text-xs font-PoppinsSemiBold text-red-800 mb-1">
-                  Reason:
-                </Text>
-                <Text className="text-xs font-PoppinsRegular text-red-700">
-                  {item.comp_rejection_reason}
-                </Text>
-              </View>
-            )}
           </View>
         </View>
 
-        {/* Action Buttons */}
+        {statusConfig.text === "Rejected" && item.comp_rejection_reason && (
+          <View className="mt-3 p-3 bg-red-100 rounded-lg">
+            <Text className="text-xs font-PoppinsSemiBold text-red-800 mb-1">
+              Reason:
+            </Text>
+            <Text className="text-xs font-PoppinsRegular text-red-700">
+              {item.comp_rejection_reason}
+            </Text>
+          </View>
+        )}
+
         {isProcessing && (
-          <View className="py-3 items-center">
+          <View className="pt-3 items-center">
             <ActivityIndicator size="small" color="#6366f1" />
           </View>
-        )}
-
-        {!isProcessing && statusConfig.showAcceptRejectButtons && (
-          <View className="flex-row gap-3">
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                onReject(item.comp_id);
-              }}
-              className="flex-1 bg-white border-2 border-red-500 rounded-lg py-3 items-center"
-              activeOpacity={0.7}
-            >
-              <Text className="text-red-500 font-PoppinsSemiBold">Reject</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                onAccept(item.comp_id);
-              }}
-              className="flex-1 bg-green-500 rounded-lg py-3 items-center"
-              activeOpacity={0.7}
-            >
-              <Text className="text-white font-PoppinsSemiBold">Accept</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {!isProcessing && statusConfig.showRaiseButton && (
-          <TouchableOpacity
-            onPress={(e) => {
-              e.stopPropagation();
-              onRaise(item.comp_id);
-            }}
-            className="bg-blue-500 rounded-lg py-3 items-center flex-row justify-center"
-            activeOpacity={0.7}
-          >
-            <ArrowUp size={18} color="white" strokeWidth={2.5} />
-            <Text className="text-white font-PoppinsSemiBold ml-2">
-              Raise to Higher Authority
-            </Text>
-          </TouchableOpacity>
         )}
       </View>
     </TouchableOpacity>
@@ -333,8 +263,23 @@ export default function ComplaintLists() {
     title: "",
     message: "",
     requiresInput: false,
+    inputLabel: "",
+    inputPlaceholder: "",
     confirmText: "Confirm",
   });
+
+  const [selectedComplaint, setSelectedComplaint] =
+    useState<ComplaintData | null>(null);
+  const drawerRef = useRef<BottomSheet>(null);
+
+  const openDrawer = (item: ComplaintData) => {
+    setSelectedComplaint(item);
+    drawerRef.current?.snapToIndex(0);
+  };
+
+  const closeDrawer = () => {
+    drawerRef.current?.close();
+  };
 
   const showModal = (
     type: "accept" | "reject" | "raise",
@@ -350,7 +295,8 @@ export default function ComplaintLists() {
       },
       reject: {
         title: "Reject Complaint",
-        message: "Please provide a reason for rejecting this complaint.",
+        message:
+          "Are you sure you want to reject this complaint? You will need to provide a reason for rejection.",
         requiresInput: true,
         inputLabel: "Rejection Reason",
         inputPlaceholder: "Enter the reason for rejection...",
@@ -371,6 +317,7 @@ export default function ComplaintLists() {
       complaintId,
       ...configs[type],
     });
+    closeDrawer();
   };
 
   const hideModal = () => {
@@ -378,6 +325,7 @@ export default function ComplaintLists() {
     setProcessingId(null);
   };
 
+  // Fix in the handleConfirmAction function
   const handleConfirmAction = async (inputValue?: string) => {
     if (!modalConfig.complaintId) return;
 
@@ -390,27 +338,30 @@ export default function ComplaintLists() {
         case "accept":
           updateData = {
             comp_status: "Accepted",
-            staff_id: staff,
+            staff_id: Number(staff), // ✅ Convert to number
           };
           break;
         case "reject":
+          if (!inputValue || inputValue.trim().length === 0) {
+            Alert.alert("Error", "Please provide a rejection reason.");
+            setProcessingId(null);
+            return;
+          }
           updateData = {
             comp_status: "Rejected",
-            comp_rejection_reason: inputValue || "",
+            comp_rejection_reason: inputValue.trim(),
           };
           break;
         case "raise":
           updateData = {
             comp_status: "Raised",
-            staff_id: staff,
+            staff_id: Number(staff), // ✅ Convert to number
           };
           break;
       }
 
       await updateComplaintStatus(modalConfig.complaintId, updateData);
-
       await refetch();
-
       hideModal();
 
       Alert.alert(
@@ -425,6 +376,146 @@ export default function ComplaintLists() {
       );
       setProcessingId(null);
     }
+  };
+
+  // Check if actions are available based on status
+  const canAcceptComplaint = (complaint: ComplaintData) => {
+    return complaint.comp_status === "Pending";
+  };
+
+  const canRejectComplaint = (complaint: ComplaintData) => {
+    return complaint.comp_status === "Pending";
+  };
+
+  const canRaiseComplaint = (complaint: ComplaintData) => {
+    return complaint.comp_status === "Accepted";
+  };
+
+  // Render action buttons in drawer based on complaint status
+  const renderActionButtons = () => {
+    if (!selectedComplaint) return null;
+
+    const canAccept = canAcceptComplaint(selectedComplaint);
+    const canReject = canRejectComplaint(selectedComplaint);
+    const canRaise = canRaiseComplaint(selectedComplaint);
+
+    return (
+      <View className="pb-6">
+        {/* Accept Complaint Button */}
+        {canAccept ? (
+          <TouchableOpacity
+            onPress={() => showModal("accept", selectedComplaint.comp_id)}
+            className="flex-row items-start p-4 bg-green-50 rounded-xl mb-3 border border-green-100"
+          >
+            <View className="w-10 h-10 rounded-full bg-green-100 items-center justify-center mr-4">
+              <CheckCircle size={20} color="#10B981" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-PoppinsSemiBold text-gray-900 mb-1">
+                Accept Complaint
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-gray-600">
+                Accept and take responsibility for handling this complaint.
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View className="flex-row items-start p-4 bg-gray-100 rounded-xl mb-3 border border-gray-200 opacity-60">
+            <View className="w-10 h-10 rounded-full bg-gray-200 items-center justify-center mr-4">
+              <Lock size={20} color="#6B7280" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-PoppinsSemiBold text-gray-500 mb-1">
+                Accept Complaint
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-gray-500">
+                {selectedComplaint.comp_status === "Accepted"
+                  ? "Complaint has already been accepted."
+                  : selectedComplaint.comp_status === "Raised"
+                  ? "Complaint has been raised to higher authority."
+                  : "This action is not available for the current status."}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Reject Complaint Button */}
+        {canReject ? (
+          <TouchableOpacity
+            onPress={() => showModal("reject", selectedComplaint.comp_id)}
+            className="flex-row items-start p-4 bg-red-50 rounded-xl mb-3 border border-red-100"
+          >
+            <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center mr-4">
+              <XCircle size={20} color="#EF4444" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-PoppinsSemiBold text-gray-900 mb-1">
+                Reject Complaint
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-gray-600">
+                Reject this complaint with a valid reason.
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View className="flex-row items-start p-4 bg-gray-100 rounded-xl mb-3 border border-gray-200 opacity-60">
+            <View className="w-10 h-10 rounded-full bg-gray-200 items-center justify-center mr-4">
+              <Lock size={20} color="#6B7280" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-PoppinsSemiBold text-gray-500 mb-1">
+                Reject Complaint
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-gray-500">
+                {selectedComplaint.comp_status === "Accepted"
+                  ? "Accepted complaints cannot be rejected."
+                  : selectedComplaint.comp_status === "Raised"
+                  ? "Raised complaints cannot be rejected."
+                  : "This action is not available for the current status."}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Raise Complaint Button */}
+        {canRaise ? (
+          <TouchableOpacity
+            onPress={() => showModal("raise", selectedComplaint.comp_id)}
+            className="flex-row items-start p-4 bg-blue-50 rounded-xl border border-blue-100"
+          >
+            <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center mr-4">
+              <ArrowUp size={20} color="#3B82F6" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-PoppinsSemiBold text-gray-900 mb-1">
+                Raise to Higher Authority
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-gray-600">
+                Escalate this complaint to higher authorities for review.
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <View className="flex-row items-start p-4 bg-gray-100 rounded-xl border border-gray-200 opacity-60">
+            <View className="w-10 h-10 rounded-full bg-gray-200 items-center justify-center mr-4">
+              <Lock size={20} color="#6B7280" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-PoppinsSemiBold text-gray-500 mb-1">
+                Raise to Higher Authority
+              </Text>
+              <Text className="text-xs font-PoppinsRegular text-gray-500">
+                {selectedComplaint.comp_status === "Pending"
+                  ? "Complaint must be accepted first before raising."
+                  : selectedComplaint.comp_status === "Raised"
+                  ? "Complaint has already been raised."
+                  : "This action is not available for the current status."}
+              </Text>
+            </View>
+          </View>
+        )}
+      </View>
+    );
   };
 
   // Get unique incident types from complaints
@@ -710,48 +801,47 @@ export default function ComplaintLists() {
   );
 
   const renderTabBar = () => (
-    <ScrollView
+    <FlatList
       horizontal
       showsHorizontalScrollIndicator={false}
-      className="px-4 pb-10"
+      className="h-12 bg-white flex-row border-gray-200 border-b mb-10"
       contentContainerStyle={{ paddingRight: 16 }}
-    >
-      <View className="h-12 bg-white flex-row border-gray-200 border-b ">
-        {tabs.map((tab) => (
-          <TouchableOpacity
-            key={tab.id}
-            onPress={() => setActiveStatus(tab.id)}
-            className={`px-4 flex-row items-center border-b-2 bg-white ${
-              activeStatus === tab.id ? "border-blue-500" : "border-transparent"
+      scrollEnabled={true}
+      data={tabs}
+      renderItem={({ item: tab }) => (
+        <TouchableOpacity
+          onPress={() => setActiveStatus(tab.id)}
+          className={`px-4 flex-row items-center border-b-2 bg-white ${
+            activeStatus === tab.id ? "border-blue-500" : "border-transparent"
+          }`}
+          activeOpacity={0.7}
+        >
+          <Text
+            className={`text-sm font-PoppinsMedium ${
+              activeStatus === tab.id ? "text-blue-500" : "text-gray-600"
             }`}
-            activeOpacity={0.7}
           >
-            <Text
-              className={`text-sm font-PoppinsMedium ${
-                activeStatus === tab.id ? "text-blue-500" : "text-gray-600"
+            {tab.label}
+          </Text>
+          {tab.count > 0 && (
+            <View
+              className={`ml-2 px-2 py-0.5 rounded-full min-w-[20px] items-center ${
+                activeStatus === tab.id ? "bg-blue-500" : "bg-gray-300"
               }`}
             >
-              {tab.label}
-            </Text>
-            {tab.count > 0 && (
-              <View
-                className={`ml-2 px-2 py-0.5 rounded-full min-w-[20px] items-center ${
-                  activeStatus === tab.id ? "bg-blue-500" : "bg-gray-300"
+              <Text
+                className={`text-xs font-PoppinsSemiBold ${
+                  activeStatus === tab.id ? "text-white" : "text-gray-600"
                 }`}
               >
-                <Text
-                  className={`text-xs font-PoppinsSemiBold ${
-                    activeStatus === tab.id ? "text-white" : "text-gray-600"
-                  }`}
-                >
-                  {tab.count}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+                {tab.count}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      )}
+      keyExtractor={(item) => item.id}
+    />
   );
 
   const renderEmptyState = () => {
@@ -770,7 +860,7 @@ export default function ComplaintLists() {
             Error Loading Data
           </Text>
           <Text className="text-gray-500 font-PoppinsRegular text-center">
-            Unable to load complaints. Please try again.
+            Unable to load Blotter Data. Please try again.
           </Text>
         </View>
       );
@@ -780,10 +870,10 @@ export default function ComplaintLists() {
       return (
         <View className="flex-1 items-center justify-center px-6 py-20">
           <Text className="text-gray-700 font-PoppinsSemiBold text-lg mb-2">
-            No Complaints
+            No Blotter
           </Text>
           <Text className="text-gray-500 font-PoppinsRegular text-center">
-            There are no complaints to display at the moment.
+            There are no blotter to display at the moment.
           </Text>
         </View>
       );
@@ -801,109 +891,125 @@ export default function ComplaintLists() {
   };
 
   return (
-    <PageLayout
-      leftAction={
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm"
-        >
-          <ChevronLeft size={24} color="#374151" />
-        </TouchableOpacity>
-      }
-      headerTitle={
-        <Text className="text-md font-PoppinsRegular text-gray-900">
-          Blotter
-        </Text>
-      }
-      rightAction={
-        <View className="flex-row gap-3">
+    <View className="flex-1">
+      <PageLayout
+        leftAction={
           <TouchableOpacity
-            onPress={() => handleAddComplaint()}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-full bg-white items-center justify-center shadow-sm"
           >
-            <Plus size={22} className="text-gray-700" />
+            <ChevronLeft size={24} color="#374151" />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setSearchQuery(searchQuery ? "" : " ")}
-            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-          >
-            <Search size={22} className="text-gray-700" />
-          </TouchableOpacity>
-        </View>
-      }
-    >
-      <View className="flex-1 bg-gray-50">
-        {searchQuery && (
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onSubmit={() => searchQuery}
-          />
-        )}
-
-        {isLoading ||
-        isError ||
-        !complaintList ||
-        complaintList.length === 0 ||
-        filteredComplaints.length === 0 ? (
-          <View className="flex-1">
-            {renderFilterBar()}
-            {renderTabBar()}
-            {renderEmptyState()}
+        }
+        headerTitle={
+          <Text className="text-md font-PoppinsRegular text-gray-900">
+            Blotter
+          </Text>
+        }
+        rightAction={
+          <View className="flex-row gap-3">
+            <TouchableOpacity
+              onPress={() => handleAddComplaint()}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <Plus size={22} className="text-gray-700" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setSearchQuery(searchQuery ? "" : " ")}
+              className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+            >
+              <Search size={22} className="text-gray-700" />
+            </TouchableOpacity>
           </View>
-        ) : (
-          <FlatList
-            data={filteredComplaints}
-            renderItem={({ item }) => (
-              <ComplaintCard
-                item={item}
-                onAccept={(id) => showModal("accept", id)}
-                onReject={(id) => showModal("reject", id)}
-                onRaise={(id) => showModal("raise", id)}
-                onPress={() =>
-                  router.push({
-                    pathname: `/(my-request)/complaint-tracking/compMainView`,
-                    params: { comp_id: item.comp_id },
-                  })
-                }
-                isProcessing={processingId === item.comp_id}
-              />
-            )}
-            keyExtractor={(item) => item.comp_id.toString()}
-            ListHeaderComponent={() => (
-              <View>
-                {renderFilterBar()}
-                {renderTabBar()}
-              </View>
-            )}
-            contentContainerStyle={{ paddingBottom: 24 }}
-            showsVerticalScrollIndicator={false}
-            removeClippedSubviews={true}
-            maxToRenderPerBatch={5}
-            updateCellsBatchingPeriod={50}
-            initialNumToRender={5}
-            windowSize={5}
-          />
-        )}
+        }
+      >
+        <View className="flex-1 bg-gray-50">
+          {searchQuery && (
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSubmit={() => searchQuery}
+            />
+          )}
 
-        <ConfirmationModal
-          visible={modalConfig.visible}
-          type={
-            modalConfig.type === "accept"
-              ? "info"
-              : modalConfig.type === "reject"
-              ? "warning"
-              : "raise"
-          }
-          title={modalConfig.title}
-          description={modalConfig.message}
-          confirmText={modalConfig.confirmText}
-          cancelText="Cancel"
-          onConfirm={() => handleConfirmAction()}
-          onClose={hideModal}
-          isLoading={processingId !== null}
-        />
-      </View>
-    </PageLayout>
+          {isLoading ||
+          isError ||
+          !complaintList ||
+          complaintList.length === 0 ||
+          filteredComplaints.length === 0 ? (
+            <View className="flex-1">
+              {renderFilterBar()}
+              {renderTabBar()}
+              {renderEmptyState()}
+            </View>
+          ) : (
+            <FlatList
+              data={filteredComplaints}
+              renderItem={({ item }) => (
+                <ComplaintCard
+                  item={item}
+                  onMorePress={() => openDrawer(item)}
+                  onPress={() =>
+                    router.push({
+                      pathname: `/(my-request)/complaint-tracking/compMainView`,
+                      params: { comp_id: item.comp_id },
+                    })
+                  }
+                  isProcessing={processingId === item.comp_id}
+                />
+              )}
+              keyExtractor={(item) => item.comp_id.toString()}
+              ListHeaderComponent={() => (
+                <View>
+                  {renderFilterBar()}
+                  {renderTabBar()}
+                </View>
+              )}
+              contentContainerStyle={{ paddingBottom: 24 }}
+              showsVerticalScrollIndicator={false}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={5}
+              updateCellsBatchingPeriod={50}
+              initialNumToRender={5}
+              windowSize={5}
+            />
+          )}
+        </View>
+      </PageLayout>
+
+      {/* Action Drawer */}
+      <DrawerView
+        bottomSheetRef={drawerRef}
+        snapPoints={[380]}
+        title="Blotter Actions"
+        description="Manage your blotter request"
+        index={-1}
+        enablePanDownToClose={true}
+      >
+        {renderActionButtons()}
+      </DrawerView>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        visible={modalConfig.visible}
+        type={
+          modalConfig.type === "accept"
+            ? "info"
+            : modalConfig.type === "reject"
+            ? "reject"
+            : "raise"
+        }
+        title={modalConfig.title}
+        description={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText="Cancel"
+        onConfirm={handleConfirmAction}
+        onClose={hideModal}
+        isLoading={processingId !== null}
+        requiresInput={modalConfig.requiresInput}
+        inputLabel={modalConfig.inputLabel}
+        inputPlaceholder={modalConfig.inputPlaceholder}
+      />
+    </View>
   );
 }
