@@ -116,7 +116,13 @@ export default function PostpartumFormFirstPg({
   const staffOptions = 
     staffsData && Array.isArray(staffsData.staff)
       ? staffsData.staff
-        .filter((staff: any) => String(staff.staff_id || "") !== String(staffId))
+        .filter((staff: any) => {
+          // Filter: exclude current user, only show ADMIN with staff_stype HEALTH STAFF
+          const isNotCurrentUser = String(staff.staff_id || "") !== String(staffId)
+          const isAdmin = staff.staff_type?.toUpperCase() === "ADMIN" || staff.type?.toUpperCase() === "ADMIN"
+          const isHealthStaff = staff.staff_stype?.toUpperCase() === "HEALTH STAFF" || staff.stype?.toUpperCase() === "HEALTH STAFF"
+          return isNotCurrentUser && isAdmin && isHealthStaff
+        })
         .map((staff: any) => {
           const fullName = staff.full_name ||`${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "Unknown Staff"
           const position = staff.position || staff.pos || ""

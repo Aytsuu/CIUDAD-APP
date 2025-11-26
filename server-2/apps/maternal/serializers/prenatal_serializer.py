@@ -22,6 +22,31 @@ from ..utils import create_medicine_request_for_maternal
 
 logger = logging.getLogger(__name__)
 
+# Lightweight serializer to list prenatal forms with their prenatal care entries
+class PrenatalFormListWithCareSerializer(serializers.ModelSerializer):
+    pregnancy_details = serializers.SerializerMethodField()
+    prenatal_care_entries = PrenatalCareCreateSerializer(source='pf_prenatal_care', many=True, read_only=True)
+
+    class Meta:
+        model = Prenatal_Form
+        fields = [
+            'pf_id', 'pf_edc', 'pf_occupation', 'previous_complications', 'created_at',
+            'pregnancy_details', 'prenatal_care_entries'
+        ]
+        read_only_fields = fields
+
+    def get_pregnancy_details(self, obj):
+        if obj.pregnancy_id:
+            return {
+                'pregnancy_id': obj.pregnancy_id.pregnancy_id,
+                'status': obj.pregnancy_id.status,
+                'created_at': obj.pregnancy_id.created_at,
+                'updated_at': obj.pregnancy_id.updated_at,
+                'prenatal_end_date': obj.pregnancy_id.prenatal_end_date,
+                'postpartum_end_date': obj.pregnancy_id.postpartum_end_date,
+            }
+        return None
+
 # serializer for Latest Prenatal Form
 class PrenatalDetailSerializer(serializers.ModelSerializer):
     # Related model serializers for reading

@@ -1093,10 +1093,10 @@ def get_additional_info(obj):
 
             # Check for latest pregnancy and AOG data
             try:
+                # Get latest pregnancy regardless of status (active, completed, pregnancy loss, etc.)
                 latest_pregnancy = Pregnancy.objects.filter(
-                    pat_id=obj,
-                    status='completed'
-                ).order_by('-created_at').first()
+                    pat_id=obj
+                ).order_by('-pregnancy_id').first()
                
                 if latest_pregnancy:
                     latest_prenatal = Prenatal_Form.objects.filter(
@@ -1148,7 +1148,7 @@ def get_additional_info(obj):
                                     mother_pregnancy = Pregnancy.objects.filter(
                                         pat_id=mother_patient,
                                         status='completed'
-                                    ).order_by('-created_at').first()
+                                    ).order_by('-pregnancy_id').first()
                                     print(f"🔍 Found mother pregnancy: {mother_pregnancy}")
                                    
                                     if mother_pregnancy:
@@ -1231,18 +1231,10 @@ def get_additional_info(obj):
             try:
                 print(f"🔍 Checking pregnancy for transient patient: {obj.pat_id}")
                 
-                # First try to get completed pregnancy
+                # Get latest pregnancy regardless of status (active, completed, pregnancy loss, etc.)
                 latest_pregnancy = Pregnancy.objects.filter(
-                    pat_id=obj,
-                    status='completed'
-                ).order_by('-created_at').first()
-                
-                # If no completed pregnancy, try active pregnancy
-                if not latest_pregnancy:
-                    latest_pregnancy = Pregnancy.objects.filter(
-                        pat_id=obj,
-                        status='active'
-                    ).order_by('-created_at').first()
+                    pat_id=obj
+                ).order_by('-pregnancy_id').first()
                 
                 print(f"🔍 Found pregnancy: {latest_pregnancy}")
                
