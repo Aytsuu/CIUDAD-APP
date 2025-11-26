@@ -245,6 +245,11 @@ class PostpartumRecordsListView(generics.ListAPIView):
         pregnancy_id = self.kwargs.get('pregnancy_id')
         return PostpartumRecord.objects.filter(
             pregnancy_id=pregnancy_id
+        ).select_related(
+            'medreq_id', 'vital_id', 'spouse_id', 'followv_id', 'pregnancy_id', 'tts_id'
+        ).prefetch_related(
+            'postpartum_delivery_record', 'postpartum_assessment',
+            'medreq_id__items', 'medreq_id__items__med'
         ).order_by('-created_at')
     
 

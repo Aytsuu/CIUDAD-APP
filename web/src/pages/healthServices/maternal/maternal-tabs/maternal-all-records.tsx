@@ -24,6 +24,9 @@ import { ExportButton } from "@/components/ui/export";
 import TableLoading from "@/components/ui/table-loading";
 
 import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
+import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+
 import { capitalize } from "@/helpers/capitalize";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
@@ -60,6 +63,11 @@ interface maternalRecords {
   }
 
 export default function MaternalAllRecords() {
+  // Sitio filter state
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  const { data: sitioData, isLoading: isSitiosLoading } = useSitioList();
+  const sitios = sitioData || [];
+
   const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
@@ -70,11 +78,26 @@ export default function MaternalAllRecords() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
 
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, selectedFilter, selectedSitios]);
+
+  // Build the combined search query that includes selected sitios
+  const combinedSearchQuery = useMemo(() => {
+    let query = debouncedSearchTerm || "";
+    if (selectedSitios.length > 0) {
+      const sitioQuery = selectedSitios.join(",");
+      query = query ? `${query},${sitioQuery}` : sitioQuery;
+    }
+    return query || "";
+  }, [debouncedSearchTerm, selectedSitios]);
+
   // useMaternalRecords expects (page, pageSize, searchQuery, status)
   const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords(
     page,
     pageSize,
-    debouncedSearchTerm,
+    combinedSearchQuery,
     selectedFilter,
   );
   const { data: maternalCountsData } = useMaternalCounts();
@@ -109,6 +132,16 @@ export default function MaternalAllRecords() {
     setPageSize(newPageSize)
     setPage(1) 
   }
+
+  // Sitio filter handlers
+  const handleSitioSelection = (sitioName: string, checked: boolean) => {
+    setSelectedSitios((prev) =>
+      checked ? [...prev, sitioName] : prev.filter((s) => s !== sitioName)
+    );
+  };
+  const handleSelectAllSitios = (checked: boolean) => {
+    setSelectedSitios(checked ? sitios.map((s: any) => s.sitio_name) : []);
+  };
   
   const calculateAge = (dob: string): number => {
     const birthDate = new Date(dob);
@@ -271,18 +304,22 @@ export default function MaternalAllRecords() {
       header: "Current Pregnancy Status",
       cell: ({ row }) => {
         const status = row.original.additional_info?.latest_pregnancy?.pregnancy_status || "N/A";
+        const normalizedStatus = status?.toLowerCase() || "";
+        const displayStatus = capitalize(status) || "N/A";
+        
+        // Determine badge color based on status
+        let badgeColor = "bg-green-500"; // Default for completed, N/A
+        if (normalizedStatus === "active") {
+          badgeColor = "bg-pink-500";
+        } else if (normalizedStatus === "pregnancy loss") {
+          badgeColor = "bg-red-500";
+        }
         
         return (
           <div className="flex justify-center">
-            {capitalize(status) === "Active" ? (
-              <div className="bg-pink-500 rounded-xl w-24 text-white px-2 py-1">
-              {capitalize(status)}
+            <div className={`${badgeColor} rounded-xl min-w-24 text-white px-2 py-1 text-center`}>
+              {displayStatus}
             </div>
-            ) : ( 
-              <div className="bg-green-500 rounded-xl w-24 text-white px-2 py-1">
-                {capitalize(status)}
-              </div>
-            )}
           </div>
         );
       }
@@ -433,16 +470,25 @@ export default function MaternalAllRecords() {
               </Button>
             </div>
             <div className="flex w-full gap-x-2">
-              <div className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                  size={17}
-                />
-                <Input
-                  placeholder="Search..."
-                  className="pl-10 w-full bg-white"
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
+              <div className="relative flex-1 flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <Search
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                    size={17}
+                  />
+                  <Input
+                    placeholder="Search..."
+                    className="pl-10 w-full bg-white"
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                </div>
+                <FilterSitio
+                  sitios={sitios}
+                  isLoading={isSitiosLoading}
+                  selectedSitios={selectedSitios}
+                  onSitioSelection={handleSitioSelection}
+                  onSelectAll={handleSelectAllSitios}
                 />
               </div>
               <div className="">

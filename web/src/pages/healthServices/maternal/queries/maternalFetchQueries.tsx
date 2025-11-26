@@ -27,6 +27,8 @@ import { getPatients,
 			getPrenatalAppointmentsPending,
 			getPrenatalLabResult,
 			getLatestMaternalFollowUpVisit,
+			getPrenatalFormsWithCare,
+			getCombinedFollowUps,
 } from "../restful-api/maternalGetAPI";
 
 import { api2 } from "@/api/api";
@@ -375,4 +377,39 @@ export const useLatestFollowUpVisit = (patientId: string) => {
 		retry: 2,
 		refetchInterval: 2000,
 	})
+}
+
+// prenatal forms with care entries
+export const usePrenatalFormsWithCare = (
+	page: number,
+	pageSize: number,
+	patientId?: string,
+	pregnancyId?: string
+) => {
+	return useQuery({
+		queryKey: ['prenatalFormsWithCare', { page, pageSize, patientId, pregnancyId }],
+		queryFn: () => getPrenatalFormsWithCare({ page, pageSize, patientId, pregnancyId }),
+		enabled: !!page && !!pageSize,
+		staleTime: 5 * 1000,
+		retry: 1,
+	})
+}
+// combined follow-ups (prenatal + postpartum)
+export const useCombinedFollowUps = (
+patientId: string,
+filters?: {
+status?: string;
+type?: 'prenatal' | 'postpartum';
+from_date?: string;
+to_date?: string;
+limit?: number;
+}
+) => {
+return useQuery({
+queryKey: ['combinedFollowUps', patientId, filters],
+queryFn: () => getCombinedFollowUps(patientId, filters),
+enabled: !!patientId && patientId !== "undefined" && patientId !== "null",
+staleTime: 5 * 1000,
+retry: 1,
+})
 }

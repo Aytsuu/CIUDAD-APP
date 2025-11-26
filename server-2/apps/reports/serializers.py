@@ -219,12 +219,12 @@ class BHWDailyNotesSerializer(serializers.ModelSerializer):
             'muac_status': instance.bm.muac_status,
             'pat_id': instance.bm.pat.pat_id if instance.bm.pat else None
         }
-        # Build illnesses list with select_related to ensure Illness instance is fetched
+        # Build illnesses list - use 'ill' (the ForeignKey field) not 'ill_id'
         illnesses_list = []
         for r in instance.bhwreferorfollowup_set.select_related('ill').all():
-            illness_obj = getattr(r, 'ill_id', None)
+            illness_obj = r.ill  # Access the foreign key directly
             illnesses_list.append({
-                'illnessName': getattr(illness_obj, 'illname', None),
+                'illnessName': illness_obj.illname if illness_obj else None,
                 'count': r.referred_follow_up_count
             })
         rep['illnesses'] = illnesses_list
