@@ -795,6 +795,9 @@ class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
     lookup_field = 'res_num'
 
     def update(self, request, *args, **kwargs):
+        import logging
+        logger = logging.getLogger(__name__) 
+
         instance = self.get_object()
         old_gpr_id = instance.gpr_id  # Store old gpr_id before update
         old_res_is_archive = instance.res_is_archive  # Store old archive status before update
