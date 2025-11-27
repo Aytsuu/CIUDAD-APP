@@ -114,9 +114,9 @@ const BusinessPermitDocumentViewer = ({ bprId, businessName }: { bprId: string; 
           <p className="text-sm text-gray-500">No documents available</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-auto-fit gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', maxWidth: '100%' }}>
+        <div className={`grid gap-4 ${mediaFiles.length === 1 ? 'grid-cols-1 justify-center' : 'grid-cols-2 sm:grid-cols-auto-fit'}`} style={mediaFiles.length === 1 ? {} : { gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', maxWidth: '100%' }}>
           {mediaFiles.map((media: any, index: number) => (
-            <div key={media.id || index} className="group relative">
+            <div key={media.id || index} className={`group relative ${mediaFiles.length === 1 ? 'max-w-md mx-auto' : ''}`}>
               <div
                 className="relative overflow-hidden rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
                 onClick={() => setSelectedImage(media)}
