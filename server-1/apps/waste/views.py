@@ -259,7 +259,7 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                 ann_details_content += f"EVENT: {event_name}\n\n"
                 ann_details_content += f"LOCATION: {event_location}\n"
                 ann_details_content += f"WHEN: {formatted_date} at {formatted_time}\n"
-                ann_details_content += f"ORGANIZER: {event_organizer}\n"
+                ann_details_content += f" ORGANIZER: {event_organizer}\n"
                 
                 # Add description if available
                 if event_description and event_description.strip():
