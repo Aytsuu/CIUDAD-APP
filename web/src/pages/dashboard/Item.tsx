@@ -27,6 +27,8 @@ import { CertificateSidebar } from "@/components/analytics/certificate/certifica
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
 import ComplaintSidebar from "@/components/analytics/complaint/complaint-sidebar";
+import { useGADUpcomingActivities } from "@/components/analytics/gad/gad-activity-bar";
+import { useWasteUpcomingEvents } from "@/components/analytics/waste/waste-event-bar";
 import { ReactElement } from "react";
 
 type DashboardItem = {
@@ -54,10 +56,14 @@ export const getItemsConfig = (
   mediationCards: ReturnType<typeof useMediationSectionCards>,
   remarkCard: ReturnType<typeof useNoRemarksSectionCard>,
   councilEvents: ReturnType<typeof useCouncilUpcomingEvents>,
+  gadActivities: ReturnType<typeof useGADUpcomingActivities>,
+  wasteEvents: ReturnType<typeof useWasteUpcomingEvents>,
 ): DashboardItem[] => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
   const { upcomingEvents: councilUpcomingEvents } = councilEvents;
+  const { upcomingEvents: gadUpcomingActivities } = gadActivities;
+  const { upcomingEvents: wasteUpcomingEvents } = wasteEvents;
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
@@ -166,6 +172,7 @@ export const getItemsConfig = (
             element: <ProjectProposalSidebar />,
           },
         ],
+        upcomingEvents: gadUpcomingActivities,
       },
       {
         dashboard: "COUNCIL",
@@ -236,7 +243,8 @@ export const getItemsConfig = (
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed], 
+        card: [driverLoaders, wasteLoaders, collectionVehicles, pending, rejected, accepted, completed],
+        upcomingEvents: wasteUpcomingEvents,
       },
     ];
   }

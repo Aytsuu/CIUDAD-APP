@@ -1,23 +1,34 @@
 import { Clock, MapPin, Calendar } from "lucide-react";
-import { useGetCouncilEvents } from "@/pages/record/council/Calendar/queries/councilEventfetchqueries";
-import { CouncilEvent } from "@/pages/record/council/Calendar/councilEventTypes";
+import { useGetWasteEvents, WasteEvent } from "@/pages/record/waste-scheduling/waste-event/queries/wasteEventQueries";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
-export const CouncilEventsDashboard = () => {
-  const { data, isLoading } = useGetCouncilEvents(1, 100, undefined, undefined, false);
+export const WasteEventsDashboard = () => {
+  const navigate = useNavigate();
+  const { data, isLoading } = useGetWasteEvents(false);
 
   // Filter events for the next 5 days (upcoming, non-archived)
-  const upcomingEvents = data?.results.filter((event: CouncilEvent) => {
-    const eventDateTime = new Date(`${event.ce_date}T${event.ce_time}`);
+  const upcomingEvents = data?.filter((event: WasteEvent) => {
+    if (!event.we_date || !event.we_time) return false;
+    
+    const eventDateTime = new Date(`${event.we_date}T${event.we_time}`);
     const now = new Date();
     const fiveDaysFromNow = new Date(now);
     fiveDaysFromNow.setDate(fiveDaysFromNow.getDate() + 5);
+    
     return (
       eventDateTime >= now &&
       eventDateTime <= fiveDaysFromNow &&
-      !event.ce_is_archive
+      !event.we_is_archive
     );
   }) ?? [];
+
+  // Sort by date
+  upcomingEvents.sort((a: WasteEvent, b: WasteEvent) => {
+    const dateA = new Date(`${a.we_date}T${a.we_time || '00:00:00'}`).getTime();
+    const dateB = new Date(`${b.we_date}T${b.we_time || '00:00:00'}`).getTime();
+    return dateA - dateB;
+  });
 
   if (isLoading) {
     return (
@@ -36,41 +47,44 @@ export const CouncilEventsDashboard = () => {
 
   return (
     <div className="space-y-3">
-      {upcomingEvents.slice(0, 3).map((event: CouncilEvent) => (
+      {upcomingEvents.slice(0, 3).map((event: WasteEvent) => (
         <div
-          key={event.ce_id}
+          key={event.we_num}
+          onClick={() => navigate('/calendar-page')}
           className="bg-white/10 backdrop-blur-sm rounded-lg p-4 hover:bg-white/20 transition-all cursor-pointer border border-white/10"
         >
           <h3 className="text-white font-semibold text-base mb-2 line-clamp-1">
-            {event.ce_title}
+            {event.we_name}
           </h3>
           
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 text-white/90 text-sm">
               <Calendar className="w-4 h-4" />
-              <span>{new Date(event.ce_date).toLocaleDateString('en-US', { 
+              <span>{new Date(event.we_date!).toLocaleDateString('en-US', { 
                 weekday: 'short', 
                 month: 'short', 
                 day: 'numeric' 
               })}</span>
             </div>
             
-            <div className="flex items-center gap-2 text-white/90 text-sm">
-              <Clock className="w-4 h-4" />
-              <span>{format(new Date(`${event.ce_date}T${event.ce_time}`), "h:mm a")}</span>
-            </div>
+            {event.we_time && (
+              <div className="flex items-center gap-2 text-white/90 text-sm">
+                <Clock className="w-4 h-4" />
+                <span>{format(new Date(`${event.we_date}T${event.we_time}`), "h:mm a")}</span>
+              </div>
+            )}
             
-            {event.ce_place && (
+            {event.we_location && (
               <div className="flex items-center gap-2 text-white/90 text-sm">
                 <MapPin className="w-4 h-4" />
-                <span className="line-clamp-1">{event.ce_place}</span>
+                <span className="line-clamp-1">{event.we_location}</span>
               </div>
             )}
           </div>
           
-          {event.ce_description && (
+          {event.we_description && (
             <p className="text-white/70 text-xs mt-2 line-clamp-2">
-              {event.ce_description}
+              {event.we_description}
             </p>
           )}
         </div>
@@ -80,8 +94,9 @@ export const CouncilEventsDashboard = () => {
 };
 
 // Hook for dashboard configuration
-export const useCouncilUpcomingEvents = () => {
+export const useWasteUpcomingEvents = () => {
   return {
-    upcomingEvents: <CouncilEventsDashboard />,
+    upcomingEvents: <WasteEventsDashboard />,
   };
 };
+

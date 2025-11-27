@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getItemsConfig } from "./Item";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { useProfilingSectionCards } from "@/components/analytics/profiling/profiling-section-cards";
 import { useAdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
@@ -11,6 +11,8 @@ import { useDonationSectionCards } from "@/components/analytics/donation/donatio
 import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import { useGADUpcomingActivities } from "@/components/analytics/gad/gad-activity-bar";
+import { useWasteUpcomingEvents } from "@/components/analytics/waste/waste-event-bar";
 import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
 import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
@@ -35,8 +37,12 @@ export default function Dashboard() {
   const remarkCard = useNoRemarksSectionCard();
 
   const councilEvents = useCouncilUpcomingEvents();
-  const instance = getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents)
-  
+  const gadActivities = useGADUpcomingActivities();
+  const wasteEvents = useWasteUpcomingEvents();
+  const instance = React.useMemo(
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, gadActivities, wasteEvents),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, gadActivities, wasteEvents]
+  );
 
   const validateFeature = (feature: string) => {
     // Always allow access to basic dashboard sections
@@ -79,6 +85,7 @@ export default function Dashboard() {
       (item) => item.sidebar && validateFeature(item.dashboard)
     );
   }, [instance, user]);
+
 
   // Carousel pagination
   const cardsPerPage = 6; // 3 columns × 2 rows
@@ -135,12 +142,20 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
-           {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
+           {instance.some(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
               <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
                 <div className="mb-4">
                   <Label className="text-white text-xl font-bold">Upcoming Events</Label>
                 </div>
-                {instance.find(item => item.upcomingEvents)?.upcomingEvents}
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                  {instance
+                    .filter(item => item.upcomingEvents && validateFeature(item.dashboard))
+                    .map((item, index) => (
+                      <React.Fragment key={`upcoming-events-${index}`}>
+                        {item.upcomingEvents}
+                      </React.Fragment>
+                    ))}
+                </div>
               </div>
             )}
             {cardsWithAccess.length > 0 && (
