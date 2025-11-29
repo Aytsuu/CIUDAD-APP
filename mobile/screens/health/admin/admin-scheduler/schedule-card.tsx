@@ -34,7 +34,7 @@ export default function ScheduleCard({ day, dailySchedule, services }: ScheduleC
             <Clock className="h-5 w-5 text-gray-500" />
             <Text className="text-xl font-bold text-gray-800">{dayName}</Text>
           </View>
-          <Text className="text-sm text-gray-500">{dateStr}</Text>
+          {/* <Text className="text-sm text-gray-500">{dateStr}</Text> */}
         </View>
       </View>
 

@@ -62,7 +62,7 @@ const getUserMedicineRequests = async (
       if (['confirmed', 'ready_for_pickup'].includes(normalizedStatus)) normalizedStatus = 'confirmed';
       if (['pending', 'referred_to_doctor'].includes(normalizedStatus)) normalizedStatus = 'pending';
       if (['rejected'].includes(normalizedStatus)) normalizedStatus = 'rejected';
-
+if (['referred'].includes(normalizedStatus)) normalizedStatus = 'referred';
       return {
         medreqitem_id: item.medreqitem_id,
         medreqitem_qty: item.medreqitem_qty,
@@ -402,7 +402,6 @@ const MedicineRequestTracker: React.FC = () => {
           </View>
         )}
 
-        {/* Reminder for To Pick Up Tab */}
         {activeTab === 'confirmed' && (
           <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
             <Text className="text-blue-800 text-sm font-medium">

@@ -1,19 +1,19 @@
 import { View, TouchableOpacity, Text } from "react-native";
 
 export type TabType = "all" | "resident" | "transient"
-export type MedTabType = "pending" | "cancelled" | "confirmed" | "completed" | "rejected";
+export type MedTabType = "pending" | "cancelled" | "confirmed" | "completed" | "rejected" | "referred";
 
 
 const getStatusConfig = (status: string) => {
   const lowerStatus = status.toLowerCase();
   switch (lowerStatus) {
     case 'pending':
-    case 'referred_to_doctor': // Group these together
+    case 'referred': // Group these together
       return {
         color: 'text-yellow-700',
         bgColor: 'bg-yellow-100',
         borderColor: 'border-yellow-200',
-        label: lowerStatus === 'referred_to_doctor' ? 'Referred to Doctor' : 'Pending'
+        label: lowerStatus === 'referred' ? 'Referred' : 'referred'
       };
     case 'rejected':
       return {
@@ -85,7 +85,7 @@ export const MedTabBar: React.FC<{
       className={`flex-1 items-center py-3 ${activeTab === 'confirmed' ? 'border-b-2 border-blue-600' : ''}`}
     >
       <Text className={`text-sm font-medium ${activeTab === 'confirmed' ? 'text-blue-600' : 'text-gray-600'}`}>
-        To Pick Up
+        Pick Up
       </Text>
     </TouchableOpacity>
     <TouchableOpacity
@@ -110,6 +110,14 @@ export const MedTabBar: React.FC<{
     >
       <Text className={`text-sm font-medium ${activeTab === 'rejected' ? 'text-blue-600' : 'text-gray-600'}`}>
         Rejected
+      </Text>
+    </TouchableOpacity>
+    <TouchableOpacity
+      onPress={() => setActiveTab('referred')}
+      className={`flex-1 items-center py-3 ${activeTab === 'referred' ? 'border-b-2 border-blue-600' : ''}`}
+    >
+      <Text className={`text-sm font-medium ${activeTab === 'referred' ? 'text-blue-600' : 'text-gray-600'}`}>
+        Referred
       </Text>
     </TouchableOpacity>
   </View>

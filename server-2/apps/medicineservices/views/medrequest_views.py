@@ -297,169 +297,253 @@ class MedicineRequestItemsByRequestView(generics.ListAPIView):
 class SubmitMedicineRequestView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     
-    @transaction.atomic
     def post(self, request):
+        print("🚀 START: SubmitMedicineRequestView called")
+        logger.info("🚀 START: SubmitMedicineRequestView called")
+        
+        # Initialize variables outside transaction
+        medicine_request = None
+        created_items = []
+        
         try:
-            print(f"🔍 DEBUG: Request data keys: {list(request.data.keys())}")
-            print(f"🔍 DEBUG: Request FILES keys: {list(request.FILES.keys())}")
-            
-            data = request.data
-            medicines_data = data.get('medicines', '[]')
-            
-            print(f"✅ DEBUG: Created {len(medicines_data)} MedicineRequestItems and MedicineAllocations")
-            print(f"🔍 DEBUG: medicines_data type: {type(medicines_data)}, value: {medicines_data}")
-            
-            if isinstance(medicines_data, list):
-                print("⚠️ WARNING: medicines received as array, taking first element")
-                medicines_data = medicines_data[0] if medicines_data else '[]'
-            
-            try:
-                medicines = json.loads(medicines_data)
-            except json.JSONDecodeError as e:
-                print(f"❌ ERROR: Failed to parse medicines JSON: {e}")
-                return Response({"error": "Invalid medicines data format"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            print(f"🔍 DEBUG: Parsed medicines: {medicines}")
-            
-            files = request.FILES.getlist('files', [])
-            print(f"🔍 DEBUG: Number of files: {len(files)}")
-            
-            if not medicines:
-                return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Check if prescription is required
-            requires_prescription = any(med.get('med_type', '') == 'Prescription' for med in medicines)
-            if requires_prescription and not files:
-                return Response({"error": "Prescription document is required for prescription medicines"}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
-            pat_id = data.get('pat_id')
-            if isinstance(pat_id, list):
-                pat_id = pat_id[0] if pat_id else None
-            rp_id = data.get('rp_id') 
-            if isinstance(rp_id, list):
-                rp_id = rp_id[0] if rp_id else None
+            # Start transaction for main data only (not files)
+            with transaction.atomic():
+                print("🔍 DEBUG: Inside transaction atomic block")
+                logger.info("🔍 Inside transaction atomic block")
                 
-            print(f"🔍 DEBUG: Received pat_id: {pat_id}, rp_id: {rp_id}")
+                print(f"🔍 DEBUG: Request data keys: {list(request.data.keys())}")
+                print(f"🔍 DEBUG: Request FILES keys: {list(request.FILES.keys())}")
                 
-            if not pat_id and not rp_id:
-                return Response({"error": "Either patient ID or resident ID must be provided"}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
-            # Validate and get instances
-            pat_instance = None
-            trans_instance = None
-            
-            # FIX: Get patient instance from rp_id if pat_id is not provided
-            if pat_id:
+                data = request.data
+                medicines_data = data.get('medicines', '[]')
+                
+                print(f"🔍 DEBUG: medicines_data type: {type(medicines_data)}, value: {medicines_data}")
+                
+                # Handle list case
+                if isinstance(medicines_data, list):
+                    print("⚠️ WARNING: medicines received as array, taking first element")
+                    medicines_data = medicines_data[0] if medicines_data else '[]'
+                
                 try:
-                    pat_instance = Patient.objects.get(pat_id=pat_id)
-                    print(f"✅ DEBUG: Validated pat_id: {pat_id}")
-                    trans_instance = getattr(pat_instance, 'trans_id', None)
-                except Patient.DoesNotExist:
-                    return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
-            elif rp_id:
-                # FIX: Get patient instance from resident profile
-                try:
-                    rp_instance = ResidentProfile.objects.get(rp_id=rp_id)
-                    print(f"✅ DEBUG: Validated rp_id: {rp_id}")
-                    
-                    # Get patient associated with this resident profile
+                    medicines = json.loads(medicines_data)
+                    print(f"✅ DEBUG: Successfully parsed {len(medicines)} medicines: {medicines}")
+                    logger.info(f"✅ Parsed {len(medicines)} medicines from request")
+                except json.JSONDecodeError as e:
+                    print(f"❌ ERROR: Failed to parse medicines JSON: {e}")
+                    logger.error(f"❌ Failed to parse medicines JSON: {e}")
+                    return Response({"error": "Invalid medicines data format"}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Collect all uploaded files regardless of key name
+                files = []
+                for key in request.FILES:
                     try:
-                        pat_instance = Patient.objects.get(rp_id=rp_instance)
-                        print(f"✅ DEBUG: Found patient for resident: {pat_instance.pat_id}")
-                    except Patient.DoesNotExist:
-                        print(f"⚠️ DEBUG: No patient found for resident {rp_id}. Creating new Patient record...")
-                        # Auto-create the Patient entry for this Resident
-                        pat_instance = Patient.objects.create(
-                            rp_id=rp_instance,
-                            pat_type='Resident',
-                            pat_status='Active' 
-                        )
-                        print(f"✅ DEBUG: Created new Patient ID: {pat_instance.pat_id}")
-                        
-                except ResidentProfile.DoesNotExist:
-                    return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
-            
-            # FIX: Create PatientRecord with the patient instance
-            if not pat_instance:
-                return Response({"error": "Could not determine patient for this request"}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
-            patient_record = PatientRecord.objects.create(
-                pat_id=pat_instance,  # This must be a Patient instance, not ID
-                patrec_type="Medicine Record",
-            )
-            print(f"✅ DEBUG: Created PatientRecord: {patient_record.patrec_id} for patient: {pat_instance.pat_id}")
-            
-            # Create MedicineRequest
-            medicine_request = MedicineRequest.objects.create(
-                rp_id=pat_instance.rp_id if pat_instance.pat_type == 'Resident' else None,
-                trans_id=pat_instance.trans_id if pat_instance.pat_type == 'Transient' else None,
-                mode='app',
-                requested_at=timezone.now(),
-                signature=data.get('signature', ''),
-                patrec=patient_record
-            )
-            print(f"✅ DEBUG: Created MedicineRequest: {medicine_request.medreq_id}")
-            
-            # Create MedicineRequestItem and MedicineAllocation for each medicine
-            for med in medicines:
-                minv_id = med.get('minv_id')
-                if not minv_id:
-                    return Response({"error": "minv_id is required for each medicine"}, 
+                        files.extend(request.FILES.getlist(key))
+                    except Exception:
+                        # fallback to single value
+                        files.append(request.FILES.get(key))
+
+                print(f"🔍 DEBUG: Number of files found in request.FILES: {len(files)} (keys: {list(request.FILES.keys())})")
+                logger.info(f"📁 Received {len(files)} files (keys: {list(request.FILES.keys())})")
+                
+                if not medicines:
+                    print("❌ ERROR: No medicines provided")
+                    logger.error("❌ No medicines provided in request")
+                    return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Check if prescription is required
+                requires_prescription = any(med.get('med_type', '') == 'Prescription' for med in medicines)
+                print(f"🔍 DEBUG: Requires prescription: {requires_prescription}")
+                
+                if requires_prescription and not files:
+                    print("❌ ERROR: Prescription required but no files provided")
+                    logger.error("❌ Prescription required but no files provided")
+                    return Response({"error": "Prescription document is required for prescription medicines"}, 
                                   status=status.HTTP_400_BAD_REQUEST)
                 
-                try:
-                    medicine_inventory = MedicineInventory.objects.get(minv_id=int(minv_id))
-                except MedicineInventory.DoesNotExist:
-                    return Response({"error": f"Medicine inventory with ID {minv_id} not found"}, 
-                                  status=status.HTTP_404_NOT_FOUND)
-                
-                # Create MedicineRequestItem
-                medicine_item = MedicineRequestItem.objects.create(
-                    medreq_id=medicine_request,
-                    med=medicine_inventory.med_id,
-                    reason=med.get('reason', ''),
-                    status='pending'
-                )
-                
-                # Create MedicineAllocation
-                allocated_qty = med.get('quantity', 1)  # Default to 1 if not provided
-                if allocated_qty > 0:
-                    MedicineAllocation.objects.create(
-                        medreqitem=medicine_item,
-                        minv=medicine_inventory,
-                        allocated_qty=allocated_qty
-                    )
+                pat_id = data.get('pat_id')
+                if isinstance(pat_id, list):
+                    pat_id = pat_id[0] if pat_id else None
+                rp_id = data.get('rp_id') 
+                if isinstance(rp_id, list):
+                    rp_id = rp_id[0] if rp_id else None
                     
-                    # Update temporary deduction
-                    medicine_inventory.temporary_deduction += allocated_qty
-                    medicine_inventory.save()
-            
-            print(f"✅ DEBUG: Created {len(medicines)} MedicineRequestItems and MedicineAllocations")
-            
-            # Handle file uploads
-            # uploaded_files = []
-            # if files:
-            #     try:
-            #         for file in files:
-            #             medicine_file = Medicine_File.objects.create(
-            #                 medf_name=file.name,
-            #                 medf_type=file.content_type,
-            #                 medf_path=f"uploads/{file.name}",
-            #                 medf_url=f"/media/uploads/{file.name}",
-            #                 medreq=medicine_request
-            #             )
-            #             uploaded_files.append(medicine_file.medf_id)
-            #         print(f"✅ DEBUG: Successfully uploaded {len(uploaded_files)} files")
-            #     except Exception as e:
-            #         print(f"❌ ERROR: File upload failed: {str(e)}")
-            #         # Don't raise exception here, just log it
-            
-            uploaded_files = []
-            if files:
+                print(f"🔍 DEBUG: Received pat_id: {pat_id}, rp_id: {rp_id}")
+                logger.info(f"👤 Received pat_id: {pat_id}, rp_id: {rp_id}")
+                    
+                if not pat_id and not rp_id:
+                    print("❌ ERROR: Neither pat_id nor rp_id provided")
+                    logger.error("❌ Neither pat_id nor rp_id provided")
+                    return Response({"error": "Either patient ID or resident ID must be provided"}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+                
+                # Validate and get instances
+                pat_instance = None
+                
+                print("🔍 DEBUG: Starting patient/resident validation")
+                
+                # Get patient instance from rp_id if pat_id is not provided
+                if pat_id:
+                    try:
+                        pat_instance = Patient.objects.get(pat_id=pat_id)
+                        print(f"✅ DEBUG: Validated pat_id: {pat_id}")
+                        logger.info(f"✅ Validated pat_id: {pat_id}")
+                    except Patient.DoesNotExist:
+                        print(f"❌ ERROR: Patient with ID {pat_id} not found")
+                        logger.error(f"❌ Patient with ID {pat_id} not found")
+                        return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+                elif rp_id:
+                    # Get patient instance from resident profile
+                    try:
+                        rp_instance = ResidentProfile.objects.get(rp_id=rp_id)
+                        print(f"✅ DEBUG: Validated rp_id: {rp_id}")
+                        logger.info(f"✅ Validated rp_id: {rp_id}")
+                        
+                        # Get patient associated with this resident profile
+                        try:
+                            pat_instance = Patient.objects.get(rp_id=rp_instance)
+                            print(f"✅ DEBUG: Found patient for resident: {pat_instance.pat_id}")
+                            logger.info(f"✅ Found patient for resident: {pat_instance.pat_id}")
+                        except Patient.DoesNotExist:
+                            print(f"⚠️ DEBUG: No patient found for resident {rp_id}. Creating new Patient record...")
+                            logger.info(f"⚠️ No patient found for resident {rp_id}. Creating new Patient record...")
+                            # Auto-create the Patient entry for this Resident
+                            pat_instance = Patient.objects.create(
+                                rp_id=rp_instance,
+                                pat_type='Resident',
+                                pat_status='Active' 
+                            )
+                            print(f"✅ DEBUG: Created new Patient ID: {pat_instance.pat_id}")
+                            logger.info(f"✅ Created new Patient ID: {pat_instance.pat_id}")
+                            
+                    except ResidentProfile.DoesNotExist:
+                        print(f"❌ ERROR: Resident with ID {rp_id} not found")
+                        logger.error(f"❌ Resident with ID {rp_id} not found")
+                        return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+                
+                # Create PatientRecord with the patient instance
+                if not pat_instance:
+                    print("❌ ERROR: Could not determine patient for this request")
+                    logger.error("❌ Could not determine patient for this request")
+                    return Response({"error": "Could not determine patient for this request"}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+                
+                print("🔍 DEBUG: Creating PatientRecord...")
                 try:
+                    patient_record = PatientRecord.objects.create(
+                        pat_id=pat_instance,
+                        patrec_type="Medicine Record",
+                    )
+                    print(f"✅ DEBUG: Created PatientRecord: {patient_record.patrec_id} for patient: {pat_instance.pat_id}")
+                    logger.info(f"✅ Created PatientRecord: {patient_record.patrec_id} for patient: {pat_instance.pat_id}")
+                except Exception as e:
+                    print(f"❌ ERROR: Failed to create PatientRecord: {str(e)}")
+                    logger.error(f"❌ Failed to create PatientRecord: {str(e)}")
+                    return Response({"error": f"Failed to create patient record: {str(e)}"}, 
+                                  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+                print("🔍 DEBUG: Creating MedicineRequest...")
+                try:
+                    medicine_request = MedicineRequest.objects.create(
+                        rp_id=pat_instance.rp_id if pat_instance.pat_type == 'Resident' else None,
+                        trans_id=pat_instance.trans_id if pat_instance.pat_type == 'Transient' else None,
+                        mode='app',
+                        requested_at=timezone.now(),
+                        signature=data.get('signature', ''),
+                        patrec=patient_record
+                    )
+                    print(f"✅ DEBUG: Created MedicineRequest: {medicine_request.medreq_id}")
+                    logger.info(f"✅ Created MedicineRequest: {medicine_request.medreq_id}")
+                except Exception as e:
+                    print(f"❌ ERROR: Failed to create MedicineRequest: {str(e)}")
+                    logger.error(f"❌ Failed to create MedicineRequest: {str(e)}")
+                    return Response({"error": f"Failed to create medicine request: {str(e)}"}, 
+                                  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+                # Create MedicineRequestItem and MedicineAllocation for each medicine
+                created_items = []
+                print(f"🔍 DEBUG: Processing {len(medicines)} medicines...")
+                
+                for i, med in enumerate(medicines):
+                    print(f"🔍 DEBUG: Processing medicine {i+1}: {med}")
+                    minv_id = med.get('minv_id')
+                    if not minv_id:
+                        print(f"❌ ERROR: minv_id is required for medicine {i+1}")
+                        logger.error("❌ minv_id is required for each medicine")
+                        return Response({"error": "minv_id is required for each medicine"}, 
+                                      status=status.HTTP_400_BAD_REQUEST)
+                    
+                    try:
+                        medicine_inventory = MedicineInventory.objects.get(minv_id=int(minv_id))
+                        print(f"✅ DEBUG: Found MedicineInventory: {minv_id}")
+                        logger.info(f"✅ Found MedicineInventory: {minv_id}")
+                    except MedicineInventory.DoesNotExist:
+                        print(f"❌ ERROR: Medicine inventory with ID {minv_id} not found")
+                        logger.error(f"❌ Medicine inventory with ID {minv_id} not found")
+                        return Response({"error": f"Medicine inventory with ID {minv_id} not found"}, 
+                                      status=status.HTTP_404_NOT_FOUND)
+                    
+                    # Create MedicineRequestItem
+                    print(f"🔍 DEBUG: Creating MedicineRequestItem for minv_id: {minv_id}")
+                    try:
+                        medicine_item = MedicineRequestItem.objects.create(
+                            medreq_id=medicine_request,
+                            med=medicine_inventory.med_id,
+                            reason=med.get('reason', ''),
+                            status='pending'
+                        )
+                        created_items.append(medicine_item)
+                        print(f"✅ DEBUG: Created MedicineRequestItem: {medicine_item.medreqitem_id}")
+                        logger.info(f"✅ Created MedicineRequestItem: {medicine_item.medreqitem_id}")
+                    except Exception as e:
+                        print(f"❌ ERROR: Failed to create MedicineRequestItem: {str(e)}")
+                        logger.error(f"❌ Failed to create MedicineRequestItem: {str(e)}")
+                        return Response({"error": f"Failed to create medicine request item: {str(e)}"}, 
+                                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    
+                    # Create MedicineAllocation
+                    allocated_qty = med.get('quantity', 1)
+                    print(f"🔍 DEBUG: Creating MedicineAllocation with quantity: {allocated_qty}")
+                    if allocated_qty > 0:
+                        try:
+                            allocation = MedicineAllocation.objects.create(
+                                medreqitem=medicine_item,
+                                minv=medicine_inventory,
+                                allocated_qty=allocated_qty
+                            )
+                            print(f"✅ DEBUG: Created MedicineAllocation: {allocation.alloc_id} for minv_id: {minv_id}")
+                            logger.info(f"✅ Created MedicineAllocation for minv_id: {minv_id}")
+                            
+                            # Update temporary deduction
+                            medicine_inventory.temporary_deduction += allocated_qty
+                            medicine_inventory.save()
+                            print(f"✅ DEBUG: Updated temporary deduction for minv_id: {minv_id}")
+                            logger.info(f"✅ Updated temporary deduction for minv_id: {minv_id}")
+                        except Exception as e:
+                            print(f"❌ ERROR: Failed to create MedicineAllocation: {str(e)}")
+                            logger.error(f"❌ Failed to create MedicineAllocation: {str(e)}")
+                            return Response({"error": f"Failed to create medicine allocation: {str(e)}"}, 
+                                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+                print(f"✅ DEBUG: Successfully created {len(created_items)} MedicineRequestItems and MedicineAllocations")
+                logger.info(f"✅ Created {len(created_items)} MedicineRequestItems and MedicineAllocations")
+                
+                # If we reach here, the main transaction will commit
+                print("✅ DEBUG: Main transaction completed successfully - about to commit")
+                logger.info("✅ Main transaction completed successfully")
+            
+            # Transaction committed successfully - MAIN DATA IS SAVED!
+            print("✅ TRANSACTION COMMITTED: All main data saved to database")
+            logger.info("✅ TRANSACTION COMMITTED: All main data saved to database")
+            
+            # NOW handle file uploads OUTSIDE the main transaction
+            uploaded_files = []
+            if files and medicine_request:
+                print("🔍 DEBUG: Starting file upload processing (outside transaction)...")
+                try:
+                    # Use the serializer for file upload (as in your working version)
+                    serializer = Medicine_FileSerializer(context={'request': request})
+                    
+                    # Prepare file data for the serializer
                     file_data_list = []
                     for file in files:
                         file_content = file.read()
@@ -473,38 +557,63 @@ class SubmitMedicineRequestView(APIView):
                             'file': data_url
                         })
                     
-                    # Upload files
-                    serializer = Medicine_FileSerializer(context={'request': request})
+                    # Upload files using the serializer method
                     uploaded_files = serializer._upload_files(
                         file_data_list, 
                         medreq_instance=medicine_request
                     )
                     
                     print(f"✅ DEBUG: Successfully uploaded {len(uploaded_files)} files")
+                    logger.info(f"✅ Successfully uploaded {len(uploaded_files)} files")
                     
                 except Exception as e:
-                    print(f"❌ ERROR: File upload failed: {str(e)}")
-                    # Don't raise exception here, just log it
-                    
-            notif_sent = False # Default to false
+                    print(f"❌ WARNING: File upload failed but main data was saved: {str(e)}")
+                    logger.warning(f"❌ File upload failed but main data was saved: {str(e)}")
+                    # Don't fail the entire request if file upload fails
+                    # The main medicine request is already saved
+            
+            # Verify the main data was actually saved
+            print("🔍 DEBUG: Verifying main data was saved...")
+            saved_request = MedicineRequest.objects.filter(medreq_id=medicine_request.medreq_id).first()
+            if not saved_request:
+                print("❌ CRITICAL: MedicineRequest was not saved to database!")
+                logger.error("❌ CRITICAL: MedicineRequest was not saved to database!")
+                return Response({"error": "Failed to save request to database"}, 
+                              status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            saved_items_count = MedicineRequestItem.objects.filter(medreq_id=medicine_request).count()
+            print(f"✅ DEBUG: Verified: {saved_items_count} items saved for request {medicine_request.medreq_id}")
+            logger.info(f"✅ Verified: {saved_items_count} items saved for request {medicine_request.medreq_id}")
+            
+            # Send notification
             try:
+                print("🔍 DEBUG: Sending notification...")
                 notif_sent = send_new_medicine_request_notification_to_staff(medicine_request)
-                
-                # 2. This is your new debug log
                 print(f"✅ DEBUG: Staff notification send attempt result: {notif_sent}")
-                
+                logger.info(f"✅ Staff notification send attempt result: {notif_sent}")
             except Exception as e:
                 print(f"❌ ERROR: Failed to send staff notification: {str(e)}")
-                
+                logger.error(f"❌ Failed to send staff notification: {str(e)}")
+                # Don't fail the request if notification fails
+            
+            print(f"🎉 SUCCESS: Medicine request {medicine_request.medreq_id} submitted successfully")
+            logger.info(f"🎉 SUCCESS: Medicine request {medicine_request.medreq_id} submitted successfully")
+            
             return Response({
                 "success": True,
                 "medreq_id": medicine_request.medreq_id,
                 "message": "Medicine request submitted successfully",
-                "files_uploaded": len(uploaded_files)
+                "files_uploaded": len(uploaded_files),
+                "items_created": len(created_items),
+                "note": "Files may be processed separately" if files and len(uploaded_files) < len(files) else None
             }, status=status.HTTP_201_CREATED)
-            
+
         except Exception as e:
             import traceback
-            print(f"❌ ERROR: Full traceback: {traceback.format_exc()}")
+            error_traceback = traceback.format_exc()
+            print(f"❌ ERROR: Transaction failed: {str(e)}")
+            print(f"❌ ERROR: Full traceback: {error_traceback}")
+            logger.error(f"❌ Transaction failed: {str(e)}")
+            logger.error(f"❌ Traceback: {error_traceback}")
             return Response({"error": f"Internal server error: {str(e)}"}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
