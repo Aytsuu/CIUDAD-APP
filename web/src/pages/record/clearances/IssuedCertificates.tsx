@@ -106,13 +106,18 @@ function IssuedCertificates() {
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
-      cell: ({ row }) => (
-        <div className="flex justify-center items-center gap-2">
-          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
-            {row.getValue("cr_id")}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        // For non-residents, show nrc_id; for residents, show cr_id
+        const certificate = row.original;
+        const requestId = certificate.is_nonresident ? certificate.nrc_id : certificate.cr_id;
+        return (
+          <div className="flex justify-center items-center gap-2">
+            <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+              {requestId || 'N/A'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "requester",
@@ -393,8 +398,10 @@ function IssuedCertificates() {
   const totalPagesCert = Math.ceil(certCount / pageSize) || 1;
 
   const filteredCertificates = certificates?.filter((cert: IssuedCertificate) => {
+    const requestId = cert.is_nonresident ? cert.nrc_id : cert.cr_id;
     const matchesSearch = cert.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (cert.purpose && cert.purpose.toLowerCase().includes(searchQuery.toLowerCase()));
+                         (cert.purpose && cert.purpose.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         (requestId && requestId.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesFilter = !filterValue || filterValue === "All" || cert.purpose === filterValue;
     return matchesSearch && matchesFilter;
   });
@@ -651,7 +658,7 @@ function IssuedCertificates() {
           Signatory={selectedCertificate.AsignatoryStaff}
           specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={selectedCertificate.dateIssued || new Date().toISOString()}
-          isNonResident={false}
+          isNonResident={selectedCertificate.is_nonresident || false}
           showAddDetails={false}
         />
       )}

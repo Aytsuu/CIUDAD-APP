@@ -203,18 +203,6 @@ function ServiceChargePage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <SelectLayout
-            placeholder="Filter by status"
-            label=""
-            className="bg-white"
-            options={[
-              { id: "all", name: "All Status" },
-              { id: "completed", name: "Completed" },
-              { id: "declined", name: "Declined" },
-            ]}
-            value={filterStatus}
-            onChange={(value) => setFilterStatus(value)}
-          />
         </div>
       </div>
 

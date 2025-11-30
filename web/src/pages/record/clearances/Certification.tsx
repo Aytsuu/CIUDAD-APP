@@ -18,7 +18,6 @@ import TemplateCreateForm from "../council/templates/template-create";
 import TemplateUpdateForm from "../council/templates/template-update";
 import { useGetTemplateRecord } from "../council/templates/queries/template-FetchQueries";
 import { calculateAge } from '@/helpers/ageCalculator';
-import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import { getAllPurposes, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -61,8 +60,6 @@ function CertificatePage() {
   const [filterType, setFilterType] = useState("all");
   const [filterPurpose, setFilterPurpose] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const {mutate: updateStatus} = useUpdateCertStatus()
-  const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
   
   const { data: staffList = []} = useGetStaffList();
   const { data: residentsList = [] } = useResidentsList();
@@ -74,12 +71,12 @@ function CertificatePage() {
     queryFn: getAllPurposes,
   });
 
-  // Filter purposes to show only Personal category purposes
+  // Filter purposes to show all non-archived purposes (for both resident and non-resident certificates)
   const personalPurposes = useMemo(() => {
     return allPurposes
-      .filter(purpose => purpose.pr_category === "Personal" && !purpose.pr_is_archive)
+      .filter(purpose => !purpose.pr_is_archive)
       .map(purpose => ({
-        id: purpose.pr_purpose.toLowerCase(),
+        id: purpose.pr_purpose, // Use actual purpose name for backend matching
         name: purpose.pr_purpose
       }));
   }, [allPurposes]);
@@ -127,8 +124,6 @@ function CertificatePage() {
       name: staff.full_name,
     }));
   }, [staffList]);
-
-
 
 
   const residentOptions = useMemo(() => {
@@ -187,14 +182,16 @@ function CertificatePage() {
   }, [deceasedResidentsList]);
 
   const { data: certificatesData, isLoading, error } = useQuery({
-    queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
+    queryKey: ["certificates", currentPage, searchTerm, filterPurpose, filterType],
     queryFn: () => getCertificates(
       searchTerm, 
       currentPage, 
       10, 
-      filterType === "all" ? undefined : filterType, 
-      filterPurpose === "all" ? undefined : filterPurpose, 
-      "Paid"
+      undefined, // status param is for request status, not resident type - backend now handles this
+      filterPurpose === "all" ? undefined : filterPurpose, // purpose parameter
+      "Paid", // paymentStatus parameter
+      undefined, // ordering parameter
+      filterType // certificateType parameter - backend now filters by resident/non-resident
     ),
   });
 
@@ -211,42 +208,32 @@ function CertificatePage() {
   const totalCount = certificatesData?.count || 0;
   const totalPages = Math.ceil(totalCount / 10);
 
-  // Sort certificates by request date (latest first) and apply filters
+  // Helper function to detect non-resident certificates
+  const isNonResidentCertificate = (cert: Certificate): boolean => {
+    // Check multiple indicators to determine if certificate is non-resident
+    return !!(
+      cert.is_nonresident || 
+      cert.nrc_id || 
+      !cert.resident_details ||
+      (cert.cr_id && cert.cr_id.toUpperCase().startsWith("NRC")) ||
+      (cert.nrc_fname || cert.nrc_lname || cert.nrc_mname) // Has non-resident name fields
+    );
+  };
+
+  // Backend now handles filtering by resident/non-resident type
+  // Just use certificates directly as backend handles filtering and sorting
   const filteredCertificates = useMemo(() => {
-    let result = [...certificates];
-    
-    // Sort by request date descending (latest first)
-    result.sort((a, b) => {
-      const dateA = new Date(a.req_request_date || 0).getTime();
-      const dateB = new Date(b.req_request_date || 0).getTime();
-      return dateB - dateA; // Descending order (latest first)
-    });
-    
-    return result;
+    return certificates;
   }, [certificates]);
 
   const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
     mutationFn: markCertificateAsIssued,
     onSuccess: async (_data, variables) => {
-      const certificateType = variables.is_nonresident ? 'Non-resident certificate' : 'Certificate';
       const certificateId = variables.is_nonresident ? variables.nrc_id : variables.cr_id;
       
-      showSuccessToast(`${certificateType} ${certificateId} marked as printed successfully!`);
+      showSuccessToast(`Certificate ${certificateId} marked as printed successfully!`);
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
-      
-      try {
-        // Only call updateStatus for resident certificates
-        if (!variables.is_nonresident) {
-          await updateStatus(variables.cr_id);
-        }
-        else{
-          await updateNonResStatus(Number(variables.nrc_id))
-        }
-
-        setSelectedCertificate(null);
-      } catch (error) {
-        showErrorToast("First mutation succeeded but second failed");
-      }
+      setSelectedCertificate(null);
     },
     onError: (error: any) => {
       showErrorToast(error.response?.data?.error || "Failed to mark certificate as printed");
@@ -254,14 +241,25 @@ function CertificatePage() {
   });
 
   const handleMarkAsPrinted = (certificate: Certificate) => {
+    // Determine if this is a non-resident certificate
+    const isNonResident = isNonResidentCertificate(certificate);
+    
+    // For non-residents, ensure nrc_id is available
+    if (isNonResident && !certificate.nrc_id) {
+      showErrorToast("Non-resident certificate ID (nrc_id) is missing. Please refresh and try again.");
+      return;
+    }
+    
     const markData: MarkCertificateVariables = {
-      cr_id: certificate.cr_id,
+      // For residents, send cr_id. For non-residents, send both cr_id (mapped from nrc_id) and nrc_id
+      cr_id: isNonResident ? certificate.nrc_id : certificate.cr_id,
       // Include staff_id if available and valid (backend now strictly validates; no upsert)
       staff_id: staffId,
-      is_nonresident: certificate.is_nonresident || false,
+      is_nonresident: isNonResident,
     };
 
-    if (certificate.is_nonresident && certificate.nrc_id) {
+    // For non-residents, also send nrc_id explicitly
+    if (isNonResident && certificate.nrc_id) {
       markData.nrc_id = certificate.nrc_id;
     }
 
@@ -506,19 +504,24 @@ function CertificatePage() {
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
-      cell: ({ row }) => (
-        <div className="capitalize flex justify-center items-center gap-2">
-          {row.original.is_nonresident && (
-            <TooltipLayout 
-              trigger={''} 
-              content="Non-resident" 
-            />
-          )}
-          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
-            {row.getValue("cr_id")}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        // For non-residents, show nrc_id; for residents, show cr_id
+        const certificate = row.original;
+        const requestId = certificate.is_nonresident ? certificate.nrc_id : certificate.cr_id;
+        return (
+          <div className="capitalize flex justify-center items-center gap-2">
+            {certificate.is_nonresident && (
+              <TooltipLayout 
+                trigger={''} 
+                content="Non-resident" 
+              />
+            )}
+            <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+              {requestId || 'N/A'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "requester",
@@ -651,7 +654,7 @@ function CertificatePage() {
                 </Button>
               }
               title="Mark Certificate as Printed"
-              description={`Are you sure you want to mark ${certificate.is_nonresident ? 'non-resident ' : ''}certificate ${certificate.cr_id} as printed? This will move it to the Issued Certificates page.`}
+              description={`Are you sure you want to mark ${certificate.is_nonresident ? 'non-resident ' : ''}certificate ${certificate.is_nonresident ? certificate.nrc_id : certificate.cr_id} as printed? This will move it to the Issued Certificates page.`}
               actionLabel="Mark as Printed"
               onClick={() => handleMarkAsPrinted(certificate)}
             />        
@@ -779,7 +782,7 @@ function CertificatePage() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalCount)} of {totalCount} rows
+          Showing {filteredCertificates.length > 0 ? ((currentPage - 1) * 10) + 1 : 0}-{Math.min(currentPage * 10, filteredCertificates.length)} of {filteredCertificates.length} rows
         </p>
 
         <div className="w-full sm:w-auto flex justify-center">
@@ -794,7 +797,7 @@ function CertificatePage() {
       {/* Render TemplateMainPage when a certificate is selected */}
       {selectedCertificate && (
         <TemplateMainPage
-          key={selectedCertificate.cr_id + Date.now()}
+          key={(selectedCertificate.is_nonresident ? (selectedCertificate.nrc_id || '') : (selectedCertificate.cr_id || '')) + Date.now()}
           fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_fname || ''}
           mname={selectedCertificate.resident_details?.per_mname || selectedCertificate.nrc_mname || ''}
           lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_lname || ''}

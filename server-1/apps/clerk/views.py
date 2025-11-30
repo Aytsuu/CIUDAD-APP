@@ -19,6 +19,7 @@ from .models import (
     IssuedCertificate,
     BusinessPermitRequest,
     IssuedBusinessPermit,
+    NonResidentCertificateRequest,
 )
 from rest_framework.generics import RetrieveAPIView
 from django.http import Http404 
@@ -923,30 +924,68 @@ class MarkCertificateAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         try:
             cr_id = request.data.get('cr_id')
+            nrc_id = request.data.get('nrc_id')
+            is_nonresident = request.data.get('is_nonresident', False)
             # Do NOT default to a hardcoded staff_id. Only use provided staff_id if it exists and is valid
             staff_id = request.data.get('staff_id')
             
-            if not cr_id:
-                return Response(
-                    {"error": "Certificate ID (cr_id) is required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            # Get the certificate
-            try:
-                certificate = ClerkCertificate.objects.get(cr_id=cr_id)
-            except ClerkCertificate.DoesNotExist:
-                return Response(
-                    {"error": f"Certificate with ID {cr_id} not found"},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Check if already issued
-            if IssuedCertificate.objects.filter(certificate=certificate).exists():
-                return Response(
-                    {"error": f"Certificate {cr_id} is already issued"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # Determine if this is a non-resident certificate
+            if is_nonresident:
+                # For non-resident certificates, use nrc_id
+                if not nrc_id:
+                    return Response(
+                        {"error": "Non-resident certificate ID (nrc_id) is required"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Get the non-resident certificate
+                try:
+                    non_resident_cert = NonResidentCertificateRequest.objects.get(nrc_id=nrc_id)
+                except NonResidentCertificateRequest.DoesNotExist:
+                    return Response(
+                        {"error": f"Non-resident certificate with ID {nrc_id} not found"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                # Check if already issued
+                if IssuedCertificate.objects.filter(nonresidentcert=non_resident_cert).exists():
+                    return Response(
+                        {"error": f"Non-resident certificate {nrc_id} is already issued"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Use nrc_id as the certificate identifier for non-residents
+                certificate_id = nrc_id
+                certificate_obj = None
+                non_resident_obj = non_resident_cert
+            else:
+                # For resident certificates, use cr_id
+                if not cr_id:
+                    return Response(
+                        {"error": "Certificate ID (cr_id) is required"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Get the resident certificate
+                try:
+                    certificate = ClerkCertificate.objects.get(cr_id=cr_id)
+                except ClerkCertificate.DoesNotExist:
+                    return Response(
+                        {"error": f"Certificate with ID {cr_id} not found"},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+                
+                # Check if already issued
+                if IssuedCertificate.objects.filter(certificate=certificate).exists():
+                    return Response(
+                        {"error": f"Certificate {cr_id} is already issued"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Use cr_id as the certificate identifier for residents
+                certificate_id = cr_id
+                certificate_obj = certificate
+                non_resident_obj = None
             
             # Resolve staff strictly if provided; avoid creating a Staff record here to prevent NULL pos_id errors
             from apps.administration.models import Staff
@@ -971,9 +1010,17 @@ class MarkCertificateAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
             # If no staff_id in request, try to use the certificate's associated staff (if any)
-            if staff is None and getattr(certificate, 'staff_id_id', None):
-                logger.info(f"MarkCertificateAsIssuedView: attempting certificate.staff_id_id={certificate.staff_id_id}")
-                staff = Staff.objects.filter(pk=certificate.staff_id_id).first()
+            if staff is None:
+                if is_nonresident and non_resident_obj:
+                    # For non-resident certificates, check if there's a staff_id field
+                    if hasattr(non_resident_obj, 'staff_id') and non_resident_obj.staff_id:
+                        staff = Staff.objects.filter(pk=non_resident_obj.staff_id).first()
+                elif certificate_obj:
+                    # For resident certificates, check staff_id_id
+                    if getattr(certificate_obj, 'staff_id_id', None):
+                        logger.info(f"MarkCertificateAsIssuedView: attempting certificate.staff_id_id={certificate_obj.staff_id_id}")
+                        staff = Staff.objects.filter(pk=certificate_obj.staff_id_id).first()
+            
             # If still no staff and the IssuedCertificate model requires staff (NOT NULL), fail fast
             if staff is None:
                 # As a safety fallback, try any existing staff to avoid hard failure
@@ -988,32 +1035,61 @@ class MarkCertificateAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
             
-        
             # Create issued certificate; staff is guaranteed at this point
-            issued_certificate = IssuedCertificate.objects.create(
-                ic_date_of_issuance=timezone.now().date(),
-                certificate=certificate,
-                staff=staff
-            )
+            if is_nonresident:
+                # Update non-resident certificate status to Completed
+                non_resident_obj.nrc_req_status = 'Completed'
+                non_resident_obj.nrc_date_completed = timezone.now().date()
+                non_resident_obj.save(update_fields=['nrc_req_status', 'nrc_date_completed'])
+                
+                # Create IssuedCertificate for non-resident
+                issued_certificate = IssuedCertificate.objects.create(
+                    ic_date_of_issuance=timezone.now().date(),
+                    certificate=None,
+                    nonresidentcert=non_resident_obj,
+                    staff=staff
+                )
+            else:
+                # Update resident certificate status to Completed
+                certificate_obj.cr_req_status = 'Completed'
+                certificate_obj.cr_date_completed = timezone.now().date()
+                certificate_obj.save(update_fields=['cr_req_status', 'cr_date_completed'])
+                
+                # Create IssuedCertificate for resident
+                issued_certificate = IssuedCertificate.objects.create(
+                    ic_date_of_issuance=timezone.now().date(),
+                    certificate=certificate_obj,
+                    nonresidentcert=None,
+                    staff=staff
+                )
             
             # Log the activity
             try:
                 from apps.act_log.utils import create_activity_log
                 
                 if staff:
-                    # Get resident name
-                    resident_name = "Unknown"
-                    if certificate.rp_id and certificate.rp_id.per:
-                        per = certificate.rp_id.per
-                        resident_name = f"{per.per_fname} {per.per_lname}"
-                    
-                    # Get purpose
-                    purpose = certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'
+                    # Get requester name and purpose based on certificate type
+                    if is_nonresident and non_resident_obj:
+                        # Non-resident certificate
+                        requester_name = f"{non_resident_obj.nrc_fname} {non_resident_obj.nrc_lname}".strip()
+                        if not requester_name:
+                            requester_name = "Unknown"
+                        purpose = non_resident_obj.pr_id.pr_purpose if non_resident_obj.pr_id else 'N/A'
+                        cert_id = nrc_id
+                    else:
+                        # Resident certificate
+                        requester_name = "Unknown"
+                        if certificate_obj and certificate_obj.rp_id and certificate_obj.rp_id.per:
+                            per = certificate_obj.rp_id.per
+                            requester_name = f"{per.per_fname} {per.per_lname}"
+                        purpose = certificate_obj.pr_id.pr_purpose if certificate_obj and certificate_obj.pr_id else 'N/A'
+                        cert_id = cr_id
                     
                     # Create activity log
+                    cert_type = "Non-resident certificate" if is_nonresident else "Certificate"
                     create_activity_log(
                         act_type="Certificate Issued",
-                        act_description=f"Certificate {cr_id} issued to {resident_name} ({purpose})",
+                        act_description=f"{cert_type} {cert_id} issued to {requester_name} ({purpose})",
                         staff=staff,
                         record_id=str(issued_certificate.ic_id)
                     )
@@ -2657,19 +2733,19 @@ class CombinedCertificateListView(ActivityLogMixin, generics.ListAPIView):
         # Get payment status filter from request
         payment_status = self.request.GET.get('payment_status', 'Unpaid')  # Default to 'Unpaid' for backward compatibility
         
-        # Get resident certificates with specified payment status and exclude cancelled
+        # Get resident certificates with specified payment status and exclude cancelled and completed
         resident_queryset = ClerkCertificate.objects.select_related(
             'rp_id__per',
             'pr_id'
         ).filter(
             cr_req_payment_status=payment_status,
-            cr_req_status__in=['Pending', 'Completed', 'In Progress']  # Exclude 'Cancelled'
+            cr_req_status__in=['Pending', 'In Progress']  # Exclude 'Cancelled' and 'Completed'
         )
         
-        # Get non-resident certificates with specified payment status and exclude cancelled
+        # Get non-resident certificates with specified payment status and exclude cancelled and completed
         non_resident_queryset = NonResidentCertificateRequest.objects.select_related('pr_id').filter(
             nrc_req_payment_status=payment_status,
-            nrc_req_status__in=['Pending', 'Completed', 'In Progress']  # Exclude 'Cancelled'
+            nrc_req_status__in=['Pending', 'In Progress']  # Exclude 'Cancelled' and 'Completed'
         )
         
         # Search functionality
@@ -2705,7 +2781,19 @@ class CombinedCertificateListView(ActivityLogMixin, generics.ListAPIView):
             resident_queryset = resident_queryset.filter(pr_id__pr_purpose=purpose_filter)
             non_resident_queryset = non_resident_queryset.filter(pr_id__pr_purpose=purpose_filter)
         
-        # Combine and order by date
+        # Certificate type filter (resident/non-resident)
+        certificate_type = self.request.query_params.get('certificate_type', None)
+        if certificate_type:
+            if certificate_type.lower() == 'resident':
+                # Only return resident certificates
+                combined_queryset = list(resident_queryset.order_by('-cr_req_request_date'))
+                return combined_queryset
+            elif certificate_type.lower() in ['nonresident', 'non-resident', 'non_resident']:
+                # Only return non-resident certificates
+                combined_queryset = list(non_resident_queryset.order_by('-nrc_req_date'))
+                return combined_queryset
+        
+        # Combine and order by date (default: return both types)
         combined_queryset = list(resident_queryset.order_by('-cr_req_request_date')) + list(non_resident_queryset.order_by('-nrc_req_date'))
         
         # Sort combined results by date (most recent first)
@@ -2742,11 +2830,20 @@ class CombinedCertificateListView(ActivityLogMixin, generics.ListAPIView):
                     data = serializer.data
                     data['is_nonresident'] = True
                     # Map non-resident fields to match resident structure
-                    data['cr_id'] = data.get('nrc_id')
+                    # Keep nrc_id in the response for frontend use
+                    nrc_id_value = data.get('nrc_id')
+                    data['cr_id'] = nrc_id_value  # Also set cr_id for compatibility
+                    data['nrc_id'] = nrc_id_value  # Ensure nrc_id is preserved
                     data['req_request_date'] = data.get('nrc_req_date')
                     data['req_purpose'] = data.get('purpose', {}).get('pr_purpose', '')
                     data['req_payment_status'] = data.get('nrc_req_payment_status')
                     data['resident_details'] = None
+                    # Include non-resident name fields
+                    data['nrc_fname'] = data.get('nrc_fname')
+                    data['nrc_lname'] = data.get('nrc_lname')
+                    data['nrc_mname'] = data.get('nrc_mname')
+                    data['nrc_address'] = data.get('nrc_address')
+                    data['nrc_birthdate'] = data.get('nrc_birthdate')
                 
                 serialized_data.append(data)
             

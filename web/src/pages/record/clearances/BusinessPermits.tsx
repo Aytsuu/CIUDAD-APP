@@ -15,6 +15,7 @@ import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { getBusinessPermit, type BusinessPermit } from "@/pages/record/clearances/queries/busFetchQueries";
 import { markBusinessPermitAsIssued, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busUpdateQueries";
+import { getAllPurposes, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import TemplateMainPage from "../council/templates/template-main";
 import { useAuth } from "@/context/AuthContext";
 import { useLoading } from "@/context/LoadingContext";
@@ -28,18 +29,59 @@ function BusinessDocumentPage() {
   const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPermit, setSelectedPermit] = useState<BusinessPermit | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterPurpose, setFilterPurpose] = useState("all");
 
   const { data: businessPermits, isLoading, error } = useQuery<BusinessPermit[]>({
     queryKey: ["businessPermits"],
     queryFn: getBusinessPermit,
   });
 
-  // Show only paid permits
+  // Fetch purposes for filter dropdown
+  const { data: allPurposes = [] } = useQuery<Purpose[]>({
+    queryKey: ["allPurposes"],
+    queryFn: getAllPurposes,
+  });
+
+  // Filter purposes to show only Barangay Permit and Barangay Clearance categories (for business permits)
+  const businessPurposes = useMemo(() => {
+    return allPurposes
+      .filter(purpose => 
+        !purpose.pr_is_archive && 
+        (purpose.pr_category === "Barangay Permit" || purpose.pr_category === "Barangay Clearance")
+      )
+      .map(purpose => ({
+        id: purpose.pr_purpose.toLowerCase(),
+        name: purpose.pr_purpose
+      }));
+  }, [allPurposes]);
+
+  // Show only paid permits and apply filters
   const paidPermits = useMemo(() => {
-    return (businessPermits || [])
+    let filtered = (businessPermits || [])
       .filter((p) => String(p.req_payment_status || "").toLowerCase() === "paid")
       .filter((p) => String(p.req_status || "").toLowerCase() !== "completed");
-  }, [businessPermits]);
+    
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((p) => 
+        p.business_name?.toLowerCase().includes(searchLower) ||
+        p.bpr_id?.toLowerCase().includes(searchLower) ||
+        (p.purpose as string)?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Apply purpose filter
+    if (filterPurpose !== "all") {
+      filtered = filtered.filter((p) => {
+        const permitPurpose = (p.purpose as string)?.toLowerCase() || "";
+        return permitPurpose === filterPurpose.toLowerCase();
+      });
+    }
+    
+    return filtered;
+  }, [businessPermits, searchTerm, filterPurpose]);
 
   // Handle loading state
   useEffect(() => {
@@ -280,15 +322,29 @@ function BusinessDocumentPage() {
         <div className="flex gap-x-2">
           <div className="relative flex-1 bg-white">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search..." className="pl-10 w-72" />
+            <Input 
+              placeholder="Search..." 
+              className="pl-10 w-72" 
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
+            />
           </div>
           <SelectLayout
-            placeholder="Filter by"
+            placeholder="Filter by purpose"
             label=""
             className="bg-white"
-            options={[]}
-            value=""
-            onChange={() => {}}
+            options={[
+              { id: "all", name: "All Purposes" },
+              ...businessPurposes
+            ]}
+            value={filterPurpose}
+            onChange={(value) => {
+              setFilterPurpose(value);
+              setCurrentPage(1); // Reset to first page when filtering
+            }}
           />
         </div>
       </div>
