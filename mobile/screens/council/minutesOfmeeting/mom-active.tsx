@@ -46,17 +46,23 @@ export default function ActiveMOMScreen({ searchQuery }: ActiveMOMScreenProps) {
   const hasNext = activeMOMData?.next
 
   // ================= SIDE EFFECTS =================
-    React.useEffect(() => {
-      if (!isFetching && isRefreshing) setIsRefreshing(false);
-    }, [isFetching, isRefreshing]);
-  
-    React.useEffect(() => {
-      if (!isLoading && isInitialRender) setIsInitialRender(false);
-    }, [isLoading, isInitialRender]);
-  
-    React.useEffect(() => {
-      if (!isFetching && isLoadMore) setIsLoadMore(false);
-    }, [isFetching, isLoadMore]);
+  // Search clearing effect - EXACT SAME as ResidentRecords
+  React.useEffect(() => {
+    // Note: Since searchQuery is passed as prop, we don't need the clearing effect here
+    // The parent component handles search state
+  }, [searchQuery]);
+
+  React.useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  React.useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  React.useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   // ================= HANDLERS =================
   const handleRefresh = async () => {
@@ -152,6 +158,19 @@ export default function ActiveMOMScreen({ searchQuery }: ActiveMOMScreenProps) {
     []
   )
 
+  // Simple empty state component - EXACT SAME as your other screens
+  const renderEmptyState = () => {
+    const message = searchQuery
+      ? "No active records found matching your criteria."
+      : "No active records found.";
+    
+    return (
+      <View className="flex-1 justify-center items-center h-full">
+        <Text className="text-gray-500 text-sm">{message}</Text>
+      </View>
+    );
+  };
+
   // Loading state for initial load
   if (isLoading) {
     return <LoadingState />
@@ -160,8 +179,8 @@ export default function ActiveMOMScreen({ searchQuery }: ActiveMOMScreenProps) {
   // ================= MAIN RENDER =================
   return (
     <View className="flex-1">
-      {/* Result Count */}
-      {!isRefreshing && (
+      {/* Result Count - Only show when there are items */}
+      {!isRefreshing && momRecords.length > 0 && (
         <Text className="text-xs text-gray-500 mt-2 mb-3 px-6">{`Showing ${momRecords.length} of ${totalCount} MOM records`}</Text>
       )}
       
@@ -188,6 +207,7 @@ export default function ActiveMOMScreen({ searchQuery }: ActiveMOMScreenProps) {
             paddingHorizontal: 0,
             paddingTop: 0,
             paddingBottom: 20,
+            flexGrow: 1, // KEY: Makes empty state center properly
           }}
           refreshControl={
             <RefreshControl
@@ -201,9 +221,9 @@ export default function ActiveMOMScreen({ searchQuery }: ActiveMOMScreenProps) {
               <View className="py-4 items-center">
                 <ActivityIndicator size="small" color="#3B82F6" />
                 <Text className="text-xs text-gray-500 mt-2">
-                    Loading more...
+                  Loading more...
                 </Text>
-            </View>
+              </View>
             ) : (
               !hasNext &&
               momRecords.length > 0 && (
@@ -215,7 +235,7 @@ export default function ActiveMOMScreen({ searchQuery }: ActiveMOMScreenProps) {
               )
             )
           }
-          ListEmptyComponent={<View></View>}
+          ListEmptyComponent={renderEmptyState()}
         />
       )}
     </View>

@@ -1962,6 +1962,7 @@ class AssignmentCollectorDeleteView(generics.DestroyAPIView):
 class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestPendingSerializer
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
@@ -1975,7 +1976,8 @@ class GarbagePickupRequestPendingByRPView(generics.ListAPIView):
 class GarbagePickupRequestRejectedByRPView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = GarbagePickupRequestRejectedSerializer
-    
+    pagination_class = StandardResultsPagination
+
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
 
@@ -1983,16 +1985,62 @@ class GarbagePickupRequestRejectedByRPView(generics.ListAPIView):
             garb_id=OuterRef('pk')
         ).order_by('-dec_date')
 
-        return (
+        queryset = (
             Garbage_Pickup_Request.objects
             .filter(rp_id=rp_id, garb_req_status='rejected')
+            .select_related(
+                'rp__per',
+                'sitio_id',
+            )
+            .prefetch_related(
+                'pickup_decisions__staff_id__rp__per'
+            )
+            .only(
+                'garb_id',
+                'garb_location',
+                'garb_waste_type',
+                'garb_pref_date',
+                'garb_pref_time',
+                'garb_req_status',
+                'garb_additional_notes',
+                'garb_created_at',
+                'rp__per__per_lname',
+                'rp__per__per_fname',
+                'rp__per__per_mname',
+                'sitio_id__sitio_name',
+            )
             .annotate(latest_dec_date=Subquery(latest_decision.values('dec_date')[:1]))
-            .order_by('-latest_dec_date')  # newest on top
         )
+
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(garb_id__icontains=search_query)
+                | Q(garb_location__icontains=search_query)
+                | Q(garb_waste_type__icontains=search_query)
+                | Q(garb_additional_notes__icontains=search_query)
+                | Q(garb_pref_date__icontains=search_query)
+                | Q(garb_pref_time__icontains=search_query)
+                | Q(rp__per__per_lname__icontains=search_query)
+                | Q(rp__per__per_fname__icontains=search_query)
+                | Q(rp__per__per_mname__icontains=search_query)
+                | Q(sitio_id__sitio_name__icontains=search_query)
+                | Q(pickup_decisions__dec_reason__icontains=search_query)
+                | Q(pickup_decisions__staff_id__rp__per__per_lname__icontains=search_query)
+                | Q(pickup_decisions__staff_id__rp__per__per_fname__icontains=search_query)
+                | Q(pickup_decisions__staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        sitio_param = self.request.query_params.get('sitio', '').strip()
+        if sitio_param:
+            queryset = queryset.filter(sitio_id__sitio_name__iexact=sitio_param)
+
+        return queryset.order_by('-latest_dec_date')
     
 class GarbagePickupRequestAcceptedByRPView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = ResidentAcceptedPickupRequestsSerializer
+    pagination_class = StandardResultsPagination
         
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
@@ -2038,6 +2086,7 @@ class GarbagePickupRequestAcceptedDetailView(generics.RetrieveAPIView):
 class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = ResidentCompletedPickupRequestSerializer
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
@@ -2061,21 +2110,72 @@ class GarbagePickupRequestCompletedByRPView(generics.ListAPIView):
 
 class GarbagePickupRequestCancelledByRPView(generics.ListAPIView):
     permission_classes = [AllowAny]
-    serializer_class = GarbagePickupRequestRejectedSerializer
+    serializer_class = GarbagePickupRequestRejectedSerializer  # Consider creating a CancelledSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         rp_id = self.kwargs.get('rp_id')
 
+        # Get the latest decision for each request
         latest_decision = Pickup_Request_Decision.objects.filter(
             garb_id=OuterRef('pk')
         ).order_by('-dec_date')
 
-        return (
+        # Base queryset with annotations
+        queryset = (
             Garbage_Pickup_Request.objects
             .filter(rp_id=rp_id, garb_req_status='cancelled')
+            .select_related(
+                'rp__per',
+                'sitio_id',
+            )
+            .prefetch_related(
+                'pickup_decisions__staff_id__rp__per'
+            )
+            .only(
+                'garb_id',
+                'garb_location',
+                'garb_waste_type',
+                'garb_pref_date',
+                'garb_pref_time',
+                'garb_req_status',
+                'garb_additional_notes',
+                'garb_created_at',
+                'rp__per__per_lname',
+                'rp__per__per_fname',
+                'rp__per__per_mname',
+                'sitio_id__sitio_name',
+            )
             .annotate(latest_dec_date=Subquery(latest_decision.values('dec_date')[:1]))
-            .order_by('-latest_dec_date')  # newest on top
         )
+
+        # Apply search functionality - SAME PATTERN as other views
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(garb_id__icontains=search_query)
+                | Q(garb_location__icontains=search_query)
+                | Q(garb_waste_type__icontains=search_query)
+                | Q(garb_additional_notes__icontains=search_query)
+                | Q(garb_pref_date__icontains=search_query)
+                | Q(garb_pref_time__icontains=search_query)
+                | Q(rp__per__per_lname__icontains=search_query)
+                | Q(rp__per__per_fname__icontains=search_query)
+                | Q(rp__per__per_mname__icontains=search_query)
+                | Q(sitio_id__sitio_name__icontains=search_query)
+                | Q(pickup_decisions__dec_reason__icontains=search_query)
+                | Q(pickup_decisions__staff_id__rp__per__per_lname__icontains=search_query)
+                | Q(pickup_decisions__staff_id__rp__per__per_fname__icontains=search_query)
+                | Q(pickup_decisions__staff_id__rp__per__per_mname__icontains=search_query)
+            ).distinct()
+
+        # Optional: Add sitio filter if needed
+        sitio_param = self.request.query_params.get('sitio', '').strip()
+        if sitio_param:
+            queryset = queryset.filter(sitio_id__sitio_name__iexact=sitio_param)
+
+        # Order by latest decision date (newest on top)
+        return queryset.order_by('-latest_dec_date')
     
 class GarbagePickupRequestCancelledDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]

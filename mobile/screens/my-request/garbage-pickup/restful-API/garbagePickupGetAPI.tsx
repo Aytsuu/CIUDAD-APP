@@ -28,25 +28,18 @@ export const getGarbagePendingRequestDetailsResident = async (garb_id: string) =
     }
 }
 
-export const getGarbageRejectedResident = async (rp_id: string) => {
+export const getGarbageRejectedResident = async (rp_id: string, page: number, pageSize: number, searchQuery: string) => {
     try{
 
-        const {data} = await api.get(`/waste/garbage-pickup-rejected/${rp_id}/`)
+        const res = await api.get(`/waste/garbage-pickup-rejected/${rp_id}/`, {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        })
         
-        return data.map((item: any) => ({
-            garb_id: item.garb_id || '', 
-            garb_location: item.garb_location || '',
-            garb_waste_type: item.garb_waste_type || '',
-            garb_created_at: item.garb_created_at || '',
-            garb_pref_date: item.garb_pref_date,
-            garb_pref_time: item.garb_pref_time,
-            garb_additional_notes: item.garb_additional_notes,
-            dec_id: item.dec_id || null, 
-            dec_date: item.dec_date || null,
-            dec_reason: item.dec_reason || '',
-            sitio_name: item.sitio_name || '',
-            staff_name: item.staff_name || ''
-        }));
+        return res.data
     }catch(err){
         throw err;
     }
@@ -129,24 +122,18 @@ export const getGarbageCompletedResident = async (rp_id: string) => {
 }
 
 
-export const getGarbageCancelledResident = async (rp_id: string) => {
+export const getGarbageCancelledResident = async (rp_id: string, page: number, pageSize: number, searchQuery: string) => {
     try{
 
-        const {data} = await api.get(`/waste/garbage-pickup-cancelled/${rp_id}/`)
+        const res = await api.get(`/waste/garbage-pickup-cancelled/${rp_id}/`, {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        })
         
-        return data.map((item: any) => ({
-            garb_id: item.garb_id || '', 
-            garb_location: item.garb_location || '',
-            garb_waste_type: item.garb_waste_type || '',
-            garb_created_at: item.garb_created_at || '',
-            garb_pref_date: item.garb_pref_date,
-            garb_pref_time: item.garb_pref_time,
-            garb_additional_notes: item.garb_additional_notes,
-            dec_id: item.dec_id || null, 
-            dec_date: item.dec_date || null,
-            dec_reason: item.dec_reason || '',
-            sitio_name: item.sitio_name || ''
-        }));
+        return res.data
     }catch(err){
         // console.error('API Error:', err)
         throw err;
