@@ -117,6 +117,8 @@ input[type=number] {
     }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Geist', sans-serif;
+    font-optical-sizing: auto;
     }
 }
 
