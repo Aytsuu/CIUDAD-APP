@@ -21,6 +21,8 @@ export const useGetGarbagePendingResident = (rp_id: string, page: number, pageSi
         queryFn: () => getGarbagePendingResident(rp_id, page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
         enabled: !!rp_id,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 }
 
@@ -153,6 +155,8 @@ export const useGetGarbageCompleteResident = (rp_id: string, page: number, pageS
         queryFn:() => getGarbageCompletedResident(rp_id, page, pageSize, searchQuery), 
         staleTime: 1000 * 60 * 30,
         enabled: !!rp_id,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 }
 
