@@ -40,7 +40,12 @@ export default function Dashboard() {
   const remarkCard = useNoRemarksSectionCard();
 
   const councilEvents = useCouncilUpcomingEvents();
-  const instance = getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards)
+  const gadActivities = useGADUpcomingActivities();
+  const wasteEvents = useWasteUpcomingEvents();
+  const instance = React.useMemo(
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards, gadActivities, wasteEvents),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards, gadActivities, wasteEvents]
+  );
   
 
   const validateFeature = (feature: string) => {
