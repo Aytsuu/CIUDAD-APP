@@ -631,18 +631,23 @@ const CertPermit: React.FC = () => {
                 {/* Annual Gross Sales - Only show for barangay clearance */}
                 {isBarangayClearance && (
                   <>
-                    <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales Range</Text>
-                    <SelectLayout
-                      label=""
-                      options={grossSalesDropdownOptions}
-                      selectedValue={selectedGrossSalesRange}
-                      onSelect={(option) => handleGrossSalesRangeSelect(option.value)}
-                      placeholder="Select annual gross sales range"
-                      disabled={false}
-                      className="mb-3"
-                    />
+                    {/* Dropdown - Only show for residents WITHOUT a registered business */}
+                    {businessData.length === 0 && (
+                      <>
+                        <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales Range</Text>
+                        <SelectLayout
+                          label=""
+                          options={grossSalesDropdownOptions}
+                          selectedValue={selectedGrossSalesRange}
+                          onSelect={(option) => handleGrossSalesRangeSelect(option.value)}
+                          placeholder="Select annual gross sales range"
+                          disabled={false}
+                          className="mb-3"
+                        />
+                      </>
+                    )}
                     
-                    {/* Input field - Only show for registered businesses */}
+                    {/* Input field - Only show for residents WITH a registered business */}
                     {businessData.length > 0 && (
                       <>
                         <Text className="text-sm font-medium text-gray-700 mb-2">Annual Gross Sales Amount</Text>

@@ -252,38 +252,36 @@ export function CertificatePurposeChart({}: CertificatePurposeChartProps) {
 
   return (
     <Card className="w-full border-none shadow-none">
-      {/* Header */}
-      <CardHeader className="border-b border-gray-100 bg-white p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <CardTitle className="text-xl font-bold text-gray-900">Certificate & Permit Overview</CardTitle>
-            <CardDescription className="text-sm text-gray-600 mt-1">
-              {currentYear} Certificate and Business Permit Requests Analysis
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="p-0">
-        <Tabs defaultValue="certificates" className="w-full">
-          <div className="relative bg-gray-50/30 border-b border-gray-200">
-            <TabsList className="grid w-full grid-cols-2 bg-transparent p-1 h-auto rounded-none">
+      <Tabs defaultValue="certificates" className="w-full">
+        {/* Header */}
+        <CardHeader className="border-b border-gray-100 bg-white p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <CardTitle className="text-xl font-bold text-gray-900">
+                Certificate and Business Permit Request Overview
+              </CardTitle>
+              <CardDescription className="text-sm text-gray-600 mt-1">
+                {currentYear} monthly breakdown of certificate and business permit requests
+              </CardDescription>
+            </div>
+            <TabsList className="inline-flex items-center justify-center rounded-lg bg-gray-100 p-1 h-9 gap-1">
               <TabsTrigger 
                 value="certificates" 
-                className="relative px-8 py-4 text-sm font-semibold text-gray-500 data-[state=active]:text-white data-[state=active]:bg-blue-600 data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/25 rounded-lg transition-all duration-300 hover:text-gray-700 hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900"
               >
-                <span className="relative z-10">Certificates</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                Certificates
               </TabsTrigger>
               <TabsTrigger 
                 value="permits" 
-                className="relative px-8 py-4 text-sm font-semibold text-gray-500 data-[state=active]:text-white data-[state=active]:bg-green-600 data-[state=active]:shadow-lg data-[state=active]:shadow-green-500/25 rounded-lg transition-all duration-300 hover:text-gray-700 hover:bg-white/80 hover:shadow-md hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-green-600 data-[state=active]:shadow-sm text-gray-600 hover:text-gray-900"
               >
-                <span className="relative z-10">Permits</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-green-600 rounded-lg opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                Permits
               </TabsTrigger>
             </TabsList>
           </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
 
           <TabsContent value="certificates" className="p-6">
             {/* Certificate Stats Summary Bar */}
@@ -420,8 +418,8 @@ export function CertificatePurposeChart({}: CertificatePurposeChartProps) {
               `There are no business permit requests to display for ${currentYear}.`
             )}
           </TabsContent>
-        </Tabs>
-      </CardContent>
+        </CardContent>
+      </Tabs>
     </Card>
   );
 }
