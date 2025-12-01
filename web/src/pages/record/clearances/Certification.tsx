@@ -204,6 +204,11 @@ function CertificatePage() {
     }
   }, [isLoading, showLoading, hideLoading]);
 
+  // Clear selected certificate when filters change to prevent template from showing
+  useEffect(() => {
+    setSelectedCertificate(null);
+  }, [filterType, filterPurpose, searchTerm, currentPage]);
+
   const certificates = certificatesData?.results || [];
   const totalCount = certificatesData?.count || 0;
   const totalPages = Math.ceil(totalCount / 10);
