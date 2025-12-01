@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 def update_ann_status():
     now = timezone.now() 
-    logger.info("Checking announcements...")
+    # logger.info("Checking announcements...")
 
     announcements = Announcement.objects.filter(
         ann_start_at__lte=now,
