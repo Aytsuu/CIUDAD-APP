@@ -37,12 +37,6 @@ export function CertificatePurposeChart({}: CertificatePurposeChartProps) {
   const isLoading = certificateLoading || permitLoading;
   const error = certificateError || permitError;
 
-  // Debug logging
-  console.log('CertificatePurposeChart - certificateData:', certificateData);
-  console.log('CertificatePurposeChart - permitData:', permitData);
-  console.log('CertificatePurposeChart - isLoading:', isLoading);
-  console.log('CertificatePurposeChart - error:', error);
-
   React.useEffect(() => {
     if(isLoading) showLoading();
     else hideLoading();

@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { getItemsConfig } from "./Item";
-import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useProfilingSectionCards } from "@/components/analytics/profiling/profiling-section-cards";
 import { useComplaintSectionCards } from "@/components/analytics/complaint/complaint-card";
 import { useAdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
