@@ -258,7 +258,7 @@ export const DisbursementSidebar = () => {
             onClick={handleViewAll}
             className="text-blue-500 hover:text-blue-700"
           >
-            View All Disbursements
+             View All Disbursements ({disbursementsData?.count || disbursements.length})
           </Button>
         </div>
       )}

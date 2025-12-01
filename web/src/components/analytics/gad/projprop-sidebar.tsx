@@ -24,16 +24,15 @@ export const ProjectProposalSidebar = () => {
     false,
     currentYear
   );
-  const [_selectedProposal, setSelectedProposal] =
-    useState<ProjectProposal | null>(null);
 
-    // Sort proposals by ID
-    const proposals = proposalsData?.results 
+  const [_selectedProposal, setSelectedProposal] = useState<ProjectProposal | null>(null);
+  const proposals = proposalsData?.results 
     ? [...proposalsData.results].sort((a, b) => 
         (b.gprId || 0) - (a.gprId || 0)
-        )
+      )
     : [];
 
+  const totalCount = proposalsData?.count || 0;
   const truncateText = (text: string, maxLength: number = 40) => {
     if (!text) return "No title";
     if (text.length <= maxLength) return text;
@@ -284,7 +283,7 @@ export const ProjectProposalSidebar = () => {
             onClick={handleViewAll}
             className="text-blue-600 hover:text-blue-700"
           >
-            View All Proposals
+             View All Proposals ({totalCount > 100 ? "100+" : totalCount})
           </Button>
         </div>
       )}
