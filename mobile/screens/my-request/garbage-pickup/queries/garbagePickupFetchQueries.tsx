@@ -15,10 +15,10 @@ export type GarbageRequestPending = {
     sitio_name: string;
 }  
 
-export const useGetGarbagePendingResident = (rp_id: string) => {
-    return useQuery<GarbageRequestPending[]>({
-        queryKey: ["garbageRequest", rp_id],
-        queryFn: () => getGarbagePendingResident(rp_id),
+export const useGetGarbagePendingResident = (rp_id: string, page: number, pageSize: number, searchQuery: string) => {
+    return useQuery({
+        queryKey: ["garbageRequest", rp_id, page, pageSize, searchQuery],
+        queryFn: () => getGarbagePendingResident(rp_id, page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
         enabled: !!rp_id,
     });
@@ -100,12 +100,14 @@ export type GarbageRequestAccept = {
 
 
 
-export const useGetGarbageAcceptedResident = (rp_id: string) => {
-    return useQuery<GarbageRequestAccept[]>({
-        queryKey: ["garbageAcceptedRequest", rp_id], 
-        queryFn:() => getGarbageAcceptedResident(rp_id),
+export const useGetGarbageAcceptedResident = (rp_id: string, page: number, pageSize: number, searchQuery: string) => {
+    return useQuery({
+        queryKey: ["garbageAcceptedRequest", rp_id, page, pageSize, searchQuery], 
+        queryFn:() => getGarbageAcceptedResident(rp_id, page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
         enabled: !!rp_id,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 }
 
@@ -145,10 +147,10 @@ export type GarbageRequestComplete = {
   staff_name: string;
 }
 
-export const useGetGarbageCompleteResident = (rp_id: string) => {
-    return useQuery<GarbageRequestComplete[]>({
-        queryKey: ["garbageCompletedRequest", rp_id], 
-        queryFn:() => getGarbageCompletedResident(rp_id), 
+export const useGetGarbageCompleteResident = (rp_id: string, page: number, pageSize: number, searchQuery: string) => {
+    return useQuery({
+        queryKey: ["garbageCompletedRequest", rp_id, page, pageSize, searchQuery], 
+        queryFn:() => getGarbageCompletedResident(rp_id, page, pageSize, searchQuery), 
         staleTime: 1000 * 60 * 30,
         enabled: !!rp_id,
     });

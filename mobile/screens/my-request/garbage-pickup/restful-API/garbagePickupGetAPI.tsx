@@ -1,19 +1,16 @@
 import { api } from "@/api/api";
 
-export const getGarbagePendingResident = async (rp_id: string) => {
+export const getGarbagePendingResident = async (rp_id: string, page: number, pageSize: number, searchQuery: string) => {
     try {
-        const {data} = await api.get(`/waste/garbage-pickup-pending/${rp_id}/`)
+        const res = await api.get(`/waste/garbage-pickup-pending/${rp_id}/`, {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        })
 
-        return data.map((item: any) => ({   
-            garb_id: item.garb_id,
-            garb_location: item.garb_location,
-            garb_waste_type: item.garb_waste_type,
-            garb_pref_date: item.garb_pref_date,
-            garb_pref_time: item.garb_pref_time,
-            garb_created_at: item.garb_created_at,
-            garb_additional_notes: item.garb_additional_notes,
-            sitio_name: item.sitio_name || ''
-        }));
+        return res.data
     }catch (err){
         throw err;
     }
@@ -56,35 +53,17 @@ export const getGarbageRejectedRequestDetailsResident = async (garb_id: string) 
 }
 
 
-export const getGarbageAcceptedResident = async (rp_id: string) => {
+export const getGarbageAcceptedResident = async (rp_id: string, page: number, pageSize: number, searchQuery: string) => {
     try {
-        const { data } = await api.get(`/waste/garbage-pickup-accepted/${rp_id}/`);
+        const res = await api.get(`/waste/garbage-pickup-accepted/${rp_id}/`, {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        });
 
-        return data.map((item: any) => ({
-            garb_id: item.garb_id || '',
-            garb_location: item.garb_location || '',
-            garb_waste_type: item.garb_waste_type || '',
-            garb_created_at: item.garb_created_at || '',
-            garb_pref_date: item.garb_pref_date,
-            garb_pref_time: item.garb_pref_time,
-            garb_additional_notes: item.garb_additional_notes || '',
-            garb_req_status: item.garb_req_status || '', 
-            garb_requester: item.garb_requester || 'Unknown', 
-            dec_date: item.dec_date || null,
-            assignment_info: item.assignment_info ? {
-                driver: item.assignment_info.driver || '',
-                pick_time: item.assignment_info.pick_time || '',
-                pick_date: item.assignment_info.pick_date || '',
-                collectors: item.assignment_info.collectors || [],
-                truck: item.assignment_info.truck || '',
-            } : null,
-            confirmation_info: item.confirmation_info ? { 
-                conf_resident_conf: item.confirmation_info.conf_resident_conf || false,
-                conf_resident_conf_date: item.confirmation_info.conf_resident_conf_date || null,
-            } : null,
-            file_url: item.file_url || '',
-            sitio_name: item.sitio_name || '',
-        }));
+        return res.data
     } catch(err) {
         // console.error('API Error:', err);
         throw err;
@@ -92,29 +71,17 @@ export const getGarbageAcceptedResident = async (rp_id: string) => {
 }
 
 
-export const getGarbageCompletedResident = async (rp_id: string) => {
+export const getGarbageCompletedResident = async (rp_id: string, page: number, pageSize: number, searchQuery: string) => {
     try{
-        const {data} = await api.get(`/waste/garbage-pickup-completed/${rp_id}/`)
+        const res = await api.get(`/waste/garbage-pickup-completed/${rp_id}/`, {
+            params: {
+                page,
+                page_size: pageSize,
+                search: searchQuery
+            }
+        })
 
-        return data.map((item: any) => ({
-            garb_id: item.garb_id ?? 0,
-            garb_location: item.garb_location ?? '',
-            garb_waste_type: item.garb_waste_type ?? '',
-            garb_created_at: item.garb_created_at ?? '',
-            conf_resident_conf_date: item.confirmation_info?.conf_resident_conf_date ?? null,
-            conf_staff_conf_date: item.confirmation_info?.conf_staff_conf_date ?? null,
-            conf_resident_conf: item.confirmation_info?.conf_resident_conf ?? null,
-            conf_staff_conf: item.confirmation_info?.conf_staff_conf ?? null,
-            assignment_info: item.assignment_info ? {
-                driver: item.assignment_info.driver || '',
-                pick_time: item.assignment_info.pick_time || '',
-                pick_date: item.assignment_info.pick_date || '',
-                collectors: item.assignment_info.collectors || [],
-                truck: item.assignment_info.truck || '',
-            } : null,
-            file_url: item.file_url || '',
-            sitio_name: item.sitio_name || ''
-        }));
+        return res.data
     }catch(err){
         // console.error('API Error:', err)
         throw err;

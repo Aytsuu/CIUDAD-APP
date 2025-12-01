@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { View, Text, TouchableOpacity, FlatList, RefreshControl, ActivityIndicator } from "react-native";
-import { Search, Info, ChevronRight } from "lucide-react-native";
+import { Search, ChevronRight } from "lucide-react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useGetGarbageRejectedResident } from "../queries/garbagePickupFetchQueries";
@@ -25,7 +25,6 @@ export default function ResidentRejected() {
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // ================= QUERY HOOK =================
-  // Updated hook to support pagination and search
   const { 
     data: rejectedReqData, 
     isLoading, 
@@ -33,12 +32,12 @@ export default function ResidentRejected() {
     isFetching 
   } = useGetGarbageRejectedResident(String(user?.rp), currentPage, pageSize, searchQuery);
   
-  const requests = rejectedReqData?.results || rejectedReqData || [];
-  const totalCount = rejectedReqData?.count || requests.length;
+  const requests = rejectedReqData?.results || [];
+  const totalCount = rejectedReqData?.count || 0;
   const hasNext = rejectedReqData?.next;
 
   // ================= SIDE EFFECTS =================
-  // Search clearing effect - Same as first example
+  // Search clearing effect
   useEffect(() => {
     if (searchQuery !== searchInputVal && searchInputVal === "") {
       setSearchQuery(searchInputVal);
@@ -100,7 +99,7 @@ export default function ResidentRejected() {
   };
 
   // ================= RENDER HELPERS =================
-  const RejectedRequestCard = useCallback(({ request }: { request: any }) => (
+  const RejectedRequestCard = ({ request }: { request: any }) => (
     <Card
       key={request.garb_id}
       className="border border-gray-200 rounded-lg bg-white mb-4"
@@ -158,32 +157,22 @@ export default function ResidentRejected() {
         </View>
       </CardContent>
     </Card>
-  ), []);
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: any }) => <RejectedRequestCard request={item} />,
     []
   );
 
-  // Simple empty state component - EXACT SAME as your first example
+  // Simple empty state component - EXACT SAME as RejectedGarbageRequest page
   const renderEmptyState = () => {
     const message = searchQuery
       ? "No rejected requests found matching your criteria."
       : "No rejected requests found.";
     
     return (
-      <View className="flex-1 justify-center items-center py-8">
-        <View className="bg-blue-50 p-6 rounded-lg items-center">
-          <Info size={24} color="#3b82f6" className="mb-2" />
-          <Text className="text-center text-gray-600">
-            {message}
-          </Text>
-          {searchQuery && (
-            <Text className="text-center text-gray-500 mt-1">
-              Try a different search term
-            </Text>
-          )}
-        </View>
+      <View className="flex-1 justify-center items-center h-full">
+        <Text className="text-gray-500 text-sm">{message}</Text>
       </View>
     );
   };
@@ -215,11 +204,7 @@ export default function ResidentRejected() {
       )}
       
       {/* Loading state during refresh */}
-      {isFetching && isRefreshing && !isLoadMore && (
-        <View className="h-64 justify-center items-center">
-          <LoadingState />
-        </View>
-      )}
+      {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
 
       {/* Main Content - only render when not refreshing */}
       {!isRefreshing && (
@@ -250,7 +235,7 @@ export default function ResidentRejected() {
             />
           }
           ListFooterComponent={() =>
-            isFetching && isLoadMore ? (
+            isFetching ? (
               <View className="py-4 items-center">
                 <ActivityIndicator size="small" color="#3B82F6" />
                 <Text className="text-xs text-gray-500 mt-2">
