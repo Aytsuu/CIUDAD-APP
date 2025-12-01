@@ -213,6 +213,9 @@ AUTH_USER_MODEL = 'account.Account'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    '192.168.100.6',
+    '192.168.100.8',
+    '192.168.254.101',
     'ciudad-app-server-1.onrender.com',
     '10.72.7.53'
 ]
