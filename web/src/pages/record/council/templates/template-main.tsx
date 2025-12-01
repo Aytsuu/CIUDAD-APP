@@ -1490,7 +1490,7 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
       `ADDRESS              :            /*${getFormattedAddress(address)}*/\n\n` +
       "This certification is being issued upon the request of the above mentioned name to support the application for the /*BANK REQUIREMENTS PURPOSES ONLY.*/  " +
       "Affixed below is the name and signature of the above-mentioned name.\n\n" +
-      "Issued this [DAY[st/nd/rd/th]] day of [YEAR] [MONTH] of Barangay San Roque Ciudad, Cebu City, Philippines."
+      `Issued this /*${FormattedIssuanceDate}*/ of Barangay San Roque Ciudad, Cebu City, Philippines.`
     },     
     {
       temp_id: "Employment",

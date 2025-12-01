@@ -71,10 +71,10 @@ function CertificatePage() {
     queryFn: getAllPurposes,
   });
 
-  // Filter purposes to show all non-archived purposes (for both resident and non-resident certificates)
+  // Filter purposes to show only Personal category and non-archived purposes
   const personalPurposes = useMemo(() => {
     return allPurposes
-      .filter(purpose => !purpose.pr_is_archive)
+      .filter(purpose => !purpose.pr_is_archive && purpose.pr_category === "Personal")
       .map(purpose => ({
         id: purpose.pr_purpose, // Use actual purpose name for backend matching
         name: purpose.pr_purpose
@@ -406,6 +406,37 @@ function CertificatePage() {
 
     if (viewingCertificate && selectedStaffId) {
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
+      const purpose = viewingCertificate.req_purpose?.toLowerCase() || "";
+      
+      // Purposes that DON'T need purpose input (have hardcoded purpose text in template)
+      const purposesWithoutInput = [
+        "identification",
+        "loan",
+        "sss",
+        "bir",
+        "bank requirement",
+        "electrical connection",
+        "mcwd requirements",
+        "scholarship",
+        "postal id",
+        "nbi",
+        "board examination",
+        "tesda",
+        "pwd identification",
+        "senior citizen identification",
+        "senior citizen financial assistance",
+        "bail bond",
+        "burial",
+        "building permit",
+        "business clearance",
+        "file action",
+        "barangay clearance",
+        "indigency (for minors)",
+        "barangay sinulog permit",
+        "barangay fiesta permit"
+      ];
+      
+      const needsPurposeInput = !purposesWithoutInput.includes(purpose);
   
       // Handle custody names - either from selection or manual input
       let custodies: string[] = [];
@@ -427,7 +458,7 @@ function CertificatePage() {
       const certDetails: ExtendedCertificate = {
         ...viewingCertificate,
         AsignatoryStaff: selectedStaff?.name,
-        SpecificPurpose: purposeInput,
+        SpecificPurpose: needsPurposeInput ? purposeInput : undefined,
         custodyChildren: custodies,
         // BURIAL fields
         deceasedName: deceasedName || undefined,
@@ -867,14 +898,53 @@ function CertificatePage() {
                   />   
                 </div>      
 
-                <Label className="pb-1">Purpose</Label>           
-                <div className="w-full pb-3">
-                  <Input 
-                    placeholder="Specify Purpose"
-                    value={purposeInput} 
-                    onChange={(e) => setPurposeInput(e.target.value)}
-                  />
-                </div>
+                {/* Purpose field - Only show for purposes that use specificPurpose in template */}
+                {(() => {
+                  const purpose = viewingCertificate?.req_purpose?.toLowerCase() || "";
+                  // Purposes that DON'T need purpose input (have hardcoded purpose text in template)
+                  const purposesWithoutInput = [
+                    "identification",
+                    "loan",
+                    "sss",
+                    "bir",
+                    "bank requirement",
+                    "electrical connection",
+                    "mcwd requirements",
+                    "scholarship",
+                    "postal id",
+                    "nbi",
+                    "board examination",
+                    "tesda",
+                    "pwd identification",
+                    "senior citizen identification",
+                    "senior citizen financial assistance",
+                    "bail bond",
+                    "burial",
+                    "building permit",
+                    "business clearance",
+                    "file action",
+                    "barangay clearance",
+                    "indigency (for minors)",
+                    "barangay sinulog permit",
+                    "barangay fiesta permit"
+                  ];
+                  
+                  // Only show purpose input if the purpose is NOT in the list above
+                  const needsPurposeInput = !purposesWithoutInput.includes(purpose);
+                  
+                  return needsPurposeInput ? (
+                    <>
+                      <Label className="pb-1">Purpose</Label>           
+                      <div className="w-full pb-3">
+                        <Input 
+                          placeholder="Specify Purpose"
+                          value={purposeInput} 
+                          onChange={(e) => setPurposeInput(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  ) : null;
+                })()}
 
                
                 {/* BURIAL FIELDS */}
@@ -1082,7 +1152,37 @@ function CertificatePage() {
                   <Button 
                     type="button" 
                     onClick={handleViewFile2} 
-                    disabled={!selectedStaffId || !purposeInput} 
+                    disabled={(() => {
+                      const purpose = viewingCertificate?.req_purpose?.toLowerCase() || "";
+                      const purposesWithoutInput = [
+                        "identification",
+                        "loan",
+                        "sss",
+                        "bir",
+                        "bank requirement",
+                        "electrical connection",
+                        "mcwd requirements",
+                        "scholarship",
+                        "postal id",
+                        "nbi",
+                        "board examination",
+                        "tesda",
+                        "pwd identification",
+                        "senior citizen identification",
+                        "senior citizen financial assistance",
+                        "bail bond",
+                        "burial",
+                        "building permit",
+                        "business clearance",
+                        "file action",
+                        "barangay clearance",
+                        "indigency (for minors)",
+                        "barangay sinulog permit",
+                        "barangay fiesta permit"
+                      ];
+                      const needsPurposeInput = !purposesWithoutInput.includes(purpose);
+                      return !selectedStaffId || (needsPurposeInput && !purposeInput);
+                    })()} 
                   >
                     Proceed
                   </Button>
