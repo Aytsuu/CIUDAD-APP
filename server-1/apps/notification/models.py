@@ -51,4 +51,3 @@ class Recipient(models.Model):
         
     def __str__(self):
         return f"Recipient {self.rec_id} - {self.acc.username}"
-        

@@ -62,20 +62,16 @@ export default function FamilyPlanningForm({
   // const patientId = formData?.pat_id
   // const { data: obstetricalData } = useObstetricalHistoryData(patientId)
 
-  // useEffect(() => {
-  //   if (obstetricalData?.livingChildren !== undefined) {
-  //     form.setValue("numOfLivingChildren", obstetricalData.livingChildren)
+ 
+  //  useEffect(() => {
+  //   if (formData.obstetricalHistory?.numOfLivingChildren !== undefined) {
+  //     form.setValue("numOfLivingChildren", formData.obstetricalHistory.numOfLivingChildren);
   //     updateFormData({
   //       ...form.getValues(),
-  //       numOfLivingChildren: obstetricalData.livingChildren,
-  //       obstetricalHistory: {
-  //         ...form.getValues().obstetricalHistory,
-  //         numOfLivingChildren: obstetricalData.livingChildren,
-  //       },
-  //     })
+  //       numOfLivingChildren: formData.obstetricalHistory.numOfLivingChildren,
+  //     });
   //   }
-  // }, [obstetricalData, updateFormData])
-
+  // }, [formData.obstetricalHistory?.numOfLivingChildren, form, updateFormData]);
 
   useEffect(() => {
     if (patientGender && !isPatientPreSelected) {
@@ -101,7 +97,21 @@ export default function FamilyPlanningForm({
 
   const [commodities, setCommodities] = useState<FormattedCommodity[]>([])
   const [loadingCommodities, setLoadingCommodities] = useState(false)
+const { setValue, getValues } = form
+  const watchedNumOfLivingChildren = form.watch("numOfLivingChildren")
 
+  // 💡 ADD THIS useEffect TO SYNC THE FIELDS
+  useEffect(() => {
+    // Get the current value from the *other* field
+    const currentObsValue = getValues("obstetricalHistory.numOfLivingChildren")
+    // Coerce the watched value to a number, defaulting to 0
+    const newNumValue = watchedNumOfLivingChildren || 0
+
+    // Only update if they are different to prevent unnecessary re-renders
+    if (currentObsValue !== newNumValue) {
+      setValue("obstetricalHistory.numOfLivingChildren", newNumValue)
+    }
+  }, [watchedNumOfLivingChildren, setValue, getValues]) // Dependencies
   // Set selected patient ID if pre-selected
   useEffect(() => {
     if (isPatientPreSelected && formData.pat_id) {
@@ -227,12 +237,12 @@ export default function FamilyPlanningForm({
 
       const requests = [
         api2.get(`familyplanning/body-measurements/${realPatId}`).catch(() => ({ data: {} })),
-        api2.get(`familyplanning/obstetrical-history/${realPatId}/`).catch(() => ({ data: {} })),
+        // api2.get(`familyplanning/obstetrical-history/${realPatId}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/last-previous-pregnancy/${realPatId}/`).catch(() => ({ data: {} })),
         api2.get(`familyplanning/patient-details/${realPatId}`).catch(() => ({ data: {} }))
       ];
-      const [bodyMeasurementsResponse, obsHistoryResponse, lastPrevPregResponse, personalResponse] = await Promise.all(requests);
-      console.log("Body measurement: ", bodyMeasurementsResponse)
+      const [bodyMeasurementsResponse, lastPrevPregResponse, personalResponse] = await Promise.all(requests);
+      // console.log("Body measurement: ", bodyMeasurementsResponse)
       const fullName = `${patientData.personal_info?.per_lname || ""}, ${patientData.personal_info?.per_fname || ""} ${patientData.personal_info?.per_mname || ""}`.trim();
       const spouseData = patientData.spouse_info?.spouse_info;
 
@@ -254,22 +264,25 @@ export default function FamilyPlanningForm({
         pat_id: patientData.pat_id || id,
         lastName: patientData.personal_info?.per_lname || "",
         givenName: patientData.personal_info?.per_fname || "",
-        client_id: patientData.client_id || "",
+        client_id: personalResponse.data?.client_id || "",
         middleInitial: (patientData.personal_info?.per_mname ? patientData.personal_info.per_mname[0] : "") || "",
         dateOfBirth: patientData.personal_info?.per_dob || "",
         gender: patientData.personal_info?.per_sex || "",
         obstetricalHistory: {
-          ...(obsHistoryResponse.data || {}),
-          livingChildren: obsHistoryResponse.data?.livingChildren || 0
+          ...(personalResponse.data?.obstetricalHistory || {}),
+          numOfLivingChildren: personalResponse.data?.obstetricalHistory?.livingChildren || 0
         },
-        height: bodyMeasurementsResponse.data?.height || 0,
-        weight: bodyMeasurementsResponse.data?.weight || 0,
-        bodyMeasurementRecordedAt: bodyMeasurementsResponse.data?.recorded_at || "",
+        numOfLivingChildren: personalResponse?.data?.numOfLivingChildren || 0,
+        height: bodyMeasurementsResponse.data?.body_measurement?.height || 0,
+        weight: bodyMeasurementsResponse.data?.body_measurement?.weight || 0,
+        avg_monthly_income: personalResponse.data?.avg_monthly_income || "",
+        bodyMeasurementRecordedAt: bodyMeasurementsResponse.data?.body_measurement?.created_at || "",
         philhealthNo: personalResponse.data?.philhealthNo || "",
         nhts_status: personalResponse.data?.nhts_status || false,
         fourps: personalResponse.data?.fourps || false,
+        plan_more_children: personalResponse.data?.plan_more_children || false,
         educationalAttainment: personalResponse.data?.educationalAttainment || "",
-        occupation: personalResponse.data?.ocupation || "", // Note: there's a typo in the original (ocupation vs occupation)
+        occupation: personalResponse.data?.occupation || "",
         acknowledgement: {
           ...formData.acknowledgement,
           clientName: fullName,
@@ -280,8 +293,8 @@ export default function FamilyPlanningForm({
         lastDeliveryDate: lastPrevPregResponse.data?.last_delivery_date || "",
         typeOfLastDelivery: lastPrevPregResponse.data?.last_delivery_type || "",
       };
-      console.log("New form data:", newFormData); // Debug log
-      console.log("Final form data address:", newFormData.address); // Debug log
+      // console.log("New form data:", newFormData); // Debug log
+      // console.log("Final form data address:", newFormData.address); // Debug log
 
       if (newFormData.methodCurrentlyUsed) {
         setOriginalMethod(newFormData.methodCurrentlyUsed);
@@ -314,6 +327,7 @@ export default function FamilyPlanningForm({
       subTypeOfClient === "changingclinic" ||
       subTypeOfClient === "dropoutrestart");
 
+  
   useEffect(() => {
     if (dateOfBirth) {
       form.setValue("age", calculateAge(dateOfBirth))
@@ -374,7 +388,7 @@ export default function FamilyPlanningForm({
         const pageSize = firstPageData.results.length;
         const totalPages = Math.ceil(totalCount / pageSize);
 
-        console.log(`Total commodities: ${totalCount}, Pages: ${totalPages}`);
+        // console.log(`Total commodities: ${totalCount}, Pages: ${totalPages}`);
 
         // Create array of promises for all pages
         const pagePromises = [Promise.resolve(firstPageResponse)];
@@ -391,10 +405,9 @@ export default function FamilyPlanningForm({
           response.data.results || []
         );
 
-        console.log("All commodities fetched:", allCommodities);
-        console.log("Total commodities count:", allCommodities.length);
+        // console.log("All commodities fetched:", allCommodities);
+        // console.log("Total commodities count:", allCommodities.length);
 
-        // ... rest of the filtering and formatting logic remains the same
         let filteredCommodities = allCommodities;
 
         // Apply filters (same as above)
@@ -444,6 +457,7 @@ export default function FamilyPlanningForm({
   }, [typeOfClient, subTypeOfClient, watchedGender, patientGender]);
 
 
+  
   const onSubmit = async (data: FormData) => {
     const currentValues = form.getValues()
 
@@ -951,7 +965,7 @@ export default function FamilyPlanningForm({
                           </FormLabel>
                           <Combobox
                             options={commodities}
-                            value={field.value}
+                            value={field.value || ""}
                             onChange={(value) => {
                               field.onChange(value)
                               if (value !== "Others") {
@@ -986,7 +1000,7 @@ export default function FamilyPlanningForm({
                           <FormLabel>Method Accepted (New Acceptor)</FormLabel>
                           <Combobox
                             options={commodities}
-                            value={field.value}
+                            value={field.value || ""}
                             onChange={(value) => {
                               field.onChange(value)
                               if (value !== "others") {

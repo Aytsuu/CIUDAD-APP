@@ -8,11 +8,11 @@
       scheme: "myapp",
       userInterfaceStyle: "automatic",
       newArchEnabled: true,
-      // splash: {
-      //   image: "./assets/images/CIUDADLogo.svg",
-      //   resizeMode: "contain",
-      //   backgroundColor: "#ffffff"
-      // },
+      splash: {
+        image: "./assets/images/app_icon.png",
+        resizeMode: "contain",
+        backgroundColor: "#ffffff"
+      },
       ios: {
         supportsTablet: true
       },
@@ -32,15 +32,15 @@
       },
       plugins: [
         "expo-router",
-        // [
-        //   "expo-splash-screen",
-        //   {
-        //     image: "./assets/images/splash-icon.png",
-        //     imageWidth: 200,
-        //     resizeMode: "contain",
-        //     backgroundColor: "#ffffff"
-        //   }
-        // ],
+        [
+          "expo-splash-screen",
+          {
+            image: "./assets/images/app_icon.png",
+            imageWidth: 200,
+            resizeMode: "contain",
+            backgroundColor: "#ffffff"
+          }
+        ],
         [
           "expo-dev-client",
           {
@@ -85,9 +85,9 @@
         router: {
           origin: false
         },
-        eas: {
-          projectId: "5aa2b834-edb9-49fb-a116-9fcdd9133d03"
-        }
+        // eas: {
+        //   projectId: "5aa2b834-edb9-49fb-a116-9fcdd9133d03"
+        // }
       }
     }
   });

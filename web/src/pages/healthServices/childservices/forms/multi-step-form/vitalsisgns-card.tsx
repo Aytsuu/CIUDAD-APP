@@ -1,12 +1,75 @@
 "use client";
 import { Button } from "@/components/ui/button/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UseFormHandleSubmit, Control } from "react-hook-form";
+import { UseFormHandleSubmit, Control, useWatch } from "react-hook-form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { FormTextArea } from "@/components/ui/form/form-text-area";
-import { FormField, FormItem, FormControl, FormLabel } from "@/components/ui/form/form";
+import { FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form/form";
 import { isToday } from "@/helpers/isToday";
+import { useState, useEffect } from "react";
+
+// Temperature validation function
+const validateTemperature = (temp: number | undefined): string | null => {
+  if (temp === undefined || temp === null) return null;
+  
+  const tempNum = Number(temp);
+  if (isNaN(tempNum)) return null;
+  
+  if (tempNum < 25) {
+    return "Warning: Temperature indicates critical hypothermia risk";
+  } else if (tempNum > 43) {
+    return "Warning: Temperature indicates critical hyperthermia risk";
+  } else if (tempNum < 36.1 || tempNum > 37.2) {
+    return "Note: Temperature outside normal range (36.1°C - 37.2°C)";
+  }
+  
+  return null;
+};
+
+// Custom temperature input component with validation
+const TemperatureInputWithValidation = ({ control, name, label, readOnly = false }: any) => {
+  const tempValue = useWatch({ control, name });
+  const [temperatureWarning, setTemperatureWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    // If tempValue is an object (e.g., { temp: 36.5 }), extract the value
+    const temp =
+      typeof tempValue === "object" && tempValue !== null
+        ? tempValue.temp
+        : tempValue;
+    const warning = validateTemperature(temp);
+    setTemperatureWarning(warning);
+  }, [tempValue]);
+
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <FormControl>
+            <FormInput
+              {...field}
+              control={control}
+              type="number"
+              step={0.1}
+              placeholder="Enter temperature"
+              readOnly={readOnly}
+              
+            />
+          </FormControl>
+          {temperatureWarning && (
+            <FormMessage className="text-amber-600 font-medium">
+              {temperatureWarning}
+            </FormMessage>
+          )}
+        </FormItem>
+      )}
+    />
+  );
+};
 
 // Reusable Form Component
 interface VitalSignFormCardProps {
@@ -32,6 +95,13 @@ export const VitalSignFormCard = ({
   isReadOnly = false,
   allowNotesEdit = false
 }: VitalSignFormCardProps) => {
+  // Watch the is_opt field to conditionally show remarks
+  const isOptChecked = useWatch({
+    control,
+    name: "is_opt",
+    defaultValue: false
+  });
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <div className="space-y-4">
@@ -70,12 +140,10 @@ export const VitalSignFormCard = ({
             placeholder="Enter weight" 
             readOnly={isReadOnly}
           />
-          <FormInput 
+          <TemperatureInputWithValidation 
             control={control} 
             name="temp" 
             label="Temperature (°C)" 
-            type="number" 
-            placeholder="Enter temperature" 
             readOnly={isReadOnly}
           />
         </div>
@@ -98,24 +166,37 @@ export const VitalSignFormCard = ({
           )}
         />
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormTextArea 
-            control={control} 
-            name="remarks" 
-            label="Remarks" 
-            placeholder="Enter remarks" 
-            rows={2} 
-            readOnly={isReadOnly}
-          />
-          <FormTextArea 
-            control={control} 
-            name="notes" 
-            label="Notes" 
-            placeholder="Enter notes" 
-            rows={2} 
-            readOnly={!allowNotesEdit && isReadOnly}
-          />
-        </div>
+        {isOptChecked ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormTextArea 
+              control={control} 
+              name="remarks" 
+              label="Remarks" 
+              placeholder="Enter remarks" 
+              rows={2} 
+              readOnly={isReadOnly}
+            />
+            <FormTextArea 
+              control={control} 
+              name="notes" 
+              label="Notes" 
+              placeholder="Enter notes" 
+              rows={2} 
+              readOnly={!allowNotesEdit && isReadOnly}
+            />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            <FormTextArea 
+              control={control} 
+              name="notes" 
+              label="Notes" 
+              placeholder="Enter notes" 
+              rows={2} 
+              readOnly={!allowNotesEdit && isReadOnly}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormDateTimeInput 
@@ -143,6 +224,7 @@ export const VitalSignFormCard = ({
 export const ViewCard = ({ data, onEdit, allowNotesEdit = false }: { data: any; index: number; onEdit: () => void; allowNotesEdit?: boolean }) => {
   const isTodayDate = isToday(data.date);
   const canEdit = allowNotesEdit;
+  const temperatureWarning = validateTemperature(data.temp);
 
   return (
     <div className="space-y-3">
@@ -168,7 +250,14 @@ export const ViewCard = ({ data, onEdit, allowNotesEdit = false }: { data: any; 
         </div>
         <div className="space-y-1">
           <div className="text-gray-600">Temperature</div>
-          <div className="font-medium">{data.temp ? `${data.temp} °C` : "-"}</div>
+          <div className="font-medium">
+            {data.temp ? `${data.temp} °C` : "-"}
+            {temperatureWarning && (
+              <div className="text-xs text-amber-600 mt-1 font-medium">
+                {temperatureWarning}
+              </div>
+            )}
+          </div>
         </div>
         <div className="space-y-1">
           <div className="text-gray-600">Height</div>
@@ -180,7 +269,20 @@ export const ViewCard = ({ data, onEdit, allowNotesEdit = false }: { data: any; 
         </div>
       </div>
 
-      {data.remarks && (
+      {data.is_opt && (
+        <div className="border-t pt-3">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-4 w-4 rounded bg-blue-100 flex items-center justify-center">
+              <svg className="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <span className="text-sm font-medium text-blue-700">OPT Tracking Enabled</span>
+          </div>
+        </div>
+      )}
+
+      {data.remarks && data.is_opt && (
         <div className="border-t pt-3">
           <div className="text-sm text-gray-600">Remarks</div>
           <p className="text-sm whitespace-pre-wrap">{data.remarks}</p>

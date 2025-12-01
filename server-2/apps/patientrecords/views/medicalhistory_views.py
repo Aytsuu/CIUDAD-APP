@@ -40,3 +40,6 @@ class DeleteMedicalHistoryByPatrecView(APIView):
         if deleted_count > 0:
             return Response({"message": f"Deleted {deleted_count} medical history record(s)."}, status=status.HTTP_204_NO_CONTENT)
         return Response({"message": "No medical history records found."}, status=status.HTTP_404_NOT_FOUND)
+    
+
+    

@@ -55,9 +55,9 @@ export const VaccineColumns = (
       const vaccine = row.original;
       const doseDetails = vaccine.doseDetails;
 
-      if (doseDetails.length === 0) {
-        return <div className="text-sm text-gray-500">N/A</div>;
-      }
+      // if (doseDetails.length === 0) {
+      //   return <div className="text-sm text-gray-500">N/A</div>;
+      // }
 
       return (
         <div className="flex flex-col gap-1">

@@ -1,38 +1,42 @@
-// pendingAppointment.tsx
+// pendingAppointment.tsx - Updated to work with resident appointments
 import { useAuth } from "@/contexts/AuthContext";
-import { useAllFollowUpVisits } from "./fetch";
+import { useAppointmentsByResidentId } from "./fetch";
 import { useMemo } from "react";
-import { LoadingState } from "@/components/ui/loading-state";
 
 export const usePendingAppointments = () => {
   const { user } = useAuth();
   const rp_id = user?.rp;
-  const { data: appointmentsData, isLoading, error } = useAllFollowUpVisits({
-    page_size: 1000
-  });
+  
+  const { data: appointmentsData, isLoading, error } = useAppointmentsByResidentId(rp_id || "");
 
-  if (isLoading){
-    return <LoadingState/>
-  }
-  // Calculate pending count for current user
+  // Calculate pending count for current user from all appointment types
   const pendingCount = useMemo(() => {
-    if (!appointmentsData?.results || !rp_id) return 0;
+    if (!appointmentsData || !rp_id) return 0;
     
-    // console.log('All appointments:', appointmentsData.results);
-    console.log('Current user ID:', rp_id);
-    
-    const userPendingAppointments = appointmentsData.results.filter((appointment: any) => {
-      const patientId = appointment.patient_details?.pat_id;
-      const isForCurrentUser = patientId === rp_id;
-      const isPending = appointment.followv_status?.toLowerCase() === 'pending';
-      
-      console.log(`Appointment ${appointment.followv_id}: patientId=${patientId}, isForCurrentUser=${isForCurrentUser}, status=${appointment.followv_status}, isPending=${isPending}`);
-      
-      return isForCurrentUser && isPending;
-    });
-    
-    console.log('User pending appointments count:', userPendingAppointments.length);
-    return userPendingAppointments.length;
+    let count = 0;
+
+    // Count pending follow-up appointments
+    if (appointmentsData.follow_up_appointments) {
+      count += appointmentsData.follow_up_appointments.filter(
+        (appointment: any) => appointment.followv_status?.toLowerCase() === 'pending'
+      ).length;
+    }
+
+    // Count pending medical consultation appointments
+    if (appointmentsData.med_consult_appointments) {
+      count += appointmentsData.med_consult_appointments.filter(
+        (appointment: any) => appointment.status?.toLowerCase() === 'pending'
+      ).length;
+    }
+
+    // Count pending prenatal appointments
+    if (appointmentsData.prenatal_appointments) {
+      count += appointmentsData.prenatal_appointments.filter(
+        (appointment: any) => appointment.status?.toLowerCase() === 'pending'
+      ).length;
+    }
+
+    return count;
   }, [appointmentsData, rp_id]);
 
   return { pendingCount, isLoading, error };

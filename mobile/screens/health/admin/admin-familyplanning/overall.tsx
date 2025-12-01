@@ -11,6 +11,7 @@ import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { debounce } from "lodash";
 import { TabBar, TabType } from "../components/tab-bar";
+import { StatusBadge } from "../components/status-badge";
 
 interface FPRecord {
   fprecord_id: number;
@@ -31,75 +32,6 @@ interface FPPatientsCount {
   resident_fp_patients: number;
   transient_fp_patients: number;
 }
-
-// type TabType = "all" | "Resident" | "Transient";
-
-// Components
-const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
-  const getTypeConfig = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'resident':
-        return {
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
-        };
-      case 'transient':
-        return {
-          color: 'text-amber-700',
-          bgColor: 'bg-amber-100',
-          borderColor: 'border-amber-200',
-        };
-      default:
-        return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
-        };
-    }
-  };
-
-  const typeConfig = getTypeConfig(type);
-  return (
-    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>
-        {type}
-      </Text>
-    </View>
-  );
-};
-
-// const TabBar: React.FC<{
-//   activeTab: TabType;
-//   setActiveTab: (tab: TabType) => void;
-// }> = ({ activeTab, setActiveTab }) => (
-//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-//     <TouchableOpacity
-//       onPress={() => setActiveTab('all')}
-//       className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-//     >
-//       <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-//         All
-//       </Text>
-//     </TouchableOpacity>
-//     <TouchableOpacity
-//       onPress={() => setActiveTab('Resident')}
-//       className={`flex-1 items-center py-3 ${activeTab === 'Resident' ? 'border-b-2 border-blue-600' : ''}`}
-//     >
-//       <Text className={`text-sm font-medium ${activeTab === 'Resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-//         Residents
-//       </Text>
-//     </TouchableOpacity>
-//     <TouchableOpacity
-//       onPress={() => setActiveTab('Transient')}
-//       className={`flex-1 items-center py-3 ${activeTab === 'Transient' ? 'border-b-2 border-blue-600' : ''}`}
-//     >
-//       <Text className={`text-sm font-medium ${activeTab === 'Transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-//         Transients
-//       </Text>
-//     </TouchableOpacity>
-//   </View>
-// );
 
 const FPRecordCard: React.FC<{
   record: FPRecord;
@@ -133,14 +65,14 @@ const FPRecordCard: React.FC<{
       </View>
 
       {/* Details */}
-      <View className="p-4">
+      {/* <View className="p-4">
         <View className="flex-row items-center">
           <FileText size={16} color="#6B7280" />
           <Text className="ml-2 text-gray-600 text-sm">
             Client Type: <Text className="font-medium text-gray-900">{record.client_type}</Text>
           </Text>
         </View>
-      </View>
+      </View> */}
     </TouchableOpacity>
   );
 };

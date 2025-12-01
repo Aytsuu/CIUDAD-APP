@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Link } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, Search, RefreshCw, FileInput } from "lucide-react";
+import { ArrowUpDown, Search, RefreshCw } from "lucide-react";
 import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
 import PregnantWomanIcon from "@mui/icons-material/PregnantWoman";
 
@@ -20,11 +20,16 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useLoading } from "@/context/LoadingContext";
 import ViewButton from "@/components/ui/view-button";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import TableLoading from "../../table-loading";
+import { ExportButton } from "@/components/ui/export";
+import TableLoading from "@/components/ui/table-loading";
 
 import { useMaternalRecords, useMaternalCounts } from "../queries/maternalFetchQueries";
+import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+
 import { capitalize } from "@/helpers/capitalize";
 import { useDebounce } from "@/hooks/use-debounce";
+import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
 
 interface maternalRecords {
     pat_id: string;
@@ -50,10 +55,19 @@ interface maternalRecords {
 
     pat_type: "Transient" | "Resident";
     patrec_type?: string;
-    pregnancy_count?: number;
+    additional_info?: {
+      latest_pregnancy?: {
+        pregnancy_status?: string
+      }
+    }
   }
 
 export default function MaternalAllRecords() {
+  // Sitio filter state
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  const { data: sitioData, isLoading: isSitiosLoading } = useSitioList();
+  const sitios = sitioData || [];
+
   const [isRefetching, setIsRefetching] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
@@ -64,11 +78,26 @@ export default function MaternalAllRecords() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
 
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, selectedFilter, selectedSitios]);
+
+  // Build the combined search query that includes selected sitios
+  const combinedSearchQuery = useMemo(() => {
+    let query = debouncedSearchTerm || "";
+    if (selectedSitios.length > 0) {
+      const sitioQuery = selectedSitios.join(",");
+      query = query ? `${query},${sitioQuery}` : sitioQuery;
+    }
+    return query || "";
+  }, [debouncedSearchTerm, selectedSitios]);
+
   // useMaternalRecords expects (page, pageSize, searchQuery, status)
   const { data: maternalRecordsData, isLoading, refetch } = useMaternalRecords(
     page,
     pageSize,
-    debouncedSearchTerm,
+    combinedSearchQuery,
     selectedFilter,
   );
   const { data: maternalCountsData } = useMaternalCounts();
@@ -103,6 +132,16 @@ export default function MaternalAllRecords() {
     setPageSize(newPageSize)
     setPage(1) 
   }
+
+  // Sitio filter handlers
+  const handleSitioSelection = (sitioName: string, checked: boolean) => {
+    setSelectedSitios((prev) =>
+      checked ? [...prev, sitioName] : prev.filter((s) => s !== sitioName)
+    );
+  };
+  const handleSelectAllSitios = (checked: boolean) => {
+    setSelectedSitios(checked ? sitios.map((s: any) => s.sitio_name) : []);
+  };
   
   const calculateAge = (dob: string): number => {
     const birthDate = new Date(dob);
@@ -157,6 +196,11 @@ export default function MaternalAllRecords() {
           add_sitio: address?.add_sitio || "Not Provided",
         },
         pat_type: record.pat_type || "N/A",
+        additional_info: {
+          latest_pregnancy: {
+            pregnancy_status: record.additional_info?.latest_pregnancy?.pregnancy_status || "N/A"
+          }
+        }
       };
     });
   }, [maternalRecordsData]);
@@ -204,7 +248,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "address",
-      size: 300,
+      size: 280,
       header: ({ column }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
@@ -251,9 +295,34 @@ export default function MaternalAllRecords() {
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
+          <div className={getPatType(row.original.pat_type)}>{row.original.pat_type}</div>
         </div>
       ),
+    },
+    {
+      accessorKey: "pregnancy_status",
+      header: "Current Pregnancy Status",
+      cell: ({ row }) => {
+        const status = row.original.additional_info?.latest_pregnancy?.pregnancy_status || "N/A";
+        const normalizedStatus = status?.toLowerCase() || "";
+        const displayStatus = capitalize(status) || "N/A";
+        
+        // Determine badge color based on status
+        let badgeColor = "bg-green-500"; // Default for completed, N/A
+        if (normalizedStatus === "active") {
+          badgeColor = "bg-pink-500";
+        } else if (normalizedStatus === "pregnancy loss") {
+          badgeColor = "bg-red-500";
+        }
+        
+        return (
+          <div className="flex justify-center">
+            <div className={`${badgeColor} rounded-xl min-w-24 text-white px-2 py-1 text-center`}>
+              {displayStatus}
+            </div>
+          </div>
+        );
+      }
     },
     {
       accessorKey: "action",
@@ -297,6 +366,45 @@ export default function MaternalAllRecords() {
         </>
       ),
     },
+  ];
+
+  // export columns
+  const exportColumns = [
+    { key: "pat_id", header: "Patient ID" },
+    { 
+      key: "patient", 
+      header: "Patient Name",
+      format: (row: maternalRecords) => 
+        `${row.personal_info.per_lname}, ${row.personal_info.per_fname} ${row.personal_info.per_mname}`.trim()
+    },
+    { 
+      key: "age", 
+      header: "Age",
+      format: (row: maternalRecords) => `${row.age} ${row.personal_info.ageTime}`
+    },
+    { 
+      key: "sex", 
+      header: "Sex",
+      format: (row: maternalRecords) => row.personal_info.per_sex
+    },
+    { 
+      key: "address", 
+      header: "Address",
+      format: (row: maternalRecords) => {
+        const addressObj = row.address;
+        return addressObj
+          ? [addressObj.add_street, addressObj.add_barangay, addressObj.add_city, addressObj.add_province]
+              .filter(Boolean)
+              .join(", ") || "Unknown"
+          : "Unknown";
+      }
+    },
+    { 
+      key: "sitio", 
+      header: "Sitio",
+      format: (row: maternalRecords) => row.address?.add_sitio || "Not Provided"
+    },
+    { key: "pat_type", header: "Type" }
   ];
   
   // refetch handler
@@ -362,26 +470,37 @@ export default function MaternalAllRecords() {
               </Button>
             </div>
             <div className="flex w-full gap-x-2">
-              <div className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
-                  size={17}
-                />
-                <Input
-                  placeholder="Search..."
-                  className="pl-10 w-full bg-white"
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
+              <div className="relative flex-1 flex gap-2 items-center">
+                <div className="flex-1 relative">
+                  <Search
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black"
+                    size={17}
+                  />
+                  <Input
+                    placeholder="Search..."
+                    className="pl-10 w-full bg-white"
+                    value={searchTerm}
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                </div>
+                <FilterSitio
+                  sitios={sitios}
+                  isLoading={isSitiosLoading}
+                  selectedSitios={selectedSitios}
+                  onSitioSelection={handleSitioSelection}
+                  onSelectAll={handleSelectAllSitios}
                 />
               </div>
-              <SelectLayout
-                placeholder="Select filter"
-                label="All"
-                className="w-full md:w-[200px] bg-white text-black"
-                options={filter}
-                value={selectedFilter}
-                onChange={handleFilterChange}
-              />
+              <div className="">
+                  <SelectLayout
+                    placeholder="Select filter"
+                    className="w-full md:w-[200px] bg-white text-black"
+                    options={filter}
+                    value={selectedFilter}
+                    onChange={handleFilterChange}
+                  />
+              </div>
+              
             </div>
           </div>
 
@@ -418,19 +537,11 @@ export default function MaternalAllRecords() {
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ExportButton
+                data={transformData}
+                filename={`maternal-records-${new Date().toISOString().split("T")[0]}`}
+                columns={exportColumns}
+              />
             </div>
           </div>
           <div className="bg-white w-full min-h-20 overflow-x-auto">

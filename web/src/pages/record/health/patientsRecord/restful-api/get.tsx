@@ -86,7 +86,6 @@ export const getChildData = async (id: any): Promise<any> => {
 }
 
 
-
 export const getChildren = async (id:string) => {
 	try{
 		const res = await api2.get(`/patientrecords/parent-children/${id}/`);
@@ -97,3 +96,31 @@ export const getChildren = async (id:string) => {
 	}
 }
 	
+
+// fetch patient count
+export const getPatientCount = async () => {
+	try {
+		const res = await api2.get('/patientrecords/patients/count/');
+		return res.data;
+	} catch (error) {
+		console.error("Error fetching patient count:", error);
+		throw error;
+	}
+}
+
+// fetch patient update history (django-simple-history for Patient)
+export const getPatientHistory = async (patientId: string) => {
+	try {
+		const res = await api2.get('patientrecords/patient/history/', {
+			params: { pat_id: patientId }
+		});
+		return res.data || [];
+	} catch (error) {
+		console.error('Error fetching patient history:', error);
+		if (typeof error === 'object' && error !== null && 'response' in error) {
+			const err = error as { response: { status: number; data: any } };
+			console.error('Response status:', err.response.status);
+		}
+		throw error;
+	}
+}

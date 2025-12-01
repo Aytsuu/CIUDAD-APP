@@ -90,6 +90,7 @@ class FamilyHealthProfilingDetailView(APIView):
                     mother_health_info_obj = MotherHealthInfo.objects.filter(rp=resident, fam=family).first()
                     if mother_health_info_obj:
                         mother_health_info = {
+                            'mhi_id': mother_health_info_obj.mhi_id,
                             'health_risk_class': mother_health_info_obj.mhi_healthRisk_class,
                             'immunization_status': mother_health_info_obj.mhi_immun_status,
                             'family_planning_method': mother_health_info_obj.mhi_famPlan_method,
@@ -99,6 +100,7 @@ class FamilyHealthProfilingDetailView(APIView):
                 
                 member_data = {
                     'resident_id': resident.rp_id,
+                    'family_composition_id': composition.fc_id,
                     'role': composition.fc_role,
                     'personal_info': {
                         'first_name': resident.per.per_fname if resident.per else '',
@@ -130,6 +132,7 @@ class FamilyHealthProfilingDetailView(APIView):
                     duf = None
                 if duf:
                     member_data['under_five'] = {
+                        'duf_id': duf.duf_id,
                         'fic': duf.duf_fic,
                         'nutritional_status': duf.duf_nutritional_status,
                         'exclusive_bf': duf.duf_exclusive_bf,

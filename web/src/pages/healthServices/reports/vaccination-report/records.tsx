@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, Search, Loader2 } from "lucide-react";
-import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
+import { exportToCSV, exportToPDF } from "../export/export-report";
 import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
@@ -13,19 +13,27 @@ import { useVaccineReports } from "./queries/fetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { getOrdinalSuffix } from "@/helpers/getOrdinalSuffix";
-import { MonthlyVaccineRecord } from "./types";
+import { toTitleCase } from "@/helpers/ToTitleCase";
+import { calculateAge } from "@/helpers/ageCalculator";
 
-// Age calculation helper function
-const calculateAge = (dob: string, referenceDate: string) => {
-  const birthDate = new Date(dob);
-  const refDate = new Date(referenceDate);
-  let age = refDate.getFullYear() - birthDate.getFullYear();
-  const monthDiff = refDate.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && refDate.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
+// // Helper function to convert base64 to image file
+// const base64ToImageFile = async (base64Data: string, fileName: string): Promise<File | null> => {
+//   try {
+//     let dataUrl = base64Data;
+
+//     // If it's raw base64 without data URL prefix, add it
+//     if (base64Data.startsWith("iVBORw0KGgo")) {
+//       dataUrl = `data:image/png;base64,${base64Data}`;
+//     }
+
+//     const response = await fetch(dataUrl);
+//     const blob = await response.blob();
+//     return new File([blob], fileName, { type: "image/png" });
+//   } catch (error) {
+//     console.error("Error converting base64 to file:", error);
+//     return null;
+//   }
+// };
 
 export default function MonthlyVaccinationDetails() {
   const location = useLocation();
@@ -33,28 +41,31 @@ export default function MonthlyVaccinationDetails() {
     month: string;
     monthName: string;
     recordCount: number;
-    vaccineName?: string;
   };
 
   const navigate = useNavigate();
   const { showLoading, hideLoading } = useLoading();
   const [searchTerm, setSearchTerm] = useState("");
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(15);
   const [currentPage, setCurrentPage] = useState(1);
+  const [, setIsExporting] = useState(false);
 
-  const { month, monthName, vaccineName } = state || {};
+  const { month, monthName } = state || {};
 
-  // Auto-set search term when vaccineName is passed
-  useEffect(() => {
-    if (vaccineName) {
-      setSearchTerm(vaccineName);
-    }
-  }, [vaccineName]);
+  // Use the hook with pagination parameters
+  const { data: apiResponse, isLoading, error } = useVaccineReports(month, currentPage, pageSize, searchTerm);
 
-  const { data: apiResponse, isLoading, error } = useVaccineReports(month);
-  const monthlyData = apiResponse?.data as { records: MonthlyVaccineRecord[]; report: any } | undefined;
+  // Add a defensive check to ensure apiResponse is defined before accessing its properties
+  const responseData = apiResponse?.results || {};
+  const records = useMemo(() => responseData?.records || [], [responseData]);
 
-  const records = monthlyData?.records || [];
+  // Get pagination info from API response
+  const totalItems = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
+
+  // Calculate display range
+  const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalItems);
 
   useEffect(() => {
     if (isLoading) {
@@ -66,222 +77,210 @@ export default function MonthlyVaccinationDetails() {
 
   useEffect(() => {
     if (error) {
-      toast.error("Failed to fetch report");
-      toast("Retrying to fetch report...");
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      toast.error("Failed to fetch vaccination records");
     }
   }, [error]);
 
-  const filteredRecords = useMemo(() => {
-    if (!searchTerm) return records;
-
-    const searchLower = searchTerm.toLowerCase();
-    return records.filter((record: any) => {
-      const patientName = record.patient_name?.toLowerCase() || "";
-      const vaccineName = record.vaccine_name?.toLowerCase() || "";
-      const doseNumber = record.vachist_doseNo?.toString() || "";
-      const date = record.date_administered ? new Date(record.date_administered).toLocaleDateString().toLowerCase() : "";
-      const status = record.vachist_status?.toLowerCase() || "";
-
-      return patientName.includes(searchLower) || 
-             vaccineName.includes(searchLower) || 
-             doseNumber.includes(searchLower) || 
-             date.includes(searchLower) || 
-             status.includes(searchLower);
-    });
-  }, [records, searchTerm]);
-
-  // Calculate dynamic headers based on dose timeline keys from all records
-  const dynamicHeaders = useMemo(() => {
-    const baseHeaders = [ "Name", "DOB", "Vaccine Name"];
-    
-    // Collect all unique dose timeline keys from all records
-    const allDoseKeys = new Set<string>();
-    
-    records.forEach((record: any) => {
-      if (record.dose_timeline) {
-        Object.keys(record.dose_timeline).forEach(key => {
-          allDoseKeys.add(key);
-        });
-      }
-    });
-
-    // Convert dose keys to proper header format and sort by dose number
-    const doseHeaders = Array.from(allDoseKeys)
-      .map(key => {
-        // Extract dose number and create proper header
-        const doseNumber = parseInt(key.split('_')[0]);
-        return {
-          key,
-          header: `${getOrdinalSuffix(doseNumber)} Dose`,
-          doseNumber
-        };
-      })
-      .sort((a, b) => a.doseNumber - b.doseNumber)
-      .map(item => item.header);
-
-    return [...baseHeaders, ...doseHeaders, "Age at Vaccination"];
-  }, [records]);
-
-  // Get sorted dose keys for consistent column ordering
-  const sortedDoseKeys = useMemo(() => {
-    const allDoseKeys = new Set<string>();
-    
-    records.forEach((record: any) => {
-      if (record.dose_timeline) {
-        Object.keys(record.dose_timeline).forEach(key => {
-          allDoseKeys.add(key);
-        });
-      }
-    });
-
-    return Array.from(allDoseKeys)
-      .map(key => ({
-        key,
-        doseNumber: parseInt(key.split('_')[0])
-      }))
-      .sort((a, b) => a.doseNumber - b.doseNumber)
-      .map(item => item.key);
-  }, [records]);
-
-  // Total items count
-  const totalItems = filteredRecords.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
-
-  const paginatedRecords = useMemo(() => {
-    return filteredRecords.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  }, [filteredRecords, currentPage, pageSize]);
-
-  // Pagination info indexes
-  const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, totalItems);
-
   const prepareExportData = () => {
-    return filteredRecords.map((record: any) => {
-      // Base export data
-      const exportData: any = {
-        "Record ID": record.vachist_id || "",
-        "Record Date": record.created_at || "",
-        "Date Administered": record.date_administered ? new Date(record.date_administered).toLocaleDateString() : "",
-        Name: record.patient_name || "",
-        DOB: record.patient_dob ? new Date(record.patient_dob).toLocaleDateString() : "",
-        "Vaccine Name": record.vaccine_name || "",
-        "Age at Vaccination": record.patient_dob && record.date_administered ? calculateAge(record.patient_dob, record.date_administered) : "",
+    return records.map((record: any) => {
+      const patient = record.patient;
+      const personalInfo = patient?.personal_info;
+      const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ");
+      const address = patient?.address?.full_address || "N/A";
+      const vitalSigns = record.vital_signs;
+
+      return {
+        Date: record.date_administered ? new Date(record.date_administered).toLocaleDateString() : "N/A",
+        Name: toTitleCase(fullName || "N/A"),
+        DOB: personalInfo?.per_dob ? new Date(personalInfo.per_dob).toLocaleDateString() : "N/A",
+        Address: toTitleCase(address),
+        "Vaccine Name": record.vac_details?.vac_name || record.vaccine_stock?.vaccinelist?.vac_name || "N/A",
+        "Dose Number": record.vachist_doseNo ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose` : "N/A",
+        "Age at Vaccination": personalInfo?.per_dob && record.created_at ? calculateAge(personalInfo.per_dob, record.created_at) : "N/A",
         Status: record.vachist_status || "No status provided",
-        "Patient ID": record.patient_id || "",
-        "Patient Address": record.patient_address || "",
-        "Staff Name": record.staff_name || ""
+        "Follow-up Date": record.follow_up_visit?.followv_date ? new Date(record.follow_up_visit.followv_date).toLocaleDateString() : "N/A",
+        // Vital Signs
+        "BP Systolic": vitalSigns?.vital_bp_systolic || "N/A",
+        "BP Diastolic": vitalSigns?.vital_bp_diastolic || "N/A",
+        Temperature: vitalSigns?.vital_temp ? `${vitalSigns.vital_temp}°C` : "N/A",
+        "Respiratory Rate": vitalSigns?.vital_RR || "N/A",
+        "Oxygen Saturation": vitalSigns?.vital_o2 || "N/A",
+        "Pulse Rate": vitalSigns?.vital_pulse || "N/A",
+        "Vital Signs Taken": vitalSigns?.created_at ? new Date(vitalSigns.created_at).toLocaleDateString() : "N/A",
+        // Signature info
+        "Signature Available": record.signature ? "Yes" : "No",
       };
-
-      // Add dose timeline data to export with vaccination history ID
-      if (record.dose_timeline) {
-        sortedDoseKeys.forEach(doseKey => {
-          const doseData = record.dose_timeline[doseKey];
-          if (doseData) {
-            const doseNumber = parseInt(doseKey.split('_')[0]);
-            const suffix = getOrdinalSuffix(doseNumber);
-            exportData[`${doseNumber}${suffix} Dose - Date Administered`] = doseData.date || "";
-            exportData[`${doseNumber}${suffix} Dose - Record Date`] = doseData.created_at || "";
-          }
-        });
-      }
-
-      return exportData;
     });
   };
 
-  const handleExportCSV = () => {
-    const dataToExport = prepareExportData();
-    exportToCSV(dataToExport, `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+  const handleExportCSV = async () => {
+    try {
+      setIsExporting(true);
+      const dataToExport = prepareExportData();
+      exportToCSV(dataToExport, `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+      toast.success("CSV exported successfully");
+    } catch (error) {
+      toast.error("Failed to export CSV");
+      console.error("CSV export error:", error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  const handleExportExcel = () => {
-    const dataToExport = prepareExportData();
-    exportToExcel(dataToExport, `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+  const handleExportExcel = async () => {
+    try {
+      setIsExporting(true);
+
+      // Dynamically import xlsx library
+      const XLSX = await import("xlsx");
+
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+
+      // Prepare data for Excel
+      const excelData = records.map((record: any) => {
+        const patient = record.patient;
+        const personalInfo = patient?.personal_info;
+        const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ");
+        const address = patient?.address?.full_address || "N/A";
+        const vitalSigns = record.vital_signs;
+
+        return {
+          Date: record.date_administered ? new Date(record.date_administered).toLocaleDateString() : "N/A",
+          Name: toTitleCase(fullName || "N/A"),
+          DOB: personalInfo?.per_dob ? new Date(personalInfo.per_dob).toLocaleDateString() : "N/A",
+          Address: toTitleCase(address),
+          "Vaccine Name": record.vac_details?.vac_name || record.vaccine_stock?.vaccinelist?.vac_name || "N/A",
+          "Dose Number": record.vachist_doseNo ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose` : "N/A",
+          "Age at Vaccination": personalInfo?.per_dob && record.created_at ? calculateAge(personalInfo.per_dob, record.created_at) : "N/A",
+          Status: record.vachist_status || "No status provided",
+          "Follow-up Date": record.follow_up_visit?.followv_date ? new Date(record.follow_up_visit.followv_date).toLocaleDateString() : "N/A",
+          "BP Systolic": vitalSigns?.vital_bp_systolic || "N/A",
+          "BP Diastolic": vitalSigns?.vital_bp_diastolic || "N/A",
+          Temperature: vitalSigns?.vital_temp ? `${vitalSigns.vital_temp}°C` : "N/A",
+          "Respiratory Rate": vitalSigns?.vital_RR || "N/A",
+          "Oxygen Saturation": vitalSigns?.vital_o2 || "N/A",
+          "Pulse Rate": vitalSigns?.vital_pulse || "N/A",
+          "Vital Signs Taken": vitalSigns?.created_at ? new Date(vitalSigns.created_at).toLocaleDateString() : "N/A",
+          "Signature Available": record.signature ? "Yes" : "No",
+        };
+      });
+
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Vaccination Records");
+
+      // Generate Excel file and download
+      XLSX.writeFile(wb, `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (error) {
+      toast.error("Failed to export Excel");
+      console.error("Excel export error:", error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleExportPDF = () => {
-    exportToPDF(`vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}`);
+    exportToPDF("landscape");
   };
 
-  const tableRows = paginatedRecords.map((record: any) => {
-    // Calculate age using date_administered and patient DOB
-    const age = record.patient_dob && record.date_administered 
-      ? calculateAge(record.patient_dob, record.date_administered) 
-      : "";
+  // Function to handle signature image display
+  const renderSignature = (signatureData: string) => {
+    if (!signatureData) return "No Signature";
 
-    // Base row data - Use created_at for record date (when it was created)
-    const rowData = [
-      record.patient_name || "",
-      record.patient_dob ? new Date(record.patient_dob).toLocaleDateString() : "",
-      record.vaccine_name || "",
+    // Check if it's a base64 encoded image
+    if (signatureData.startsWith("data:image/") || signatureData.startsWith("iVBORw0KGgo")) {
+      return (
+        <img src={signatureData.startsWith("data:image/") ? signatureData : `data:image/png;base64,${signatureData}`} alt="Signature" className="h-5 w-18 object-contain " title="Patient Signature" />
+      );
+    }
+
+    return "Invalid Signature";
+  };
+
+  const tableHeader = ["Date", "Name", "DOB", "Address", "Vaccine Name", "Dose No.", "Age", "BP", "Temp", "Pulse", "O2 Sat", "Signature"];
+
+  const tableRows = records.map((record: any) => {
+    const patient = record.patient;
+    const personalInfo = patient?.personal_info;
+    const fullName = [personalInfo?.per_fname, personalInfo?.per_mname, personalInfo?.per_lname].filter(Boolean).join(" ");
+    const vitalSigns = record.vital_signs;
+
+    // Calculate age using created_at date and patient DOB
+    const age = personalInfo?.per_dob && record.created_at ? calculateAge(personalInfo.per_dob, record.created_at) : "N/A";
+
+    // Extract the full address
+    const address = patient?.address?.full_address || "N/A";
+
+    // Get vaccine name from either vac_details or vaccine_stock
+    const vaccineName = record.vac_details?.vac_name || record.vaccine_stock?.vaccinelist?.vac_name || "N/A";
+
+    // Format vital signs
+    const bloodPressure = vitalSigns ? `${vitalSigns.vital_bp_systolic || "N/A"}/${vitalSigns.vital_bp_diastolic || "N/A"}` : "N/A";
+    const temperature = vitalSigns?.vital_temp ? `${vitalSigns.vital_temp}°C` : "N/A";
+    const pulse = vitalSigns?.vital_pulse || "N/A";
+    const oxygenSaturation = vitalSigns?.vital_o2 || "N/A";
+
+    return [
+      record.date_administered ? new Date(record.date_administered).toLocaleDateString() : "N/A",
+      toTitleCase(fullName || "N/A"),
+      personalInfo?.per_dob ? new Date(personalInfo.per_dob).toLocaleDateString() : "N/A",
+      toTitleCase(address),
+      vaccineName,
+      record.vachist_doseNo ? `${getOrdinalSuffix(Number(record.vachist_doseNo))} dose` : "N/A",
+      age,
+      bloodPressure,
+      temperature,
+      pulse,
+      oxygenSaturation,
+      // Render signature as image or text
+      <div className="flex justify-center">{renderSignature(record.signature)}</div>,
     ];
-
-    // Add dose timeline data in consistent order
-    // Each dose shows: Date Administered (from date field in dose_timeline)
-    sortedDoseKeys.forEach(doseKey => {
-      const doseInfo = record.dose_timeline?.[doseKey];
-      if (doseInfo) {
-        // Display the date when the dose was administered
-        rowData.push(doseInfo.date ? new Date(doseInfo.date).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }) : "");
-      } else {
-        rowData.push("");
-      }
-    });
-
-    // Add age at the end
-    rowData.push(age);
-
-    return rowData;
   });
 
   return (
-    <div>
+    <div className="container mx-auto p-4">
       <div className="flex flex-col">
-        <div className="flex flex-col sm:flex-row gap-4 mb-4">
-          <Button className="text-black p-2 mb-2 self-start" variant={"outline"} onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-4 mb-4">
+          <Button className="text-black p-2" variant={"outline"} onClick={() => navigate(-1)}>
             <ChevronLeft />
           </Button>
-          <div className="flex-col items-center ">
+          <div className="flex flex-col">
             <h1 className="font-semibold text-xl sm:text-2xl text-darkBlue2">Monthly Vaccination Records</h1>
+            <p className="text-sm text-gray-600 mt-1">Month: {monthName}</p>
           </div>
         </div>
         <hr className="border-gray mb-5 sm:mb-8" />
 
         {/* Export Actions */}
-        <div className="bg-white p-4 border">
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <div className="flex-1 max-w-md">
+        <div className="bg-white p-4 border rounded-lg shadow-sm">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="w-full sm:w-auto sm:flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input 
-                  placeholder="Search records..." 
-                  className="pl-10 w-full" 
-                  value={searchTerm} 
+                <Input
+                  placeholder="Search by patient name, vaccine, dose..."
+                  className="pl-10 w-full"
+                  value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
                     setCurrentPage(1);
-                  }} 
+                  }}
                 />
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <ExportDropdown 
-                onExportCSV={handleExportCSV} 
-                onExportExcel={handleExportExcel} 
-                onExportPDF={handleExportPDF} 
-                className="border-gray-200 hover:bg-gray-50" 
-              />
+            <div className="w-full sm:w-auto flex justify-end">
+              <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:bg-gray-50" />
             </div>
           </div>
         </div>
 
         {/* Pagination Controls */}
-        <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50">
-          <div className="flex items-center gap-2">
+        <div className="px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50 border-x border-b rounded-b-lg">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <span className="text-sm text-gray-700">Show</span>
             <Select
               value={pageSize.toString()}
@@ -294,7 +293,7 @@ export default function MonthlyVaccinationDetails() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {[10, 25, 50, 100].map((size) => (
+                {[15].map((size) => (
                   <SelectItem key={size} value={size.toString()}>
                     {size}
                   </SelectItem>
@@ -304,74 +303,68 @@ export default function MonthlyVaccinationDetails() {
             <span className="text-sm text-gray-700">entries</span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-700">
-              Showing {startIndex} - {endIndex} of {totalItems} records
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+            <span className="text-sm text-gray-700 text-center">
+              Showing {startIndex} to {endIndex} of {totalItems} records
+              {searchTerm && ` for "${searchTerm}"`}
             </span>
-            <PaginationLayout 
-              currentPage={currentPage} 
-              totalPages={totalPages} 
-              onPageChange={setCurrentPage} 
-              className="text-sm" 
-            />
+            <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="text-sm" />
           </div>
         </div>
       </div>
 
       {/* PRINTABLE REPORT */}
-      <div className="flex-1 mb-10 bg-white">
+      <div className="flex-1 mb-10 bg-white border rounded-lg shadow-sm">
         <div
-          className="py-4 px-4"
-          id="printable-area"
           style={{
-            width: "full",
-            minHeight: "8.5in",
+            width: "100%",
+            overflowX: "auto",
             position: "relative",
-            margin: "0 auto",
-            paddingBottom: "120px"
+            fontSize: "10px",
           }}
         >
-          <div className="text-center py-2">
-            <Label className="text-sm font-bold uppercase tracking-widest underline block">
-              VACCINATION RECORDS
-            </Label>
-            <Label className="font-medium items-center block">Month: {monthName}</Label>
-          </div>
+          <div className="py-4 px-4" id="printable-area">
+            <div className="text-center py-2 mb-4">
+              <Label className="text-sm font-bold uppercase tracking-widest underline block">VACCINATION RECORDS</Label>
+              <Label className="font-medium items-center block mt-1">Month: {monthName}</Label>
+            </div>
 
-          <div className="pb-4 order-b sm:items-center gap-4">
-            <div className="flex flex-col space-y-2 mt-4">
-              <div className="flex justify-between items-end">
-                <div className="flex items-end gap-2 flex-1 mr-8">
+            <div className="pb-4 border-b mb-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <div className="flex items-end gap-2 flex-1 w-full sm:w-auto">
                   <Label className="font-medium whitespace-nowrap text-xs">Vaccine Name:</Label>
-                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">
-                    {searchTerm || "All Vaccines"}
-                  </div>
+                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">{searchTerm || "All Vaccines"}</div>
                 </div>
 
-                <div className="flex items-end gap-2 flex-1">
+                <div className="flex items-end gap-2 flex-1 w-full sm:w-auto">
                   <Label className="font-medium whitespace-nowrap text-xs">Total:</Label>
-                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">
-                    {filteredRecords.length} records
-                  </div>
+                  <div className="text-sm border-b border-black bg-transparent min-w-0 flex-1 pb-1">{totalItems} records</div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {isLoading ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">loading....</span>
-            </div>
-          ) : (
-            <TableLayout 
-              header={dynamicHeaders} 
-              rows={tableRows} 
-              tableClassName="border rounded-lg w-full" 
-              bodyCellClassName="border border-gray-600 text-center text-xs p-2" 
-              headerCellClassName="font-bold text-xs border border-gray-600 text-black text-center p-2" 
-            />
-          )}
+            {isLoading ? (
+              <div className="w-full min-h-[400px] flex flex-col text-gray-500 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 mt-2">Loading vaccination records...</span>
+              </div>
+            ) : records.length === 0 ? (
+              <div className="w-full min-h-[400px] flex flex-col text-gray-500 items-center justify-center">
+                <span>No vaccination records found for the selected criteria.</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <TableLayout
+                  header={tableHeader}
+                  rows={tableRows}
+                  tableClassName="border border-black rounded-lg w-full"
+                  bodyCellClassName="border border-black text-center text-xs p-2 whitespace-nowrap"
+                  headerCellClassName="font-bold text-xs border border-black text-black text-center p-2 whitespace-nowrap"
+                  defaultRowCount={15}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

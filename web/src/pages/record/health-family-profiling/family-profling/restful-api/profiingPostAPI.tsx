@@ -44,8 +44,8 @@ export const addResidentProfileHealth = async (personalId: string, staffId: stri
 // POST request for personal model 
 export const addResidentAndPersonalHealth = async (personalInfo: Record<string, any>, staffId?: string) => {
   try {
-      console.log('staffId received:', staffId); // Debug log
-      console.log('staff value being sent:', staffId || null); // Debug log
+      // console.log('staffId received:', staffId); // Debug log
+      // console.log('staff value being sent:', staffId || null); // Debug log
 
       const res = await api2.post("health-profiling/resident/create/combined/", {
         per: {
@@ -63,7 +63,7 @@ export const addResidentAndPersonalHealth = async (personalInfo: Record<string, 
         staff: staffId || null
       })
 
-      console.log('Full payload:', res); // Debug log
+      // console.log('Full payload:', res); // Debug log
       
       return res.data
     } catch (err) { 
@@ -95,7 +95,7 @@ export const addFamilyHealth = async (
 // POST request for family_composition model 
 export const addFamilyCompositionHealth = async (data: Record<string, any>[]) => {
   try {
-      console.log(data)
+      // console.log(data)
       const res = await api2.post("health-profiling/family/composition/bulk/create/", data);
   
       return res.data
@@ -107,12 +107,12 @@ export const addFamilyCompositionHealth = async (data: Record<string, any>[]) =>
 // POST request for household model 
 export const addHouseholdHealth = async (householdInfo: Record<string, string>, staffId: string) => {
   try {
-      console.log({
-        hh_nhts: capitalize(householdInfo.nhts),
-        add: +householdInfo.add_id,
-        rp: householdInfo.householdHead.split(" ")[0],
-        staff: staffId
-      })
+      // console.log({
+      //   hh_nhts: capitalize(householdInfo.nhts),
+      //   add: +householdInfo.add_id,
+      //   rp: householdInfo.householdHead.split(" ")[0],
+      //   staff: staffId
+      // })
       const res = await api2.post("health-profiling/household/create/", {
         hh_nhts: capitalize(householdInfo.nhts),
         add: householdInfo.add_id,

@@ -21,15 +21,14 @@ class FirstAidListView(generics.ListCreateAPIView):
     pagination_class = StandardResultsPagination
     
     def get_queryset(self):
-        queryset = FirstAidList.objects.all()
+        queryset = FirstAidList.objects.all().order_by('-updated_at')
         
         # Add search functionality
         search_query = self.request.GET.get('search', '').strip()
         if search_query:
             queryset = queryset.filter(
                 models.Q(fa_name__icontains=search_query) |
-                models.Q(fa_id__icontains=search_query) |
-                models.Q(cat__cat_name__icontains=search_query)
+                models.Q(fa_id__icontains=search_query) 
             )
         
         return queryset.order_by('fa_name')
@@ -75,6 +74,8 @@ class FirstAidInventoryView(generics.ListAPIView):  # Fixed typo: VIew → View
         queryset = FirstAidInventory.objects.select_related('inv_id').filter(inv_id__is_Archived=False)
         return queryset
 
+
+
 class FirstAidStockTableView(APIView):
     """
     API view for first aid stocks with pagination, search, and filtering
@@ -83,7 +84,7 @@ class FirstAidStockTableView(APIView):
     
     def get(self, request):
         try:
-            self.auto_archive_expired_first_aid()
+            # self.auto_archive_expired_first_aid()
             
             # Get parameters
             search_query = request.GET.get('search', '').strip()
@@ -142,23 +143,25 @@ class FirstAidStockTableView(APIView):
                     days_until_expiry = (expiry_date - today).days
                     is_near_expiry = 0 < days_until_expiry <= 30
                 
-                # Check low stock based on unit type
-                if stock.finv_qty_unit and stock.finv_qty_unit.lower() == "boxes":
-                    # For boxes, low stock threshold is 2 boxes
-                    is_low_stock = available_stock <= 2
-                else:
-                    # For pieces, low stock threshold is 20 pcs
-                    is_low_stock = available_stock <= 20
-                
-                # Check out of stock
+                # Check out of stock FIRST
                 is_out_of_stock = available_stock <= 0
+                
+                # Check low stock based on unit type (only if NOT out of stock)
+                is_low_stock = False
+                if not is_out_of_stock:
+                    if stock.finv_qty_unit and stock.finv_qty_unit.lower() == "boxes":
+                        # For boxes, low stock threshold is 2 boxes
+                        is_low_stock = available_stock <= 20
+                    else:
+                        # For pieces, low stock threshold is 20 pcs
+                        is_low_stock = available_stock <= 20
                 
                 # Update filter counts (only count non-archived items)
                 if not stock.inv_id.is_Archived if stock.inv_id else False:
                     filter_counts['total'] += 1
                     if is_out_of_stock:
                         filter_counts['out_of_stock'] += 1
-                    if is_low_stock and not is_expired:
+                    elif is_low_stock and not is_expired:  # Only count as low stock if not out of stock and not expired
                         filter_counts['low_stock'] += 1
                     if is_near_expiry:
                         filter_counts['near_expiry'] += 1
@@ -179,16 +182,15 @@ class FirstAidStockTableView(APIView):
                 # Calculate used quantity
                 if stock.finv_qty_unit and stock.finv_qty_unit.lower() == "boxes":
                     used_qty = total_pcs - available_stock
-                    used_display = f"{used_qty} pcs"
+                    used_display = f"{used_qty - stock.wasted} pcs"
                 else:
                     used_qty = finv_qty - available_stock
-                    used_display = f"{used_qty} {stock.finv_qty_unit}"
+                    used_display = f"{used_qty -stock.wasted} {stock.finv_qty_unit}"
                 
                 item_data = {
                     'type': 'first_aid',
                     'id': stock.finv_id,
                     'batchNumber': stock.inv_id.inv_id if stock.inv_id else "N/A",
-                    'category': stock.fa_id.cat.cat_name if stock.fa_id and stock.fa_id.cat else "N/A",
                     'item': {
                         'fa_name': stock.fa_id.fa_name if stock.fa_id else "Unknown First Aid",
                     },
@@ -197,8 +199,8 @@ class FirstAidStockTableView(APIView):
                         'finv_pcs': finv_pcs,
                     },
                     'finv_qty_unit': stock.finv_qty_unit,
-                    'administered': used_display,
-                    'wastedDose': "0",  # Add if you have wasted first aid tracking
+                    'qty_used': used_display,
+                    'wasted': f"{stock.wasted} {'pcs' if stock.finv_qty_unit and stock.finv_qty_unit.lower() == 'boxes' else stock.finv_qty_unit}",  # Adjusted for boxes
                     'availableStock': available_stock,
                     'expiryDate': expiry_date.isoformat() if expiry_date else None,
                     'inv_id': stock.inv_id.inv_id if stock.inv_id else None,
@@ -243,50 +245,50 @@ class FirstAidStockTableView(APIView):
                 'error': f'Error fetching first aid stock data: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def auto_archive_expired_first_aid(self):
-        """Auto-archive first aid items that expired more than 10 days ago and log transactions"""
+    # def auto_archive_expired_first_aid(self):
+    #     """Auto-archive first aid items that expired more than 10 days ago and log transactions"""
         
-        today = timezone.now().date()
-        archive_date = today - timedelta(days=10)
+    #     today = timezone.now().date()
+    #     archive_date = today - timedelta(days=10)
         
-        print(f"Auto-archiving first aid items expired before: {archive_date}")
+    #     print(f"Auto-archiving first aid items expired before: {archive_date}")
         
-        # Archive expired first aid stocks
-        first_aid_stocks = FirstAidInventory.objects.select_related('inv_id').filter(
-            inv_id__expiry_date__lte=archive_date,
-            inv_id__is_Archived=False
-        )
+    #     # Archive expired first aid stocks
+    #     first_aid_stocks = FirstAidInventory.objects.select_related('inv_id').filter(
+    #         inv_id__expiry_date__lte=archive_date,
+    #         inv_id__is_Archived=False
+    #     )
         
-        archived_first_aid_count = 0
-        for stock in first_aid_stocks:
-            # Get the current available quantity before archiving
-            current_qty = stock.finv_qty_avail or 0
+    #     archived_first_aid_count = 0
+    #     for stock in first_aid_stocks:
+    #         # Get the current available quantity before archiving
+    #         current_qty = stock.finv_qty_avail or 0
             
-            # Determine the unit and format quantity with unit
-            if stock.finv_qty_unit and stock.finv_qty_unit.lower() == "boxes":
-                # For boxes, show quantity in pieces
-                qty_with_unit = f"{current_qty} pcs"
-            else:
-                # For other units, use the actual unit
-                unit = stock.finv_qty_unit if stock.finv_qty_unit else "pcs"
-                qty_with_unit = f"{current_qty} {unit}"
+    #         # Determine the unit and format quantity with unit
+    #         if stock.finv_qty_unit and stock.finv_qty_unit.lower() == "boxes":
+    #             # For boxes, show quantity in pieces
+    #             qty_with_unit = f"{current_qty} pcs"
+    #         else:
+    #             # For other units, use the actual unit
+    #             unit = stock.finv_qty_unit if stock.finv_qty_unit else "pcs"
+    #             qty_with_unit = f"{current_qty} {unit}"
             
-            # Archive the inventory
-            stock.inv_id.is_Archived = True
-            stock.inv_id.save()
+    #         # Archive the inventory
+    #         stock.inv_id.is_Archived = True
+    #         stock.inv_id.save()
             
-            # Create transaction record for the archive action
-            FirstAidTransactions.objects.create(
-                fat_qty=qty_with_unit,  # Record the quantity with unit that was archived
-                fat_action='Expired',  # Clear action indicating expiration-based archiving
-                finv_id=stock,  # Reference to the first aid inventory
-                staff=None  # System action, so no staff member
-            )
+    #         # Create transaction record for the archive action
+    #         FirstAidTransactions.objects.create(
+    #             fat_qty=qty_with_unit,  # Record the quantity with unit that was archived
+    #             fat_action='Expired',  # Clear action indicating expiration-based archiving
+    #             finv_id=stock,  # Reference to the first aid inventory
+    #             staff=None  # System action, so no staff member
+    #         )
             
-            archived_first_aid_count += 1
-            print(f"Archived first aid stock: {stock.finv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
+    #         archived_first_aid_count += 1
+    #         print(f"Archived first aid stock: {stock.finv_id}, Expiry: {stock.inv_id.expiry_date}, Qty: {qty_with_unit}")
         
-        print(f"Auto-archived {archived_first_aid_count} first aid items with transaction records")
+    #     print(f"Auto-archived {archived_first_aid_count} first aid items with transaction records")
         
         
 class FirstAidStockCreate(APIView):
@@ -412,10 +414,11 @@ class FirstAidStockCreate(APIView):
         qty_unit = data.get('finv_qty_unit')
         qty = data.get('finv_qty', 0)
         pcs = data.get('finv_pcs', 0)
+        total_pcs = qty * pcs
         
         # Format quantity string based on unit
         if qty_unit == 'boxes':
-            fat_qty = f"{qty} boxes ({pcs} pcs per box)"
+            fat_qty = f"{qty} boxes ({total_pcs} pcs)"
         else:
             fat_qty = f"{qty} {qty_unit}"
         
@@ -450,7 +453,7 @@ class FirstAidArchiveInventoryView(APIView):
     
     def patch(self, request, inv_id):
         """
-        Archive first aid inventory item and create expired transaction only if expired AND has available stock
+        Archive first aid inventory item (no expired transaction creation)
         """
         try:
             # Get inventory item
@@ -461,29 +464,10 @@ class FirstAidArchiveInventoryView(APIView):
             inventory.updated_at = timezone.now()
             inventory.save()
             
-            # Check if item is expired and has available stock to create transaction
-            is_expired = request.data.get('is_expired', False)
-            has_available_stock = request.data.get('has_available_stock', False)
-            
-            transaction_created = False
-            if is_expired and has_available_stock:
-                try:
-                    self._create_expired_transaction(inventory)
-                    transaction_created = True
-                except Exception as e:
-                    # Roll back the archive operation if transaction creation fails
-                    inventory.is_Archived = False
-                    inventory.save()
-                    return Response(
-                        {"error": f"Failed to create transaction for expired first aid: {str(e)}"}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            
             return Response(
                 {
                     "message": "First aid inventory archived successfully", 
-                    "inv_id": inv_id,
-                    "transaction_created": transaction_created
+                    "inv_id": inv_id
                 },
                 status=status.HTTP_200_OK
             )
@@ -493,30 +477,6 @@ class FirstAidArchiveInventoryView(APIView):
                 {"error": f"Error archiving first aid inventory: {str(e)}"}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-    
-    def _create_expired_transaction(self, inventory):
-        """
-        Create expired transaction for first aid items with available stock
-        """
-        if not hasattr(inventory, 'inventory_firstaid'):
-            raise Exception("No first aid inventory found for this inventory item")
-        
-        first_aid_inventory = inventory.inventory_firstaid
-        current_qty = first_aid_inventory.finv_qty_avail or 0
-        unit = first_aid_inventory.finv_qty_unit or "pcs"
-        
-        if unit.lower() == "boxes":
-            qty_with_unit = f"{current_qty} pcs"
-        else:
-            qty_with_unit = f"{current_qty} {unit}"
-        
-        # Create the first aid transaction
-        FirstAidTransactions.objects.create(
-            fat_qty=qty_with_unit,
-            fat_action="Expired",
-            finv_id=first_aid_inventory,
-            staff=None  # None for system action
-        )
 
 # ===========================TRANSACTION===================================
 class FirstAidTransactionView(APIView):
@@ -744,7 +704,7 @@ class FirstAidDeduct(APIView):
             record = request.data.get('record', {})
             finv_id = record.get('id')
             deduct_qty = int(data.get('wastedAmount', 0))
-            action = "Deducted"
+            action = "Wasted"
             staff_id = data.get('staff_id')
             print("Deducting quantity:", deduct_qty)     
             print("From inventory ID:", finv_id)
@@ -764,6 +724,7 @@ class FirstAidDeduct(APIView):
             
             # Update available quantity
             firstaid_inventory.finv_qty_avail = current_avail - deduct_qty
+            firstaid_inventory.wasted = (firstaid_inventory.wasted or 0) + deduct_qty
             firstaid_inventory.finv_used = (firstaid_inventory.finv_used or 0) + deduct_qty
             firstaid_inventory.save()
             
@@ -914,6 +875,8 @@ class FirstAidSummaryMonthsAPIView(APIView):
                 'error': str(e),
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
 class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
     serializer_class = FirstAidInventorySerializer
     pagination_class = StandardResultsPagination
@@ -979,8 +942,8 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
                 fat_action__icontains="added"
             )
             opening_out = transactions.filter(
-                created_at__date__lt=start_date,
-                fat_action__icontains="deduct"
+                Q(fat_action__icontains="deducted") | Q(fat_action__icontains="wasted"),
+                created_at__date__lt=start_date
             )
             opening_qty = (sum(self._parse_qty(t) for t in opening_in) -
                          sum(self._parse_qty(t) for t in opening_out))
@@ -1002,14 +965,18 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
             dispensed_qty = sum(
                 self._parse_qty(t) for t in transactions.filter(
                     created_at__date__gte=start_date,
-                    created_at__date__lte=end_date,
-                    fat_action__icontains="deduct"
+                    created_at__date__lte=end_date
+                ).filter(
+                    Q(fat_action__icontains="deducted") | Q(fat_action__icontains="wasted")
                 )
             )
 
-            # Opening displayed includes received
-            display_opening = opening_qty + received_qty
-            closing_qty = display_opening - dispensed_qty
+            # Calculate total stock available in the month
+            # If no received during month but have opening, show opening as both opening and received
+            total_available = opening_qty + received_qty
+            display_received = received_qty if received_qty > 0 else opening_qty
+            
+            closing_qty = total_available - dispensed_qty
 
             # Check if expired this month
             expired_this_month = (finv.inv_id.expiry_date and 
@@ -1018,21 +985,27 @@ class MonthlyFirstAidRecordsDetailAPIView(generics.ListAPIView):
             # REMOVED: Don't set closing to 0 for expired items
             # if expired_this_month:
             #     closing_qty = 0
-            
-            # Skip if there's no stock and it's not expiring this month
-            # Also include items that expired this month even if closing_qty <= 0
-            if closing_qty <= 0 and (not expiry_date or expiry_date > end_date) and not expired_this_month:
+
+            if (closing_qty <= 0 and 
+                (not expiry_date or expiry_date < start_date) and 
+                not expired_this_month and
+                not monthly_transactions.exists() and
+                not transactions.filter(created_at__date__gte=start_date, created_at__date__lte=end_date).exists()):
                 continue
+
 
             inventory_summary.append({
                 'finv_id': finv.finv_id,
                 'inv_id': finv.inv_id_id,
+                'date_received':finv.created_at,
+                'wasted':finv.wasted,
+                'pcs':finv.finv_pcs,
                 'fa_name': finv.fa_id.fa_name,
-                'opening': display_opening,
-                'received': received_qty,
+                'opening': total_available,
+                'received': display_received,
                 'dispensed': dispensed_qty,
                 'closing': closing_qty,
-                'unit': "pcs",
+                'unit': finv.finv_qty_unit,
                 'expiry': finv.inv_id.expiry_date.strftime('%Y-%m-%d') if finv.inv_id.expiry_date else None,
                 'expired_this_month': expired_this_month,
             })
@@ -1191,23 +1164,16 @@ class FirstAidExpiredOutOfStockSummaryAPIView(APIView):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+
 # Monthly First Aid Expired/Out-of-Stock Detail API View
 class MonthlyFirstAidExpiredOutOfStockDetailAPIView(APIView):
     pagination_class = StandardResultsPagination
 
-    def _parse_qty(self, transaction, multiply_boxes=False):
-        """Extract numeric value from fat_qty and convert boxes to pieces if needed."""
+    def _parse_qty(self, transaction):
+        """Extract numeric value from fat_qty."""
         match = re.search(r'\d+', str(transaction.fat_qty))
-        qty_num = int(match.group()) if match else 0
-        
-        # If it's a box unit AND we need to multiply, convert to pieces
-        if (multiply_boxes and 
-            transaction.finv_id.finv_qty_unit and 
-            transaction.finv_id.finv_qty_unit.lower() == "boxes"):
-            pcs_per_box = transaction.finv_id.finv_pcs or 1
-            qty_num *= pcs_per_box
-            
-        return qty_num
+        return int(match.group()) if match else 0
 
     def get(self, request, *args, **kwargs):
         month_str = self.kwargs['month']  # Format: YYYY-MM
@@ -1219,13 +1185,15 @@ class MonthlyFirstAidExpiredOutOfStockDetailAPIView(APIView):
         start_date = datetime(year, month, 1).date()
         end_date = (start_date + relativedelta(months=1)) - timedelta(days=1)
         near_expiry_threshold = end_date + timedelta(days=30)  # 1 month after end of current month
+        low_stock_threshold = 20
 
         expired_items = []
         out_of_stock_items = []
         expired_out_of_stock_items = []
-        near_expiry_items = []  # New category for near expiry
+        near_expiry_items = []
+        low_stock_items = []
 
-        # Get all first aid inventory items that were active up to this month
+        # Get all FIRST AID inventory items that were active up to this month
         fa_expiry_inv_pairs = FirstAidTransactions.objects.filter(
             created_at__date__lte=end_date
         ).values_list(
@@ -1270,38 +1238,76 @@ class MonthlyFirstAidExpiredOutOfStockDetailAPIView(APIView):
             unit = finv.finv_qty_unit
             pcs_per_box = finv.finv_pcs if unit and unit.lower() == "boxes" else 1
 
-            # Calculate stock levels - multiply boxes for added quantities
-            opening_in = transactions.filter(created_at__date__lt=start_date, fat_action__icontains="added")
-            opening_out = transactions.filter(created_at__date__lt=start_date, fat_action__icontains="deduct")
-            opening_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in opening_in) - sum(self._parse_qty(t, multiply_boxes=False) for t in opening_out)
+            # Calculate opening stock (before start_date)
+            opening_in = transactions.filter(
+                created_at__date__lt=start_date,
+                fat_action__icontains="added"
+            )
+            opening_out = transactions.filter(
+                created_at__date__lt=start_date,
+                fat_action__icontains="deduct"
+            )
+            
+            # Calculate raw opening quantity
+            opening_qty = (sum(self._parse_qty(t) for t in opening_in) - 
+                          sum(self._parse_qty(t) for t in opening_out))
+            
+            # Convert boxes to pieces for opening stock
+            if unit and unit.lower() == "boxes":
+                opening_qty *= pcs_per_box
 
+            # Calculate received during the month
             monthly_transactions = transactions.filter(
                 created_at__date__gte=start_date,
                 created_at__date__lte=end_date
             )
-            # Multiply boxes for received items
-            received_qty = sum(self._parse_qty(t, multiply_boxes=True) for t in monthly_transactions.filter(fat_action__icontains="added"))
-            # Don't multiply boxes for dispensed items (they're already in pieces)
-            dispensed_qty = sum(self._parse_qty(t, multiply_boxes=False) for t in monthly_transactions.filter(fat_action__icontains="deduct"))
+            
+            received_qty = sum(
+                self._parse_qty(t) 
+                for t in monthly_transactions.filter(fat_action__icontains="added")
+            )
+            
+            # Convert boxes to pieces for received stock
+            if unit and unit.lower() == "boxes":
+                received_qty *= pcs_per_box
 
+            # Calculate dispensed during the month (already in pieces)
+            dispensed_qty = sum(
+                self._parse_qty(t)
+                for t in monthly_transactions.filter(fat_action__icontains="deduct")
+            )
+
+            # Calculate closing stock
             closing_qty = opening_qty + received_qty - dispensed_qty
 
             # Check conditions
             is_expired = start_date <= expiry_date <= end_date
             is_out_of_stock = closing_qty <= 0
             is_near_expiry = (end_date < expiry_date <= near_expiry_threshold) and closing_qty > 0
+            is_low_stock = (0 < closing_qty <= low_stock_threshold) and not is_near_expiry
 
+            # Use FA_NAME not MED_NAME - this is First Aid!
             item_data = {
                 'fa_name': f"{finv.fa_id.fa_name}",
                 'expiry_date': expiry_date.strftime('%Y-%m-%d') if expiry_date else 'No expiry',
                 'opening_stock': opening_qty,
+                'pcs': finv.finv_pcs,
+                'wasted': finv.wasted,
+                'unit': finv.finv_qty_unit,
                 'received': received_qty,
                 'dispensed': dispensed_qty,
                 'closing_stock': closing_qty,
-                'unit': 'pcs',
-                'status': 'Expired' if is_expired else 'Out of Stock' if is_out_of_stock else 'Near Expiry' if is_near_expiry else 'Active'
+                'date_received': finv.created_at,
+                'status': (
+                    'Expired' if is_expired else
+                    'Out of Stock' if is_out_of_stock else
+                    'Near Expiry' if is_near_expiry else
+                    'Low Stock' if is_low_stock else
+                    'Active'
+                )
             }
 
+            # Categorize items based on priority
             if is_expired and is_out_of_stock:
                 expired_out_of_stock_items.append(item_data)
             elif is_expired:
@@ -1310,9 +1316,11 @@ class MonthlyFirstAidExpiredOutOfStockDetailAPIView(APIView):
                 out_of_stock_items.append(item_data)
             elif is_near_expiry:
                 near_expiry_items.append(item_data)
+            elif is_low_stock:
+                low_stock_items.append(item_data)
 
-        # Combine all items (including near expiry in problem items)
-        all_problem_items = expired_items + out_of_stock_items + expired_out_of_stock_items + near_expiry_items
+        # Combine all items
+        all_problem_items = expired_items + out_of_stock_items + expired_out_of_stock_items + near_expiry_items + low_stock_items
 
         return Response({
             'success': True,
@@ -1323,12 +1331,14 @@ class MonthlyFirstAidExpiredOutOfStockDetailAPIView(APIView):
                     'expired_count': len(expired_items),
                     'out_of_stock_count': len(out_of_stock_items),
                     'expired_out_of_stock_count': len(expired_out_of_stock_items),
-                    'near_expiry_count': len(near_expiry_items),  # New count
+                    'near_expiry_count': len(near_expiry_items),
+                    'low_stock_count': len(low_stock_items),
                 },
                 'expired_items': expired_items,
                 'out_of_stock_items': out_of_stock_items,
                 'expired_out_of_stock_items': expired_out_of_stock_items,
-                'near_expiry_items': near_expiry_items,  # New category
+                'near_expiry_items': near_expiry_items,
+                'low_stock_items': low_stock_items,
                 'all_problem_items': all_problem_items
             }
         })

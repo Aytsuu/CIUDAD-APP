@@ -89,7 +89,7 @@ export default function MainInventoryList() {
 
   const getTitle = () => {
     const tab = TabConfig.find((t) => t.id === selectedView);
-    return `${tab?.label} List` || "Inventory List";
+    return tab ? `${tab.label} List` : "Inventory List";
   };
 
   // Get count with loading state

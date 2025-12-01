@@ -15,7 +15,7 @@ urlpatterns=[
     
     path('combined-health-records/<str:assigned_to>/', CombinedHealthRecordsView.as_view(), name='combined-health-records-assigned'),
     path('family-medhistory/<str:pat_id>/', FamilyPHIllnessCheckAPIView.as_view(), name='family-medhistory'),
-    
+    path('check-pending-status/', CheckPendingStatusView.as_view(), name='check-pending-status'),
     
     path('available-slots/', AvailableMedicalConsultationSlotsView.as_view(), name='available-slots'),
     path('book-appointment/', MedicalConsultationBookingView.as_view(), name='book-appointment'),
@@ -25,5 +25,8 @@ urlpatterns=[
     path('confirmed-medicalcon-appointments/', ConfirmedMedicalUserAppointmentsView.as_view(), name='pending-appointment'),
 
     path('action-appointment/<int:pk>/', ActionAppointmentView.as_view(), name='reject-appointment'),
+    path('medical-consultation-stats/', MedicalUserAppointmentsView.as_view(), name='medical-consultation-stats'),
+
+
 
 ]  

@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormContext, type UseFormReturn } from "react-hook-form"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router"
 import type { z } from "zod"
 
@@ -26,7 +26,7 @@ import { useAddPostpartumRecord } from "../queries/maternalAddQueries"
 import {
   transformPostpartumFormData,
   validatePostpartumFormData,
-} from "@/pages/healthServices/maternal/postpartum/postpartumFormHelpers"
+} from "@/pages/healthServices/maternal/helpers/postpartumFormHelpers"
 import { showErrorToast } from "@/components/ui/toast" 
 
 // fetch hooks
@@ -38,7 +38,10 @@ import { usePostpartumAssessements } from "../queries/maternalFetchQueries";
 import { Patient } from "@/pages/record/health/patientsRecord/patient-types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import MedicineDisplay from "@/components/ui/medicine-display"
+
+import { useMaternalStaff } from "../queries/maternalFetchQueries";
 import { useAuth } from "@/context/AuthContext";
+import { Combobox } from "@/components/ui/combobox";
 
 type PostpartumTableType = {
   date: string;
@@ -78,26 +81,24 @@ export default function PostpartumFormFirstPg({
   const [selectedPatientId, setSelectedPatientId] = useState<string>("")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("")
-  // Assessment data management:
-  // - postpartumCareData: Combined view for table display (existing + new)
-  // - existingAssessments: Assessments fetched from database (read-only)
-  // - newAssessments: New assessments added in this session (will be submitted)
   const [postpartumCareData, setPostpartumCareData] = useState<PostpartumTableType[]>([])
   const [existingAssessments, setExistingAssessments] = useState<PostpartumTableType[]>([])
   const [newAssessments, setNewAssessments] = useState<PostpartumTableType[]>([])
   const [formErrors, setFormErrors] = useState<string[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("")
 
   const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
+  const [latestTtsId, setLatestTtsId] = useState<number | null>(null)
 
   const navigate = useNavigate()
 
   // auth hook for staff information
   const { user } = useAuth()
-  const staffId = user?.staff?.staff_id || ""
+  const staffId = user?.staff?.staff_id || "" 
 
   // add hooks
   const addPostpartumMutation = useAddPostpartumRecord()
@@ -107,7 +108,40 @@ export default function PostpartumFormFirstPg({
   const { data: ttStatusData, isLoading: ttStatusLoading } = usePatientTTStatus(selectedPatientId);
   const { data: postpartumAssessments, isLoading: postpartumAssessmentsLoading } = usePostpartumAssessements(selectedPatientId);
 
-  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
+  // Fetch medicines including zero availability so user sees possible postpartum supplements
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock({ is_temp: true, includeZeroAvail: true })
+
+  const { data: staffsData, isLoading: isLoadingStaff } = useMaternalStaff()
+
+  const staffOptions = 
+    staffsData && Array.isArray(staffsData.staff)
+      ? staffsData.staff
+        .filter((staff: any) => {
+          // Filter: exclude current user, only show ADMIN with staff_stype HEALTH STAFF
+          const isNotCurrentUser = String(staff.staff_id || "") !== String(staffId)
+          const isAdmin = staff.staff_type?.toUpperCase() === "ADMIN" || staff.type?.toUpperCase() === "ADMIN"
+          const isHealthStaff = staff.staff_stype?.toUpperCase() === "HEALTH STAFF" || staff.stype?.toUpperCase() === "HEALTH STAFF"
+          return isNotCurrentUser && isAdmin && isHealthStaff
+        })
+        .map((staff: any) => {
+          const fullName = staff.full_name ||`${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "Unknown Staff"
+          const position = staff.position || staff.pos || ""
+          const searchableId = `${fullName} ${position}`.toLowerCase()
+
+          return {
+            id: searchableId,
+            name: position ? (
+              <div className="flex items-center gap-2">
+                <span className="border border-green-300 rounded px-2 py-1 text-xs bg-green-500 text-white">{position}</span>
+                <span>{fullName}</span>
+              </div>
+            ) : (
+                fullName
+              ),
+              realId: String(staff.staff_id || ""),
+          }
+        })
+      : []
 
   // useEffect to preselect patient if coming from individual record page
   useEffect(() => {
@@ -127,7 +161,7 @@ export default function PostpartumFormFirstPg({
   useEffect(() => {
     const latestRecord = latestPostpartumRecord?.latest_postpartum_record
     const patientDetails = latestRecord?.patient_details
-    
+
     // Determine if patient is resident - check from selected patient or API response
     const isResident = patientDetails?.pat_type?.toLowerCase() === "resident" || 
                       selectedPatient?.pat_type?.toLowerCase() === "resident" ||
@@ -144,7 +178,7 @@ export default function PostpartumFormFirstPg({
         setValue("mothersPersonalInfo.husbandFName", father?.per_fname)
         setValue("mothersPersonalInfo.husbandMName", father?.per_mname || "N/A")
         setValue("mothersPersonalInfo.husbandDob", father?.per_dob)
-      } else if (!isResident && spouseInfo) {
+      } else if (!isResident && !spouseInfo?.spouse) {
         // For non-resident patients, spouse info comes directly
         setValue("mothersPersonalInfo.husbandLName", spouseInfo?.spouse_lname)
         setValue("mothersPersonalInfo.husbandFName", spouseInfo?.spouse_fname)
@@ -157,9 +191,9 @@ export default function PostpartumFormFirstPg({
       setValue("pregnancy_id", latestPostpartumRecord.latest_postpartum_record?.pregnancy?.pregnancy_id || "")
 
       if (latestRecord) {
-        const spouse = latestRecord.spouse_info
+        const spouse = latestRecord.spouse  // ✅ Direct spouse object, not spouse_info
         const delivery = latestRecord.delivery_records?.[0]
-        const visit = latestRecord.follow_up_visits
+        const visit = latestRecord.follow_up_visit  // ✅ Fixed: follow_up_visits → follow_up_visit
         
         
         const fatherFromFC = patientDetails?.family?.family_heads?.father?.personal_info
@@ -181,10 +215,11 @@ export default function PostpartumFormFirstPg({
           setValue("mothersPersonalInfo.husbandDob", fatherFromFC.per_dob)
 
         } else if (spouse) {
-          setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname)
-          setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname)
-          setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname)
-          setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob)
+          // For transient patients with spouse record
+          setValue("mothersPersonalInfo.husbandLName", spouse.spouse_lname || "")
+          setValue("mothersPersonalInfo.husbandFName", spouse.spouse_fname || "")
+          setValue("mothersPersonalInfo.husbandMName", spouse.spouse_mname || "")
+          setValue("mothersPersonalInfo.husbandDob", spouse.spouse_dob || "")
         }
 
         if(delivery) {
@@ -216,8 +251,11 @@ export default function PostpartumFormFirstPg({
       
       const ttStatusValue = latestTTStatus.tts_status?.toLowerCase() || "";
       setValue("postpartumInfo.ttStatus", ttStatusValue);
+      setLatestTtsId(latestTTStatus.tts_id); // ✅ Store the tts_id for FK relationship
+      
     } else {
       setValue("postpartumInfo.ttStatus", "");
+      setLatestTtsId(null);
     }
   }, [ttStatusData, ttStatusLoading, setValue]);
 
@@ -402,6 +440,21 @@ export default function PostpartumFormFirstPg({
   }, [])
   // end of medicine selection handlers
 
+  // lookup for medicine names by inventory id
+  const medicineLookup = useMemo(() => {
+    const list = Array.isArray(medicineStocksOptions)
+      ? medicineStocksOptions
+      : medicineStocksOptions?.medicines ?? []
+    const map = new Map<string, string>()
+    list.forEach((m: any) => {
+      const name = m?.med_name || m?.med?.med_name || m?.name || 'Unknown'
+      if (m?.minv_id) {
+        map.set(String(m.minv_id), String(name))
+      }
+    })
+    return map
+  }, [medicineStocksOptions])
+
   // conversion helpers
   const outcomeConversion = (value: string) => {
     switch (value) {
@@ -556,10 +609,7 @@ export default function PostpartumFormFirstPg({
 
     try {
       // Only send NEW assessments to prevent duplicates
-      const transformedData = transformPostpartumFormData(formData, selectedPatientId, newAssessments, selectedMedicines, staffId);
-
-      console.log("Submitting postpartum data:", transformedData);
-      console.log("New assessments only:", newAssessments);
+      const transformedData = transformPostpartumFormData(formData, selectedPatientId, newAssessments, selectedMedicines, staffId, latestTtsId);
 
       const success = await addPostpartumMutation.mutateAsync(transformedData);
 
@@ -639,17 +689,17 @@ export default function PostpartumFormFirstPg({
               <FormInput control={form.control} label="Middle Name" name="mothersPersonalInfo.motherMName" placeholder="Middle Name" />
               <FormInput control={form.control} label="Age" name="mothersPersonalInfo.motherAge" placeholder="Age" />
 
-              <FormInput control={form.control} label="Husband's Last Name" name="mothersPersonalInfo.husbandLName" placeholder="Last Name (optional)" />
-              <FormInput control={form.control} label="Husband's First Name" name="mothersPersonalInfo.husbandFName" placeholder="First Name (optional)" />
-              <FormInput control={form.control} label="Husband's Middle Name" name="mothersPersonalInfo.husbandMName" placeholder="Middle Name (optional)" />
+              <FormInput control={form.control} label="Husband's Last Name" name="mothersPersonalInfo.husbandLName" placeholder="Last Name (optional)" upper={true} />
+              <FormInput control={form.control} label="Husband's First Name" name="mothersPersonalInfo.husbandFName" placeholder="First Name (optional)" upper={true} />
+              <FormInput control={form.control} label="Husband's Middle Name" name="mothersPersonalInfo.husbandMName" placeholder="Middle Name (optional)" upper={true} />
               <FormDateTimeInput control={form.control} type="date" label="Husband's Date of Birth" name="mothersPersonalInfo.husbandDob" />
             </div>
             <div className="grid grid-cols-5 gap-4 mt-4">
-              <FormInput control={form.control} label="Street" name="mothersPersonalInfo.address.street" placeholder="Street" />
-              <FormInput control={form.control} label="Sitio" name="mothersPersonalInfo.address.sitio" placeholder="Sitio" />
-              <FormInput control={form.control} label="Barangay" name="mothersPersonalInfo.address.barangay" placeholder="Barangay" />
-              <FormInput control={form.control} label="City" name="mothersPersonalInfo.address.city" placeholder="City" />
-              <FormInput control={form.control} label="Province" name="mothersPersonalInfo.address.province" placeholder="Province" />
+              <FormInput control={form.control} label="Street" name="mothersPersonalInfo.address.street" placeholder="Street" upper={true} />
+              <FormInput control={form.control} label="Sitio" name="mothersPersonalInfo.address.sitio" placeholder="Sitio" upper={true} />
+              <FormInput control={form.control} label="Barangay" name="mothersPersonalInfo.address.barangay" placeholder="Barangay" upper={true} />
+              <FormInput control={form.control} label="City" name="mothersPersonalInfo.address.city" placeholder="City" upper={true} />
+              <FormInput control={form.control} label="Province" name="mothersPersonalInfo.address.province" placeholder="Province" upper={true} />
             </div>
 
             <div className="mt-10 mb-3">
@@ -748,6 +798,9 @@ export default function PostpartumFormFirstPg({
                       itemsPerPage={itemsPerPage}
                       currentPage={currentPage}
                       onPageChange={handlePageChange}
+                      isLoading={isMedicineLoading}
+                      totalPages={medicineStocksOptions?.pagination?.totalPages || 1}
+                      totalItems={medicineStocksOptions?.pagination?.totalItems || (Array.isArray(medicineStocksOptions) ? medicineStocksOptions.length : (medicineStocksOptions?.medicines?.length || 0))}
                     />
                   )}
                   
@@ -755,13 +808,20 @@ export default function PostpartumFormFirstPg({
                     <div className="border rounded-lg p-3 w-full">
                       <Label className="font-semibold">Given Medicines</Label>
                       <div className="flex justify-center items-center p-3">
-                        {/* {selectedMedicines.map((medicine) => (
-                          <div key={medicine.id} className="flex justify-between">
-                            <span>{medicine.name}</span>
-                            <span>{medicine.dosage}</span>
-                          </div>
-                        ))} */}
-                        <Label className="text-black/70">No history of given medicines yet.</Label>
+                        {selectedMedicines.length === 0 ? (
+                          <Label className="text-black/70">No medicines selected.</Label>
+                        ) : (
+                          <ul className="w-full space-y-1">
+                            {selectedMedicines.map((m) => (
+                              <li key={m.minv_id} className="flex justify-between text-sm">
+                                <span className="truncate max-w-[60%]" title={medicineLookup.get(m.minv_id) || m.minv_id}>
+                                  {medicineLookup.get(m.minv_id) || m.minv_id}
+                                </span>
+                                <span>{m.medrec_qty} unit{m.medrec_qty > 1 ? 's' : ''}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -828,6 +888,12 @@ export default function PostpartumFormFirstPg({
                   ]}
                 />
               </div>
+              <div className="grid grid-cols-4 gap-4 mt-4">
+                  <FormInput control={form.control} label="Temperature" name="postpartumTable.temp" placeholder="Temperature" type="number" />
+                  <FormInput control={form.control} label="Respiratory Rate" name="postpartumTable.rr" placeholder="Respiratory Rate" type="number" />
+                  <FormInput control={form.control} label="Pulse" name="postpartumTable.pulse" placeholder="Pulse Rate" type="number" />
+                  <FormInput control={form.control} label="O2" name="postpartumTable.o2" placeholder="Oxygen Rate" type="number" />
+              </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <FormTextArea control={form.control} label="Findings" name="postpartumTable.findings" placeholder="Enter findings" />
                 <FormTextArea control={form.control} label="Nurses Notes" name="postpartumTable.nursesNotes" placeholder="Enter nurses notes" />
@@ -843,6 +909,47 @@ export default function PostpartumFormFirstPg({
               </div>
             </div>
 
+            <div className="flex flex-col gap-2 mt-4">
+              <Label className="text-sm font-medium">Forward record to</Label>
+              <Combobox
+                options={staffOptions}
+                value={staffOptions.find((opt: any) => opt.realId === selectedStaffId)?.id || ""}
+                placeholder={isLoadingStaff ? "Loading staff..." : "Select staff"}
+                emptyMessage="No staff found"
+                onChange={(value:any) => {
+                  // Find the realId and position from the selected option
+                  const selectedOption = staffOptions.find((opt: any) => opt.id === value)
+                  const realStaffId = selectedOption?.realId || value
+                  
+                  // Extract position from the searchable ID (format: "name position")
+                  const fullStaffData = staffsData?.staff.find((staff: any) => String(staff.staff_id) === realStaffId)
+                  const position = fullStaffData?.position || fullStaffData?.pos || ""
+                  
+                  console.log("Selected staff:", value, "Real ID:", realStaffId, "Position:", position)
+                  setSelectedStaffId(realStaffId)
+
+                  // Determine status based on staff position
+                  if (realStaffId) {
+                    let forwardStatus = "pending_review"
+                    let forwardedStatus = "completed"
+                    
+                    if (position.toUpperCase() === "ADMIN") {
+                      forwardStatus = "tbc_by_midwife"
+                      forwardedStatus = "pending"
+                      console.log("Forwarding to ADMIN staff - setting status to: tbc_by_midwife, forwarded_status to: pending")
+                    }
+                    
+                    // Store forward information in form for backend
+                    form.setValue("assigned_to", realStaffId)
+                    form.setValue("status", forwardStatus)
+                    form.setValue("forwarded_status", forwardedStatus)
+                    
+                    console.log("Forward record: Staff ID:", realStaffId, "Status:", forwardStatus, "Forwarded Status:", forwardedStatus)
+                  }
+                }}
+              />
+            </div>
+            
             <div className="mt-8 sm:mt-auto flex justify-end">
               <Button type="submit" className="mt-4 mr-4 sm-w-32" disabled={addPostpartumMutation.isPending || !selectedPatient}>
                 {addPostpartumMutation.isPending && isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -1,6 +1,8 @@
 "use client"
 
-import { CalendarCheck, Check } from "lucide-react"
+import { Check } from "lucide-react"
+import { usePrenatalFormsWithCare } from "../queries/maternalFetchQueries"
+import { useMemo } from "react"
 
 interface PregnancyDataDetails {
   pregnancy_id: string
@@ -45,7 +47,10 @@ interface PregnancyDataDetails {
 }
 
 interface PregnancyVisitTrackerProps {
-  pregnancies: PregnancyDataDetails[]
+  pregnancies?: PregnancyDataDetails[]  // legacy prop (still supported)
+  patientId?: string                    // new: fetch via hook
+  pregnancyId?: string                  // optional filter
+  pageSize?: number                     // optional page size for pagination
 }
 
 interface VisitCheckmarksProps {
@@ -73,12 +78,48 @@ function VisitCheckmarks({ requiredVisits, completedVisits }: VisitCheckmarksPro
   )
 }
 
-export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTrackerProps) {
-  // Ensure pregnancies is always an array
-  const pregnanciesArray = Array.isArray(pregnancies) ? pregnancies : []
-  
-  if (pregnanciesArray.length === 0) {
-    return <div className="text-center text-gray-500">No pregnancy data available</div>
+export default function PregnancyVisitTracker({ pregnancies, patientId, pregnancyId, pageSize = 50 }: PregnancyVisitTrackerProps) {
+  const { data: prenatalFormsData } = usePrenatalFormsWithCare(1, pageSize, patientId, pregnancyId)
+
+  const pregnanciesArray = useMemo(() => (Array.isArray(pregnancies) ? pregnancies : []), [pregnancies])
+
+  const prenatalFormsWithAOG = useMemo(() => {
+    // Handle different response structures
+    let results = []
+    if (Array.isArray(prenatalFormsData)) {
+      results = prenatalFormsData
+    } else if (prenatalFormsData?.results) {
+      results = prenatalFormsData.results
+    } else if (prenatalFormsData?.data) {
+      results = prenatalFormsData.data
+    }
+    
+    if (!Array.isArray(results)) return []
+    const forms = results.map((form: any) => {
+      const careEntries = form.prenatal_care_entries || []
+      // Get the latest care entry (highest AOG) for this form
+      const latestCare = careEntries.length > 0 
+        ? careEntries.reduce((latest: any, current: any) => {
+            const latestWeeks = latest.pfpc_aog_wks || 0
+            const currentWeeks = current.pfpc_aog_wks || 0
+            return currentWeeks > latestWeeks ? current : latest
+          })
+        : null
+      
+      return {
+        pf_id: form.pf_id,
+        aog_wks: latestCare?.pfpc_aog_wks,
+        aog_days: latestCare?.pfpc_aog_days,
+        date: latestCare?.pfpc_date || form.created_at,
+      }
+    }).filter(f => f.aog_wks != null) // Only count forms with valid AOG
+    return forms
+  }, [prenatalFormsData])
+
+  // Fallback: if no fetched forms and no legacy pregnancies data
+  const noData = !pregnanciesArray.length && !prenatalFormsWithAOG.length
+  if (noData) {
+    return <div className="text-center text-gray-500">No pregnancy / prenatal care data available</div>
   }
 
   // Helper function: Calculate which trimester a follow-up visit belongs to
@@ -105,75 +146,60 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
     return "unknown"
   }
 
-  // Helper function: Count completed visits per trimester
-  const countVisitsByTrimester = () => {
-    let firstTrimester = 0
-    let secondTrimester = 0
-    let thirdTrimester = 0
-
-    // Process each pregnancy (including all statuses, not just "active")
-    pregnanciesArray.forEach((pregnancy) => {
-      const pregnancyStartDate = pregnancy.created_at
-      const followUps = pregnancy.follow_up || []
-      const prenatalForms = pregnancy.prenatal_form || []
-
-      // Count only the FIRST prenatal form creation as the initial visit
-      if (prenatalForms.length > 0) {
-        const firstPrenatalForm = prenatalForms[0]
-        const trimester = getFollowUpTrimester(firstPrenatalForm.created_at, pregnancyStartDate)
-        
-        switch (trimester) {
-          case "1-3 months":
-            firstTrimester++
-            break
-          case "4-6 months":
-            secondTrimester++
-            break
-          case "7-9 months":
-            thirdTrimester++
-            break
-        }
-      }
-
-      // Count completed follow-ups by trimester
-      followUps.forEach((visit) => {
-        // Only count completed visits
-        if (visit.followv_status.toLowerCase() === "completed") {
-          const trimester = getFollowUpTrimester(visit.followv_date, pregnancyStartDate)
-          
-          switch (trimester) {
-            case "1-3 months":
-              firstTrimester++
-              break
-            case "4-6 months":
-              secondTrimester++
-              break
-            case "7-9 months":
-              thirdTrimester++
-              break
-          }
-        }
-      })
-    })
-
-    return {
-      first: firstTrimester,
-      second: secondTrimester,
-      third: thirdTrimester,
-    }
+  // Trimester classification based on AOG weeks (WHO simplified 8 ANC schedule boundaries)
+  // 1st: <=13 weeks 6 days, 2nd: 14w0d - 27w6d, 3rd: >=28w0d
+  const classifyTrimesterByAOG = (wks?: number | null): 1 | 2 | 3 | 0 => {
+    if (wks == null || isNaN(wks)) return 0
+    if (wks <= 13) return 1
+    if (wks >= 14 && wks <= 27) return 2
+    if (wks >= 28) return 3
+    return 0
   }
 
-  // Calculate actual visit counts
-  const visitCounts = countVisitsByTrimester()
+  const visitCounts = useMemo(() => {
+    let t1 = 0, t2 = 0, t3 = 0
+
+    // Prefer prenatal forms with AOG if available (1 pf_id = 1 visit)
+    if (prenatalFormsWithAOG.length) {
+      prenatalFormsWithAOG.forEach(form => {
+        const tri = classifyTrimesterByAOG(form.aog_wks)
+        if (tri === 1) t1++
+        else if (tri === 2) t2++
+        else if (tri === 3) t3++
+      })
+    } else {
+      // Legacy fallback using month-diff approach on pregnancies
+      pregnanciesArray.forEach(preg => {
+        const prenatalForms = preg.prenatal_form || []
+        if (prenatalForms.length) {
+          const firstForm = prenatalForms[0]
+          const trimesterLabel = getFollowUpTrimester(firstForm.created_at, preg.created_at)
+          if (trimesterLabel === '1-3 months') t1++
+          else if (trimesterLabel === '4-6 months') t2++
+          else if (trimesterLabel === '7-9 months') t3++
+        }
+        (preg.follow_up || []).forEach(v => {
+          if (v.followv_status?.toLowerCase() === 'completed') {
+            const trimesterLabel = getFollowUpTrimester(v.followv_date, preg.created_at)
+            if (trimesterLabel === '1-3 months') t1++
+            else if (trimesterLabel === '4-6 months') t2++
+            else if (trimesterLabel === '7-9 months') t3++
+          }
+        })
+      })
+    }
+    return { first: t1, second: t2, third: t3 }
+  }, [prenatalFormsWithAOG, pregnanciesArray])
+
   const firstTrimesterVisits = visitCounts.first
   const secondTrimesterVisits = visitCounts.second
   const thirdTrimesterVisits = visitCounts.third
 
   return (
-    <div className="bg-white rounded-sm shadow-md border border-gray-200">
+    <div className="bg-white rounded-sm shadow-sm border border-gray-200">
       <div className="p-4 w-full">
-        <h2 className="flex items-center text-lg font-semibold mb-3 gap-1">
-          <CalendarCheck size={24} color="red" /> 8 ANC Visit Tracker
+        <h2 className="flex justify-between items-center text-lg font-semibold mb-3 gap-1">
+          8 ANC Visit Tracker <p className="bg-pink-200 text-xs text-pink-800 border-pink-600 border rounded-md px-2 py-0.5">Latest Pregnancy</p>
         </h2>
         <div className="grid grid-cols-3 gap-2 w-full">
           {/* 1st trimester */}
@@ -187,7 +213,7 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
               </div>
             </span>
             <div className="flex flex-col gap-2 p-2">
-              <p className="text-xs text-gray-600">Minimum: 1 visit</p>
+              <p className="text-xs text-gray-600">Minimum: 1 visit (≤13w)</p>
               <p className="text-sm font-semibold text-gray-800">
                 {firstTrimesterVisits} {firstTrimesterVisits === 1 ? "visit" : "visits"}
               </p>
@@ -206,7 +232,7 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
               </div>
             </span>
             <div className="flex flex-col gap-2 p-2">
-              <p className="text-xs text-gray-600">Minimum: 2 visits</p>
+              <p className="text-xs text-gray-600">Minimum: 2 visits (14–27w)</p>
               <p className="text-sm font-semibold text-gray-800">
                 {secondTrimesterVisits} {secondTrimesterVisits === 1 ? "visit" : "visits"}
               </p>
@@ -225,7 +251,7 @@ export default function PregnancyVisitTracker({ pregnancies }: PregnancyVisitTra
               </div>
             </span>
             <div className="flex flex-col gap-2 p-2">
-              <p className="text-xs text-gray-600">Minimum: 5 visits</p>
+              <p className="text-xs text-gray-600">Minimum: 5 visits (≥28w)</p>
               <p className="text-sm font-semibold text-gray-800">
                 {thirdTrimesterVisits} {thirdTrimesterVisits === 1 ? "visit" : "visits"}
               </p>

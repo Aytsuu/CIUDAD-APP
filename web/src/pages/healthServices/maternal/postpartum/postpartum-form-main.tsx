@@ -62,6 +62,10 @@ export default function PostpartumForm() {
       feeding: "",
       findings: "",
       nursesNotes: "",
+      temp: "",
+      rr: "",
+      o2: "",
+      pulse: ""
     },
   }
 

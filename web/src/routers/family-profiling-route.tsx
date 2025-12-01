@@ -1,37 +1,13 @@
-// import  FamilyProfilingMain  from "@/pages/health-profiling/FamilyProfilingMain"
-// import { FamilyProfileForm } from "@/pages/health-profiling/form-pages/FamilyProfileForm"
-// import  FamilyProfileView from "@/pages/health-profiling/FamilyProfileView"
 import HealthFamilyForm from "@/pages/record/health-family-profiling/HealthFamilyForm"
-// import FamilyHouseholdInfo from "@/pages/record/health-family-profiling/family-profling/householdInfo/FamilyHouseholdInfo"
+import ContinueHealthProfiling from "@/pages/record/health-family-profiling/ContinueHealthProfiling"
 
 export const familyProfilingRoute = [
-
-    // {
-    //     path: 'family-profiling-main',
-    //     element: <FamilyProfilingMain />
-    // },
-    // {
-    //     path: 'family-profile-form',
-    //     element: <FamilyProfileForm />
-    // },
-    // {
-    //     path: 'family-profile-view',
-    //     element: <FamilyProfileView></FamilyProfileView>
-    // },
     {
         path: 'family/family-profile-form',
         element: <HealthFamilyForm />,
     },
-    // {
-    //     path: 'family/family-profile-form/household-info',
-    //     element: <FamilyHouseholdInfo form={null} residentsList={[]} formattedResidents={[]} />,
-    // },
-    
-
-    // {
-    //     path: 'family/dependents-information',
-    //     element: <FamilyProfileForm />,
-    // }
-    
-   
+    {
+        path: 'family/continue-profiling/:famId',
+        element: <ContinueHealthProfiling />,
+    },
 ]

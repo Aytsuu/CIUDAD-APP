@@ -4,24 +4,24 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
-import { Search, Loader2, Users, Home, UserCheck } from "lucide-react";
+import { Search, Users, Home, UserCheck } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useChildHealthRecords } from "../forms/queries/fetchQueries";
 import { filterOptions } from "./types";
 import { childColumns } from "./columns/all_col";
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "../../reports/filter-sitio";
 import { SelectedFiltersChips } from "../../reports/selectedFiltersChipsProps ";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
+import { ProtectedComponent } from "@/ProtectedComponent";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 import { formatChildHealthData } from "./formattedData";
+import TableLoading from "../../../../components/ui/table-loading";
 
-export default function AllChildHealthRecords() {
+export default function AllChildHealthRecordsTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -163,7 +163,6 @@ export default function AllChildHealthRecords() {
   };
 
   return (
-    <MainLayoutComponent title="Child Health Record" description="Manage and View Child's Record">
       <div className="w-full h-full flex flex-col">
         {/* Summary Cards */}
         <div className="w-full">
@@ -207,7 +206,7 @@ export default function AllChildHealthRecords() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
               <Input 
-                placeholder="Search by name, family no, UFC no, address, or sitio..." 
+                placeholder="Search by name, address, or sitio..." 
                 className="pl-10 bg-white w-full" 
                 value={searchQuery} 
                 onChange={(e) => setSearchQuery(e.target.value)} 
@@ -240,8 +239,8 @@ export default function AllChildHealthRecords() {
                 className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
               />
             </div>
-            <ProtectedComponentButton exclude={["DOCTOR"]}>
-              <div className="w-full sm:w-auto">
+            <ProtectedComponent exclude={["DOCTOR"]}>
+                <div className="w-full sm:w-auto">
                 <Link
                   to="/services/childhealthrecords/form"
                   state={{
@@ -249,11 +248,16 @@ export default function AllChildHealthRecords() {
                       mode: "newchildhealthrecord"
                     }
                   }}
+                  onClick={() => {
+                    localStorage.removeItem("childHRFormData");
+                    localStorage.removeItem("childHRSelectedPatient");
+                    localStorage.removeItem("childHRSelectedPatientId");
+                  }}
                 >
                   <Button className="w-full sm:w-auto">New Record</Button>
                 </Link>
-              </div>
-            </ProtectedComponentButton>
+                </div>
+            </ProtectedComponent>
           </div>
         </div>
 
@@ -290,10 +294,7 @@ export default function AllChildHealthRecords() {
 
           <div className="bg-white w-full overflow-x-auto border">
             {isLoading ? (
-              <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading...</span>
-              </div>
+             <TableLoading/>
             ) : error ? (
               <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
                 <span>Error loading data. Please try again.</span>
@@ -313,6 +314,5 @@ export default function AllChildHealthRecords() {
           </div>
         </div>
       </div>
-    </MainLayoutComponent>
   );
 }

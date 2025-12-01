@@ -19,10 +19,10 @@ export const MedicalConsultationCard = ({ record, onPress }: { record: any; onPr
     }
   };
 
-  const bhwName = `${record.staff_details?.rp?.per?.per_fname || "N/A"} ${record.staff_details?.rp?.per?.per_lname || "N/A"}`;
+  const bhwName = `${record.staff_details?.fname || "N/A"} ${record.staff_details?.lname || "N/A"}`;
 
   // Check if consultation is completed (has diagnosis/treatment)
-  const isCompleted = record.find_details?.assessment_summary || record.treatment_details?.treatment_plan;
+  const isCompleted = record.find_details?.assessment_summary || record.find_details?.plantreatment_summary;
 
   return (
     <TouchableOpacity 

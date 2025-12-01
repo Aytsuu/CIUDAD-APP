@@ -11,15 +11,24 @@ import Page4 from "./page4";
 import Page5 from "./page5";
 import Page6 from "./page6";
 import Page7 from "./page7";
-import Page8 from "./page8";
-import Page9 from "./page9";
-import Page10 from "./page10";
+
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 
 export default function MultiPageFormFHIS() {
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 10;
+  const totalPages = 7;
+
+  // Page descriptions for dropdown and display
+  const pageDescriptions = [
+    "Family Planning Report",
+    "Prenatal Care Services and Postpartum and Newborn Care Section",
+    "Prenatal Care Services and Postpartum and Newborn Care Section",
+    "Immunization",
+    "Child Health and Nutrition Services",
+    "Deworming Statistics",
+    "Morbidity Report"
+  ];
 
   // Get the state from location
   const state = location.state as {
@@ -40,31 +49,43 @@ export default function MultiPageFormFHIS() {
   };
 
   return (
-    <LayoutWithBack title="FHIS Monthly Report" description={`FHSIS Report for ${state?.monthName || ""}`}>
-      {/* Page Indicator */}
+    <LayoutWithBack
+      title="FHSIS Monthly Report"
+      description={`FHSIS Report for ${state?.monthName || ""} — Page ${currentPage}: ${pageDescriptions[currentPage - 1]}`}
+    >
+      {/* Page Indicator & Dropdown */}
       <div className="w-full mb-6">
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-          <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${(currentPage / totalPages) * 100}%` }} />
-        </div>
-        <div className="text-center">
+      
+        <div className="flex flex-col sm:flex-row  justify-start gap-2">
+            <select
+            className="ml-2 px-2 py-1 rounded border border-gray-300 text-sm bg-white shadow"
+            value={currentPage}
+            onChange={e => setCurrentPage(Number(e.target.value))}
+            style={{ minWidth: 220 }}
+          >
+            {pageDescriptions.map((desc, idx) => (
+              <option key={idx + 1} value={idx + 1}>{`Page ${idx + 1}: ${desc}`}</option>
+            ))}
+          </select>
           <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
             Page {currentPage} of {totalPages}
           </span>
+        
         </div>
       </div>
 
-      {/* Page Content */}
+      {/* Page Content with styled header */}
       <Card className="p-6">
-        {currentPage === 1 && <Page1 state={state} onNext={nextPage} />}
+        <h2 className="text-xl font-bold  mb-4 t">
+          {`Page ${currentPage}: ${pageDescriptions[currentPage - 1]}`}
+        </h2>
+        {currentPage === 1 && <Page1 onNext={nextPage} />}
         {currentPage === 2 && <Page2 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 3 && <Page3 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 4 && <Page4 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 5 && <Page5 state={state} onBack={prevPage} onNext={nextPage} />}
         {currentPage === 6 && <Page6 state={state} onBack={prevPage} onNext={nextPage} />}
-        {currentPage === 7 && <Page7 state={state} onBack={prevPage} onNext={nextPage} />}
-        {currentPage === 8 && <Page8 state={state} onBack={prevPage} onNext={nextPage} />}
-        {currentPage === 9 && <Page9 state={state} onBack={prevPage} onNext={nextPage} />}
-        {currentPage === 10 && <Page10 state={state} onBack={prevPage} />}
+        {currentPage === 7 && <Page7 state={state} onBack={prevPage} />}
       </Card>
     </LayoutWithBack>
   );

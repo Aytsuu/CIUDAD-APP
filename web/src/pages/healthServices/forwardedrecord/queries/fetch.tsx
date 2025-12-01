@@ -3,36 +3,20 @@ import { api2 } from "@/api/api";
 
 // Medical Consultations
 
-export function useCombinedHealthRecords(staffId: string, search: string, recordType: string, page: number, pageSize: number) {
-  return useQuery<any>({
-    queryKey: ["combinedHealthRecords", staffId, search, recordType, page, pageSize],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        search: search,
-        record_type: recordType,
-        page: page.toString(),
-        page_size: pageSize.toString()
-      });
-
-      const response = await api2.get<any>(`/medical-consultation/combined-health-records/${staffId}/?${params}`);
-      return response.data;
-    }
-  });
-}
 
 
 
-export function useCHimmunizationCount() {
-    return useQuery({
-      queryKey: ["chimmunization-count"],
-      queryFn: async () => {
-        const response = await api2.get(`/child-health/child-immunization-count/`);
-        return response.data;
-      },
-      refetchOnMount: true,
-      staleTime: 0
-    });
-  }
+// export function useCHimmunizationCount() {
+//     return useQuery({
+//       queryKey: ["chimmunization-count"],
+//       queryFn: async () => {
+//         const response = await api2.get(`/child-health/child-immunization-count/`);
+//         return response.data;
+//       },
+//       refetchOnMount: true,
+//       staleTime: 0
+//     });
+//   }
   
   export function usePendingMedicalConCount() {
     return useQuery({
@@ -82,3 +66,21 @@ export function useCHimmunizationCount() {
     });
   }
   
+
+  // forwarded maternal records 
+  export function useForwardedMaternal(page: number = 1, pageSize: number = 10, search: string = "") {
+    return useQuery({
+      queryKey: ["forwardedmaternal-records", page, pageSize, search],
+      queryFn: async () => {
+        const params = new URLSearchParams({
+          page: page.toString(),
+          page_size: pageSize.toString(),
+          search: search
+        });
+        const response = await api2.get(`/maternal/forwarded/midwife/?${params}`);
+        return response.data;
+      },
+      refetchOnMount: true,
+      staleTime: 0
+    })
+  }

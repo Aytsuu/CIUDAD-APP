@@ -5,7 +5,8 @@ declare module 'html2pdf.js' {
         image?: { type: string; quality: number };
         html2canvas?: any; // You can specify more detailed types if needed
         jsPDF?: { unit: string; format: string; orientation: string };
-        pagebreak?: { mode: string | string[] };
+        pagebreak?: { mode?: string | string[]; before?: string | string[]; after?: string | string[]; avoid?: string | string[] };
+        [key: string]: any; // Allow additional options used by html2pdf.js
         // Add any other options you need
     }
 

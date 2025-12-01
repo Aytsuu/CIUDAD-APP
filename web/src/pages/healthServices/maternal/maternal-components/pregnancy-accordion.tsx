@@ -80,7 +80,7 @@ interface PregnancyAccordionProps {
   getStatusBadge: (status: "Active" | "Completed" | "Pregnancy Loss") => JSX.Element
   getRecordTypeBadge: (recordType: "Prenatal" | "Postpartum Care") => JSX.Element
   onCompletePregnancy?: (pregnancyId: string) => void
-  onCompleteRecord?: (recordId: string, recordType: "Prenatal" | "Postpartum Care") => void
+  onCompleteRecord?: (recordId: string, recordType: "Prenatal" | "Postpartum Care", pregnancyId?: string) => void
   onPregnancyLossRecord?: (recordId: string, recordType: "Prenatal") => void
 }
 
@@ -101,21 +101,21 @@ export function PregnancyAccordion({
     );
   }
 
-  const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care") => {
+  const handleCompleteRecord = (recordId: string, recordType: "Prenatal" | "Postpartum Care", pregnancyId?: string) => {
     if (onCompleteRecord) {
-      onCompleteRecord(recordId, recordType);
+      onCompleteRecord(recordId, recordType, pregnancyId);
     } else {
       console.log(`Completing record: ${recordId} of type ${recordType} (no onCompleteRecord prop provided)`);
     }
   }
 
-  const handlePregnancyLossRecord = (recordId: string, recordType: "Prenatal") => {
-    if (onPregnancyLossRecord) {
-      onPregnancyLossRecord(recordId, recordType)
-    } else {
-      console.log(`Marking record: ${recordId} of type ${recordType} as pregnancy loss (no onPregnancyLossRecord prop provided)`)
-    }
-  }
+  // const handlePregnancyLossRecord = (recordId: string, recordType: "Prenatal") => {
+  //   if (onPregnancyLossRecord) {
+  //     onPregnancyLossRecord(recordId, recordType)
+  //   } else {
+  //     console.log(`Marking record: ${recordId} of type ${recordType} as pregnancy loss (no onPregnancyLossRecord prop provided)`)
+  //   }
+  // }
   
   // determine if a record should have a complete button
   const shouldShowCompleteButton = (record: MaternalRecord, pregnancy: PregnancyGroup, sortedRecords: MaternalRecord[]) => {
@@ -190,7 +190,6 @@ export function PregnancyAccordion({
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-3">
                   {sortedRecords.map((record, recordIndex) => {
-                    // const showUpdateButton = shouldShowUpdateButton(record, pregnancy, sortedRecords)
                     const showCompleteButton = shouldShowCompleteButton(record, pregnancy, sortedRecords)
                     const showPregnancyLossbutton = shouldShowPregnancyLossButton(record, pregnancy, sortedRecords)
                     const visitNumber = record.visitNumber || (sortedRecords.length - recordIndex)
@@ -220,15 +219,7 @@ export function PregnancyAccordion({
                                           patientData: selectedPatient, 
                                           recordId: record.id,
                                           pregnancyId: record.pregnancyId,
-                                          visitNumber: visitNumber,
-                                          ...(record.recordType === "Postpartum Care" && record.postpartum_assessment && {
-                                            postpartumRecord: {
-                                              ppr_id: record.id,
-                                              delivery_date: record.deliveryDate,
-                                              postpartum_assessment: record.postpartum_assessment
-                                            }
-                                          })
-                                          
+                                          visitNumber: visitNumber
                                         } 
                                       }}
                                     >
@@ -248,11 +239,10 @@ export function PregnancyAccordion({
                                         size="sm"
                                         className="h-8 bg-green-500 text-white border-green-200 hover:bg-green-400 hover:text-white"
                                         onClick={() => {
-                                          // For prenatal records, mark the pregnancy as complete
                                           if (record.recordType === "Prenatal" && onCompletePregnancy) {
                                             onCompletePregnancy(record.pregnancyId);
                                           } else {
-                                            handleCompleteRecord(record.id, record.recordType);
+                                            handleCompleteRecord(record.id, record.recordType, record.pregnancyId);
                                           }
                                         }}
                                       >
@@ -275,7 +265,6 @@ export function PregnancyAccordion({
                                           if (record.recordType === "Prenatal" && onPregnancyLossRecord) {
                                             onPregnancyLossRecord(record.pregnancyId, "Prenatal")
                                           }
-                                          handlePregnancyLossRecord(record.id, "Prenatal")
                                         }}
                                       >
                                         <HeartHandshake className="w-3 h-3" />

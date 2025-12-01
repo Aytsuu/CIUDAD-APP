@@ -16,4 +16,19 @@ class UpdateMonthlyRCPReportDetailView(generics.RetrieveUpdateAPIView):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context['request'] = self.request
-        return context
+        return context 
+    
+class HeaderRCPReportTemplateView(generics.ListCreateAPIView):
+    serializer_class = HeaderRecipientListReportTemplateSerializer
+    queryset = HeaderRecipientListReporTemplate.objects.all()
+
+class UpdateHeaderReport(generics.RetrieveUpdateAPIView):
+    serializer_class = UpdateHeaderReportTemplateSerializer
+    queryset = HeaderRecipientListReporTemplate.objects.all()
+    lookup_field = 'rcpheader_id'
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context 
+

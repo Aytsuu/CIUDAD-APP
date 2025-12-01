@@ -235,8 +235,8 @@ export function useFCMToken() {
           // ✨ Invalidate notifications query
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
           
-          // Handle navigation using helper function
-          handleNotificationNavigation(data, router);
+          // // Handle navigation using helper function
+          // handleNotificationNavigation(data, router);
         }
 
         // 9️⃣ Token refresh

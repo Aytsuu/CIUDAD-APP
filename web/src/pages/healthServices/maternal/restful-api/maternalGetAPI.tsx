@@ -2,13 +2,23 @@
 
 import { api2 } from "@/api/api"
 
-// for get
+// for maternal 
 export const getPatients = async () => {
   try {
       const res = await api2.get("patientrecords/patient/view/create/")
       return res.data;
   } catch (error) {
       console.error("Error:", error);
+  }
+}
+
+export const getLatestMaternalFollowUpVisit = async (patientId: string) => {
+  try {
+    const res = await api2.get(`maternal/maternal-patients/latest-followupvisit/${patientId}/`)
+    return res.data;
+  } catch (error) {
+    console.log("Error fetching latest maternal follow-up visit: ", error);
+    throw error;
   }
 }
 
@@ -205,13 +215,42 @@ export const getIllnessList = async () => {
 // prenatal complete table comparison
 export const getPrenatalRecordComparison = async (pregnancyId: string) => {
   try {
-    const res = await api2.get(`maternal/prenatal/records/?pregnancyId=${pregnancyId}`)
+    const res = await api2.get(`maternal/prenatal/records/?pregnancy_id=${pregnancyId}`)
     return res.data || [];
   } catch (error) {
     console.error("Error fetching prenatal record comparison: ", error);
     throw error;
   }
 }
+
+// prenatal (based on pregnancy) lab result
+export const getPrenatalLabResult = async (pregnancyId: string) => {
+  try {
+    const res = await api2.get(`maternal/lab-results/${pregnancyId}/`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal lab result: ", error);
+    throw error;
+  }
+}
+
+// prenatal forms list with embedded prenatal care entries
+export const getPrenatalFormsWithCare = async (params: { page?: number; pageSize?: number; patientId?: string; pregnancyId?: string }) => {
+  try {
+    const { page, pageSize, patientId, pregnancyId } = params || {}
+    const queryParams: any = {}
+    if (page) queryParams.page = page
+    if (pageSize) queryParams.page_size = pageSize
+    if (patientId) queryParams.pat_id = patientId
+    if (pregnancyId) queryParams.pregnancy_id = pregnancyId
+    const res = await api2.get('maternal/prenatal/forms/', { params: queryParams })
+    return res.data || {}
+  } catch (error) {
+    console.error('Error fetching prenatal forms with care: ', error)
+    throw error
+  }
+}
+
 
 {/* *********** postpartum *********** */}
 
@@ -276,6 +315,57 @@ export const getMaternalCharts = async (month: string) => {
     return res.data || []
   } catch (error) {
     console.error("Error fetching maternal charts: ", error);
+    throw error;
+  }
+}
+
+
+{/* *********** dashboard sidebar *********** */}
+export const getPrenatalAppointmentsPending = async () => {
+  try {
+    const res = await api2.get('maternal/prenatal/appointment/requests/pendings/')
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal appointments pending: ", error);
+    throw error;
+  }
+}
+
+// combined follow-ups (prenatal + postpartum)
+export const getCombinedFollowUps = async (
+  patientId: string,
+  filters?: {
+    status?: string;
+    type?: 'prenatal' | 'postpartum';
+    from_date?: string;
+    to_date?: string;
+    limit?: number;
+  }
+) => {
+  try {
+    const queryParams: any = {}
+    if (filters?.status) queryParams.status = filters.status
+    if (filters?.type) queryParams.type = filters.type
+    if (filters?.from_date) queryParams.from_date = filters.from_date
+    if (filters?.to_date) queryParams.to_date = filters.to_date
+    if (filters?.limit) queryParams.limit = filters.limit
+    
+    const res = await api2.get(`maternal/patient/${patientId}/followups/combined/`, { params: queryParams })
+    return res.data || {}
+  } catch (error) {
+    console.error('Error fetching combined follow-ups: ', error)
+    throw error
+  }
+}
+
+
+{/* *********** staffs *********** */}
+export const getMaternalStaff = async () => {
+  try {
+    const res = await api2.get("maternal/staff/")
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching maternal staff: ", error);
     throw error;
   }
 }

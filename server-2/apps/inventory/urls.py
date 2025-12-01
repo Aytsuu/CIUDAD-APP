@@ -87,6 +87,7 @@ urlpatterns = [
     path("imz_supplies/<int:imz_id>/", ImmunizationSuppliesRetrieveUpdateDestroyView.as_view(), name="imz_supplies-detail"),
     path("immunization_stock/<int:imzStck_id>/", ImmunizationSuppliesStockRetrieveUpdateDestroyView.as_view(), name="immunization_stocks-detail"),
     path("immunization_stock-create/", ImmunizationStockCreate.as_view(), name="immunization_stock_atomic"),
+    path("immunization_supplies-stocks/", ImmunizationSuppliesStockListView.as_view(), name="immunization_supplies_stocks"),
 
 
     path('archive/antigen/<str:inv_id>/', AntigenArchiveInventoryView.as_view(), name='archive-antigen'),
@@ -115,7 +116,7 @@ urlpatterns = [
     
     
     path('medicine-avaiable-records/', MedicineListAvailableTable.as_view(), name='medicine-available'),
-    
+
     path('firstaid/summaries/', FirstAidSummaryMonthsAPIView.as_view(), name='firstaid-summary-montly'),
     path('firstaid/records/<str:month>/', MonthlyFirstAidRecordsDetailAPIView.as_view(), name='firstaid-monthly-records'),
     path('firstaid-expired-out-of-stock-summary/', FirstAidExpiredOutOfStockSummaryAPIView.as_view(), name='firstaid-expired-out-of-stock-summary'),

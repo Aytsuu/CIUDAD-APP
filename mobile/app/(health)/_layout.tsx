@@ -10,7 +10,6 @@ const queryClient = new QueryClient();
 export default () => {
   const { user, isAuthenticated, hasCheckedAuth } = useAuth();
 
-  // Wait for auth check to complete
   if (!hasCheckedAuth) {
     return null; // Optionally render a loading screen
   }

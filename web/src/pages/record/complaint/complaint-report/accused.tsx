@@ -140,7 +140,7 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, is
           </div>
           <p className="text-xs text-gray-600 max-w-md">
             Please select a registered resident as the respondent. Only
-            registered residents can be filed as respondents in a complaint. The
+            registered residents can be filed as respondents in a blotter. The
             description field can be edited to provide additional details about
             the incident.
           </p>
@@ -202,7 +202,7 @@ export const AccusedInfo: React.FC<AccusedInfoProps> = ({ onNext, onPrevious, is
             <div className="flex gap-2 items-center">
               <div className="flex-1">
                 <p className="text-xs text-gray-600 mb-2">
-                  Search and select a record if the complainant is a registered
+                  Search and select a record if the accused is a registered
                   resident.
                 </p>
                 <Combobox

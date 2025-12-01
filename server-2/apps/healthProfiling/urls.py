@@ -19,6 +19,7 @@ from .views.survey_form_views import *
 from .views.all_record_views import *
 from .views.dependents_views import *
 from .views.history_views import *
+from .views.population_report_views import *
 # from .views_deprecated import * # To be removed
 
 urlpatterns = [
@@ -77,11 +78,14 @@ urlpatterns = [
 
     path('respondents/create/', RespondentsInfoCreateView.as_view(), name='respondents-create'),
     path('per_additional_details/create/', HealthRelatedDetailsCreateView.as_view(), name='health-details-create'),
+    path('per_additional_details/<str:rp_id>/update/', HealthRelatedDetailsUpdateView.as_view(), name='health-details-update'),
     path('mother-health-info/', MotherHealthInfoListView.as_view(), name='mother-health-info-list'),
     path('mother-health-info/<int:pk>/', MotherHealthInfoView.as_view(), name='mother-health-info-detail'),
+    path('mother-health-info/<int:mhi_id>/update/', MotherHealthInfoUpdateView.as_view(), name='mother-health-info-update'),
     # Dependents Under Five
     path("dependent-under-five/create/", DependentsUnderFiveCreateView.as_view(), name="dependent-under-five-create"),
     path("dependent-under-five/list/", DependentsUnderFiveListView.as_view(), name="dependent-under-five-list"),
+    path("dependent-under-five/<int:duf_id>/update/", DependentsUnderFiveUpdateView.as_view(), name="dependent-under-five-update"),
 
     #   # Request Urls
     # path("request/list/table/", RequestTableView.as_view(), name="request-list-table"),
@@ -144,6 +148,13 @@ urlpatterns = [
     # Comprehensive Family Health Profiling Views
     path("family-health-profiling/<str:fam_id>/", FamilyHealthProfilingDetailView.as_view(), name="family-health-profiling-detail"),
     path("family-health-profiling/summary/all/", FamilyHealthProfilingSummaryView.as_view(), name="family-health-profiling-summary"),
+
+    # Population Structure Report
+    path("population-structure-report/", PopulationStructureReportView.as_view(), name="population-structure-report"),
+    path("population-yearly-records/", PopulationYearlyRecordsView.as_view(), name="population-yearly-records"),
+    path("population-by-sitio/", PopulationBySitioReportView.as_view(), name="population-by-sitio"),
+    path("health-profiling-summary/", HealthProfilingSummaryView.as_view(), name="health-profiling-summary"),
+    path("health-profiling-summary/", HealthProfilingSummaryView.as_view(), name="health-profiling-summary"),
 
     # Survey Identification URLs
     path("survey-identification/list/", SurveyIdentificationListView.as_view(), name="survey-identification-list"),

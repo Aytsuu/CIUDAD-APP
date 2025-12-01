@@ -19,6 +19,7 @@ export const FormComboCheckbox = React.memo(
     placeholder = "Select options",
     showBadges = false,
     maxDisplayValues = 2,
+    exclusiveOptionId,
   }: {
     control: any
     name: string
@@ -28,6 +29,7 @@ export const FormComboCheckbox = React.memo(
     placeholder?: string
     showBadges?: boolean
     maxDisplayValues?: number
+    exclusiveOptionId?: string // Option that excludes all others when selected
   }) => {
     const triggerRef = useRef<HTMLButtonElement>(null)
     const [triggerWidth, setTriggerWidth] = useState<number>(0)
@@ -57,13 +59,39 @@ export const FormComboCheckbox = React.memo(
           const enabledOptions = options.filter((option) => !option.disabled)
           const enabledOptionIds = enabledOptions.map((opt) => opt.id.toLowerCase())
           
-          // Check if all enabled options are selected
-          const allSelected = enabledOptionIds.length > 0 && enabledOptionIds.every((id) => selectedValues.includes(id))
+          // Check if all enabled options (excluding exclusive option) are selected
+          const selectableOptionIds = exclusiveOptionId
+            ? enabledOptionIds.filter((id) => id !== exclusiveOptionId.toLowerCase())
+            : enabledOptionIds
+          const allSelected = selectableOptionIds.length > 0 && selectableOptionIds.every((id) => selectedValues.includes(id))
 
           const toggleOption = (optionId: string) => {
             const option = options.find((o) => o.id === optionId)
             if (option?.disabled) return
 
+            const isExclusiveOption = exclusiveOptionId && optionId.toLowerCase() === exclusiveOptionId.toLowerCase()
+            const hasExclusiveOption = exclusiveOptionId && selectedValues.includes(exclusiveOptionId.toLowerCase())
+
+            // If toggling the exclusive option
+            if (isExclusiveOption) {
+              // If already selected, deselect it
+              if (selectedValues.includes(optionId.toLowerCase())) {
+                field.onChange([])
+              } else {
+                // Select only the exclusive option, clearing all others
+                field.onChange([optionId.toLowerCase()])
+              }
+              return
+            }
+
+            // If toggling a regular option while exclusive option is selected
+            if (hasExclusiveOption) {
+              // Replace exclusive option with the new selection
+              field.onChange([optionId.toLowerCase()])
+              return
+            }
+
+            // Normal toggle behavior for non-exclusive options
             const newValues = selectedValues.includes(optionId.toLowerCase())
               ? selectedValues.filter((val) => val !== optionId.toLowerCase())
               : [...selectedValues, optionId.toLowerCase()]
@@ -76,8 +104,11 @@ export const FormComboCheckbox = React.memo(
               // Deselect all
               field.onChange([])
             } else {
-              // Select all enabled options
-              field.onChange(enabledOptionIds)
+              // Select all enabled options except the exclusive option
+              const optionsToSelect = exclusiveOptionId
+                ? enabledOptionIds.filter((id) => id !== exclusiveOptionId.toLowerCase())
+                : enabledOptionIds
+              field.onChange(optionsToSelect)
             }
           }
 
@@ -163,18 +194,6 @@ export const FormComboCheckbox = React.memo(
                         <CommandInput placeholder="Search options..." />
                         <CommandList 
                           className="max-h-64 overflow-auto"
-                          onWheel={(e) => {
-                            e.stopPropagation()
-                            const el = e.currentTarget
-                            if (e.deltaY > 0 && el.scrollTop >= el.scrollHeight - el.clientHeight) {
-                              return
-                            }
-                            if (e.deltaY < 0 && el.scrollTop <= 0) {
-                              return
-                            }
-                            e.preventDefault()
-                            el.scrollTop += e.deltaY
-                          }}
                         >
                           <CommandEmpty>No options found.</CommandEmpty>
                           <CommandGroup>
@@ -201,29 +220,35 @@ export const FormComboCheckbox = React.memo(
                             </CommandItem>
                             
                             {/* Individual Options */}
-                            {options.map((option) => (
-                              <CommandItem
-                                key={option.id}
-                                onSelect={() => toggleOption(option.id)}
-                                className={cn("flex items-center gap-2", option.disabled && "opacity-50 pointer-events-none")}
-                              >
-                                <Checkbox
-                                  checked={selectedValues.includes(option.id.toLowerCase())}
-                                  onCheckedChange={() => toggleOption(option.id)}
-                                  id={`${name}-${option.id}`}
-                                  disabled={option.disabled}
-                                />
-                                <label
-                                  htmlFor={`${name}-${option.id}`}
-                                  className={cn("flex-1 cursor-pointer", option.disabled && "cursor-not-allowed")}
+                            {options.map((option) => {
+                              const isExclusiveOption = exclusiveOptionId && option.id.toLowerCase() === exclusiveOptionId.toLowerCase()
+                              const hasExclusiveOption = exclusiveOptionId && selectedValues.includes(exclusiveOptionId.toLowerCase())
+                              const isDisabled = option.disabled || (hasExclusiveOption && !isExclusiveOption)
+                              
+                              return (
+                                <CommandItem
+                                  key={option.id}
+                                  onSelect={() => toggleOption(option.id)}
+                                  className={cn("flex items-center gap-2", isDisabled && "opacity-50 pointer-events-none")}
                                 >
-                                  {option.name}
-                                </label>
-                                {selectedValues.includes(option.id.toLowerCase()) && !option.disabled && (
-                                  <Check className="ml-auto h-4 w-4" />
-                                )}
-                              </CommandItem>
-                            ))}
+                                  <Checkbox
+                                    checked={selectedValues.includes(option.id.toLowerCase())}
+                                    onCheckedChange={() => toggleOption(option.id)}
+                                    id={`${name}-${option.id}`}
+                                    disabled={isDisabled}
+                                  />
+                                  <label
+                                    htmlFor={`${name}-${option.id}`}
+                                    className={cn("flex-1 cursor-pointer", isDisabled && "cursor-not-allowed")}
+                                  >
+                                    {option.name}
+                                  </label>
+                                  {selectedValues.includes(option.id.toLowerCase()) && !isDisabled && (
+                                    <Check className="ml-auto h-4 w-4" />
+                                  )}
+                                </CommandItem>
+                              )
+                            })}
                           </CommandGroup>
                         </CommandList>
                       </Command>

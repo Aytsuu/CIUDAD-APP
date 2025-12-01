@@ -8,7 +8,7 @@
 
 export const type_of_feeding_options = [
   {
-    id: "Exclusive Breastfeedin",
+    id: "Exclusive Breastfeeding",
     name: "Exclusive Breastfeeding",
   },
   { id: "Mixed Breastfeeding", name: "Mixed Breastfeeding" },

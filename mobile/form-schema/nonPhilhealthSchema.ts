@@ -23,9 +23,6 @@ export const temperatureSchema = positiveNumberWith2Decimals
   .refine((temp) => temp <= 43, {
     message: "Temperature too high (hyperthermia risk)",
   })
-  .refine((temp) => temp >= 36.5 || temp <= 37.5, {
-    message: "Temperature outside normal range (36.5°C-37.5°C)",
-  });
 
 export const heightSchema = z.preprocess(
   (val) => (val !== '' ? Number(val) : undefined),

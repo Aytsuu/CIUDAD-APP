@@ -1,20 +1,17 @@
 // api/vaccination.ts
-import { 
-  VaccinationExpiredOutOfStockSummaryResponse, 
-  VaccinationExpiredOutOfStockDetailResponse 
-} from "../types";
+
 import { api2 } from "@/api/api";
 
 export const getVaccinationExpiredOutOfStockSummary = async (
   page: number,
   pageSize: number,
-): Promise<VaccinationExpiredOutOfStockSummaryResponse> => {
+): Promise<any> => {
   try {
     const params = new URLSearchParams();
     params.append('page', page.toString());
     params.append('page_size', pageSize.toString());
 
-    const response = await api2.get<VaccinationExpiredOutOfStockSummaryResponse>(
+    const response = await api2.get<any>(
       `/inventory/vaccination-expired-out-of-stock-summary/?${params.toString()}`
     );
     return response.data;
@@ -26,9 +23,9 @@ export const getVaccinationExpiredOutOfStockSummary = async (
 
 export const getMonthlyVaccinationExpiredOutOfStockDetail = async (
   month: string,
-): Promise<VaccinationExpiredOutOfStockDetailResponse> => {
+): Promise<any> => {
   try {
-    const response = await api2.get<VaccinationExpiredOutOfStockDetailResponse>(
+    const response = await api2.get<any>(
       `/inventory/vaccination-expired-out-of-stock-detail/${month}/`
     );
     return response.data;

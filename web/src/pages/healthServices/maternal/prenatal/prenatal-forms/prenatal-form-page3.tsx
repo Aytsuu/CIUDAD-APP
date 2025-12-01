@@ -1,19 +1,19 @@
 "use client"
 
 
-import { useState, useCallback } from "react" 
+import { useState, useCallback, useEffect } from "react" 
 import type { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 
 import { Button } from "@/components/ui/button/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { FormControl, FormField, FormItem, FormLabel, Form } from "@/components/ui/form/form" // Ensure Form is imported
+import { FormControl, FormField, FormItem, FormLabel, Form } from "@/components/ui/form/form" 
 import { Label } from "@/components/ui/label"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Added Card imports
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { MedicineDisplay } from "@/components/ui/medicine-display"
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
@@ -23,6 +23,85 @@ import { usePrenatalPatientFollowUpVisits } from "../../queries/maternalFetchQue
 import { ScrollText } from "lucide-react"
 import { ANCVisitsGuide } from "../../maternal-components/guide-for-8anc"
 import { useAuth } from "@/context/AuthContext"
+
+/**
+ * Medicine Selection Type
+ * Used for tracking selected medicines in prenatal form
+ */
+// interface MedicineSelection {
+//   minv_id: string              // Medicine inventory ID
+//   medrec_qty: number           // Quantity to dispense
+//   reason?: string              // Optional reason; defaults to "Micronutrient supplementation"
+// }
+
+// /**
+//  * Constants for medicine handling
+//  */
+// const MEDICINE_CONSTANTS = {
+//   REASON_DEFAULT: "Micronutrient supplementation",
+//   UNIT_PCS: "pcs",
+//   UNIT_BOXES: "boxes",
+// } as const
+
+/**
+ * Helper function: Transform medicine selections for API submission
+ * Ensures reason field has default value
+ */
+// const transformMedicineData = (medicines: any[]): MedicineSelection[] => {
+//   return medicines.map(med => ({
+//     minv_id: med.minv_id,
+//     medrec_qty: med.medrec_qty,
+//     reason: med.reason || MEDICINE_CONSTANTS.REASON_DEFAULT
+//   }))
+// }
+
+/**
+ * Helper function: Validate medicine stock availability
+ * Handles both transformed (id) and raw (minv_id) field names
+ */
+// const validateMedicineStock = (
+//   selectedMeds: any[],
+//   medicineOptions?: any[]
+// ): { isValid: boolean; errors: string[] } => {
+//   const errors: string[] = []
+
+//   if (!medicineOptions) {
+//     return { isValid: false, errors: ["Medicine options not loaded"] }
+//   }
+
+//   for (const med of selectedMeds) {
+//     // Convert both to strings for comparison to handle type mismatches
+//     // Try matching both 'id' (transformed) and 'minv_id' (raw) fields
+//     const medicineItem = medicineOptions.find(m => 
+//       String(m.minv_id) === String(med.minv_id) || 
+//       String(m.id) === String(med.minv_id)
+//     )
+    
+//     // if (!medicineItem) {
+//     //   console.warn(`Medicine not found. Selected: ${med.minv_id}`)
+//     //   console.warn(`Available medicine fields:`, medicineOptions[0] ? Object.keys(medicineOptions[0]) : 'No medicines')
+//     //   console.warn(`Available IDs (minv_id):`, medicineOptions.map(m => m.minv_id))
+//     //   console.warn(`Available IDs (id):`, medicineOptions.map(m => m.id))
+//     //   errors.push(`Medicine ID ${med.minv_id} not found in inventory`)
+//     //   continue
+//     // }
+
+//     // Use 'avail' field if present (transformed), otherwise use 'minv_qty_avail' (raw)
+//     const availableQty = Number(medicineItem.avail ?? medicineItem.minv_qty_avail) || 0
+//     const requestedQty = Number(med.medrec_qty) || 0
+
+//     if (availableQty < requestedQty) {
+//       // Try different name fields
+//       const medicineName = medicineItem.name || medicineItem.med_id?.med_name || medicineItem.medicine_name || `Medicine ${med.minv_id}`
+//       errors.push(
+//         `Insufficient stock for ${medicineName}. ` +
+//         `Available: ${availableQty}, Requested: ${requestedQty}`
+//       )
+//     }
+//   }
+
+//   return { isValid: errors.length === 0, errors }
+// }
 
 // main  component
 export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedicines, setSelectedMedicines }: {
@@ -36,22 +115,45 @@ export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedi
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
-  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock({ is_temp: true, includeZeroAvail: true })
   const { data: followUpVisitsData, isLoading: isFUVLoading, error: followUpVisitsError } = usePrenatalPatientFollowUpVisits(form.getValues("pat_id") || "")
   const { user } = useAuth()
   const staff = `${user?.personal?.per_fname || ""} ${user?.personal?.per_lname || ""} (${user?.staff?.pos || ""})`
   const staffId = user?.staff?.staff_id || ""
 
-  form.setValue("assessedBy.name", staff)
-  form.setValue("assessedBy.id", staffId)
+  useEffect(() => {
+    if (staff && staffId) {
+      form.setValue("assessedBy.name", staff)
+      form.setValue("assessedBy.id", staffId)
+    }
+  }, [staff, staffId, form])
 
   const handleNext = async () => {
+    // Validate form fields first
     if (Object.keys(form.formState.errors).length === 0) {
-      console.log("Form is valid, proceeding to next page")
+      // Validate selected medicines stock if any are selected
+      if (selectedMedicines.length > 0) {
+        // const stockValidation = validateMedicineStock(
+        //   selectedMedicines,
+        //   medicineStocksOptions?.medicines
+        // )
+
+        // if (!stockValidation.isValid) {
+        //   console.error("Medicine stock validation failed:", stockValidation.errors)
+        //   // Show error toast or alert to user
+        //   // alert("Medicine Stock Issue:\n" + stockValidation.errors.join("\n"))
+        //   return
+        // }
+        
+        // console.log("Medicine stock validation passed")
+        // Transform medicine data before submission
+        // const transformedMedicines = transformMedicineData(selectedMedicines)
+        // console.log("Transformed medicines:", transformedMedicines)
+      }
+
       onSubmit() 
     } else {
-      console.log("Form validation failed for RHF fields.")
-      console.log("Validation errors:", form.formState.errors) 
+      // console.log("Validation errors:", form.formState.errors) 
       
       const firstErrorElement = document.querySelector('[data-error="true"]')
       if (firstErrorElement) {
@@ -215,16 +317,13 @@ export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedi
     }
   }
 
+  useEffect(() => {
+    const isCesarean = form.getValues("previousPregnancy.typeOfDelivery") === "Cesarean Section";
 
-  // Set initial values for micronutrientSupp from form if they exist
-  // useEffect(() => {
-  //   const ironFolicStarted = form.getValues("micronutrientSupp.ironFolicStarted")
-  //   const ironFolicCompleted = form.getValues("micronutrientSupp.ironFolicCompleted")
-  //   const deworming = form.getValues("micronutrientSupp.deworming")
-
-  //   // You might need to map these to your `selectedMedicines` structure
-  //   // For now, I'll just ensure the form fields are correctly watched/set
-  // }, [form])
+    if (isCesarean) {
+      form.setValue("riskCodes.hasOneOrMoreOfTheFF.prevCaesarian", true);
+    }
+  }, [form]);
 
   return (
     <>
@@ -423,31 +522,21 @@ export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedi
                     <div className="p-4 flex justify-center items-center space-y-4">
                       <p className="text-center text-red-600">Loading medicines...</p>
                     </div>
-                  ) : (
+                  ) : medicineStocksOptions && medicineStocksOptions.medicines ? (
                     <MedicineDisplay
-                      medicines={medicineStocksOptions?.medicines ?? []}
+                      medicines={medicineStocksOptions.medicines}
                       initialSelectedMedicines={selectedMedicines}
                       onSelectedMedicinesChange={handleSelectedMedicinesChange}
                       itemsPerPage={itemsPerPage}
                       currentPage={currentPage}
                       onPageChange={handlePageChange}
                     />
+                  ) : (
+                    <div className="p-4 flex justify-center items-center">
+                      <p className="text-center text-red-600">No medicines available</p>
+                    </div>
                   )}
                   
-                  <div className="flex px-3 mt-4">
-                    <div className="border rounded-lg p-3 w-full">
-                      <Label className="font-semibold">Given Medicines</Label>
-                      <div className="flex justify-center items-center p-3">
-                        {/* {selectedMedicines.map((medicine) => (
-                          <div key={medicine.id} className="flex justify-between">
-                            <span>{medicine.name}</span>
-                            <span>{medicine.dosage}</span>
-                          </div>
-                        ))} */}
-                        <Label className="text-black/70">No history of given medicines yet.</Label>
-                      </div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>

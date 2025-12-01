@@ -173,8 +173,8 @@ class ValidateOTPMobileView(APIView):
         
         serializer = UserAccountSerializer(user)
         
-        if not serializer.data.get('rp'):
-            return Response({'error': 'Resident profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        # if not serializer.data.get('rp'):
+        #     return Response({'error': 'Resident profile not found'}, status=status.HTTP_404_NOT_FOUND)
         
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
@@ -190,4 +190,3 @@ class ValidateOTPMobileView(APIView):
             },
             status = status.HTTP_200_OK
         )
-

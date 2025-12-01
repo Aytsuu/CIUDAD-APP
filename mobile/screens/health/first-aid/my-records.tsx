@@ -1,13 +1,6 @@
 // screens/first-aid/my-records.tsx
 import React, { useState, useMemo } from "react";
-import { 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
-  RefreshControl,
-  TextInput,
-  Text
-} from "react-native";
+import { View, ScrollView, TouchableOpacity, RefreshControl,TextInput,Text } from "react-native";
 import { FileText, AlertCircle, Package, Heart, Search, ChevronLeft, Calendar, RefreshCw } from "lucide-react-native";
 
 import { router, useLocalSearchParams } from "expo-router";
@@ -296,7 +289,7 @@ const filteredData = useMemo(() => {
             <View className="flex-1 justify-center items-center py-20">
               <FileText size={48} color="#D1D5DB" />
               <Text className="text-gray-600 text-lg font-semibold mb-2 mt-4">
-                No records found
+                No records found 
               </Text>
               <Text className="text-gray-500 text-center">
                 {searchQuery

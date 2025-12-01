@@ -268,7 +268,7 @@ export default function MedicalConsultationForm() {
   }
 
   return (
-    <LayoutWithBack title="Medical Consultation" description="Fill out the medical consultation details">
+    <LayoutWithBack title="Medical Consultation Form" description="Fill out the medical consultation details">
       {/* Main form content */}
       <CardLayout
         title=""

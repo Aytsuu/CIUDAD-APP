@@ -47,50 +47,70 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       header: "Notes",
       cell: ({ row }) => {
         const displayNotes = row.original.notes || "";
+        const displayFollowDescription = row.original.follov_description || "";
+        const displayFollowUpVisit = row.original.followUpVisit || "";
         const currentDate = row.original.date;
         // Filter notes to only show those matching the current row's date
         const filteredNotes = historicalNotes.filter((note) => new Date(note.date).toISOString().split("T")[0] === currentDate);
 
+        // Check if we have any content to display
+        const hasCurrentData = displayNotes || displayFollowDescription || displayFollowUpVisit;
+        const hasHistoricalData = filteredNotes.length > 0;
+
+        if (!hasCurrentData && !hasHistoricalData) {
+          return <div className="text-center py-2 text-gray-400 italic">No notes</div>;
+        }
+
         return (
-          <div className="flex flex-col justify-center">
-            <div className="text-left">
-              {filteredNotes.length > 0 ? (
-                <div className="space-y-4">
+          <div className="flex flex-col justify-center space-y-4">
+            {/* Current/Form Notes (from localStorage or form state) */}
+            {hasCurrentData && (
+              <div className="max-w-[200px] text-left">
+                {displayNotes && (
+                  <div className="mb-2">
+                    <p className="text-gray-800 whitespace-pre-wrap font-medium">{displayNotes}</p>
+                  </div>
+                )}
+                {displayFollowDescription && (
+                  <p className="text-gray-600 text-sm">
+                    <span className="font-semibold">Follow up Reason:</span> {displayFollowDescription}
+                  </p>
+                )}
+                {displayFollowUpVisit && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    <span className="font-semibold">Schedule on:</span> {displayFollowUpVisit} ({row.original.followv_status || "pending"})
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Historical Notes (from database) */}
+            {hasHistoricalData && (
+              <div className="text-left border-t pt-2">
+                <p className="text-xs text-gray-400 mb-2 italic">Historical:</p>
+                <div className="space-y-3">
                   {filteredNotes.map((note, index) => (
-                    <div key={index}>
+                    <div key={index} className="text-sm">
                       {note.notes && (
-                        <div className="mt-2">
-                          <p className="text-gray-600 whitespace-pre-wrap">{note.notes }</p>
+                        <div className="mb-1">
+                          <p className="text-gray-600 whitespace-pre-wrap">{note.notes}</p>
                         </div>
                       )}
-
-                      <div>
-                        {note.follov_description && <p className="text-gray-600">Follow up Reason: {note.follov_description}</p>}
-                        {note.followUpVisit && (
-                          <p className="mt-1 flex flex-col text-xs text-gray-500">
-                            Schedule on {note.followUpVisit} ({note.followv_status || "N/A"})
-                          </p>
-                        )}
-                      </div>
+                      {note.follov_description && (
+                        <p className="text-gray-500 text-xs">
+                          <span className="font-semibold">Follow up Reason:</span> {note.follov_description}
+                        </p>
+                      )}
+                      {note.followUpVisit && (
+                        <p className="mt-1 text-xs text-gray-400">
+                          <span className="font-semibold">Schedule on:</span> {note.followUpVisit} ({note.followv_status || "N/A"})
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-4 text-gray-500">No notes found for this date</div>
-              )}
-            </div>
-
-            <div className="max-w-[200px] text-left mt-4">
-              <p className="whitespace-pre-wrap">{displayNotes}</p>
-              {row.original.follov_description && <p className="text-gray-600">Follow up Reason: {row.original.follov_description}</p>}
-              {row.original.followUpVisit && (
-                <p className="mt-1 flex flex-col text-xs text-gray-500">
-                  <span>
-                    Schedule on {row.original.followUpVisit} ({row.original.followv_status || "pending"})
-                  </span>
-                </p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         );
       }
@@ -136,6 +156,15 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
       )
     },
     {
+      accessorKey: "imzStck_name",
+      header: "Immunization Supply",
+      cell: ({ row }) => (
+        <div className="text-sm text-gray-600">
+          {row.original.imzStck_name || "N/A"}
+        </div>
+      )
+    },
+    {
       accessorKey: "nextdose",
       header: "Next Dose",
       cell: ({ row }) => (
@@ -147,12 +176,30 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
     {
       accessorKey: "date",
       header: "Date Administered",
-      cell: ({ row }) => (
-        <div className="flex justify-center items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{row.original.date ? new Date(row.original.date).toLocaleDateString() : "N/A"}</span>
-        </div>
-      )
+      cell: ({ row }) => {
+        const dateStr = row.original.date;
+        if (!dateStr) return <span>N/A</span>;
+        
+        // Handle DD-MM-YYYY format
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          // If it's DD-MM-YYYY, display as is
+          return (
+            <div className="flex justify-center items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{dateStr}</span>
+            </div>
+          );
+        }
+        
+        // Otherwise try to parse as date
+        return (
+          <div className="flex justify-center items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{new Date(dateStr).toLocaleDateString()}</span>
+          </div>
+        );
+      }
     },
     {
       id: "actions",
@@ -194,12 +241,30 @@ export const createImmunizationColumns = (props: ColumnsProps) => {
     {
       accessorKey: "date",
       header: "Date Administered",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{row.original.date ? new Date(row.original.date).toLocaleDateString() : "N/A"}</span>
-        </div>
-      )
+      cell: ({ row }) => {
+        const dateStr = row.original.date;
+        if (!dateStr) return <span>N/A</span>;
+        
+        // Handle DD-MM-YYYY format
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          // If it's DD-MM-YYYY, display as is
+          return (
+            <div className="flex justify-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm">{dateStr}</span>
+            </div>
+          );
+        }
+        
+        // Otherwise try to parse as date
+        return (
+          <div className="flex justify-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm">{new Date(dateStr).toLocaleDateString()}</span>
+          </div>
+        );
+      }
     },
     {
       id: "actions",

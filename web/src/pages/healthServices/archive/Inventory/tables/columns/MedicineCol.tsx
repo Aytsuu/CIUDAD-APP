@@ -3,6 +3,19 @@ import { ColumnDef } from "@tanstack/react-table"
 
 export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
   return [
+   {
+      accessorKey: "archivedDate",
+      header: "Archived Date",
+      cell: ({ row }) => {
+        const archivedDate = row.original.archivedDate;
+        return archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A";
+      },
+    },
+    {
+    accessorKey: "inv_id",
+    header: "ID",
+    cell: ({ row }) => <div className="text-center bg-snow p-2 rounded-md text-gray-700">{row.original.inv_id || "N/A"}</div>
+  },
     {
       accessorKey: "item",
       header: "Medicine Details",
@@ -21,25 +34,77 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
       },
     },
     {
-      accessorKey: "qty.minv_qty",
-      header: "Quantity",
+      accessorKey: "qty",
+      header: "Total Qty",
       cell: ({ row }) => {
-        const data = row.original;
-        return `${data.qty.minv_qty} ${data.minv_qty_unit}`;
-      },
-    },
-    {
-      accessorKey: "administered",
-      header: "Administered",
-    },
-    {
-      accessorKey: "wasted",
-      header: "Wasted",
+        const qty = row.original.qty.minv_qty;
+        const unit = row.original.unit;
+        const pcs = row.original.qty?.minv_pcs || 1;
+
+        if (unit.toLowerCase() === "boxes" && pcs > 1) {
+          return (
+            <div className="text-center">
+              {qty} boxes ({qty * pcs} pcs)
+            </div>
+          );
+        }
+
+        return (
+          <div className="text-center">
+            {qty} {unit}
+          </div>
+        );
+      }
     },
     {
       accessorKey: "availableStock",
       header: "Available Stock",
+      cell: ({ row }) => {
+        const record = row.original;
+        const unit = record.unit;
+        const pcs = record.qty?.minv_pcs || 1;
+      
+        if (unit.toLowerCase() === "boxes" && pcs > 1) {
+          const availablePcs = record.availableStock;
+          const fullBoxes = Math.floor(availablePcs / pcs);
+          const remainingPcs = availablePcs % pcs;
+      
+          return (
+        <div className="flex flex-col items-center">
+          <span>
+            {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
+          </span>
+          <span className="text-blue-500">({availablePcs} total pcs)</span>
+        </div>
+          );
+        }
+      
+        return (
+          <div className="text-center">
+        {record.availableStock} {unit}
+          </div>
+        );
+      }
+        },
+     {
+      accessorKey: "qty_used",
+      header: "Qty Given",
+      cell: ({ row }) => {
+        const data = row.original;
+        return `${data.qty_used} ${data.item.unit || "pcs"}`;
+      },
     },
+   
+    {
+      accessorKey: "qty_used",
+      header: "Wasted Unit",
+      cell: ({ row }) => {
+        const data = row.original;
+        return `${data.wasted} ${data.item.unit || "pcs"}`;
+      },
+    },
+ 
+       
     {
       accessorKey: "expiryDate",
       header: "Expiry Date",
@@ -48,27 +113,24 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
         return expiryDate === "N/A" ? "N/A" : new Date(expiryDate).toLocaleDateString();
       },
     },
-    {
-      accessorKey: "archivedDate",
-      header: "Archived Date",
-      cell: ({ row }) => {
-        const archivedDate = row.original.archivedDate;
-        return archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A";
-      },
+   
+  {
+    accessorKey: "reason",
+    header: "Reason",
+    cell: ({ row }) => {
+      const reason = row.original.reason;
+      return (
+        <div className="text-center">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            reason === "Expired" 
+              ? "bg-red-100 text-red-800" 
+              : "bg-yellow-100 text-yellow-800"
+          }`}>
+            {reason}
+          </span>
+        </div>
+      );
     },
-    {
-      accessorKey: "reason",
-      header: "Reason",
-      cell: ({ row }) => {
-        const reason = row.original.reason;
-        return (
-          <div className="text-center">
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-              {reason}
-            </span>
-          </div>
-        );
-      },
     },
   ];
 }

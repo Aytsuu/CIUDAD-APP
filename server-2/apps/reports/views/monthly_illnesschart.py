@@ -8,6 +8,7 @@ from apps.patientrecords.models import *
 from django.db.models import Count
 from django.db.models import Q
 
+
 class MedicalHistoryMonthlyChart(APIView):
     def get(self, request, month):
         """
@@ -25,7 +26,8 @@ class MedicalHistoryMonthlyChart(APIView):
                 .filter(
                     created_at__year=year,
                     created_at__month=month_num,
-                    ill__isnull=False
+                    ill__isnull=False,
+                    is_for_surveillance=True
                 )
                 .values('ill__illname')
                 .annotate(count=Count('patrec__pat_id', distinct=True))
@@ -44,7 +46,7 @@ class MedicalHistoryMonthlyChart(APIView):
                     'success': True,
                     'month': month,
                     'month_name': f"{month_num:02d}/{year}",
-                    'total_records': sum(illness_data.values()),
+                    'total_records': surveillance_counts.count(),
                     'illness_counts': illness_data,
                 },
                 status=status.HTTP_200_OK,

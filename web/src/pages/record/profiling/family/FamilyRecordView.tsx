@@ -5,7 +5,7 @@ import { DataTable } from "@/components/ui/table/data-table"
 import { familyMembersCol } from "./FamilyColumns"
 import { useLocation, useNavigate } from "react-router"
 import { Card } from "@/components/ui/card"
-import { Pen, UserRoundPlus, Calendar, User, Hash } from "lucide-react"
+import { Pen, UserRoundPlus, Calendar, User, Hash, ClipboardList } from "lucide-react"
 import { Button } from "@/components/ui/button/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
@@ -53,6 +53,11 @@ export default function FamilyRecordView() {
   // AND ensure there is a survey identification (si_id)
   const showHealthProfiling = (params?.showHealthProfiling || user?.staff?.staff_type === "HEALTH STAFF") && hasSurveyIdentification
 
+  // Check if current user is health staff and family doesn't have survey identification
+  // to show "Complete Profiling" button
+  const isHealthStaff = user?.staff?.staff_type === "HEALTH STAFF"
+  const showCompleteProfiling = isHealthStaff && !hasSurveyIdentification
+
   const members = familyMembers?.results || []
 
   // =================== SIDE EFFECTS ===================
@@ -76,6 +81,10 @@ export default function FamilyRecordView() {
         },
       },
     })
+  }
+
+  const handleCompleteProfiling = () => {
+    navigate(`/family/continue-profiling/${params?.fam_id}`)
   }
 
   const formatRegisteredBy = () => {
@@ -231,19 +240,31 @@ export default function FamilyRecordView() {
                 A comprehensive list of all members in this family, including their roles and key details.
               </p>
             </div>
-            <DialogLayout
-              trigger={
-                <Button className="gap-2">
-                  <UserRoundPlus className="h-4 w-4" />
-                  Add Member
+            <div className="flex gap-2">
+              {showCompleteProfiling && (
+                <Button 
+                  onClick={handleCompleteProfiling}
+                  variant="outline"
+                  className="gap-2 bg-green-500 text-white"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Complete Profiling
                 </Button>
-              }
-              title="New Member"
-              description="Select a registered resident from the database and assign their role within the family."
-              mainContent={<AddMemberForm familyId={familyData?.fam_id} setIsOpenDialog={setIsOpenAddDialog} />}
-              isOpen={isOpenAddDialog}
-              onOpenChange={setIsOpenAddDialog}
-            />
+              )}
+              <DialogLayout
+                trigger={
+                  <Button className="gap-2">
+                    <UserRoundPlus className="h-4 w-4" />
+                    Add Member
+                  </Button>
+                }
+                title="New Member"
+                description="Select a registered resident from the database and assign their role within the family."
+                mainContent={<AddMemberForm familyId={familyData?.fam_id} setIsOpenDialog={setIsOpenAddDialog} />}
+                isOpen={isOpenAddDialog}
+                onOpenChange={setIsOpenAddDialog}
+              />
+            </div>
           </div>
 
           {isLoadingFamMembers ? (

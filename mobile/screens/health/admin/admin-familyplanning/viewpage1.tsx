@@ -72,7 +72,7 @@ export default function FpRecordViewPage1() {
               <Text className="text-lg font-semibold text-gray-800">Client Information</Text>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <CreditCard size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -81,7 +81,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -90,7 +90,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Calendar size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -101,16 +101,16 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <GraduationCap size={18} color="#6B7280" />
               </View>
-              <View className="flex-1">
+              <View className="flex-1 m">
                 <Text className="text-sm text-gray-500 mb-1">Education</Text>
                 <Text className="text-sm font-medium text-gray-900">{recordData.educationalAttainment ?? "N/A"}</Text>
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <GraduationCap size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -119,7 +119,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <CreditCard size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -128,7 +128,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <MapPin size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -156,7 +156,7 @@ export default function FpRecordViewPage1() {
               <Text className="text-lg font-semibold text-gray-800">Family Planning Details</Text>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -164,18 +164,33 @@ export default function FpRecordViewPage1() {
                 <Text className="text-sm font-medium text-gray-900">{recordData.typeOfClient ?? "N/A"}</Text>
               </View>
             </View>
+
+              <View className="flex-row items-start space-x-3 mb-4">
+              <View className="w-5 h-5 mt-1 mr-2">
+                <User size={18} color="#6B7280" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-sm text-gray-500 mb-1">Subtype</Text>
+                <Text className="text-sm font-medium text-gray-900">{recordData.subTypeOfClient ?? "N/A"}</Text>
+              </View>
+            </View>
             
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Heart size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
                 <Text className="text-sm text-gray-500 mb-1">Reason for Family Planning</Text>
-                <Text className="text-sm font-medium text-gray-900">{recordData.reasonForFP ?? "N/A"}</Text>
+                <Text className="text-sm font-medium text-gray-900">
+            {recordData.reasonForFP === "Others" && recordData.fp_type?.fpt_reason 
+              ? recordData.fp_type.fpt_reason 
+              : recordData.reasonForFP ?? "N/A"
+            }
+          </Text>
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Activity size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -184,7 +199,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <TrendingUp size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -195,7 +210,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
              <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -230,7 +245,7 @@ export default function FpRecordViewPage1() {
               <Text className="text-lg font-semibold text-gray-800">Obstetrical History</Text>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Droplets size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -239,7 +254,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Droplets size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -248,7 +263,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Droplets size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -257,7 +272,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
              <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Droplets size={18} color="#6B7280" />
               </View>
               
@@ -268,7 +283,7 @@ export default function FpRecordViewPage1() {
             </View>
 
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Droplets size={18} color="#6B7280" />
               </View>
               
@@ -279,7 +294,7 @@ export default function FpRecordViewPage1() {
             </View>
 
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Droplets size={18} color="#6B7280" />
               </View>
               
@@ -515,7 +530,7 @@ export default function FpRecordViewPage1() {
               <Text className="text-lg font-semibold text-gray-800">Physical Examination</Text>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -524,7 +539,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -533,7 +548,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -542,7 +557,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -551,7 +566,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -560,7 +575,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -605,7 +620,7 @@ export default function FpRecordViewPage1() {
               <Text className="text-lg font-semibold text-gray-800">Acknowledgement</Text>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -614,7 +629,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <User size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -623,7 +638,7 @@ export default function FpRecordViewPage1() {
               </View>
             </View>
             <View className="flex-row items-start space-x-3 mb-4">
-              <View className="w-5 h-5 mt-1">
+              <View className="w-5 h-5 mt-1 mr-2">
                 <Calendar size={18} color="#6B7280" />
               </View>
               <View className="flex-1">
@@ -670,7 +685,7 @@ export default function FpRecordViewPage1() {
                   </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
-                  <View className="w-5 h-5 mt-1">
+                  <View className="w-5 h-5 mt-1 mr-2">
                     <Calendar size={18} color="#6B7280" />
                   </View>
                   <View className="flex-1">
@@ -701,7 +716,7 @@ export default function FpRecordViewPage1() {
                   </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
-                  <View className="w-5 h-5 mt-1">
+                  <View className="w-5 h-5 mt-1 mr-2">
                     <Calendar size={18} color="#6B7280" />
                   </View>
                   <View className="flex-1">
@@ -710,7 +725,7 @@ export default function FpRecordViewPage1() {
                   </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
-                  <View className="w-5 h-5 mt-1">
+                  <View className="w-5 h-5 mt-1 mr-2">
                     <Heart size={18} color="#6B7280" />
                   </View>
                   <View className="flex-1">
@@ -719,7 +734,7 @@ export default function FpRecordViewPage1() {
                   </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
-                  <View className="w-5 h-5 mt-1">
+                  <View className="w-5 h-5 mt-1 mr-2">
                     <User size={18} color="#6B7280" />
                   </View>
                   <View className="flex-1">
@@ -728,7 +743,7 @@ export default function FpRecordViewPage1() {
                   </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
-                  <View className="w-5 h-5 mt-1">
+                  <View className="w-5 h-5 mt-1 mr-2">
                     <Calendar size={18} color="#6B7280" />
                   </View>
                   <View className="flex-1">
@@ -737,7 +752,7 @@ export default function FpRecordViewPage1() {
                   </View>
                 </View>
                 <View className="flex-row items-start space-x-3 mb-4">
-                  <View className="w-5 h-5 mt-1">
+                  <View className="w-5 h-5 mt-1 mr-2">
                     <FileText size={18} color="#6B7280" />
                   </View>
                   <View className="flex-1">

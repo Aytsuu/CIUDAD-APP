@@ -6,7 +6,7 @@
 export function prepareTBRecordForSubmission(tbRecord: any) {
   if (!tbRecord || !tbRecord.id) {
     console.warn('Invalid TB record: missing id (resident ID)');
-    console.log('TB record received:', tbRecord);
+    // console.log('TB record received:', tbRecord);
     return null;
   }
 
@@ -14,7 +14,7 @@ export function prepareTBRecordForSubmission(tbRecord: any) {
   const tbData = tbRecord.tbSurveilanceSchema;
   if (!tbData) {
     console.warn('Invalid TB record: missing tbSurveilanceSchema');
-    console.log('TB record received:', tbRecord);
+    // console.log('TB record received:', tbRecord);
     return null;
   }
 
@@ -30,7 +30,7 @@ export function prepareTBRecordForSubmission(tbRecord: any) {
     tb_status: tbData.tbStatus || ''
   };
 
-  console.log('Prepared TB payload:', payload);
+  // console.log('Prepared TB payload:', payload);
 
   // Don't remove empty values as the backend handles optional fields
   return payload;
@@ -71,3 +71,4 @@ export function validateTBRecord(tbRecord: any) {
     errors
   };
 }
+

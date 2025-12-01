@@ -1,27 +1,27 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react"
-import { ArrowUpDown, Search, FileInput, AlertCircle, Loader2, FileText } from "lucide-react"
+import { ArrowUpDown, Search, AlertCircle, FileText } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DataTable } from "@/components/ui/table/data-table"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { useLoading } from "@/context/LoadingContext"
+import { ExportButton } from "@/components/ui/export";
 
 import { getAgeInUnit } from "@/helpers/ageCalculator"
 
 import ScheduleTab from "./appointments-tab";
 
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
-import ViewButton from "@/components/ui/view-button";
 import { useDebounce } from "@/hooks/use-debounce";
+import { capitalize } from "@/helpers/capitalize";
+
+import TableLoading from "../../../components/ui/table-loading";
 
 // main component           
 export default function ScheduleRecords() {
@@ -194,7 +194,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
     },
     {
       accessorKey: "patient",
-      size: 200,
+      size: 250,
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
@@ -218,7 +218,6 @@ const handleTimeFrameChange = (timeFrame: string) => {
     },
     {
       accessorKey: "scheduledDate",
-      size: 100,
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Scheduled Date <ArrowUpDown size={15} />
@@ -234,17 +233,17 @@ const handleTimeFrameChange = (timeFrame: string) => {
     },
     {
       accessorKey: "purpose",
-      size: 150,
+      size: 200,
       header: "Purpose",
       cell: ({ row }) => (
         <div className="flex justify-center px-2">
-          <div className="w-full break-words">{row.original.purpose}</div>
+          <div className="w-full break-words">{capitalize(row.original.purpose)}</div>
         </div>
       )
     },
     {
       accessorKey: "status",
-      size: 80,
+      // size: 80,
       header: "Status",
       cell: ({ row }) => {
         const actualStatus = getAppointmentStatus(row.original.scheduledDate, row.original.status);
@@ -264,7 +263,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
     },
     {
       accessorKey: "sitio",
-      size: 80,
+      // size: 80,
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px]">
@@ -274,7 +273,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
     },
     {
       accessorKey: "type",
-      size: 80,
+      // size: 80,
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center">
@@ -282,30 +281,30 @@ const handleTimeFrameChange = (timeFrame: string) => {
         </div>
       )
     }, 
-    {
-      accessorKey: "action",
-      size: 100,
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <TooltipProvider> 
-            <TooltipLayout
-              trigger={
-                <div
-                  className="bg-white hover:bg-gray-50 text-black px-4 py- rounded cursor-pointer"
-                  onClick={() => {
-                    console.log("View patient:", row.original.patient.patientId)
-                  }}
-                >
-                  <ViewButton onClick={() => {}} />
-                </div>
-              }
-              content="View Schedule Details"
-            />
-          </TooltipProvider>
-        </div>
-      )
-    }
+    // {
+    //   accessorKey: "action",
+    //   size: 100,
+    //   header: "Action",
+    //   cell: ({ row }) => (
+    //     <div className="flex justify-center">
+    //       <TooltipProvider> 
+    //         <TooltipLayout
+    //           trigger={
+    //             <div
+    //               className="bg-white hover:bg-gray-50 text-black px-4 py- rounded cursor-pointer"
+    //               onClick={() => {
+    //                 console.log("View patient:", row.original.patient.patientId)
+    //               }}
+    //             >
+    //               <ViewButton onClick={() => {}} />
+    //             </div>
+    //           }
+    //           content="View Schedule Details"
+    //         />
+    //       </TooltipProvider>
+    //     </div>
+    //   )
+    // }
   ], [getAppointmentStatus]);
 
   const filter = [
@@ -316,26 +315,36 @@ const handleTimeFrameChange = (timeFrame: string) => {
     { id: "cancelled", name: "Cancelled" },
   ]
 
-
-  // Export to CSV
-  const exportToCSV = () => {
-    const headers = ["ID", "Patient Name", "Date", "Purpose", "Status", "Sitio", "Type"];
-    const csvData = transformedData.map((record: any) => {
-      const fullName = `${record.patient.lastName}, ${record.patient.firstName} ${record.patient.middleName}`;
-      const actualStatus = getAppointmentStatus(record.scheduledDate, record.status);
-      return [record.id, fullName, record.scheduledDate, record.purpose, actualStatus, record.sitio, record.type];
-    });
-
-    const csvContent = [headers, ...csvData].map((row) => row.map((field: any) => `"${field}"`).join(",")).join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "follow-up-visits.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+  // export columns
+  const exportColumns = [
+    { 
+      key: "patient", 
+      header: "Patient Name",
+      format: (row: ScheduleRecord) => 
+        `${row.patient.firstName}, ${row.patient.lastName} ${row.patient.middleName}`.trim()
+    },
+    { 
+      key: "age", 
+      header: "Age",
+      format: (row: ScheduleRecord) => `${row.patient.age} ${row.patient.ageTime}`
+    },
+    { 
+      key: "sex", 
+      header: "Sex",
+      format: (row: ScheduleRecord) => row.patient.gender
+    },
+    { 
+      key: "scheduledDate", 
+      header: "Scheduled Date",
+      format: (row: ScheduleRecord) => row.scheduledDate || "Not Provided"
+    },
+    { 
+      key: "sitio", 
+      header: "Sitio",
+      format: (row: ScheduleRecord) => row.sitio || "Not Provided"
+    },
+    { key: "pat_type", header: "Type", format: (row: ScheduleRecord) => row.type || "Not Provided" },
+  ];
 
   useEffect(() => {
     if (isLoading) {
@@ -355,7 +364,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
   // Error state
   if (error) {
     return (
-      <LayoutWithBack title="Scheduled Appointments" description="View patient appointment schedules">
+      <MainLayoutComponent title="Scheduled Appointments" description="View patient appointment schedules">
         <div className="flex flex-col items-center justify-center h-64">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-red-600 mb-2 text-lg font-semibold">Error loading data</p>
@@ -364,14 +373,14 @@ const handleTimeFrameChange = (timeFrame: string) => {
             Try Again
           </Button>
         </div>
-      </LayoutWithBack>
+      </MainLayoutComponent>
     );
   }
 
   const showLoadingState = isLoading || isTimeFrameLoading;
 
   return (
-    <LayoutWithBack title="Follow-up Visits" description="View patient appointment schedules">
+    <MainLayoutComponent title="Follow-up Visits" description="View patient appointment schedules">
       <div className="w-full h-full bg-white/40 p-2 flex flex-col">
         <div className="flex justify-between mb-4 w-full">
           <div>
@@ -379,9 +388,6 @@ const handleTimeFrameChange = (timeFrame: string) => {
           </div>
 
           {/* defaulters tracking */}
-          {/* <div className="flex justify-center items-center">
-            <Button variant="link" className="rounded-none border-b-2 border-blue-500">View Defaulters</Button>
-          </div> */}
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -390,7 +396,13 @@ const handleTimeFrameChange = (timeFrame: string) => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
                 <Input placeholder="Search schedules..." className="pl-10 w-full bg-white" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
               </div>
-              <SelectLayout placeholder="Select status" label="" className="w-full md:w-[200px] bg-white text-black" options={filter} value={selectedFilter} onChange={handleFilterChange} />
+              <SelectLayout 
+                placeholder="Select status" 
+                className="w-full md:w-[200px] bg-white text-black" 
+                options={filter} 
+                value={selectedFilter} 
+                onChange={handleFilterChange} 
+              />
             </div>
           </div>
         </div>
@@ -403,31 +415,21 @@ const handleTimeFrameChange = (timeFrame: string) => {
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={exportToCSV}>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ExportButton
+                data={transformedData}
+                filename={`follow-up-visits-${new Date().toISOString().split("T")[0]}`}
+                columns={exportColumns}
+              />
             </div>
           </div>
 
           <div className="w-full overflow-x-auto">
             {showLoadingState ? (
-              <div className="flex items-center justify-center min-h-20 overflow-x-auto gap-2">
-                <Loader2 className="h-6 w-6 animate-spin" /> Loading...
-              </div>
+             <TableLoading/>
             ) : transformedData.length > 0 ? (
               <DataTable columns={columns} data={transformedData} />
             ) : (
-              <div className="flex justify-center">
+              <div className="flex justify-center h-48">
                 <p className="flex text-gray-500 items-center"> 
                   <FileText size={28}/> 
                   No follow-up visits found for {timeFrame === "today" ? "today" : timeFrame === "thisWeek" ? "this week" : "this month"}
@@ -447,6 +449,6 @@ const handleTimeFrameChange = (timeFrame: string) => {
           </div>
         </div>
       </div>
-    </LayoutWithBack>
+    </MainLayoutComponent>
   );
 }

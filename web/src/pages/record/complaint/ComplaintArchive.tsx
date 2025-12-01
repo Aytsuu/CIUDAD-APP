@@ -103,7 +103,6 @@ export default function ComplaintArchive() {
         buttons={{
           filter: true,
           request: false,
-          archived: false,
           newReport: false,
           rejected: true,
           rejectedCount: rejectedCount,

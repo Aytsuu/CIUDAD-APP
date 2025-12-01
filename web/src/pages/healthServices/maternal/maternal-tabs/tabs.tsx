@@ -1,12 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MaternalTabProps {
    onTabChange: (tab: string) => void;
    pendingCount?: number;
+   activeTab?: string;
 }
 
-export default function MaternalTab({ onTabChange, pendingCount = 0 }: MaternalTabProps): JSX.Element {
-   const [selectedTab, setSelectedTab] = useState("records");
+export default function MaternalTab({ onTabChange, pendingCount = 0, activeTab = "records" }: MaternalTabProps): JSX.Element {
+   const [selectedTab, setSelectedTab] = useState(activeTab);
+
+   // Sync selectedTab with activeTab prop when it changes
+   useEffect(() => {
+      setSelectedTab(activeTab);
+   }, [activeTab]);
 
    const handleTabChange = (tab: string) => {
       setSelectedTab(tab);

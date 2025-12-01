@@ -19,13 +19,11 @@ export interface Medicine {
   pcs_per_box?: number
   inv_id?: string
   preFilledReason?: string
-  // Additional fields for enhanced medicine mapping
   med_name?: string
   display_id?: string
   original_stock_id?: string
   requested_qty?: number
   pending_reason?: string
-  // New field to track if medicine is from auto-selection
   is_auto_selected?: boolean
   selection_type?: string
   allocation_id?: string
@@ -46,7 +44,6 @@ interface MedicineDisplayProps {
   autoFillReasons?: boolean
   readOnlyReasons?: boolean
   readonly?: boolean
-  // New props for backend pagination and search
   totalPages?: number
   totalItems?: number
   onSearch?: (searchTerm: string) => void
@@ -65,7 +62,6 @@ export const MedicineDisplay = ({
   autoFillReasons = true,
   readOnlyReasons = false,
   readonly = false,
-  // New props for backend pagination
   totalPages = 1,
   totalItems = 0,
   onSearch,
@@ -77,54 +73,62 @@ export const MedicineDisplay = ({
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
   const medicines = propMedicines || []
 
+  // --- AUTOFILL AUTO-SELECTION ---
+  useEffect(() => {
+    // If initialSelectedMedicines is empty, auto-select medicines marked as is_auto_selected
+    if (!initialSelectedMedicines || initialSelectedMedicines.length === 0) {
+      const autoSelected = medicines
+        .filter(med => med.is_auto_selected)
+        .map(med => ({
+          minv_id: med.id,
+          medrec_qty: med.requested_qty ?? 1,
+          reason: med.preFilledReason ?? "",
+        }))
+      if (autoSelected.length > 0) {
+        setInternalSelectedMedicines(autoSelected)
+        onSelectedMedicinesChange(autoSelected)
+      }
+    }
+  }, [medicines, initialSelectedMedicines, onSelectedMedicinesChange])
+  // --- END AUTOFILL ---
+
   useEffect(() => {
     setInternalSelectedMedicines(initialSelectedMedicines)
   }, [initialSelectedMedicines])
 
+  // Only update local search query when searchQuery prop changes AND we're not currently searching
   useEffect(() => {
-    setLocalSearchQuery(searchQuery)
-  }, [searchQuery])
+    if (!isSearching) {
+      setLocalSearchQuery(searchQuery)
+    }
+  }, [searchQuery, isSearching])
 
   const handleSearchChange = (value: string) => {
     setLocalSearchQuery(value)
-    
-    // Debounce search to avoid too many API calls
     if (searchTimeout) {
       clearTimeout(searchTimeout)
     }
-    
     const newTimeout = setTimeout(() => {
       onSearch?.(value)
-    }, 500) // 500ms debounce
-    
+    }, 500)
     setSearchTimeout(newTimeout)
   }
 
-  const filteredMedicines = useMemo(() => {
-    // If we're using backend search, just return all medicines
-    // The filtering is done on the backend
-    return medicines
-  }, [medicines])
-
+  const filteredMedicines = useMemo(() => medicines, [medicines])
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentMedicines = useMemo(
-    () => filteredMedicines,
-    [filteredMedicines],
-  )
+  const currentMedicines = useMemo(() => filteredMedicines, [filteredMedicines])
 
-  // Helper function to check if a medicine is auto-selected
   const isMedicineAutoSelected = useCallback((medicineId: string) => {
-    const medicine = medicines.find(med => med.id === medicineId);
-    return medicine?.is_auto_selected || 
-           medicine?.selection_type === 'allocation' || 
-           medicine?.allocation_id != null;
-  }, [medicines]);
+    const medicine = medicines.find(med => med.id === medicineId)
+    return medicine?.is_auto_selected ||
+      medicine?.selection_type === 'allocation' ||
+      medicine?.allocation_id != null
+  }, [medicines])
 
   const updateSelectedMedicines = useCallback(
     (updater: (prev: typeof internalSelectedMedicines) => typeof internalSelectedMedicines) => {
-      if (readonly) return // Prevent updates in readonly mode
-      
+      if (readonly) return
       setInternalSelectedMedicines((prev) => {
         const updated = updater(prev)
         setTimeout(() => onSelectedMedicinesChange(updated), 0)
@@ -136,22 +140,18 @@ export const MedicineDisplay = ({
 
   const handleMedicineSelection = useCallback(
     (minv_id: string, isChecked: boolean, preFilledReason?: string) => {
-      if (readonly) return // Prevent selection in readonly mode
-      
-      // Don't allow unselecting auto-selected medicines
+      if (readonly) return
       if (!isChecked && isMedicineAutoSelected(minv_id)) {
-        return;
+        return
       }
-      
       updateSelectedMedicines((prev) => {
         if (isChecked) {
           const medicineExists = prev.some((med) => med.minv_id === minv_id)
           if (!medicineExists) {
-            const medicine = medicines.find(med => med.id === minv_id);
-            const isAutoSelected = isMedicineAutoSelected(minv_id);
+            const medicine = medicines.find(med => med.id === minv_id)
+            const isAutoSelected = isMedicineAutoSelected(minv_id)
             const reason = autoFillReasons && preFilledReason ? preFilledReason : ""
-            // For auto-selected medicines, use the requested quantity, otherwise default to 1
-            const quantity = isAutoSelected ? (medicine?.requested_qty || 1) : 1;
+            const quantity = isAutoSelected ? (medicine?.requested_qty || 1) : 1
             return [...prev, { minv_id, medrec_qty: quantity, reason }]
           }
           return prev
@@ -164,13 +164,10 @@ export const MedicineDisplay = ({
 
   const handleQuantityChange = useCallback(
     (minv_id: string, value: number) => {
-      if (readonly) return // Prevent quantity changes in readonly mode
-      
-      // Don't allow quantity changes for auto-selected medicines
+      if (readonly) return
       if (isMedicineAutoSelected(minv_id)) {
-        return;
+        return
       }
-      
       updateSelectedMedicines((prev) =>
         prev.map((med) => (med.minv_id === minv_id ? { ...med, medrec_qty: Math.max(0, value) } : med)),
       )
@@ -180,8 +177,7 @@ export const MedicineDisplay = ({
 
   const handleReasonChange = useCallback(
     (minv_id: string, value: string) => {
-      if (readonly) return // Prevent reason changes in readonly mode
-      
+      if (readonly) return
       updateSelectedMedicines((prev) => prev.map((med) => (med.minv_id === minv_id ? { ...med, reason: value } : med)))
     },
     [updateSelectedMedicines, readonly],
@@ -265,8 +261,11 @@ export const MedicineDisplay = ({
     </tr>
   )
 
-  // Calculate column span for empty state based on readonly mode
   const emptyStateColSpan = readonly ? 5 : 7
+
+  // Determine which empty state to show
+  const showNoMedicinesFound = currentMedicines.length === 0 && localSearchQuery && !isLoading && !isSearching
+  const showNoMedicinesAvailable = currentMedicines.length === 0 && !localSearchQuery && !isLoading && !isSearching
 
   return (
     <div className="lg:block bg-white rounded-xl shadow-sm border border-gray-200">
@@ -297,7 +296,7 @@ export const MedicineDisplay = ({
                 value={localSearchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10 pr-4 py-2 border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 w-full"
-                disabled={isLoading}
+                // REMOVED: disabled={isLoading} - Search field is NEVER disabled
               />
               {isSearching && (
                 <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-blue-500 animate-spin" />
@@ -370,19 +369,29 @@ export const MedicineDisplay = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {isLoading ? (
+            {(isLoading || isSearching) ? (
               Array.from({ length: 4 }).map((_, index) => <LoadingRow key={`loading-${index}`} />)
-            ) : currentMedicines.length === 0 ? (
+            ) : showNoMedicinesFound ? (
               <tr>
                 <td colSpan={emptyStateColSpan} className="px-6 py-12 text-center">
                   <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
                   <h3 className="text-base font-medium text-gray-900 mb-2">
-                    {localSearchQuery ? "No medicines found" : "No medicines available"}
+                    No medicines found
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {localSearchQuery
-                      ? "Try adjusting your search query."
-                      : "There are currently no medicines in the inventory."}
+                    Try adjusting your search query.
+                  </p>
+                </td>
+              </tr>
+            ) : showNoMedicinesAvailable ? (
+              <tr>
+                <td colSpan={emptyStateColSpan} className="px-6 py-12 text-center">
+                  <Package className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <h3 className="text-base font-medium text-gray-900 mb-2">
+                    No medicines available
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    There are currently no medicines in the inventory.
                   </p>
                 </td>
               </tr>
@@ -395,10 +404,7 @@ export const MedicineDisplay = ({
                 const hasPreFilledReason = autoFillReasons && !!medicine.preFilledReason
                 const isReasonReadOnly = readOnlyReasons && hasPreFilledReason
                 const isAutoSelected = isMedicineAutoSelected(medicine.id)
-                
-                // Use med_name if available (for enhanced mapping), otherwise fall back to name
                 const displayName = medicine.med_name || medicine.name
-                
                 return (
                   <tr
                     key={medicine.id}
@@ -445,7 +451,6 @@ export const MedicineDisplay = ({
                           <div className="text-sm text-gray-500">
                             {medicine.dosage} • {medicine.form}
                           </div>
-                         
                         </div>
                       </div>
                     </td>
@@ -520,7 +525,6 @@ export const MedicineDisplay = ({
                                   <span className="text-lg">+</span>
                                 </Button>
                               </div>
-                             
                               {(selectedMedicine?.medrec_qty ?? 0) < 1 && !isAutoSelected && (
                                 <span className="text-red-500 text-xs">Quantity must be more than zero</span>
                               )}
@@ -547,7 +551,6 @@ export const MedicineDisplay = ({
                                 disabled={medicine.avail <= 0 || isReasonReadOnly}
                                 readOnly={isReasonReadOnly}
                               />
-                             
                             </div>
                           )}
                         </td>

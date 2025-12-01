@@ -62,8 +62,8 @@ export function prepareSurveyDataForSubmission(surveyData: any, familyId: string
     return null;
   }
 
-  console.log('Prepared survey payload:', payload);
-  console.log('Formatted date for backend:', payload.date);
+  // console.log('Prepared survey payload:', payload);
+  // console.log('Formatted date for backend:', payload.date);
 
   return payload;
 }
@@ -110,3 +110,4 @@ export function validateSurveyData(surveyData: any) {
     errors
   };
 }
+

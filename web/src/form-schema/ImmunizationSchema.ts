@@ -62,6 +62,7 @@ export const ImmunizationFormSchema = VitalSignSchema.extend({
       vacrec: z.string().optional(),
       hasExistingVaccination: z.boolean().default(false).optional(),
       existingFollowvId: z.string().optional(), // Optional field for existing follow-up ID
+      imzStck_id: z.string().optional(), // Immunization stock ID for supplies
 
     })
   ).optional(),
@@ -166,6 +167,8 @@ export type VaccineRecord = {
   nextFollowUpDate?: string;
   vacrec?: string;
   existingFollowvId?: string; // Optional field for existing follow-up ID
+  imzStck_id?: string; // Immunization stock ID for supplies
+  imzStck_name?: string; // Immunization supply name for display
 };
 
 // Existing Vaccine Record Type

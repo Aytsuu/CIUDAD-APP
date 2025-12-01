@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Plus, FileInput, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "react-router";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -12,16 +11,22 @@ import CardLayout from "@/components/ui/card/card-layout";
 import { Button } from "@/components/ui/button/button";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { useDebounce } from "@/hooks/use-debounce";
+import { ProtectedComponent } from "@/ProtectedComponent";
+import ViewButton from "@/components/ui/view-button";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 
 import { getAgeInUnit } from "@/helpers/ageCalculator";
 import { formatDate } from "@/helpers/dateHelper";
 
 import { usePatients } from "./queries/fetch";
+import { usePatientCount } from "./queries/fetch";
 
 import PatientRecordCount from "./PatientRecordCounts";
-import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { ProtectedComponentButton } from "@/ProtectedComponentButton";
-import ViewButton from "@/components/ui/view-button";
+import TableLoading from "@/components/ui/table-loading";
+import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 
 type Report = {
@@ -37,6 +42,7 @@ type Report = {
     ageUnit: string;
   };
   type: string;
+  status: string;
   noOfRecords?: number; 
   created_at: string;
   philhealthId?: string;
@@ -45,6 +51,7 @@ type Report = {
 interface Patients {
   pat_id: string;
   pat_type: string;
+  pat_status: string;
 
   personal_info: {
     per_fname: string;
@@ -65,7 +72,7 @@ interface Patients {
   created_at: string;
 }
 
-const getPatType = (type: string) => {
+export const getPatType = (type: string) => {
   switch (type.toLowerCase()) {
     case "resident":
       return 'bg-blue-600 py-1 w-20 rounded-xl font-semibold text-white'
@@ -151,6 +158,15 @@ export const columns: ColumnDef<Report>[] = [
     cell: ({ row }) => <div className="flex justify-center"><PatientRecordCount patientId={row.getValue("id")} /></div>
   },
   {
+    accessorKey: "status",
+    header: () => <div className="flex justify-center">Status</div>,
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+      const displayStatus = status === "Transfer of Residency" ? "TOR" : status;
+      return <div className="flex justify-center">{displayStatus}</div>;
+    }
+  },
+  {
     accessorKey: "dateRegistered",
     header: () => (
       <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
@@ -210,15 +226,37 @@ export default function PatientsRecord() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Fetch sitio data
+  const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
+  const sitios = sitioData || [];
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, selectedFilter, selectedSitios]);
+
+  // Build the combined search query that includes selected sitios
+  const combinedSearchQuery = useMemo(() => {
+    let query = debouncedSearchTerm || "";
+    // Add sitio filter if any sitios are selected
+    if (selectedSitios.length > 0) {
+      const sitioQuery = selectedSitios.join(",");
+      query = query ? `${query},${sitioQuery}` : sitioQuery;
+    }
+    return query || "";
+  }, [debouncedSearchTerm, selectedSitios]);
 
   const { data: patientData, isLoading } = usePatients(
     page,
     pageSize,
-    debouncedSearchTerm,
+    combinedSearchQuery,
     selectedFilter
   );
+  const { data: patientCount } = usePatientCount();
 
   const totalPages = Math.ceil((patientData?.count || 0) / pageSize);
 
@@ -244,11 +282,6 @@ export default function PatientsRecord() {
     setPage(1);
   };
 
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setPage(1);
-  };
-
   const transformPatientsToReports = (patients: Patients[]): Report[] => {
     return patients.map((patient) => {
       const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patient.personal_info?.per_dob || "");
@@ -270,6 +303,7 @@ export default function PatientsRecord() {
         },
         age: { ageNumber: ageInfo, ageUnit: ageUnit},
         type: patient.pat_type || "Resident",
+        status: patient.pat_status,
         created_at: registeredDate,
         dateRegistered: patient.created_at || registeredDate,
         philhealthId: philhealthId,
@@ -282,12 +316,57 @@ export default function PatientsRecord() {
     return transformPatientsToReports(patientData.results);
   }, [patientData]);
 
-  const patientDataset = transformedPatients;
+  // Sitio filter handlers
+  const handleSitioSelection = (sitio_name: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSitios([...selectedSitios, sitio_name]);
+    } else {
+      setSelectedSitios(selectedSitios.filter((sitio) => sitio !== sitio_name));
+    }
+  };
 
-  const totalPatients = patientDataset.length;
+  const handleSelectAllSitios = (checked: boolean) => {
+    if (checked && sitios.length > 0) {
+      setSelectedSitios(sitios.map((sitio: any) => sitio.sitio_name));
+    } else {
+      setSelectedSitios([]);
+    }
+  };
 
-  const residents = patientDataset.filter((patient) => patient.type.includes("Resident")).length;
-  const transients = patientDataset.filter((patient) => patient.type.includes("Transient")).length;
+  // Export functionality
+  const prepareExportData = () => {
+    return transformedPatients.map((patient) => ({
+      "Patient No": patient.id,
+      "Full Name": `${patient.fullName?.lastName}, ${patient.fullName?.firstName} ${patient.fullName?.mi || ""}`.trim(),
+      "Sitio": patient.sitio,
+      "Age": `${patient.age.ageNumber} ${patient.age.ageUnit} old`,
+      "Type": patient.type,
+      "Status": patient.status === "Transfer of Residency" ? "TOR" : patient.status,
+      "No. of Records": patient.noOfRecords || 0,
+      "Date Registered": formatDate(patient.created_at, 'short'),
+      "PhilHealth ID": patient.philhealthId || "N/A"
+    }));
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `patient_records_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `patient_records_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `patient_records_${new Date().toISOString().slice(0, 10)}`, "Patient Records");
+  };
+
+  const totalPatients = patientCount?.total || 0;
+
+  const residents = patientCount?.resident || 0;
+  const transients = patientCount?.transient || 0;
   const residentPercentage = totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
   const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 
@@ -363,79 +442,89 @@ export default function PatientsRecord() {
           />
         </div>
 
-        {/* The Header is hidden on small screens */}
-        <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-          <div className="flex w-full gap-x-2">
-            <div className="relative flex-1 bg-white">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={20} />
-              <Input placeholder="Search..." className="pl-10 w-full bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
+        {/* Filters Section */}
+        <div className="w-full flex flex-col sm:flex-row gap-2 py-4 px-4 border bg-white mb-4 rounded-md">
+          <div className="w-full flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
+              <Input 
+                placeholder="Search by name, address, or sitio..." 
+                className="pl-10 bg-white w-full" 
+                value={searchTerm} 
+                onChange={(e) => handleSearch(e.target.value)} 
+              />
             </div>
-            <div className="w-48">
-              <SelectLayout placeholder="Filter by" label="" className="bg-white" options={filter} value={selectedFilter} onChange={handleFilterChange} />
-            </div>
+            <SelectLayout 
+              placeholder="Patient Type" 
+              label="" 
+              className="bg-white w-full sm:w-48" 
+              options={filter} 
+              value={selectedFilter} 
+              onChange={handleFilterChange} 
+            />
+            <FilterSitio 
+              sitios={sitios} 
+              isLoading={isLoadingSitios} 
+              selectedSitios={selectedSitios} 
+              onSitioSelection={handleSitioSelection} 
+              onSelectAll={handleSelectAllSitios} 
+              manualSearchValue="" 
+            />
           </div>
-            
-            <ProtectedComponentButton exclude={["DOCTOR"]}>
-            <div>
-              <div className="flex ml-2">
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex gap-2">
+              <ExportDropdown 
+                onExportCSV={handleExportCSV} 
+                onExportExcel={handleExportExcel} 
+                onExportPDF={handleExportPDF} 
+                className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
+              />
+            </div>
+            <ProtectedComponent exclude={["DOCTOR"]}>
+              <div className="w-full sm:w-auto">
                 <Link to="/patientrecords/form">
-                  <Button className="flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+                  <Button className="w-full sm:w-auto flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
                     <Plus size={15} /> Create
                   </Button>
                 </Link>
               </div>
-            </div>
-            </ProtectedComponentButton>
-          
+            </ProtectedComponent>
+          </div>
         </div>
 
         {/* Table Container */}
         <div className="h-full w-full rounded-md">
-          <div className="w-full bg-white flex flex-row justify-between p-3">
+          <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0">
             <div className="flex gap-x-2 items-center">
               <p className="text-xs sm:text-sm">Show</p>
-              <Input type="number" className="w-14 h-6" value={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))} />
+              <Input 
+                type="number" 
+                className="w-14 h-8" 
+                value={pageSize} 
+                onChange={(e) => {
+                  const value = +e.target.value;
+                  setPageSize(value >= 1 ? value : 1);
+                  setPage(1);
+                }} 
+                min="1" 
+              />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
           </div>
-          <div className="bg-white w-full min-h-20 overflow-x-auto">
+          <div className="bg-white w-full overflow-x-auto border">
             {isLoading ? (
-              <div className="flex items-center justify-center">
-                <Loader2 className="animate-spin" /> Loading...
-              </div>
+              <TableLoading />
             ) : (
               <DataTable columns={columns} data={transformedPatients} />
             )}
           </div>
-          <div className="bg-white border flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-            {/* Showing Rows Info */}
+          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 bg-white border">
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-              Showing {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, patientData?.count) || 0} of {patientData?.count} rows
+              Showing {transformedPatients.length > 0 ? (page - 1) * pageSize + 1 : 0}-{Math.min(page * pageSize, patientData?.count || 0)} of {patientData?.count || 0} rows
             </p>
-
             <div className="w-full sm:w-auto flex justify-center">
-              {totalPages > 0 && (
-                <PaginationLayout
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              )}
+              <PaginationLayout currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
             </div>
           </div>
         </div>

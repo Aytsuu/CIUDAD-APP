@@ -75,8 +75,8 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
   // Base styles
   const baseStyles = `flex items-center px-4 py-2.5 text-sm rounded-md cursor-pointer transition-colors ${
     isActive
-      ? "bg-[#1273B2]/10 text-[#1273B8]"
-      : "text-[#2D4A72] hover:bg-[#1273B2]/10 hover:text-[#1273B8]"
+      ? "text-white bg-white/10 hover:text-white hover:bg-white/10"
+      : "text-white/90 hover:bg-white/20"
   }`;
 
   if (hasSubItems) {
@@ -119,24 +119,22 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
   return (
     <SidebarMenuItem>
       <div className={indentClass}>
-        <SidebarMenuButton asChild className="w-full">
-          {item.url && item.url !== "/" ? (
-            <Link
-              to={item.url}
-              className={baseStyles}
-              onClick={() => setActiveItem(item.title)}
-            >
-              <span>{item.title}</span>
-            </Link>
-          ) : (
-            <div
-              className={baseStyles}
-              onClick={() => setActiveItem(item.title)}
-            >
-              <span>{item.title}</span>
-            </div>
-          )}
-        </SidebarMenuButton>
+        {item.url && item.url !== "/" ? (
+          <Link
+            to={item.url}
+            onClick={() => setActiveItem(item.title)}
+            className={baseStyles}
+          >
+            <span>{item.title}</span>
+          </Link>
+        ) : (
+          <div
+            className={baseStyles}
+            onClick={() => setActiveItem(item.title)}
+          >
+            <span>{item.title}</span>
+          </div>
+        )}
       </div>
     </SidebarMenuItem>
   );
@@ -171,15 +169,15 @@ export function AppSidebar() {
             title: "Report",
             url: "/",
             items: [
-              { 
-                title: "Incident", 
+              {
+                title: "Incident",
                 url: "/report/incident",
                 items: [
                   {
                     title: "Securado",
-                    url: "/report/incident/securado"
-                  }
-                ]
+                    url: "/report/incident/securado",
+                  },
+                ],
               },
               { title: "Acknowledgement", url: "/report/acknowledgement" },
               {
@@ -187,7 +185,7 @@ export function AppSidebar() {
                 url: "/report/weekly-accomplishment",
               },
             ],
-          }
+          },
         ]
       : []),
     ...(featureValidator("complaint")
@@ -219,13 +217,13 @@ export function AppSidebar() {
         ]
       : []),
     ...(featureValidator("conciliation proceedings")
-    ? [
-        {
-          title: "Conciliation Proceedings",
-          url: "/conciliation-proceedings",
-        },
-      ]
-    : []),
+      ? [
+          {
+            title: "Conciliation Proceedings",
+            url: "/conciliation-proceedings",
+          },
+        ]
+      : []),
     ...(featureValidator("gad")
       ? [
           {
@@ -292,31 +290,31 @@ export function AppSidebar() {
         ]
       : []),
     ...(featureValidator("waste")
-    ? [
-        {
-          title: "Waste",
-          url: "/", 
-          items: [
-            {
-              title: "Illegal Dumping Reports",
-              url: "/waste-illegaldumping-report",
-            },
-            {
-              title: "Garbage Pickup Request",
-              url: "/garbage-pickup-request",
-            },
-            {
-              title: "Waste Collection",
-              url: "/waste-collection",
-            },
-            {
-              title: "Waste Personnel & Collection Vehicle",
-              url: "/waste-personnel",
-            },
-          ]
-        }
-      ]
-    : []),
+      ? [
+          {
+            title: "Waste",
+            url: "/",
+            items: [
+              {
+                title: "Illegal Dumping Reports",
+                url: "/waste-illegaldumping-report",
+              },
+              {
+                title: "Garbage Pickup Request",
+                url: "/garbage-pickup-request",
+              },
+              {
+                title: "Waste Collection",
+                url: "/waste-collection",
+              },
+              {
+                title: "Waste Personnel & Collection Vehicle",
+                url: "/waste-personnel",
+              },
+            ],
+          },
+        ]
+      : []),
     ...(featureValidator("certificate & clearances")
       ? [
           {
@@ -359,26 +357,42 @@ export function AppSidebar() {
 
   // HEALTH FEATURES
   const healthItems: BaseMenuItem[] = [
-    ...(user?.staff?.pos.toLowerCase() != "doctor" ? [{ title: "BHW Daily Notes", url: "/bhw/notes" }] : []),
-    ...(featureValidator("patient records") ? [{ title: "Patient Records", url: "/patientrecords" }] : []),
-    ...(featureValidator("forwarded records") ? [{
-      title: "Forwarded Records",
-      url: "/",
-      items: [
-        {
-          title: "Child Immunization",
-          url: "/forwarded-records/child-health-immunization",
-        },
-        {
-          title: "Vaccine Waitlist",
-          url: "/forwarded-records/vaccine-waitlist",
-        },
-      ],
-    }] : []),
-    ...(featureValidator("referred patients") ? [{
-      title: "Referred Patients",
-      url: "/forwarded-records/medical-consultation",
-    }] : []),
+    ...(user?.staff?.pos.toLowerCase() != "doctor"
+      ? [{ title: "Daily Notes", url: "/bhw/notes" }]
+      : []),
+    ...(featureValidator("patient records")
+      ? [{ title: "Patient Records", url: "/patientrecords" }]
+      : []),
+    ...(featureValidator("forwarded records")
+      ? [
+          {
+            title: "Forwarded Records",
+            url: "/",
+            items: [
+              {
+                title: "Child Immunization",
+                url: "/forwarded-records/child-health-immunization",
+              },
+              {
+                title: "Vaccine Waitlist",
+                url: "/forwarded-records/vaccine-waitlist",
+              },
+              {
+                title: "Maternal",
+                url: "/forwarded-records/maternal",
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator("referred patients")
+      ? [
+          {
+            title: "Referred Patients",
+            url: "/referred-patients/pending-assessment",
+          },
+        ]
+      : []),
     {
       title: "Services",
       url: "/",
@@ -396,18 +410,30 @@ export function AppSidebar() {
         { title: "Vaccination", url: "/services/vaccination" },
       ],
     },
-    ...(featureValidator("inventory") ? [{
-      title: "Inventory",
-      url:  "/" ,
-      items: [
-        { title: "Inventory List", url: "/inventory/list/medicine" },
-        { title: "Inventory Stocks", url: "/inventory-stocks/list/stocks/medicine" }
-
-      ],
-    }] : []),
-    ...(featureValidator("follow-up visits") ? [{ title: "Follow-up Visits", url: "/services/scheduled/follow-ups" }] : []),
-    ...(featureValidator("service scheduler") ? [{ title: "Service Scheduler", url: "/scheduler" }] : []),
-    ...(featureValidator("reports") ? [{ title: "Reports", url: "/reports" }] : []),
+    ...(featureValidator("inventory")
+      ? [
+          {
+            title: "Inventory",
+            url: "/",
+            items: [
+              { title: "Inventory List", url: "/inventory/list/medicine" },
+              {
+                title: "Inventory Stocks",
+                url: "/inventory-stocks/list/stocks/medicine",
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator("follow-up visits")
+      ? [{ title: "Follow-up Visits", url: "/scheduled/follow-ups" }]
+      : []),
+    ...(featureValidator("service scheduler")
+      ? [{ title: "Service Scheduler", url: "/scheduler" }]
+      : []),
+    ...(featureValidator("reports")
+      ? [{ title: "Reports", url: "/reports" }]
+      : []),
   ];
 
   const items: BaseMenuItem[] = [
@@ -420,6 +446,7 @@ export function AppSidebar() {
           {
             title: "Administration",
             url: "/administration",
+            
           },
         ]
       : []),
@@ -456,17 +483,21 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(user?.staff?.pos != "DOCTOR" ? [{
-      title: "Announcement",
-      url: "/announcement",
-    }] : []),
+    ...(user?.staff?.pos != "DOCTOR"
+      ? [
+          {
+            title: "Announcement",
+            url: "/announcement",
+          },
+        ]
+      : []),
     ...(user?.staff?.staff_type?.toLowerCase() === "barangay staff"
       ? barangayItems
       : healthItems),
   ];
 
   return (
-    <Sidebar className="border-none">
+    <Sidebar className="border-none bg-darkBlue1">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>

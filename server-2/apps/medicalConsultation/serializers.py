@@ -1,17 +1,17 @@
 from rest_framework import serializers
 from .models import *
 from datetime import date
-from apps.patientrecords.serializers.patients_serializers import PatientSerializer, PatientRecordSerializer
+from apps.patientrecords.serializers.patients_serializers import *
 from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
 from apps.patientrecords.serializers.bodymesurement_serializers import BodyMeasurementBaseSerializer
 from apps.patientrecords.serializers.findings_serializers import FindingSerializer
 from apps.patientrecords.models import *
 from apps.administration.serializers.staff_serializers import *  
-from apps.childhealthservices.serializers import NutritionalStatusSerializerBase
 from apps.administration.models import *
 from apps.maternal.serializers.serializer import *
+
 class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
-    patient_details = PatientSerializer(source='*', read_only=True)
+    patient_details = PatientMiniMalSerializerWithAddtionalInfo(source='*', read_only=True)
     medicalrec_count = serializers.IntegerField(read_only=True)
     latest_consultation_date = serializers.SerializerMethodField()
  
@@ -30,16 +30,16 @@ class PatientMedConsultationRecordSerializer(serializers.ModelSerializer):
         return None
       
       
-class PhilHealthLaboratorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PhilHealthLaboratory
-        fields = '__all__'
+# class PhilHealthLaboratorySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = PhilHealthLaboratory
+#         fields = '__all__'
 
 class PhilhealthDetailsSerializer(serializers.ModelSerializer):
     # Nested serializers for foreign keys
     tts_details = serializers.SerializerMethodField()
     obs_details = serializers.SerializerMethodField()
-    lab_details = PhilHealthLaboratorySerializer(source='lab', read_only=True)
+   
     
     class Meta:
         model = PhilhealthDetails
@@ -61,8 +61,10 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
     bmi_details = BodyMeasurementBaseSerializer(source='bm', read_only=True)
     find_details = FindingSerializer(source='find', read_only=True)
     patrec_details = PatientMedConsultationRecordSerializer(source='patrec.pat_id', read_only=True)
-    staff_details = StaffMinimalSerializer(source='staff', read_only=True)
-    assigned_to_details = StaffMinimalSerializer(source='assigned_to', read_only=True)
+    staff_details = StaffTableSerializer(source='staff', read_only=True)
+    assigned_to_details = StaffTableSerializer(source='assigned_to', read_only=True)
+    # lab_details = PhilHealthLaboratorySerializer(source='lab', read_only=True)
+    
     
     # PhilHealth nested serializers
     philhealth_details = PhilhealthDetailsSerializer(read_only=True)
@@ -87,6 +89,7 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
             'assigned_to',
             'is_phrecord',
             'app_id',
+            # 'lab',
             
             # Nested fields
             'vital_signs',
@@ -97,6 +100,7 @@ class MedicalConsultationRecordSerializer(serializers.ModelSerializer):
             'assigned_to_details',
             'philhealth_details',
             'formatted_date',
+            # 'lab_details',
         ]
     
     def get_formatted_date(self, obj):

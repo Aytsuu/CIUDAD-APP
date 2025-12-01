@@ -358,7 +358,7 @@ const handlePrint = () => {
             <div className="mt-4">
                 <Button
                     onClick={handlePrint}
-                    className="bg-blue rounded"
+                
                 >
                     Print / Download as PDF
                 </Button>

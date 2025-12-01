@@ -70,7 +70,7 @@ const MaternalLanding = () => {
       <View className='flex justify-center items-center'>
         <Image
           source={require('@/assets/images/Health/Home/Maternal2.png')}
-          className="w-30 justify-center items-center flex h-30 mt-20"
+          className="w-30 justify-center items-center flex h-30 mt-10"
           resizeMode="contain"
         />
         <View className='items-start mr-18'>

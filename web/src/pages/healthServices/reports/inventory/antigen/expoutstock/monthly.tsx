@@ -42,7 +42,7 @@ export default function AntigenExpiredOutOfStockSummary() {
   }, [searchQuery]);
 
   // Filter months based on search query
-  const filteredMonthlyData = monthlyData.filter((monthItem) => monthItem.month_name.toLowerCase().includes(searchQuery.toLowerCase()) || monthItem.month.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredMonthlyData = monthlyData.filter((monthItem:any) => monthItem.month_name.toLowerCase().includes(searchQuery.toLowerCase()) || monthItem.month.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <div>
@@ -99,7 +99,7 @@ export default function AntigenExpiredOutOfStockSummary() {
               </div>
             ) : filteredMonthlyData.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {filteredMonthlyData.map((monthItem) => (
+                {filteredMonthlyData.map((monthItem:any) => (
                   <div key={monthItem.month} className="relative">
                     <MonthInfoCard
                       monthItem={{

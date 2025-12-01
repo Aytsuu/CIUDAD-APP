@@ -120,9 +120,9 @@ export default function ComplaintSidebar() {
                         </p>
                       </div>
 
-                      <p className="text-xs text-gray-600 mt-1 truncate">
+                      {/* <p className="text-xs text-gray-600 mt-1 truncate">
                         Complainant: {complaint.complainant?.[0]?.cpnt_name || "Unknown"}
-                      </p>
+                      </p> */}
                     </div>
 
                     {complaint.complainant?.length > 1 && (
