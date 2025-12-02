@@ -124,8 +124,8 @@ const Homepage = () => {
     >
       <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
         <View className="flex-1 pr-4 ml-2">
-          <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome</Text>
-          <Text className="text-white text-base mt-1">How can we help you today?</Text>
+          <Text className="text-white text-5xl font-Geist font-semibold">Welcome</Text>
+          <Text className="text-white text-base mt-1 font-Geist">How can we help you today?</Text>
         </View>
         <Image
           source={require("@/assets/images/Health/Home/young_doctor_man.png")}
@@ -158,8 +158,10 @@ const Homepage = () => {
                         <Image source={service.image} className="w-full h-full" resizeMode="cover" />
                         <View className="absolute inset-0 bg-black/50" />
                         <View className="absolute bottom-4 left-4 right-4">
-                          <Text className="text-white text-lg font-PoppinsSemiBold">{service.title}</Text>
-                          <Text className="text-white/90 text-xs font-PoppinsRegular mt-1">{service.subtitle}</Text>
+                          {/* UPDATED: font-PoppinsSemiBold -> font-Geist font-semibold */}
+                          <Text className="text-white text-lg font-Geist font-semibold">{service.title}</Text>
+                          {/* UPDATED: font-PoppinsRegular -> font-Geist */}
+                          <Text className="text-white/90 text-xs font-Geist mt-1">{service.subtitle}</Text>
                         </View>
                       </View>
                       <View className="p-4 flex-row items-center justify-between">
@@ -168,7 +170,8 @@ const Homepage = () => {
                           className="bg-green-700 px-4 py-1.5 rounded-full"
                           onPress={() => safeRouterPush(service.route)}
                         >
-                          <Text className="text-white text-xs font-PoppinsSemiBold">Learn More</Text>
+                          {/* UPDATED: font-PoppinsSemiBold -> font-Geist font-semibold */}
+                          <Text className="text-white text-xs font-Geist font-semibold">Learn More</Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -181,7 +184,7 @@ const Homepage = () => {
 
         {/* Quick Actions */}
         <View className="px-6 mb-8">
-          <Text className="text-gray-800 text-xl mt-4 font-PoppinsSemiBold mb-4">Quick Actions</Text>
+          <Text className="text-gray-800 text-xl mt-4 font-semibold mb-4">Quick Actions</Text>
           <View className="flex-row gap-4">
             {quickActions.map((action, index) => {
               const Icon = action.icon;
@@ -189,7 +192,8 @@ const Homepage = () => {
                 <TouchableOpacity key={index} onPress={() => safeRouterPush(action.route)} className="flex-1">
                   <View className="p-4 rounded-2xl shadow-lg relative" style={{ backgroundColor: action.color }}>
                     <Icon size={32} color="white" />
-                    <Text className="text-white font-PoppinsSemiBold text-md mt-3">{action.title}</Text>
+                    {/* UPDATED: font-Poppins-SemiBold -> font-Geist font-semibold */}
+                    <Text className="text-white font-Geist font-semibold text-md mt-3">{action.title}</Text>
                     <View className="absolute top-4 right-4">
                       <ChevronRight size={20} color="white" />
                     </View>
@@ -203,13 +207,14 @@ const Homepage = () => {
         {/* Book Appointment */}
         <View className="px-6 mb-8">
           <View className="flex-row justify-between items-center mb-2">
-            <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book appointment</Text>
+            <Text className="text-gray-800 font-semibold text-xl">Book appointment</Text>
             <TouchableOpacity
               className="bg-blue-700 px-4 py-2 rounded-xl relative"
               onPress={() => router.push("/my-schedules/my-schedules" as Href)}
             >
-              <Text className="text-white text-sm font-PoppinsSemiBold">My schedules</Text>
-              {/* Pending Count Badge - FIXED: using pendingCount instead of counts.pending */}
+              {/* UPDATED: font-PoppinsSemiBold -> font-Geist font-semibold */}
+              <Text className="text-white text-sm font-Geist font-semibold">My schedules</Text>
+              {/* Pending Count Badge */}
               {!isLoadingPending && pendingCount > 0 && (
                 <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center">
                   <Text className="text-white text-xs font-bold">
@@ -235,7 +240,7 @@ const Homepage = () => {
                   </View>
                 </View>
                 <View className="p-3">
-                  <Text className="text-gray-900 text-md font-PoppinsSemiBold mb-1">Maternal Services</Text>
+                  <Text className="text-gray-900 text-md font-Geist font-semibold mb-1">Maternal Services</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -254,7 +259,8 @@ const Homepage = () => {
                   </View>
                 </View>
                 <View className="p-3">
-                  <Text className="text-gray-900 text-md font-PoppinsSemiBold mb-1">Medical Consultation</Text>
+                  {/* UPDATED: font-PoppinsSemiBold -> font-Geist font-semibold */}
+                  <Text className="text-gray-900 text-md font-Geist font-semibold mb-1">Medical Consultation</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -264,7 +270,8 @@ const Homepage = () => {
         {/* Manage Section (Admin Only) */}
         {isAdmin && (
           <View className="px-5 mt-4 mb-6">
-            <Text className="text-gray-800 text-xl font-PoppinsSemiBold mb-5">Manage</Text>
+            {/* UPDATED: font-PoppinsSemiBold -> font-Geist font-semibold */}
+            <Text className="text-gray-800 text-xl font-Geist font-semibold mb-5">Manage</Text>
             <View className="flex-row flex-wrap justify-between">
               {modules.map((module, index) => {
                 const Icon = module.icon;
@@ -275,7 +282,8 @@ const Homepage = () => {
                     className="w-[30%] bg-blue-900 p-3 rounded-2xl mb-4 items-center"
                   >
                     <Icon size={43} color="white" />
-                    <Text className="text-white font-PoppinsRegular text-center mt-3 text-sm leading-4">
+                    {/* UPDATED: font-PoppinsRegular -> font-Geist */}
+                    <Text className="text-white font-Geist text-center mt-3 text-sm leading-4">
                       {module.name}
                     </Text>
                   </TouchableOpacity>

@@ -119,7 +119,7 @@ export default function TodayScheduleWidget({ onViewWeeklySchedule }: { onViewWe
           style={{ backgroundColor: '#2563EB', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, alignItems: 'center', marginTop: 8 }}
           onPress={handleViewWeeklySchedule}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>View Weekly Schedule</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' }}>View Schedules</Text>
         </TouchableOpacity>
       </View>
     </View>

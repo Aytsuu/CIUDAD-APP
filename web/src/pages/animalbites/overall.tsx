@@ -179,10 +179,23 @@ const Overall: React.FC = () => {
 
   const columns: ColumnDef<UniquePatientDisplay>[] = [
     {
+      accessorKey: "patient_id",
+      header: ({ column }) => (
+        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Patient ID 
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[120px] px-2">
+          <div className="text-center w-full">{row.original.id}</div>
+        </div>
+      )
+    },
+    {
       accessorKey: "patient",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient <ArrowUpDown size={15} />
+          Patient 
         </div>
       ),
       cell: ({ row }) => {
@@ -203,7 +216,7 @@ const Overall: React.FC = () => {
       accessorKey: "patientType",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient Type <ArrowUpDown size={15} />
+          Patient Type 
         </div>
       ),
       cell: ({ row }) => (
@@ -216,7 +229,7 @@ const Overall: React.FC = () => {
       accessorKey: "bitingAnimal",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Biting Animal <ArrowUpDown size={15} />
+          Biting Animal 
         </div>
       ),
       cell: ({ row }) => (
@@ -227,11 +240,15 @@ const Overall: React.FC = () => {
     },
     {
       accessorKey: "actions_taken",
-      header: "Actions Taken",
+      header: () => (
+        <div className="flex w-full justify-center items-center">
+          Actions Taken
+        </div>
+      ),
       cell: ({ row }) => {
         const actions = row.original.actions_taken;
         return (
-          <div className="flex justify-center min-w-[150px] px-2">
+          <div className="flex justify-center max-w-full px-2">
             <div className="text-center w-full">{actions && actions.length > 30 ? `${actions.substring(0, 30)}...` : actions}</div>
           </div>
         );
@@ -241,7 +258,7 @@ const Overall: React.FC = () => {
       accessorKey: "norecords",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          No of Records <ArrowUpDown size={15} />
+          No of Records 
         </div>
       ),
       cell: ({ row }) => (
@@ -415,23 +432,14 @@ const Overall: React.FC = () => {
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
-                    <FileInput className="h-4 w-4" />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>
-                    <ExportButton 
-                      data={patients} 
-                      filename="animal-bite-records" 
-                      columns={exportColumns} 
-                    />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div>
+              {/* FIXED: Removed wrapping DropdownMenu, used ExportButton directly */}
+              <ExportButton 
+                data={patients} 
+                filename="animal-bite-records" 
+                columns={exportColumns} 
+              />
+            </div>
             </div>
           </div>
 

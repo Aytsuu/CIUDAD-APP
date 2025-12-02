@@ -1675,65 +1675,88 @@ class FamilyPHIllnessCheckAPIView(APIView):
 class AvailableMedicalConsultationSlotsView(APIView):
     def get(self, request):
         try:
-            consultation_service = Service.objects.get(service_name='Medical Consultation')
+            print("⚡ Starting optimized slot generation...")
+            # 1. Fetch Service (1 Query)
+            try:
+                consultation_service = Service.objects.get(service_name='Medical Consultation')
+            except Service.DoesNotExist:
+                return Response({'error': 'Service "Medical Consultation" not configured.'}, status=status.HTTP_404_NOT_FOUND)
             
-            # Generate slots for the next 90 days
+            # 2. Bulk Fetch Schedulers (1 Query)
+            # Fetch all schedules for this service at once
+            schedulers = ServiceScheduler.objects.filter(service_id=consultation_service)
+            
+            # Create a memory map: {'Monday': {'AM': True, 'PM': False}, ...}
+            schedule_map = {}
+            for sched in schedulers:
+                day_name = sched.day_id.day 
+                meridiem = sched.meridiem
+                
+                if day_name not in schedule_map:
+                    schedule_map[day_name] = {'AM': False, 'PM': False}
+                schedule_map[day_name][meridiem] = True
+
+            # 3. Bulk Fetch DateSlots for the next 90 days (1 Query)
             today = date.today()
             future_date_limit = today + timedelta(days=90)
-            response_data = []
             
+            # Fetch all slot overrides/bookings for the date range
+            date_slots = DateSlots.objects.filter(date__range=[today, future_date_limit])
+            
+            # Create a memory map: {date_obj: slot_obj}
+            slots_map = {ds.date: ds for ds in date_slots}
+
+            response_data = []
             current_date = today
+
+            # 4. In-Memory Loop (Zero DB hits here)
             while current_date <= future_date_limit:
                 day_of_week_name = current_date.strftime('%A')
-                is_weekend = current_date.weekday() in [5, 6]  # Saturday=5, Sunday=6
+                is_weekend = current_date.weekday() in [5, 6]  # 5=Sat, 6=Sun
 
-                # Check scheduler for AM and PM
-                is_scheduled_am = ServiceScheduler.objects.filter(
-                    service_id=consultation_service,
-                    day_id__day=day_of_week_name,
-                    meridiem='AM'
-                ).exists()
-                is_scheduled_pm = ServiceScheduler.objects.filter(
-                    service_id=consultation_service,
-                    day_id__day=day_of_week_name,
-                    meridiem='PM'
-                ).exists()
+                # Get schedule availability from memory map
+                day_sched = schedule_map.get(day_of_week_name, {'AM': False, 'PM': False})
+                is_scheduled_am = day_sched['AM']
+                is_scheduled_pm = day_sched['PM']
 
                 # Rule: Available if scheduled OR weekend
                 am_allowed = is_scheduled_am or is_weekend
                 pm_allowed = is_scheduled_pm or is_weekend
 
-                # FIX: Use DateSlots (with 's') instead of DateSlot
-                date_slot = DateSlots.objects.filter(date=current_date).first()
-                am_max_slots = date_slot.am_max_slots if date_slot else 20
-                pm_max_slots = date_slot.pm_max_slots if date_slot else 20
-                am_current_bookings = date_slot.am_current_bookings if date_slot else 0
-                pm_current_bookings = date_slot.pm_current_bookings if date_slot else 0
-                am_available_slots = am_max_slots - am_current_bookings
-                pm_available_slots = pm_max_slots - pm_current_bookings
+                # Get slot data from memory map (or use defaults)
+                date_slot = slots_map.get(current_date)
+                
+                am_max = date_slot.am_max_slots if date_slot else 20
+                pm_max = date_slot.pm_max_slots if date_slot else 20
+                am_booked = date_slot.am_current_bookings if date_slot else 0
+                pm_booked = date_slot.pm_current_bookings if date_slot else 0
+                
+                am_avail_count = max(0, am_max - am_booked)
+                pm_avail_count = max(0, pm_max - pm_booked)
 
-                # Only include dates with available slots
-                if (am_allowed and am_available_slots > 0) or (pm_allowed and pm_available_slots > 0):
+                # Only include dates that have at least one available slot
+                if (am_allowed and am_avail_count > 0) or (pm_allowed and pm_avail_count > 0):
                     response_data.append({
                         'date': current_date.isoformat(),
                         'day_name': day_of_week_name,
-                        'am_available': am_allowed and am_available_slots > 0,
-                        'pm_available': pm_allowed and pm_available_slots > 0,
-                        'am_available_count': am_available_slots,
-                        'pm_available_count': pm_available_slots,
+                        'am_available': bool(am_allowed and am_avail_count > 0),
+                        'pm_available': bool(pm_allowed and pm_avail_count > 0),
+                        'am_available_count': am_avail_count,
+                        'pm_available_count': pm_avail_count,
                     })
 
                 current_date += timedelta(days=1)
             
+            print(f"⚡ Generated {len(response_data)} slots successfully.")
             return Response(response_data, status=status.HTTP_200_OK)
         
-        except Service.DoesNotExist:
-            return Response({'error': 'Service "Medical Consultation" not configured in the database.'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            import traceback
+            print("❌ Error generating slots:", str(e))
+            traceback.print_exc()
             return Response({'error': f'An unexpected error occurred: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
+        
+        
 class MedicalConsultationBookingView(APIView):
     @transaction.atomic
     def post(self, request):
