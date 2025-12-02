@@ -7,23 +7,23 @@ export const mapApi = axios.create({
 })
 
 
-export const api = axios.create({
-  baseURL: "http://192.168.1.14:8000",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
-
 // export const api = axios.create({
-//   baseURL: Constants.expoConfig?.extra?.apiUrl,
+//   baseURL: "http://192.168.1.14:8000",
 //   withCredentials: true,
 //   headers: {
 //     "Content-Type": "application/json",
 //     "Accept": "application/json",
 //   },
 // });
+
+export const api = axios.create({
+  baseURL: Constants.expoConfig?.extra?.apiUrl,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+});
 
 // export const api = axios.create({
 //   baseURL: "http://10.249.197.53:8000",
@@ -35,7 +35,7 @@ export const api = axios.create({
 // });
 
 export const api2 = axios.create({
-  baseURL: "http://192.168.1.14:8001",
+  baseURL: "http://192.168.1.15:8001",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
