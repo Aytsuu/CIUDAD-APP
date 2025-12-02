@@ -159,7 +159,7 @@ const PersonalInfoForm = ({
       )}
 
       {formType == Type.Editing && (
-        <div className="flex items-center gap-4 my-4">
+        <div className="flex items-center gap-4 my-2">
           <Label className="text-[15px] text-gray-700">Is this person deceased?</Label>
           <FormRadioGroup control={control} name="per_is_deceased" orientation="horizontal" readOnly={isReadOnly} options={[
             {value: "YES", label: "YES"},

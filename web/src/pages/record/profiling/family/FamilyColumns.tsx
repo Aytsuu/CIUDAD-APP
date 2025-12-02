@@ -23,7 +23,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     accessorKey: "fam_id",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Family No.
@@ -35,7 +35,7 @@ export const familyColumns: ColumnDef<FamilyRecord>[] = [
     accessorKey: "members",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Members

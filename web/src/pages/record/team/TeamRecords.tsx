@@ -128,11 +128,11 @@ export default function TeamRecords() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-2">
-              <Button onClick={() => setView("plantilla")} variant="outline" className="gap-2">
+              <Button onClick={() => setView("plantilla")} className="gap-2">
                 <FileText className="mr-1"/>
                 Plantilla
               </Button>
-              <Button onClick={() => setView("certification")}  variant="outline" className="gap-2">
+              <Button onClick={() => setView("certification")} className="gap-2">
                 <FileText className="mr-1"/>
                 Certification
               </Button>

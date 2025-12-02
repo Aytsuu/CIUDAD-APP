@@ -34,7 +34,7 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
         HIGH: 'bg-red-100 border-red-400 text-red-700 hover:bg-red-100',
       }
       return (
-        <div className="flex justify-center">
+        <div className="flex">
           <Badge className={`px-3 rounded-full ${ severity_color[row.original.ir_severity as string]}`}>
             {row.original.ir_severity}
           </Badge>
@@ -176,7 +176,7 @@ export const ARColumns = (
   },
   {
     accessorKey: "date",
-    header: "Date",
+    header: "Created",
   },
   {
     accessorKey: "status",

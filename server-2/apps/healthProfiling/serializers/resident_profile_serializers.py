@@ -17,70 +17,70 @@ class ResidentProfileBaseSerializer(serializers.ModelSerializer):
             'staff': {'write_only': True}
         }
 
-class ResidentProfileTableSerializer(serializers.ModelSerializer):
-    lname = serializers.CharField(source='per.per_lname')
-    fname = serializers.CharField(source='per.per_fname')
-    mname = serializers.SerializerMethodField()
-    suffix = serializers.CharField(source='per.per_suffix')
-    sex = serializers.CharField(source='per.per_sex')
-    pwd = serializers.CharField(source="per.per_disability")
-    household_no = serializers.SerializerMethodField()
-    family_no = serializers.SerializerMethodField()
-    business_owner = serializers.SerializerMethodField()
-    has_account = serializers.SerializerMethodField()
-    dob = serializers.DateField(source="per.per_dob")
-    age = serializers.SerializerMethodField()
-    per_id = serializers.CharField(source="per.per_id")
-    voter = serializers.SerializerMethodField()
+# class ResidentProfileTableSerializer(serializers.ModelSerializer):
+#     lname = serializers.CharField(source='per.per_lname')
+#     fname = serializers.CharField(source='per.per_fname')
+#     mname = serializers.SerializerMethodField()
+#     suffix = serializers.CharField(source='per.per_suffix')
+#     sex = serializers.CharField(source='per.per_sex')
+#     pwd = serializers.CharField(source="per.per_disability")
+#     household_no = serializers.SerializerMethodField()
+#     family_no = serializers.SerializerMethodField()
+#     business_owner = serializers.SerializerMethodField()
+#     has_account = serializers.SerializerMethodField()
+#     dob = serializers.DateField(source="per.per_dob")
+#     age = serializers.SerializerMethodField()
+#     per_id = serializers.CharField(source="per.per_id")
+#     voter = serializers.SerializerMethodField()
 
-    class Meta:
-        model = ResidentProfile
-        fields = [ 'rp_id', 'per_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'suffix', 'dob', 
-                  'age', 'sex', 'pwd', 'voter', 'household_no', 'family_no', 'business_owner', 'has_account']
+#     class Meta:
+#         model = ResidentProfile
+#         fields = [ 'rp_id', 'per_id', 'rp_date_registered', 'lname', 'fname', 'mname', 'suffix', 'dob', 
+#                   'age', 'sex', 'pwd', 'voter', 'household_no', 'family_no', 'business_owner', 'has_account']
     
-    def get_mname(self, obj):
-        return obj.per.per_mname if obj.per.per_mname else ''
+#     def get_mname(self, obj):
+#         return obj.per.per_mname if obj.per.per_mname else ''
     
-    def get_household_no(self, obj):
-        if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
-            return obj.family_compositions.first().fam.hh.hh_id
-        return ""
+#     def get_household_no(self, obj):
+#         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
+#             return obj.family_compositions.first().fam.hh.hh_id
+#         return ""
     
-    def get_family_no(self, obj):
-        if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
-            return obj.family_compositions.first().fam.fam_id
-        return ""
+#     def get_family_no(self, obj):
+#         if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
+#             return obj.family_compositions.first().fam.fam_id
+#         return ""
     
-    def get_business_owner(self, obj):
-        if hasattr(obj, 'owned_business') and obj.owned_business.exists():
-            return True
-        return False
+#     def get_business_owner(self, obj):
+#         if hasattr(obj, 'owned_business') and obj.owned_business.exists():
+#             return True
+#         return False
     
-    # def get_has_account(self, obj):
-    #     return hasattr(obj, 'account')
+#     # def get_has_account(self, obj):
+#     #     return hasattr(obj, 'account')
     
     
-    def get_age(self, obj):
-        dob = obj.per.per_dob
-        today = datetime.today().date()
+#     def get_age(self, obj):
+#         dob = obj.per.per_dob
+#         today = datetime.today().date()
 
-        age = today.year - dob.year - (
-            (today.month, today.day) < (dob.month, dob.day)
-        )
-        return age
+#         age = today.year - dob.year - (
+#             (today.month, today.day) < (dob.month, dob.day)
+#         )
+#         return age
     
-    # def get_voter(self, obj):
-    #     if obj.voter:
-    #         return "Yes"
+#     # def get_voter(self, obj):
+#     #     if obj.voter:
+#     #         return "Yes"
         
-    #     name = f'{obj.per.per_lname.upper()}, {obj.per.per_fname.upper()} {obj.per.per_mname.upper() if obj.per.per_mname else ""}'
-    #     voters = Voter.objects.filter(voter_name=name)
-    #     total = len(voters)
-    #     if total > 0:
-    #         if total > 1:
-    #             return "Review"
-    #         return "Link"
-    #     return "No"
+#     #     name = f'{obj.per.per_lname.upper()}, {obj.per.per_fname.upper()} {obj.per.per_mname.upper() if obj.per.per_mname else ""}'
+#     #     voters = Voter.objects.filter(voter_name=name)
+#     #     total = len(voters)
+#     #     if total > 0:
+#     #         if total > 1:
+#     #             return "Review"
+#     #         return "Link"
+#     #     return "No"
 
 class ResidentPersonalCreateSerializer(serializers.ModelSerializer):
     per = PersonalBaseSerializer()

@@ -7,7 +7,7 @@ import ViewButton from "@/components/ui/view-button";
 import { Combobox } from "@/components/ui/combobox";
 import React from "react";
 import { useFamFilteredByHouse } from "../queries/profilingFetchQueries";
-import { formatFamiles } from "../ProfilingFormats";
+import { formatFamilies } from "../ProfilingFormats";
 import { formatDate } from "@/helpers/dateHelper";
 
 // Define the columns for household the data tables
@@ -18,7 +18,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     accessorKey: 'hh_id',
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Household No.
@@ -30,7 +30,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     accessorKey: 'total_families',
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Families
@@ -40,7 +40,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     cell: ({ row }) => {
       const { showLoading, hideLoading } = useLoading();
       const { data: famFilteredByHouse, isLoading } = useFamFilteredByHouse(row.getValue('hh_id'));
-      const formattedFamilies = React.useMemo(() => formatFamiles(famFilteredByHouse), [famFilteredByHouse]);
+      const formattedFamilies = React.useMemo(() => formatFamilies(famFilteredByHouse), [famFilteredByHouse]);
 
       React.useEffect(() => {
         if(isLoading) {
@@ -54,8 +54,8 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
         <Combobox 
           options={formattedFamilies}
           value={row.getValue('total_families')}
-          placeholder="Search member"
-          emptyMessage="No resident found"
+          placeholder="Search family"
+          emptyMessage="No family found"
           staticVal={true}
           size={300}
         />
@@ -66,7 +66,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     accessorKey: 'sitio',
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Sitio
@@ -86,7 +86,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     accessorKey: 'head',
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Owner
@@ -94,7 +94,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
       </div>
     ),
     cell: ({ row }) => (
-        <div className="flex gap-4 justify-center items-center">
+        <div className="flex gap-4 items-center">
           {row.original.head}
         </div>
     )

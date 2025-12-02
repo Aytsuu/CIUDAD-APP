@@ -30,10 +30,14 @@ class ResidentProfileTableSerializer(serializers.ModelSerializer):
     suffix = serializers.CharField(source='per.per_suffix')
     sex = serializers.CharField(source='per.per_sex')
     pwd = serializers.CharField(source="per.per_disability")
+
+    # TO BE REMOVED ----
     household_no = serializers.SerializerMethodField()
     family_no = serializers.SerializerMethodField()
     business_owner = serializers.SerializerMethodField()
     has_account = serializers.SerializerMethodField()
+    # TO BE REMOVED ----
+
     dob = serializers.DateField(source="per.per_dob")
     age = serializers.SerializerMethodField()
     per_id = serializers.CharField(source="per.per_id")
@@ -184,12 +188,16 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     per_age = serializers.SerializerMethodField()
     registered_by = serializers.SerializerMethodField()
     fam_id = serializers.SerializerMethodField()
+    voter = serializers.SerializerMethodField()
+    household_no = serializers.SerializerMethodField()
+    has_account = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
         fields = ['rp_id','per_id', 'per_lname', 'per_fname', 'per_mname', 'per_suffix', 'per_sex', 'per_dob', 
                   'per_status', 'per_edAttainment', 'per_religion', 'per_contact', 'per_disability', 'per_is_deceased',
-                    'per_addresses', 'per_age', 'rp_date_registered', 'fam_id', 'registered_by']
+                    'per_addresses', 'per_age', 'rp_date_registered', 'fam_id', 'registered_by', 'voter', 'household_no',
+                    'has_account']
         read_only_fields = fields
 
     def get_per_age(self, obj):
@@ -222,6 +230,32 @@ class ResidentPersonalInfoSerializer(serializers.ModelSerializer):
     def get_fam_id(self, obj):
         families = obj.family_compositions.all().first()
         return families.fam.fam_id if families else None
+
+    def get_voter(self, obj):
+        if obj.voter:
+            return "YES"
+        
+        name = f'{obj.per.per_lname.upper()}, {obj.per.per_fname.upper()} {obj.per.per_mname.upper() if obj.per.per_mname else ""}'
+        voters = Voter.objects.filter(voter_name=name)
+        total = len(voters)
+        if total > 0:
+            if total > 1:
+                return "REVIEW"
+            return "LINK"
+        return "NO"
+    
+    def get_household_no(self, obj):
+        if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
+            return obj.family_compositions.first().fam.hh.hh_id
+        return ""
+    
+    def get_family_no(self, obj):
+        if hasattr(obj, 'family_compositions') and obj.family_compositions.exists():
+            return obj.family_compositions.first().fam.fam_id
+        return ""
+    
+    def get_has_account(self, obj):
+        return hasattr(obj, 'account')
 
 
 

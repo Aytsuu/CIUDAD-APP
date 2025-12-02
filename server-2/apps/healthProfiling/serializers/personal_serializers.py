@@ -123,10 +123,10 @@ class PersonalUpdateSerializer(serializers.ModelSerializer):
             
         return instance
     
-class PersonalModificationBaseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PersonalModification
-        fields = '__all__'
+# class PersonalModificationBaseSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = PersonalModification
+#         fields = '__all__'
 
 class HealthRelatedDetailsSerializer(serializers.ModelSerializer):
     class Meta:

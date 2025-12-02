@@ -106,13 +106,13 @@ export function DataTable<TData, TValue>({
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
                     key={headerGroup.id}
-                    className="bg-lightBlue hover:bg-lightBlue h-10"
+                    className="h-10"
                   >
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={header.id}
-                        style={{ width: header.getSize() }} // 👈 apply size
-                        className={cn("text-center bg-lightBlue", headerClassName)}
+                        style={{ width: header.getSize() }}
+                        className={cn("text-left pl-5", headerClassName)}
                       >
                         {header.isPlaceholder
                           ? null
@@ -130,25 +130,40 @@ export function DataTable<TData, TValue>({
         )}
 
         {/* Scrollable Body */}
+                {/* Scrollable Body */}
         <div
           className="overflow-auto"
           style={{ maxHeight: maxHeight }}
         >
           <Table className="table-fixed">
+            {!header && (
+              <TableHeader className="sr-only">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        style={{ width: header.getSize() }}
+                      />
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+            )}
             <TableBody>
               {!isLoading ? (
                 table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
+                  table.getRowModel().rows.map((row, index: number) => (
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
-                      className={!header ? "border-none hover:bg-white" : ""}
+                      className={!header ? "border-none" : ""}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell
                           key={cell.id}
-                          style={{ width: cell.column.getSize() }} // 👈 apply size
-                          className={cn("text-center font-medium text-gray-700", cellClassName)}
+                          style={{ width: cell.column.getSize() }}
+                          className={cn("text-left font-medium text-gray-700 pl-5", cellClassName, `${index % 2 == 1 && "bg-primary/5"}`)}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>

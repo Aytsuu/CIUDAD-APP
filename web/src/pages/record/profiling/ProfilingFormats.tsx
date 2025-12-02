@@ -74,7 +74,7 @@ export const formatAddresses = (addresses: any) => {
     }
   );
 };
-export const formatFamiles = (families: any) => {
+export const formatFamilies = (families: any) => {
   if (!families) return [];
 
   return families.map((family: any, idx: number) => ({
