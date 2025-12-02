@@ -77,8 +77,8 @@ export const PendingAppointmentsSidebar = () => {
     return `/services/medical-consultation/appointments/pending`;
   };
 
-  // Display only first 5 appointments
-  const displayedAppointments = combinedAppointments.slice(0, 5);
+  // Display only first 3 appointments
+  const displayedAppointments = combinedAppointments.slice(0, 3);
 
   return (
     <Card className="w-full bg-white h-full flex flex-col border-none">
@@ -177,7 +177,7 @@ export const PendingAppointmentsSidebar = () => {
               <Button variant="link" className="w-full justify-between">
                 <span>
                   View All Appointments ({totalCount > 100 ? "100+" : totalCount})
-                  {totalCount > 5 && <span className="ml-1 text-gray-400">• Showing 5 of {totalCount}</span>}
+                  {totalCount > 3 && <span className="ml-1 text-gray-400">• Showing 3 of {totalCount}</span>}
                 </span>
                 <ChevronDown className="w-4 h-4 ml-2" />
               </Button>

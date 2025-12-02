@@ -92,8 +92,8 @@ export const ReferredPatientsSidebar = () => {
     return types[recordType] || { label: recordType.replace("-", " "), color: "text-gray-600 bg-gray-50 border-gray-500" };
   };
 
-  // Display only first 5 records
-  const displayedRecords = records.slice(0, 5);
+  // Display only first 3 records
+  const displayedRecords = records.slice(0, 3);
 
   return (
     <Card className="w-full bg-white h-full flex flex-col border-none">
@@ -166,7 +166,7 @@ export const ReferredPatientsSidebar = () => {
           <Link to="/referred-patients/pending-assessment">
             <Button variant="link" className="w-full justify-start text-blue-600 hover:text-blue-700">
               View All Referred Patients ({totalCount > 100 ? "100+" : totalCount})
-              {totalCount > 5 && <span className="ml-1 text-gray-400">• Showing 5 of {totalCount}</span>}
+              {totalCount > 3 && <span className="ml-1 text-gray-400">• Showing 3 of {totalCount}</span>}
             </Button>
           </Link>
         </div>

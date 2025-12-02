@@ -8,7 +8,7 @@ export const teamColumns: ColumnDef<AdministrationRecord>[] = [
     accessorKey: "lname",
     header: ({ column }) => (
       <div
-        className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+        className="w-full h-full flex items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Last Name
@@ -20,7 +20,7 @@ export const teamColumns: ColumnDef<AdministrationRecord>[] = [
     accessorKey: "fname",
     header: ({ column }) => (
       <div
-        className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+        className="w-full h-full flex items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         First Name
@@ -32,7 +32,7 @@ export const teamColumns: ColumnDef<AdministrationRecord>[] = [
     accessorKey: "mname",
     header: ({ column }) => (
       <div
-        className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+        className="w-full h-full flex items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Middle Name

@@ -25,17 +25,6 @@ export const api = axios.create({
 // });
 
 
-export const api2 = axios.create({
-  baseURL: "http://localhost:8001",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
-
-
-
 // export const api2 = axios.create({
 //   baseURL: "http://localhost:8001",
 //   withCredentials: true,
@@ -44,6 +33,17 @@ export const api2 = axios.create({
 //     "Accept": "application/json",
 //   },
 // });
+
+
+
+export const api2 = axios.create({
+  baseURL: "http://localhost:8001",
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+});
 
 setupApiInterceptor(api)
 

@@ -159,7 +159,24 @@ export function InventoryAlertsSidebar() {
   };
 
   const allAlertItems = getCombinedAlertItems();
-  const itemsToShow = allAlertItems.slice(0, 10);
+  // Show only 2 alerts per type
+  const groupedByType: Record<ItemType, StockAlertItem[]> = {
+    antigen: [],
+    medicine: [],
+    commodity: [],
+    firstaid: []
+  };
+  allAlertItems.forEach(item => {
+    if (groupedByType[item.type]) {
+      groupedByType[item.type].push(item);
+    }
+  });
+  const itemsToShow = [
+    ...groupedByType.antigen.slice(0, 2),
+    ...groupedByType.medicine.slice(0, 2),
+    ...groupedByType.commodity.slice(0, 2),
+    ...groupedByType.firstaid.slice(0, 2)
+  ];
 
   // Calculate total counts - count all statuses independently
   const totalCounts = {
@@ -400,9 +417,9 @@ export function InventoryAlertsSidebar() {
             <div className="pt-3 border-t border-gray-100 mt-3">
               <DropdownMenu open={showViewAllDropdown} onOpenChange={setShowViewAllDropdown}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="link" className="w-full flex items-center justify-between text-sm font-medium text-blue-600 hover:text-blue-700">
+                  <Button variant="link" className="w-full flex items-center justify-between text-sm font-700 ">
                     <span className="flex items-center gap-2">
-                      View All Stock Alerts ({allAlertItems.length}){allAlertItems.length > 10 && <span className="text-gray-400 text-xs">• Showing 10 of {allAlertItems.length}</span>}
+                      View All Stock Alerts ({allAlertItems.length}){allAlertItems.length > 8 && <span className="text-gray-400 text-xs">• Showing 2 per type of {allAlertItems.length}</span>}
                     </span>
                     <ChevronDown className="h-4 w-4 ml-2" />
                   </Button>

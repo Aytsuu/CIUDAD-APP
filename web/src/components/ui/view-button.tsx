@@ -5,8 +5,8 @@ export default function ViewButton({onClick} : {
   onClick: () => void
 }) {
   return (
-    <div className="group flex justify-center items-center gap-2 px-3 py-2
-                  rounded-lg border-none shadow-none hover:bg-muted
+    <div className="group flex items-center gap-2 py-2
+                  rounded-lg border-none shadow-none
                   transition-colors duration-200 ease-in-out cursor-pointer"
 
         onClick={onClick}

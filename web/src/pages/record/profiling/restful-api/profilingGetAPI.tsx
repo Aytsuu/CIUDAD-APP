@@ -63,13 +63,16 @@ export const getResidentsFamSpecificList = async (familyId: string) => {
   }
 }
 
-export const getResidentsTable = async (page: number, pageSize: number, searchQuery?: string) => {
+export const getResidentsTable = async (page: number, pageSize: number, searchQuery: string, age: string, voter: string, disable: string) => {
   try {
     const res = await api.get("profiling/resident/list/table/", {
       params: { 
         page, 
         page_size: pageSize,
-        search: searchQuery
+        search: searchQuery,
+        age,
+        voter,
+        disable
       }
     });
     
@@ -207,7 +210,6 @@ export const getHouseholdData = async (householdId: string) => {
 export const getSitioList = async () => {
   try {
     const res = await api.get("profiling/sitio/list/");
-    console.log(res.data);
     return res.data;
   } catch (err) {
     throw err;

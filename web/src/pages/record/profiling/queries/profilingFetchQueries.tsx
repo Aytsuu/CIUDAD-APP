@@ -109,11 +109,14 @@ export const useResidentsList = (
 export const useResidentsTable = (
   page: number,
   pageSize: number,
-  searchQuery: string
+  searchQuery: string,
+  age: string,
+  voter: string,
+  disable: string,
 ) => {
   return useQuery({
-    queryKey: ["residentsTableData", page, pageSize, searchQuery],
-    queryFn: () => getResidentsTable(page, pageSize, searchQuery),
+    queryKey: ["residentsTableData", page, pageSize, searchQuery, age, voter, disable],
+    queryFn: () => getResidentsTable(page, pageSize, searchQuery, age, voter, disable),
     staleTime: 5000,
   });
 };
@@ -361,10 +364,24 @@ export const useHouseholdData = (hh_id: string) => {
         const res = await api.get(`profiling/household/${hh_id}/data/`)
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     }
+  })
+}
+
+export const useOwnedHouses = (residentId: string) => {
+  return useQuery({
+    queryKey: ['ownedHouses', residentId],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`profiling/household/owned-by-${residentId}/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
   })
 }
 

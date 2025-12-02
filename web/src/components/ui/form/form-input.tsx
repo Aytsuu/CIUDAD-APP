@@ -130,7 +130,8 @@ export const FormInput = React.memo(
                     "ArrowDown",
                     "Home",
                     "End",
-                    "Capslock"
+                    "Capslock",
+                    " "
                   );
 
                   if (!allowedKeys.includes(e.key)) {
