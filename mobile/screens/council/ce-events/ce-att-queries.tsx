@@ -202,6 +202,7 @@ export const useGetCouncilEvents = (
       throw error;
     }),
     staleTime: 1000 * 60 * 5, 
+    placeholderData: (previous) => previous,
   });
 };
 
