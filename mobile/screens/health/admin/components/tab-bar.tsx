@@ -8,19 +8,26 @@ const getStatusConfig = (status: string) => {
   const lowerStatus = status.toLowerCase();
   switch (lowerStatus) {
     case 'pending':
-    case 'referred': // Group these together
       return {
         color: 'text-yellow-700',
         bgColor: 'bg-yellow-100',
         borderColor: 'border-yellow-200',
-        label: lowerStatus === 'referred' ? 'Referred' : 'referred'
+        label: 'Pending'
       };
+      
     case 'rejected':
       return {
         color: 'text-red-700',
         bgColor: 'bg-red-100',
         borderColor: 'border-red-200',
         label: 'Rejected'
+      };
+       case 'referred':
+      return {
+        color: 'text-red-700',
+        bgColor: 'bg-red-100',
+        borderColor: 'border-red-200',
+        label: 'Referred'
       };
     case 'declined':
     case 'cancelled':

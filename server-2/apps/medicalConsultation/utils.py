@@ -143,10 +143,24 @@ def apply_patient_type_filter(queryset, patient_type):
     return queryset.filter(type_query) if type_query else queryset
 
 
-
-def create_future_date_slots(days_in_advance=60):
+def delete_past_date_slots():
+    """
+    Deletes DateSlots records that are in the past (yesterday or older).
+    """
+    try:
+        today = date.today()
+        # Delete slots where the date is strictly less than today
+        deleted_count, _ = DateSlots.objects.filter(date__lt=today).delete()
+        if deleted_count > 0:
+            print(f"🧹 Cleaned up {deleted_count} past date slots.")
+    except Exception as e:
+        print(f"Error deleting past slots: {e}")
+        
+        
+def create_future_date_slots(days_in_advance=30):
     today = date.today() 
     slots_created = 0
+    
     
     for i in range(days_in_advance):
         target_date = today + timedelta(days=i)

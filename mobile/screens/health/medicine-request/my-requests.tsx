@@ -59,10 +59,12 @@ const getUserMedicineRequests = async (
 
       if (['declined', 'cancelled'].includes(normalizedStatus)) normalizedStatus = 'cancelled';
       if (['fulfilled', 'completed'].includes(normalizedStatus)) normalizedStatus = 'completed';
-      if (['confirmed', 'ready_for_pickup'].includes(normalizedStatus)) normalizedStatus = 'confirmed';
-      if (['pending', 'referred_to_doctor'].includes(normalizedStatus)) normalizedStatus = 'pending';
+      if (['confirmed'].includes(normalizedStatus)) normalizedStatus = 'confirmed';
+      if (['pending'].includes(normalizedStatus)) normalizedStatus = 'pending';
       if (['rejected'].includes(normalizedStatus)) normalizedStatus = 'rejected';
-if (['referred'].includes(normalizedStatus)) normalizedStatus = 'referred';
+      if (['referred'].includes(normalizedStatus)) normalizedStatus = 'referred';
+      
+      
       return {
         medreqitem_id: item.medreqitem_id,
         medreqitem_qty: item.medreqitem_qty,
