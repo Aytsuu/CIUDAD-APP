@@ -60,7 +60,7 @@ class CreateNotificationView(APIView):
             if skipped_ids:
                 logger.info(f"⚠️ Skipped IDs without linked accounts: {skipped_ids}")
 
-            notification = create_notification(
+            create_notification(
                 title=request.data.get("title"),
                 message=request.data.get("message"),
                 notif_type=request.data.get("notif_type"),
