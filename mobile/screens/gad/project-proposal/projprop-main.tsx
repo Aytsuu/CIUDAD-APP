@@ -1,11 +1,12 @@
-import type React from "react";
-import { useState } from "react";
+import React from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   RefreshControl,
   FlatList,
+  ActivityIndicator
 } from "react-native";
 import {
   Archive,
@@ -37,9 +38,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search } from "@/lib/icons/Search";
 import { SearchInput } from "@/components/ui/search-input";
 
+const INITIAL_PAGE_SIZE = 10;
+
 const ProjectProposalList: React.FC = () => {
   const router = useRouter();
-  const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [_showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [selectedProject, setSelectedProject] =
@@ -48,11 +50,19 @@ const ProjectProposalList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchTerm = useDebounce(searchQuery, 500);
   const [selectedYear, setSelectedYear] = useState("All");
-  const [currentPage, setCurrentPage] = useState(1);
   const [showSearch, setShowSearch] = useState(false);
+  
+  // Pagination states like receipt page
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  
   const { data: grandTotalData } = useGetProjectProposalGrandTotal();
   const grandTotal = grandTotalData?.grand_total || 0;
-  const pageSize = 10;
   const { data: availableYears = [] } = useGetProjectProposalYears();
   const {
     data: projectsData,
@@ -76,6 +86,53 @@ const ProjectProposalList: React.FC = () => {
   const projects = projectsData?.results || [];
   const totalCount = projectsData?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+  const hasMore = currentPage < totalPages;
+
+  // Reset pagination when search, filter, year or view mode changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, selectedYear, viewMode]);
+
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  // Handle load more - increment page number
+  const handleLoadMore = () => {
+    if (isScrolling && hasMore && !isFetching && !isLoadMore) {
+      setIsLoadMore(true);
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setCurrentPage(1);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   // Create year filter options
   const yearFilterOptions = [
@@ -88,13 +145,6 @@ const ProjectProposalList: React.FC = () => {
 
   const handleSearch = () => {
     setSearchQuery(searchInputVal);
-    setCurrentPage(1);
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
     setCurrentPage(1);
   };
 
@@ -140,8 +190,8 @@ const ProjectProposalList: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Render Project Card (styled like Budget Plan)
-  const RenderProjectCard = ({ project }: { project: ProjectProposal }) => (
+  // Memoized Render Project Card
+  const RenderProjectCard = React.memo(({ project }: { project: ProjectProposal }) => (
     <TouchableOpacity
       onPress={() => handleProjectPress(project)}
       activeOpacity={0.8}
@@ -240,6 +290,12 @@ const ProjectProposalList: React.FC = () => {
         </CardContent>
       </Card>
     </TouchableOpacity>
+  ));
+
+  // Render function for FlatList
+  const renderItem = React.useCallback(
+    ({ item }: { item: ProjectProposal }) => <RenderProjectCard project={item} />,
+    []
   );
 
   // Empty state component
@@ -293,7 +349,7 @@ const ProjectProposalList: React.FC = () => {
             {error.message}
           </Text>
           <TouchableOpacity
-            onPress={() => refetch()}
+            onPress={handleRefresh}
             className="bg-primaryBlue px-6 py-3 rounded-xl"
           >
             <Text className="text-white font-medium">Retry</Text>
@@ -360,6 +416,16 @@ const ProjectProposalList: React.FC = () => {
               </View>
             </View>
 
+            {/* Result Count */}
+            {!isRefreshing && projects.length > 0 && (
+              <View className="mb-2">
+                <Text className="text-xs text-gray-500">
+                  Showing {projects.length} of {totalCount} proposals
+                  {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+                </Text>
+              </View>
+            )}
+
             {/* Tabs - Styled like Budget Plan */}
             <Tabs value={viewMode} onValueChange={val => handleViewModeChange(val as "active" | "archived")} className="flex-1">
               <TabsList className="bg-blue-50 flex-row justify-between">
@@ -383,7 +449,7 @@ const ProjectProposalList: React.FC = () => {
 
               {/* Active Tab Content */}
               <TabsContent value="active" className="flex-1 mt-4">
-                {isLoading ? (
+                {isLoading && isInitialRender ? (
                   <View className="flex-1 justify-center items-center">
                     <LoadingState/>
                   </View>
@@ -394,48 +460,48 @@ const ProjectProposalList: React.FC = () => {
                     ) : (
                       <FlatList
                         data={projects}
-                        renderItem={({ item }) => <RenderProjectCard project={item} />}
+                        maxToRenderPerBatch={5}
+                        overScrollMode="never"
                         showsVerticalScrollIndicator={false}
+                        showsHorizontalScrollIndicator={false}
+                        initialNumToRender={5}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        onScroll={handleScroll}
+                        windowSize={11}
+                        renderItem={renderItem}
+                        keyExtractor={(item, index) => `project-${item.gprId}-${index}`}
+                        removeClippedSubviews
+                        contentContainerStyle={{
+                          paddingBottom: 20,
+                          paddingTop: 8,
+                          flexGrow: 1,
+                        }}
                         refreshControl={
                           <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
                             colors={['#00a8f0']}
                           />
                         }
-                        contentContainerStyle={{ 
-                          paddingBottom: 16,
-                          paddingTop: 16
-                        }}
-                        ListFooterComponent={
-                          totalPages > 1 ? (
-                            <View className="flex-row justify-between items-center mt-4 px-4">
-                              <TouchableOpacity
-                                onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-                              >
-                                <Text className="text-primaryBlue font-bold">← Previous</Text>
-                              </TouchableOpacity>
-
-                              <View className="flex-row items-center">
-                                {isFetching && (
-                                  <LoadingState />
-                                )}
-                                <Text className="text-gray-500">
-                                  Page {currentPage} of {totalPages}
+                        ListFooterComponent={() =>
+                          isFetching && isLoadMore ? (
+                            <View className="py-4 items-center">
+                              <ActivityIndicator size="small" color="#3B82F6" />
+                              <Text className="text-xs text-gray-500 mt-2">
+                                Loading more proposals...
+                              </Text>
+                            </View>
+                          ) : (
+                            !hasMore &&
+                            projects.length > 0 && (
+                              <View className="py-4 items-center">
+                                <Text className="text-xs text-gray-400">
+                                  No more proposals
                                 </Text>
                               </View>
-
-                              <TouchableOpacity
-                                onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                                className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
-                              >
-                                <Text className="text-primaryBlue font-bold">Next →</Text>
-                              </TouchableOpacity>
-                            </View>
-                          ) : null
+                            )
+                          )
                         }
                       />
                     )}
@@ -445,7 +511,7 @@ const ProjectProposalList: React.FC = () => {
 
               {/* Archived Tab Content */}
               <TabsContent value="archived" className="flex-1 mt-4">
-                {isLoading ? (
+                {isLoading && isInitialRender ? (
                   <View className="flex-1 justify-center items-center">
                     <LoadingState/>
                   </View>
@@ -456,48 +522,48 @@ const ProjectProposalList: React.FC = () => {
                     ) : (
                       <FlatList
                         data={projects}
-                        renderItem={({ item }) => <RenderProjectCard project={item} />}
+                        maxToRenderPerBatch={5}
+                        overScrollMode="never"
                         showsVerticalScrollIndicator={false}
+                        showsHorizontalScrollIndicator={false}
+                        initialNumToRender={5}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        onScroll={handleScroll}
+                        windowSize={11}
+                        renderItem={renderItem}
+                        keyExtractor={(item, index) => `project-${item.gprId}-${index}`}
+                        removeClippedSubviews
+                        contentContainerStyle={{
+                          paddingBottom: 20,
+                          paddingTop: 8,
+                          flexGrow: 1,
+                        }}
                         refreshControl={
                           <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
                             colors={['#00a8f0']}
                           />
                         }
-                        contentContainerStyle={{ 
-                          paddingBottom: 16,
-                          paddingTop: 16
-                        }}
-                        ListFooterComponent={
-                          totalPages > 1 ? (
-                            <View className="flex-row justify-between items-center mt-4 px-4">
-                              <TouchableOpacity
-                                onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-                              >
-                                <Text className="text-primaryBlue font-bold">← Previous</Text>
-                              </TouchableOpacity>
-
-                              <View className="flex-row items-center">
-                                {isFetching && (
-                                  <LoadingState />
-                                )}
-                                <Text className="text-gray-500">
-                                  Page {currentPage} of {totalPages}
+                        ListFooterComponent={() =>
+                          isFetching && isLoadMore ? (
+                            <View className="py-4 items-center">
+                              <ActivityIndicator size="small" color="#3B82F6" />
+                              <Text className="text-xs text-gray-500 mt-2">
+                                Loading more proposals...
+                              </Text>
+                            </View>
+                          ) : (
+                            !hasMore &&
+                            projects.length > 0 && (
+                              <View className="py-4 items-center">
+                                <Text className="text-xs text-gray-400">
+                                  No more proposals
                                 </Text>
                               </View>
-
-                              <TouchableOpacity
-                                onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                                className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
-                              >
-                                <Text className="text-primaryBlue font-bold">Next →</Text>
-                              </TouchableOpacity>
-                            </View>
-                          ) : null
+                            )
+                          )
                         }
                       />
                     )}
