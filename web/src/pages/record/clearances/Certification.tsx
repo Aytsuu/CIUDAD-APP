@@ -213,7 +213,7 @@ function CertificatePage() {
 
   // Sort certificates by request date (latest first) and apply filters
   const filteredCertificates = useMemo(() => {
-    let result = [...certificates];
+    const result = [...certificates];
     
     // Sort by request date descending (latest first)
     result.sort((a, b) => {
