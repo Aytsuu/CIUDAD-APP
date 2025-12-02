@@ -207,11 +207,7 @@ ALLOWED_HOSTS = [
     'ciudad-app-server-2.onrender.com',
     'localhost',
     '127.0.0.1',
-<<<<<<< HEAD
     'host.docker.internal'
-=======
-    '192.168.1.15',
->>>>>>> 71ce51495c9f67f01ad9c8046818278228453d44
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
