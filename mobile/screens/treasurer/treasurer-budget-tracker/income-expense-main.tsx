@@ -241,7 +241,7 @@ const IncomeExpenseMain = () => {
   return (
     <PageLayout
       leftAction={
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+        <TouchableOpacity onPress={() => router.push('/(treasurer)')} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
