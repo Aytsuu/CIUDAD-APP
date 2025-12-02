@@ -1,27 +1,38 @@
-// src/features/vaccination/components/columns.tsx
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ViewButton from "@/components/ui/view-button";
-import { BasicInfoVaccinationRecord } from "./types";
+import { toTitleCase } from "@/helpers/ToTitleCase";
+import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
 
-export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
+export const vaccinationColumns: ColumnDef<any>[] = [
+  {
+    accessorKey: "patient_no",
+    header: ({ column }) => (
+      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        Patient No. <ArrowUpDown size={15} />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-center min-w-[120px] px-2">
+        <div className="text-center w-full">{row.original.pat_id}</div>
+      </div>
+    )
+  },
   {
     accessorKey: "patient",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        Patient <ArrowUpDown size={15} />
+      <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <span className="text-center">Patient</span> <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => {
       const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="flex flex-col w-full">
-            <div className="font-medium truncate">{fullName}</div>
-            <div className="text-sm text-darkGray">
-              {row.original.sex}, {row.original.age}
-            </div>
+        <div className="text-center py-2 px-4">
+          <div className="font-medium break-words">{toTitleCase(fullName)}</div>
+          <div className="text-sm text-darkGray">
+            {toTitleCase(row.original.sex || "")}, {row.original.age}
           </div>
         </div>
       );
@@ -30,18 +41,13 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
   {
     accessorKey: "address",
     header: ({ column }) => (
-      <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
-        onClick={() =>
-          column.toggleSorting(column.getIsSorted() === "asc")
-        }
-      >
-        Address <ArrowUpDown size={15} />
+      <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <span className="text-center">Address</span> <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex justify-start min-w-[200px] px-2">
-        <div className="w-full truncate">{row.original.address ? row.original.address : "No address provided"}</div>
+      <div className="text-center py-2 px-4 whitespace-pre-wrap break-words">
+        {toTitleCase(row.original.address || "No address provided")}
       </div>
     )
   },
@@ -50,16 +56,18 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
     header: "Sitio",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">{row.original.sitio || "N/A"}</div>
+        <div className="text-center w-full">{toTitleCase(row.original.sitio || "N/A")}</div>
       </div>
     )
   },
   {
-    accessorKey: "type",
+    accessorKey: "pat_type",
     header: "Type",
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.pat_type}</div>
+        <div className={getPatType(row.original.pat_type)}>
+          {toTitleCase(row.original.pat_type)}
+        </div>
       </div>
     )
   },
@@ -69,6 +77,23 @@ export const vaccinationColumns: ColumnDef<BasicInfoVaccinationRecord>[] = [
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[100px] px-2">
         <div className="text-center w-full">{row.original.vaccination_count}</div>
+      </div>
+    )
+  },
+  {
+    accessorKey: "latest_vaccination_date",
+    header: "Latest Vaccination Date",
+    cell: ({ row }) => (
+      <div className="flex justify-center min-w-[120px] px-2">
+        <div className="text-center w-full">
+          {row.original.latest_vaccination_date
+            ? new Date(row.original.latest_vaccination_date).toLocaleDateString("en-US", {
+                year: "2-digit",
+                month: "short",
+                day: "2-digit",
+              })
+            : "N/A"}
+        </div>
       </div>
     )
   },

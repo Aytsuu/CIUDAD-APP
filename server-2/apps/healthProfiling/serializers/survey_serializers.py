@@ -79,3 +79,40 @@ class SurveyIdentificationDetailSerializer(serializers.ModelSerializer):
             'si_date', 'si_signature', 'si_created_at', 'si_updated_at',
             'family_id', 'family_building', 'family_indigenous', 'household_id'
         ]
+
+
+class SurveyIdentificationUpdateSerializer(serializers.ModelSerializer):
+    staff_id = serializers.CharField(write_only=True, required=False)
+    
+    class Meta:
+        model = SurveyIdentification
+        fields = [
+            'si_filled_by',
+            'si_informant',
+            'si_checked_by',
+            'si_date',
+            'si_signature',
+            'staff_id'
+        ]
+    
+    def update(self, instance, validated_data):
+        from apps.administration.models import Staff
+        
+        # Extract staff_id for history tracking
+        staff_id = validated_data.pop('staff_id', None)
+        
+        # Set history user if staff_id provided
+        if staff_id:
+            try:
+                staff = Staff.objects.get(staff_id=staff_id)
+                instance._history_user = staff
+            except Staff.DoesNotExist:
+                pass
+        
+        # Update instance fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
+

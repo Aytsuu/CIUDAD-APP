@@ -11,7 +11,7 @@ export const postCouncilEvent = async (eventInfo: Record<string, any>) => {
       ce_description: eventInfo.ce_description,
       ce_is_archive: eventInfo.ce_is_archive || false,
       ce_rows: eventInfo.ce_rows,
-      staff: eventInfo.staff,
+      staff_id: eventInfo.staff,
     });
 
     return res.data.ce_id;

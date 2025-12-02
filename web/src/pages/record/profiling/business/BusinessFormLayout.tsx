@@ -9,7 +9,7 @@ import type { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { businessFormSchema } from "@/form-schema/profiling-schema"
 import { generateDefaultValues } from "@/helpers/generateDefaultValues"
-import { FileText, MapPin, User, Database, Store, Clock, History, Check, MoveRight } from "lucide-react"
+import { Store, Clock, History, Check, MoveRight } from "lucide-react"
 import { Form } from "@/components/ui/form/form"
 import { Type } from "../ProfilingEnums"
 import { useAuth } from "@/context/AuthContext"
@@ -442,7 +442,7 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
         <div className="flex gap-4">
           <div className="w-full">
             {showRespondent && respondentView()}
-            <Card className={`w-full max-h-[750px] overflow-y-auto ${showRespondent ? "rounded-t-none border-t-0" : "rounded-lg border"}`}>
+            <Card className={`w-full ${showRespondent ? "rounded-t-none border-t-0" : "rounded-lg border"}`}>
               <Form {...(tab_params?.isRegistrationTab ? tab_params?.form : form)}>
                 <form
                   onSubmit={(e) => {
@@ -512,41 +512,6 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
               </div>
             </div>
           </div>
-
-          {/* Help Section */}
-          {!isBusinessInfoLoading && (
-            <div className="text-center pt-4">
-              <p className="text-xs text-gray-500 mb-2">
-                All business information and documents are securely stored and
-                encrypted. Access is restricted to authorized personnel only.
-              </p>
-              <p className="text-xs text-gray-500 mb-2">
-                Need assistance with business registration? Contact your administrator for help.
-              </p>
-              <div className="flex justify-center gap-4 text-xs text-gray-400">
-                <span className="flex items-center gap-1">
-                  <Store className="w-3 h-3" />
-                  Business Info
-                </span>
-                <span className="flex items-center gap-1">
-                  <User className="w-3 h-3" />
-                  Respondent Details
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  Location
-                </span>
-                <span className="flex items-center gap-1">
-                  <FileText className="w-3 h-3" />
-                  Documentation
-                </span>
-                <span className="flex items-center gap-1">
-                  <Database className="w-3 h-3" />
-                  Secure Storage
-                </span>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

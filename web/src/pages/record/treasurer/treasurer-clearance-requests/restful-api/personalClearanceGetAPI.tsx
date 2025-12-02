@@ -26,7 +26,6 @@ export const getPersonalClearances = async (search?: string, page?: number, page
         const response = await api.get(url);
         return response.data;
     } catch (error: any) {
-        console.error("Failed to fetch personal clearances:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch personal clearances");
     }
 };
@@ -63,7 +62,6 @@ export const getPersonalClearancesFromTreasurer = async (search?: string, page?:
         const response = await api.get(url);
         return response.data;
     } catch (error: any) {
-        console.error("Failed to fetch personal clearances from treasurer:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch personal clearances from treasurer");
     }
 };
@@ -74,7 +72,6 @@ export const getPersonalClearanceById = async (crId: string) => {
         const response = await api.get(`/clerk/certificate/${crId}/`);
         return response.data;
     } catch (error: any) {
-        console.error("Failed to fetch personal clearance by ID:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch personal clearance by ID");
     }
 };
@@ -85,7 +82,6 @@ export const getPersonalClearanceByIdFromTreasurer = async (crId: string) => {
         const response = await api.get(`/treasurer/clearance-request/${crId}/`);
         return response.data;
     } catch (error: any) {
-        console.error("Failed to fetch personal clearance by ID from treasurer:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch personal clearance by ID from treasurer");
     }
 };
@@ -98,7 +94,6 @@ export const updatePaymentStatus = async (crId: string, paymentStatus: string) =
         });
         return response.data;
     } catch (error: any) {
-        console.error("Failed to update payment status:", error);
         throw new Error(error.response?.data?.detail || "Failed to update payment status");
     }
 };
@@ -111,7 +106,6 @@ export const updatePaymentStatusFromTreasurer = async (crId: string, paymentStat
         });
         return response.data;
     } catch (error: any) {
-        console.error("Failed to update payment status from treasurer:", error);
         throw new Error(error.response?.data?.detail || "Failed to update payment status from treasurer");
     }
 };
@@ -122,7 +116,6 @@ export const getPaymentStatistics = async () => {
         const response = await api.get('/treasurer/clearance-request/payment-statistics/');
         return response.data;
     } catch (error: any) {
-        console.error("Failed to fetch payment statistics:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch payment statistics");
     }
 };
@@ -133,7 +126,6 @@ export const createPaymentIntent = async (crId: string) => {
         const response = await api.post(`/clerk/payment/create/${crId}/`);
         return response.data;
     } catch (error: any) {
-        console.error("Failed to create payment intent:", error);
         throw new Error(error.response?.data?.detail || "Failed to create payment intent");
     }
 };
@@ -164,7 +156,6 @@ export const getNonResidentCertReq = async (search?: string, page?: number, page
         const response = await api.get(url);
         return response.data;
     } catch (error: any) {
-        console.error("Failed to fetch non-resident certificate requests:", error);
         throw new Error(error.response?.data?.detail || "Failed to fetch non-resident certificate requests");
     }
 }

@@ -331,6 +331,27 @@ class TemplateView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = TemplateSerializer
     queryset = Template.objects.all()
 
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                create_activity_log(
+                    act_type="Template Create",
+                    act_description=f"Template record created. Filename: '{instance.temp_filename}'. Purpose: {instance.pr_id.pr_purpose if instance.pr_id else 'N/A'}",
+                    staff=staff,
+                    record_id=str(instance.temp_id)
+                )
+                logger.info(f"Activity logged for template creation: {instance.temp_id}")
+            else:
+                logger.debug(f"Skipping activity log for Template create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for template creation: {str(e)}")
+        return instance
+
 
 class TemplateFileView(generics.ListCreateAPIView):
     serializer_class = TemplateFileSerializer
@@ -400,9 +421,51 @@ class UpdateTemplateView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        
+        # Capture old values
+        old_values = {
+            'temp_filename': instance.temp_filename,
+            'pr_id': instance.pr_id.pr_id if instance.pr_id else None
+        }
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_instance = serializer.save()
+            
+            # Log activity with field changes
+            try:
+                from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                
+                staff, staff_identifier = resolve_staff_from_request(request)
+                
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    changes = []
+                    
+                    if 'temp_filename' in serializer.validated_data and old_values['temp_filename'] != updated_instance.temp_filename:
+                        changes.append(f"temp_filename: '{old_values['temp_filename']}' → '{updated_instance.temp_filename}'")
+                    
+                    if 'pr_id' in serializer.validated_data:
+                        new_pr_id = serializer.validated_data.get('pr_id')
+                        if new_pr_id and hasattr(new_pr_id, 'pr_id'):
+                            new_pr_id = new_pr_id.pr_id
+                        if old_values['pr_id'] != new_pr_id:
+                            changes.append(f"pr_id: '{old_values['pr_id']}' → '{new_pr_id}'")
+                    
+                    if changes:
+                        description = f"Template changes: {'; '.join(changes)}"
+                    else:
+                        description = f"Template {updated_instance.temp_id} updated (no field-level changes recorded)"
+                    
+                    create_activity_log(
+                        act_type="Template Updated",
+                        act_description=description,
+                        staff=staff,
+                        record_id=str(updated_instance.temp_id)
+                    )
+                    logger.info(f"Activity logged for template update: {updated_instance.temp_id}")
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for template update: {str(log_error)}")
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -440,8 +503,9 @@ class DeleteTemplateByPrIdView(generics.DestroyAPIView):
 #     queryset = Resolution.objects.all()
 
 class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResolutionSerializer
-    # Remove the fixed queryset and use get_queryset method instead
+    pagination_class = StandardResultsPagination  # Add pagination
     
     def get_queryset(self):
         queryset = Resolution.objects.all().prefetch_related('resolution_files', 'resolution_supp')
@@ -450,6 +514,21 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         search_query = self.request.query_params.get('search', '')
         area_filter = self.request.query_params.get('area', '')
         year_filter = self.request.query_params.get('year', '')
+        is_archive = self.request.query_params.get('is_archive', None)
+        
+        # Apply archive filter if provided
+        if is_archive is not None:
+            # Convert string to boolean
+            if is_archive.lower() in ['true', '1', 'yes']:
+                is_archive_bool = True
+            elif is_archive.lower() in ['false', '0', 'no']:
+                is_archive_bool = False
+            else:
+                # Default behavior if invalid value
+                is_archive_bool = None
+                
+            if is_archive_bool is not None:
+                queryset = queryset.filter(res_is_archive=is_archive_bool)
         
         # Apply search filter
         if search_query:
@@ -470,7 +549,7 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         if year_filter and year_filter != "all":
             queryset = queryset.filter(res_date_approved__year=year_filter)
         
-        return queryset
+        return queryset.order_by('-res_num')  # Add ordering
     
     def create(self, request, *args, **kwargs):
         # Check if we need to generate a resolution number
@@ -483,30 +562,456 @@ class ResolutionView(ActivityLogMixin, generics.ListCreateAPIView):
         # Continue with the normal creation process
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        instance = serializer.save()
+    
+        try:
+            from apps.act_log.utils import create_activity_log, log_model_change, resolve_staff_from_request
+            from apps.administration.models import Staff
+            
+            # Resolve staff using the utility function
+            staff, staff_identifier = resolve_staff_from_request(request)
+            
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Build detailed description for resolution creation
+                description_parts = []
+                
+                # Resolution number
+                if instance.res_num:
+                    description_parts.append(f"Resolution #{instance.res_num}")
+                
+                # Resolution title
+                if instance.res_title:
+                    description_parts.append(f"Title: {instance.res_title}")
+                
+                # Date approved
+                if instance.res_date_approved:
+                    date_str = instance.res_date_approved.strftime('%Y-%m-%d') if not isinstance(instance.res_date_approved, str) else instance.res_date_approved
+                    description_parts.append(f"Date Approved: {date_str}")
+                
+                # Area of focus
+                if instance.res_area_of_focus and len(instance.res_area_of_focus) > 0:
+                    areas = ", ".join([area.upper() for area in instance.res_area_of_focus])
+                    description_parts.append(f"Area of Focus: {areas}")
+                
+                # Related project proposal and dev plan
+                if instance.gpr_id:
+                    try:
+                        from apps.gad.models import DevelopmentPlan
+                        project_proposal = instance.gpr_id
+                        dev_plan = project_proposal.dev
+                        project_title = dev_plan.dev_project or 'N/A'
+                        description_parts.append(f"Linked to GAD Development Plan: {project_title}")
+                    except Exception:
+                        pass
+                
+                description = ". ".join(description_parts) if description_parts else "Resolution record created"
+                
+                create_activity_log(
+                    act_type="Resolution Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.res_num)
+                )
+                
+                # Always log GAD Development Plan Updated when a resolution is created with a project proposal
+                if instance.gpr_id:
+                    try:
+                        from apps.gad.models import DevelopmentPlan
+                        project_proposal = instance.gpr_id
+                        dev_plan = project_proposal.dev
+                        
+                        # Build description with dev plan details - highlight the dev plan
+                        project_title = dev_plan.dev_project or 'N/A'
+                        description_parts = [f"GAD Development Plan ({project_title})"]
+                        
+                        if dev_plan.dev_date:
+                            date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                            description_parts.append(f"Date: {date_str}")
+                        if dev_plan.dev_client:
+                            description_parts.append(f"Client: {dev_plan.dev_client}")
+                        
+                        # Check if dev plan already had a proposal (it should since we're linking to one)
+                        description_parts.append("now has both project proposal and resolution")
+                        
+                        description = ". ".join(description_parts)
+                        
+                        create_activity_log(
+                            act_type="GAD Development Plan Updated",
+                            act_description=description,
+                            staff=staff,
+                            record_id=str(dev_plan.dev_id)
+                        )
+                        logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} updated with resolution")
+                        
+                        # Create announcement for dev plan with proposal and resolution
+                        try:
+                            from apps.gad.views import create_gad_announcement
+                            create_gad_announcement(dev_plan, staff, reason="proposal_resolution")
+                        except Exception as ann_error:
+                            logger.error(f"Failed to create announcement for dev plan with proposal and resolution: {str(ann_error)}")
+                            # Don't fail if announcement creation fails
+                    except Exception as check_error:
+                        logger.debug(f"Error logging dev plan update for resolution: {str(check_error)}")
+                        # Don't fail if this check fails
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"No valid staff with staff_id resolved for activity logging "
+                    f"(input id: {staff_identifier or 'not provided'})"
+                )
+        except Exception as log_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log activity for resolution creation: {str(log_error)}")
+            # Don't fail the request if logging fails
+        
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class DeleteResolutionView(generics.DestroyAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ResolutionSerializer    
     queryset = Resolution.objects.all()
 
     def get_object(self):
         res_num = self.kwargs.get('res_num')
-        return get_object_or_404(Resolution, res_num=res_num) 
+        return get_object_or_404(Resolution, res_num=res_num)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Store resolution details before deletion (for GAD Development Plan logging)
+        gpr_id = instance.gpr_id
+        
+        # Log the activity if staff exists with staff_id (before deletion)
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            from apps.administration.models import Staff
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            # Try to get staff_id from request body first, then fall back to resolve_staff_from_request
+            staff = None
+            staff_id_from_request = request.data.get('staff_id')
+            
+            if staff_id_from_request:
+                try:
+                    staff = Staff.objects.get(staff_id=staff_id_from_request)
+                    logger.info(f"Found staff from request for deletion: {staff.staff_id}")
+                except Staff.DoesNotExist:
+                    logger.warning(f"Staff with staff_id {staff_id_from_request} not found, falling back to resolve_staff_from_request")
+            
+            # Fall back to resolve_staff_from_request if staff_id not in request or not found
+            if not staff:
+                staff, staff_identifier = resolve_staff_from_request(request)
+                logger.info(f"Staff from resolve_staff_from_request for deletion: staff={staff}, staff_identifier={staff_identifier}")
+            
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Build detailed description for resolution deletion
+                description_parts = []
+                
+                # Resolution number
+                if instance.res_num:
+                    description_parts.append(f"Resolution #{instance.res_num}")
+                
+                # Resolution title
+                if instance.res_title:
+                    description_parts.append(f"Title: {instance.res_title}")
+                
+                # Date approved
+                if instance.res_date_approved:
+                    date_str = instance.res_date_approved.strftime('%Y-%m-%d') if not isinstance(instance.res_date_approved, str) else instance.res_date_approved
+                    description_parts.append(f"Date Approved: {date_str}")
+                
+                # Area of focus
+                if instance.res_area_of_focus and len(instance.res_area_of_focus) > 0:
+                    areas = ", ".join([area.upper() for area in instance.res_area_of_focus])
+                    description_parts.append(f"Area of Focus: {areas}")
+                
+                description_parts.append("Status: Deleted")
+                
+                description = ". ".join(description_parts) if description_parts else "Resolution deleted"
+                
+                create_activity_log(
+                    act_type="Resolution Delete",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.res_num)
+                )
+                logger.info(f"Activity logged: Resolution {instance.res_num} deleted")
+                
+                # Log GAD Development Plan Updated if resolution is linked to a project proposal
+                if gpr_id:
+                    try:
+                        from apps.gad.models import DevelopmentPlan
+                        project_proposal = gpr_id
+                        dev_plan = project_proposal.dev
+                        
+                        if dev_plan:
+                            # Build description with dev plan details - highlight the dev plan
+                            project_title = dev_plan.dev_project or 'N/A'
+                            description_parts = [f"GAD Development Plan ({project_title})"]
+                            
+                            if dev_plan.dev_date:
+                                date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                                description_parts.append(f"Date: {date_str}")
+                            if dev_plan.dev_client:
+                                description_parts.append(f"Client: {dev_plan.dev_client}")
+                            
+                            description_parts.append("resolution deleted")
+                            
+                            description = ". ".join(description_parts)
+                            
+                            create_activity_log(
+                                act_type="GAD Development Plan Updated",
+                                act_description=description,
+                                staff=staff,
+                                record_id=str(dev_plan.dev_id)
+                            )
+                            logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} updated - resolution deleted")
+                    except Exception as dev_plan_error:
+                        logger.warning(f"Error logging dev plan update for resolution deletion: {str(dev_plan_error)}")
+                        # Don't fail if this check fails
+            else:
+                logger.warning(f"No valid staff found for logging resolution deletion. Staff: {staff}")
+        except Exception as log_error:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to log activity for resolution deletion: {str(log_error)}", exc_info=True)
+            # Don't fail the request if logging fails
+        
+        # Proceed with deletion
+        return super().destroy(request, *args, **kwargs) 
 
 
 class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionSerializer
     queryset = Resolution.objects.all()
     lookup_field = 'res_num'
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_gpr_id = instance.gpr_id  # Store old gpr_id before update
+        old_res_is_archive = instance.res_is_archive  # Store old archive status before update
+        
+        # Store old values for comparison
+        old_values = {
+            'res_title': instance.res_title,
+            'res_date_approved': instance.res_date_approved,
+            'res_area_of_focus': instance.res_area_of_focus,
+            'gpr_id': instance.gpr_id,
+            'res_is_archive': instance.res_is_archive
+        }
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_instance = serializer.save()
+            
+            # Refresh from database to ensure we have the latest relationships
+            updated_instance.refresh_from_db()
+            
+            # Build detailed description for resolution update
+            try:
+                from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                
+                staff, staff_identifier = resolve_staff_from_request(request)
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    description_parts = []
+                    
+                    # Resolution number (always include)
+                    if updated_instance.res_num:
+                        description_parts.append(f"Resolution #{updated_instance.res_num}")
+                    
+                    # Track what changed
+                    changes = []
+                    
+                    # Title changed
+                    if 'res_title' in serializer.validated_data and old_values['res_title'] != updated_instance.res_title:
+                        changes.append(f"Title: '{old_values['res_title']}' → '{updated_instance.res_title}'")
+                    
+                    # Date approved changed
+                    if 'res_date_approved' in serializer.validated_data and old_values['res_date_approved'] != updated_instance.res_date_approved:
+                        old_date = old_values['res_date_approved'].strftime('%Y-%m-%d') if old_values['res_date_approved'] and not isinstance(old_values['res_date_approved'], str) else str(old_values['res_date_approved'])
+                        new_date = updated_instance.res_date_approved.strftime('%Y-%m-%d') if updated_instance.res_date_approved and not isinstance(updated_instance.res_date_approved, str) else str(updated_instance.res_date_approved)
+                        changes.append(f"Date Approved: '{old_date}' → '{new_date}'")
+                    
+                    # Area of focus changed
+                    if 'res_area_of_focus' in serializer.validated_data and old_values['res_area_of_focus'] != updated_instance.res_area_of_focus:
+                        old_areas = ", ".join([area.upper() for area in old_values['res_area_of_focus']]) if old_values['res_area_of_focus'] else 'None'
+                        new_areas = ", ".join([area.upper() for area in updated_instance.res_area_of_focus]) if updated_instance.res_area_of_focus else 'None'
+                        changes.append(f"Area of Focus: '{old_areas}' → '{new_areas}'")
+                    
+                    # Archive status changed - include resolution details
+                    if old_res_is_archive != updated_instance.res_is_archive:
+                        # Include resolution details when archiving/restoring
+                        if updated_instance.res_title:
+                            changes.append(f"Title: {updated_instance.res_title}")
+                        if updated_instance.res_date_approved:
+                            date_str = updated_instance.res_date_approved.strftime('%Y-%m-%d') if not isinstance(updated_instance.res_date_approved, str) else updated_instance.res_date_approved
+                            changes.append(f"Date Approved: {date_str}")
+                        if updated_instance.res_area_of_focus and len(updated_instance.res_area_of_focus) > 0:
+                            areas = ", ".join([area.upper() for area in updated_instance.res_area_of_focus])
+                            changes.append(f"Area of Focus: {areas}")
+                        if updated_instance.res_is_archive:
+                            changes.append("Status: Archived")
+                        else:
+                            changes.append("Status: Restored")
+                    
+                    # Project proposal link changed
+                    if old_gpr_id != updated_instance.gpr_id:
+                        if not old_gpr_id and updated_instance.gpr_id:
+                            try:
+                                from apps.gad.models import DevelopmentPlan
+                                project_proposal = updated_instance.gpr_id
+                                dev_plan = project_proposal.dev
+                                project_title = dev_plan.dev_project or 'N/A'
+                                changes.append(f"Linked to GAD Development Plan: {project_title}")
+                            except Exception:
+                                changes.append("Linked to project proposal")
+                        elif old_gpr_id and not updated_instance.gpr_id:
+                            changes.append("Unlinked from project proposal")
+                        elif old_gpr_id and updated_instance.gpr_id and old_gpr_id != updated_instance.gpr_id:
+                            changes.append("Project proposal link changed")
+                    
+                    if changes:
+                        description_parts.extend(changes)
+                        description = ". ".join(description_parts)
+                    else:
+                        description = f"Resolution #{updated_instance.res_num} updated"
+                    
+                    create_activity_log(
+                        act_type="Resolution Update",
+                        act_description=description,
+                        staff=staff,
+                        record_id=str(updated_instance.res_num)
+                    )
+            except Exception as log_error:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Error logging resolution update: {str(log_error)}")
+                # Don't fail if logging fails
+            
+            # Check if gpr_id was added (was None, now has value)
+            if not old_gpr_id and updated_instance.gpr_id:
+                try:
+                    from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                    from apps.gad.models import DevelopmentPlan
+                    
+                    staff, staff_identifier = resolve_staff_from_request(request)
+                    
+                    # Only log if we have a valid staff with staff_id
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        project_proposal = updated_instance.gpr_id
+                        dev_plan = project_proposal.dev
+                        
+                        # Build description with dev plan details - highlight the dev plan
+                        project_title = dev_plan.dev_project or 'N/A'
+                        description_parts = [f"GAD Development Plan ({project_title})"]
+                        
+                        if dev_plan.dev_date:
+                            date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                            description_parts.append(f"Date: {date_str}")
+                        if dev_plan.dev_client:
+                            description_parts.append(f"Client: {dev_plan.dev_client}")
+                        
+                        description_parts.append("now has both project proposal and resolution")
+                        
+                        description = ". ".join(description_parts)
+                        
+                        create_activity_log(
+                            act_type="GAD Development Plan Updated",
+                            act_description=description,
+                            staff=staff,
+                            record_id=str(dev_plan.dev_id)
+                        )
+                        logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} now has both proposal and resolution (via resolution update)")
+                except Exception as log_error:
+                    logger.debug(f"Error logging dev plan proposal/resolution link: {str(log_error)}")
+                    # Don't fail if logging fails
+            
+            # Log GAD Development Plan Updated when resolution is archived/restored
+            # Check if archive status changed and resolution is linked to a project proposal
+            archive_status_changed = old_res_is_archive != updated_instance.res_is_archive
+            has_project_proposal = updated_instance.gpr_id is not None
+            
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Resolution archive/restore check: archive_status_changed={archive_status_changed}, has_project_proposal={has_project_proposal}, old_archive={old_res_is_archive}, new_archive={updated_instance.res_is_archive}, gpr_id={updated_instance.gpr_id}")
+            
+            if archive_status_changed and has_project_proposal:
+                try:
+                    from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                    from apps.gad.models import DevelopmentPlan
+                    from apps.administration.models import Staff
+                    
+                    # Try to get staff_id from request body first, then fall back to resolve_staff_from_request
+                    staff = None
+                    staff_id_from_request = request.data.get('staff_id')
+                    logger.info(f"Attempting to get staff: staff_id_from_request={staff_id_from_request}, request.data={request.data}")
+                    
+                    if staff_id_from_request:
+                        try:
+                            staff = Staff.objects.get(staff_id=staff_id_from_request)
+                            logger.info(f"Found staff from request: {staff.staff_id}")
+                        except Staff.DoesNotExist:
+                            logger.warning(f"Staff with staff_id {staff_id_from_request} not found, falling back to resolve_staff_from_request")
+                    
+                    # Fall back to resolve_staff_from_request if staff_id not in request or not found
+                    if not staff:
+                        staff, staff_identifier = resolve_staff_from_request(request)
+                        logger.info(f"Staff from resolve_staff_from_request: staff={staff}, staff_identifier={staff_identifier}")
+                    
+                    # Only log if we have a valid staff with staff_id
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        logger.info(f"Staff is valid, proceeding with logging. staff_id={staff.staff_id}")
+                        project_proposal = updated_instance.gpr_id
+                        if project_proposal:
+                            dev_plan = project_proposal.dev
+                            if dev_plan:
+                                # Build description with dev plan details - highlight the dev plan
+                                project_title = dev_plan.dev_project or 'N/A'
+                                description_parts = [f"GAD Development Plan ({project_title})"]
+                                
+                                if dev_plan.dev_date:
+                                    date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                                    description_parts.append(f"Date: {date_str}")
+                                if dev_plan.dev_client:
+                                    description_parts.append(f"Client: {dev_plan.dev_client}")
+                                
+                                # Add archive/restore status
+                                if updated_instance.res_is_archive:
+                                    description_parts.append("resolution archived")
+                                else:
+                                    description_parts.append("resolution restored")
+                                
+                                description = ". ".join(description_parts)
+                                
+                                create_activity_log(
+                                    act_type="GAD Development Plan Updated",
+                                    act_description=description,
+                                    staff=staff,
+                                    record_id=str(dev_plan.dev_id)
+                                )
+                                logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} updated - resolution {'archived' if updated_instance.res_is_archive else 'restored'}")
+                            else:
+                                logger.warning(f"Dev plan not found for project proposal {project_proposal.gpr_id}")
+                        else:
+                            logger.warning(f"Project proposal not found for resolution {updated_instance.res_num}")
+                    else:
+                        logger.warning(f"No valid staff found for logging resolution archive/restore. Staff: {staff}, hasattr staff_id: {hasattr(staff, 'staff_id') if staff else 'N/A'}, staff_id value: {getattr(staff, 'staff_id', None) if staff else 'N/A'}")
+                except Exception as log_error:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error logging dev plan archive/restore update: {str(log_error)}", exc_info=True)
+                    # Don't fail if logging fails
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -517,6 +1022,7 @@ class UpdateResolutionView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
 
 
 class ResolutionFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionFileSerializer
     queryset = ResolutionFile.objects.all()
 
@@ -546,6 +1052,7 @@ class ResolutionFileView(generics.ListCreateAPIView):
 
 # Deleting Res File or replace if updated
 class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = ResolutionFile.objects.all()
     serializer_class = ResolutionFileSerializer
     lookup_field = 'rf_id' 
@@ -553,6 +1060,7 @@ class ResolutionFileDetailView(generics.RetrieveDestroyAPIView):
 
  # Resolution Supp Docs
 class ResolutionSupDocsView(ActivityLogMixin, generics.ListCreateAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = ResolutionSupDocsSerializer
     queryset = ResolutionSupDocs.objects.all()
 
@@ -581,12 +1089,14 @@ class ResolutionSupDocsView(ActivityLogMixin, generics.ListCreateAPIView):
 
 
 class ResolutionSupDocsDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny]    
     queryset = ResolutionSupDocs.objects.all()
     serializer_class = ResolutionSupDocsSerializer
     lookup_field = 'rsd_id'     
 
 
 class GADProposalsView(generics.ListAPIView):
+    permission_classes = [AllowAny]    
     serializer_class = GADProposalSerializer
     
     def get_queryset(self):
@@ -599,11 +1109,7 @@ class PurposeRatesListView(generics.ListCreateAPIView):
     serializer_class = PurposeRatesListViewSerializer
     
 # =================== MINUTES OF MEETING VIEWS ======================
-
-# class MinutesOfMeetingView(generics.ListCreateAPIView):
-#     serializer_class = MinutesOfMeetingSerializer
-#     queryset = MinutesOfMeeting.objects.all().order_by('-mom_date')
-class MinutesOfMeetingActiveView(generics.ListCreateAPIView):
+class MinutesOfMeetingActiveView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     pagination_class = StandardResultsPagination
     permission_classes = [AllowAny]  # Add appropriate permissions
@@ -645,10 +1151,39 @@ class MinutesOfMeetingActiveView(generics.ListCreateAPIView):
         # Order by date descending (most recent first)
         return queryset.order_by('-mom_date')
     
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Format area of focus for display
+                area_of_focus = instance.mom_area_of_focus
+                if isinstance(area_of_focus, list):
+                    area_of_focus_display = ", ".join(area_of_focus).upper()
+                else:
+                    area_of_focus_display = str(area_of_focus).upper() if area_of_focus else "N/A"
+                
+                # Create detailed activity log
+                create_activity_log(
+                    act_type="Minutes of Meeting Create",
+                    act_description=f"Minutes of Meeting record created. Title: '{instance.mom_title}'. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
+                    staff=staff,
+                    record_id=str(instance.mom_id)
+                )
+                logger.info(f"Activity logged for minutes of meeting creation: {instance.mom_id}")
+            else:
+                logger.debug(f"Skipping activity log for MinutesOfMeeting create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for minutes of meeting creation: {str(e)}")
+        return instance
+    
 class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
     serializer_class = MinutesOfMeetingSerializer
     pagination_class = StandardResultsPagination
-    permission_classes = [AllowAny]  # Add appropriate permissions
+    permission_classes = [AllowAny]  
 
     def get_queryset(self):
         # Filter out archived records and select related staff data
@@ -688,44 +1223,192 @@ class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
         return queryset.order_by('-mom_date')
 
 class MinutesOfMeetingDetailView(generics.RetrieveDestroyAPIView):
+    permission_classes = [AllowAny] 
     queryset = MinutesOfMeeting.objects.all()
     serializer_class = MinutesOfMeetingSerializer
     lookup_field = 'mom_id'
 
 class MOMFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMFileCreateSerializer
     queryset = MOMFile.objects.all()
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
-            print(serializer.errors) 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return super().create(request, *args, **kwargs)
 
-class UpdateMinutesOfMeetingView(generics.RetrieveUpdateAPIView):
+class UpdateMinutesOfMeetingView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MinutesOfMeetingSerializer
     queryset = MinutesOfMeeting.objects.all()
     lookup_field = 'mom_id'
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        
+        # Capture old values for all fields that might be updated
+        old_values = {
+            'mom_title': instance.mom_title,
+            'mom_agenda': instance.mom_agenda,
+            'mom_date': instance.mom_date,
+            'mom_area_of_focus': instance.mom_area_of_focus,
+            'mom_is_archive': instance.mom_is_archive,
+            'staff_id': instance.staff_id.staff_id if instance.staff_id else None
+        }
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_instance = serializer.save()
+            
+            # Log activity with field-level changes
+            try:
+                from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+                
+                staff, staff_identifier = resolve_staff_from_request(request)
+                
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Track field changes
+                    changes = []
+                    
+                    # Check each field for changes
+                    if 'mom_title' in serializer.validated_data and old_values['mom_title'] != updated_instance.mom_title:
+                        old_title = old_values['mom_title'] or 'N/A'
+                        new_title = updated_instance.mom_title or 'N/A'
+                        changes.append(f"mom_title: '{old_title}' → '{new_title}'")
+                    
+                    if 'mom_agenda' in serializer.validated_data and old_values['mom_agenda'] != updated_instance.mom_agenda:
+                        old_agenda = old_values['mom_agenda'] or 'N/A'
+                        new_agenda = updated_instance.mom_agenda or 'N/A'
+                        # Truncate long strings
+                        old_agenda_short = (old_agenda[:60] + '…') if len(old_agenda) > 60 else old_agenda
+                        new_agenda_short = (new_agenda[:60] + '…') if len(new_agenda) > 60 else new_agenda
+                        changes.append(f"mom_agenda: '{old_agenda_short}' → '{new_agenda_short}'")
+                    
+                    if 'mom_date' in serializer.validated_data and old_values['mom_date'] != updated_instance.mom_date:
+                        old_date = str(old_values['mom_date']) if old_values['mom_date'] else 'N/A'
+                        new_date = str(updated_instance.mom_date) if updated_instance.mom_date else 'N/A'
+                        changes.append(f"mom_date: '{old_date}' → '{new_date}'")
+                    
+                    if 'mom_area_of_focus' in serializer.validated_data and old_values['mom_area_of_focus'] != updated_instance.mom_area_of_focus:
+                        old_areas = old_values['mom_area_of_focus']
+                        if isinstance(old_areas, list):
+                            old_areas_display = ", ".join(old_areas).upper()
+                        else:
+                            old_areas_display = str(old_areas).upper() if old_areas else 'N/A'
+                        
+                        new_areas = updated_instance.mom_area_of_focus
+                        if isinstance(new_areas, list):
+                            new_areas_display = ", ".join(new_areas).upper()
+                        else:
+                            new_areas_display = str(new_areas).upper() if new_areas else 'N/A'
+                        
+                        changes.append(f"mom_area_of_focus: '{old_areas_display}' → '{new_areas_display}'")
+                    
+                    if 'mom_is_archive' in serializer.validated_data and old_values['mom_is_archive'] != updated_instance.mom_is_archive:
+                        old_archive = 'True' if old_values['mom_is_archive'] else 'False'
+                        new_archive = 'True' if updated_instance.mom_is_archive else 'False'
+                        changes.append(f"mom_is_archive: '{old_archive}' → '{new_archive}'")
+                    
+                    if 'staff_id' in request.data:
+                        new_staff_id = request.data.get('staff_id')
+                        if isinstance(new_staff_id, str) and len(new_staff_id) < 11:
+                            new_staff_id = new_staff_id.zfill(11)
+                        elif isinstance(new_staff_id, int):
+                            new_staff_id = str(new_staff_id).zfill(11)
+                        
+                        old_staff_id = old_values['staff_id'] or 'N/A'
+                        if isinstance(old_staff_id, str) and len(old_staff_id) < 11:
+                            old_staff_id = old_staff_id.zfill(11)
+                        elif isinstance(old_staff_id, int):
+                            old_staff_id = str(old_staff_id).zfill(11)
+                        
+                        if str(old_staff_id) != str(new_staff_id):
+                            changes.append(f"staff_id: '{old_staff_id}' → '{new_staff_id}'")
+                    
+                    # Determine action type
+                        if old_values['mom_is_archive'] != updated_instance.mom_is_archive:
+                            if updated_instance.mom_is_archive:
+                                act_type = "Minutes of Meeting Archived"
+                            else:
+                                act_type = "Minutes of Meeting Restored"
+                        else:
+                            act_type = "Minutes of Meeting Updated"
+                    
+                    # Build description
+                    if changes:
+                        description = f"Minutes of Meeting changes: {'; '.join(changes)}"
+                    else:
+                        description = "Minutes of Meeting record updated (no field-level changes recorded)"
+                        
+                        create_activity_log(
+                        act_type=act_type,
+                        act_description=description,
+                            staff=staff,
+                            record_id=str(updated_instance.mom_id)
+                        )
+                        logger.info(f"Activity logged for minutes of meeting update: {updated_instance.mom_id}")
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for minutes of meeting update: {str(log_error)}")
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeleteMinutesOfMeetingView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MinutesOfMeetingSerializer    
     queryset = MinutesOfMeeting.objects.all()
 
     def get_object(self):
         mom_id = self.kwargs.get('mom_id')
-        return get_object_or_404(MinutesOfMeeting, mom_id=mom_id) 
+        return get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Format area of focus for display
+        area_of_focus = instance.mom_area_of_focus
+        if isinstance(area_of_focus, list):
+            area_of_focus_display = ", ".join(area_of_focus).upper()
+        else:
+            area_of_focus_display = str(area_of_focus).upper() if area_of_focus else "N/A"
+        
+        # Log activity before deletion
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(request)
+            
+            if not staff:
+                # Fallback to instance staff_id
+                staff_id = instance.staff_id.staff_id if instance.staff_id else None
+            if staff_id:
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                    from apps.administration.models import Staff
+                staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+                
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    create_activity_log(
+                        act_type="Minutes of Meeting Deleted",
+                    act_description=f"Minutes of Meeting record deleted. Title: '{instance.mom_title}'. Date: {instance.mom_date}. Area of Focus: {area_of_focus_display}",
+                        staff=staff,
+                        record_id=str(instance.mom_id)
+                    )
+                    logger.info(f"Activity logged for minutes of meeting deletion: {instance.mom_id}")
+            else:
+                logger.debug(f"Skipping activity log for MinutesOfMeeting delete: No valid staff")
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for minutes of meeting deletion: {str(log_error)}")
+        
+        return super().destroy(request, *args, **kwargs) 
     
 
 class DeleteMOMFileView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMFileViewSerializer    
     queryset = MOMFile.objects.all()
 
@@ -733,18 +1416,8 @@ class DeleteMOMFileView(generics.DestroyAPIView):
         mom_id = self.kwargs.get('mom_id')
         return get_object_or_404(MOMFile, mom_id=mom_id)
 
-
-class DeleteMOMAreaOfFocusView(APIView):
-    def delete(self, request, mom_id):
-        get_object_or_404(MinutesOfMeeting, mom_id=mom_id)
-        deleted_count, _ = MOMAreaOfFocus.objects.filter(mom_id=mom_id).delete()
-
-        return Response(
-            {"detail": f"{deleted_count} area(s) of focus deleted."},
-            status=status.HTTP_204_NO_CONTENT
-        )
-
 class MeetingSuppDocsView(generics.ListAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMSuppDocViewSerializer
     
     def get_queryset(self):
@@ -752,11 +1425,13 @@ class MeetingSuppDocsView(generics.ListAPIView):
         return MOMSuppDoc.objects.filter(mom_id=mom_id)
 
 class DeleteMOMSuppDocView(generics.DestroyAPIView):
+    permission_classes = [AllowAny] 
     queryset = MOMSuppDoc.objects.all()
     serializer_class = MOMSuppDocViewSerializer
     lookup_field = 'momsp_id'
 
 class MOMSuppDocView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny] 
     serializer_class = MOMSuppDocCreateSerializer
     query_set = MOMSuppDoc.objects.all()
 
@@ -764,19 +1439,19 @@ class MOMSuppDocView(generics.ListCreateAPIView):
 # ================================== ORDINANCE VIEWS (from secretary) =================================
 
 class OrdinanceListView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
 
     def get_queryset(self):
         return Ordinance.objects.filter(
             ord_is_archive=False
-        )
+        ).order_by('-ord_date_created')
     
     def create(self, request, *args, **kwargs):
         # Extract of_id from request data
         of_id = request.data.get('of_id')
-        print(f"Received of_id: {of_id}")
-        print(f"Full request data: {request.data}")
+        staff_id = request.data.get('staff_id')
         
         # Remove of_id from data to avoid serializer issues
         ordinance_data = request.data.copy()
@@ -786,7 +1461,6 @@ class OrdinanceListView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=ordinance_data)
         serializer.is_valid(raise_exception=True)
         ordinance = serializer.save()
-        print(f"Created ordinance: {ordinance.ord_num}")
         
         # Link file if provided
         if of_id:
@@ -794,12 +1468,8 @@ class OrdinanceListView(generics.ListCreateAPIView):
                 file_obj = OrdinanceFile.objects.get(of_id=of_id)
                 ordinance.of_id = file_obj
                 ordinance.save()
-                print(f"Linked file {of_id} to ordinance {ordinance.ord_num}")
             except OrdinanceFile.DoesNotExist:
-                print(f"File with of_id {of_id} does not exist")
                 pass  # File doesn't exist, continue without linking
-        else:
-            print("No of_id provided, ordinance created without file")
         
         # Log the activity
         try:
@@ -807,21 +1477,32 @@ class OrdinanceListView(generics.ListCreateAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
-            staff = Staff.objects.filter(staff_id=staff_id).first()
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+            staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
             
-            if staff:
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Format category for display (remove brackets if array)
+                category_display = ordinance.ord_category
+                if isinstance(category_display, list):
+                    category_display = ", ".join(category_display)
+                
                 # Create activity log
                 create_activity_log(
                     act_type="Ordinance Created",
-                    act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' created for {ordinance.ord_category}",
+                    act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' created for {category_display}",
                     staff=staff,
-                    record_id=ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance creation: {ordinance.ord_num}")
             else:
-                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                logger.warning(f"No valid staff with staff_id found for ordinance creation logging: {ordinance.ord_num}")
                 
         except Exception as log_error:
             logger.error(f"Failed to log activity for ordinance creation: {str(log_error)}")
@@ -830,37 +1511,129 @@ class OrdinanceListView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
     lookup_field = 'ord_num'
     
     def update(self, request, *args, **kwargs):
         ordinance = self.get_object()
+        
+        # Capture old values for all fields that might be updated
+        old_values = {
+            'ord_title': ordinance.ord_title,
+            'ord_date_created': ordinance.ord_date_created,
+            'ord_category': ordinance.ord_category,
+            'ord_details': ordinance.ord_details,
+            'ord_year': ordinance.ord_year,
+            'ord_is_archive': ordinance.ord_is_archive,
+            'ord_repealed': ordinance.ord_repealed,
+            'ord_is_ammend': ordinance.ord_is_ammend,
+            'ord_ammend_ver': ordinance.ord_ammend_ver,
+            'ord_parent': ordinance.ord_parent,
+            'staff_id': ordinance.staff.staff_id if ordinance.staff else None
+        }
+        
         serializer = self.get_serializer(ordinance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         updated_ordinance = serializer.save()
         
-        # Log the activity
+        # Log the activity with field-level changes
         try:
-            from apps.act_log.utils import create_activity_log
-            from apps.administration.models import Staff
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
             
-            # Get staff member from the ordinance or request
-            staff_id = getattr(updated_ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
-            staff = Staff.objects.filter(staff_id=staff_id).first()
+            staff, staff_identifier = resolve_staff_from_request(request)
             
-            if staff:
-                # Create activity log
+            if not staff:
+                # Fallback to instance staff_id
+                staff_id = updated_ordinance.staff.staff_id if updated_ordinance.staff else None
+            if staff_id:
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                    from apps.administration.models import Staff
+            staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                # Track field changes
+                changes = []
+                
+                if 'ord_title' in serializer.validated_data and old_values['ord_title'] != updated_ordinance.ord_title:
+                    old_title = old_values['ord_title'] or 'N/A'
+                    new_title = updated_ordinance.ord_title or 'N/A'
+                    changes.append(f"ord_title: '{old_title}' → '{new_title}'")
+                
+                if 'ord_date_created' in serializer.validated_data and old_values['ord_date_created'] != updated_ordinance.ord_date_created:
+                    old_date = str(old_values['ord_date_created']) if old_values['ord_date_created'] else 'N/A'
+                    new_date = str(updated_ordinance.ord_date_created) if updated_ordinance.ord_date_created else 'N/A'
+                    changes.append(f"ord_date_created: '{old_date}' → '{new_date}'")
+                
+                if 'ord_category' in serializer.validated_data and old_values['ord_category'] != updated_ordinance.ord_category:
+                    old_cat = ", ".join(old_values['ord_category']) if isinstance(old_values['ord_category'], list) and old_values['ord_category'] else (str(old_values['ord_category']) if old_values['ord_category'] else 'N/A')
+                    new_cat = ", ".join(updated_ordinance.ord_category) if isinstance(updated_ordinance.ord_category, list) and updated_ordinance.ord_category else (str(updated_ordinance.ord_category) if updated_ordinance.ord_category else 'N/A')
+                    changes.append(f"ord_category: '{old_cat}' → '{new_cat}'")
+                
+                if 'ord_details' in serializer.validated_data and old_values['ord_details'] != updated_ordinance.ord_details:
+                    old_details = (old_values['ord_details'][:60] + '…') if old_values['ord_details'] and len(old_values['ord_details']) > 60 else (old_values['ord_details'] or 'N/A')
+                    new_details = (updated_ordinance.ord_details[:60] + '…') if updated_ordinance.ord_details and len(updated_ordinance.ord_details) > 60 else (updated_ordinance.ord_details or 'N/A')
+                    changes.append(f"ord_details: '{old_details}' → '{new_details}'")
+                
+                if 'ord_year' in serializer.validated_data and old_values['ord_year'] != updated_ordinance.ord_year:
+                    changes.append(f"ord_year: '{old_values['ord_year']}' → '{updated_ordinance.ord_year}'")
+                
+                if 'ord_is_archive' in serializer.validated_data and old_values['ord_is_archive'] != updated_ordinance.ord_is_archive:
+                    old_archive = 'True' if old_values['ord_is_archive'] else 'False'
+                    new_archive = 'True' if updated_ordinance.ord_is_archive else 'False'
+                    changes.append(f"ord_is_archive: '{old_archive}' → '{new_archive}'")
+                
+                if 'ord_repealed' in serializer.validated_data and old_values['ord_repealed'] != updated_ordinance.ord_repealed:
+                    old_repealed = 'True' if old_values['ord_repealed'] else 'False'
+                    new_repealed = 'True' if updated_ordinance.ord_repealed else 'False'
+                    changes.append(f"ord_repealed: '{old_repealed}' → '{new_repealed}'")
+                
+                if 'ord_is_ammend' in serializer.validated_data and old_values['ord_is_ammend'] != updated_ordinance.ord_is_ammend:
+                    old_amend = 'True' if old_values['ord_is_ammend'] else 'False'
+                    new_amend = 'True' if updated_ordinance.ord_is_ammend else 'False'
+                    changes.append(f"ord_is_ammend: '{old_amend}' → '{new_amend}'")
+                
+                if 'ord_ammend_ver' in serializer.validated_data and old_values['ord_ammend_ver'] != updated_ordinance.ord_ammend_ver:
+                    changes.append(f"ord_ammend_ver: '{old_values['ord_ammend_ver']}' → '{updated_ordinance.ord_ammend_ver}'")
+                
+                if 'ord_parent' in serializer.validated_data and old_values['ord_parent'] != updated_ordinance.ord_parent:
+                    changes.append(f"ord_parent: '{old_values['ord_parent']}' → '{updated_ordinance.ord_parent}'")
+                
+                if 'staff_id' in request.data:
+                    new_staff_id = request.data.get('staff_id')
+                    if isinstance(new_staff_id, str) and len(new_staff_id) < 11:
+                        new_staff_id = new_staff_id.zfill(11)
+                    elif isinstance(new_staff_id, int):
+                        new_staff_id = str(new_staff_id).zfill(11)
+                    
+                    old_staff_id = old_values['staff_id'] or 'N/A'
+                    if isinstance(old_staff_id, str) and len(old_staff_id) < 11:
+                        old_staff_id = old_staff_id.zfill(11)
+                    elif isinstance(old_staff_id, int):
+                        old_staff_id = str(old_staff_id).zfill(11)
+                    
+                    if str(old_staff_id) != str(new_staff_id):
+                        changes.append(f"staff_id: '{old_staff_id}' → '{new_staff_id}'")
+                
+                # Build description
+                if changes:
+                    description = f"Ordinance changes: {'; '.join(changes)}"
+                else:
+                    description = f"Ordinance {updated_ordinance.ord_num} '{updated_ordinance.ord_title}' updated (no field-level changes recorded)"
+                
                 create_activity_log(
                     act_type="Ordinance Updated",
-                    act_description=f"Ordinance {updated_ordinance.ord_num} '{updated_ordinance.ord_title}' updated",
+                    act_description=description,
                     staff=staff,
-                    record_id=updated_ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=updated_ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance update: {updated_ordinance.ord_num}")
             else:
-                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                logger.warning(f"No valid staff with staff_id found for ordinance update logging: {updated_ordinance.ord_num}")
                 
         except Exception as log_error:
             logger.error(f"Failed to log activity for ordinance update: {str(log_error)}")
@@ -879,21 +1652,27 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
-            staff = Staff.objects.filter(staff_id=staff_id).first()
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+            staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
             
-            if staff:
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                 # Create activity log
                 create_activity_log(
                     act_type="Ordinance Deleted",
                     act_description=f"Ordinance {ordinance_num} '{ordinance_title}' deleted",
                     staff=staff,
-                    record_id=ordinance_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance_num
                 )
                 logger.info(f"Activity logged for ordinance deletion: {ordinance_num}")
             else:
-                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                logger.warning(f"No valid staff with staff_id found for ordinance deletion logging: {ordinance_num}")
                 
         except Exception as log_error:
             logger.error(f"Failed to log activity for ordinance deletion: {str(log_error)}")
@@ -902,6 +1681,7 @@ class OrdinanceDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().destroy(request, *args, **kwargs)
 
 class OrdinanceArchiveView(generics.UpdateAPIView):
+    permission_classes = [AllowAny]
     queryset = Ordinance.objects.all()
     serializer_class = OrdinanceSerializer
     lookup_field = 'ord_num'
@@ -917,21 +1697,27 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
             from apps.administration.models import Staff
             
             # Get staff member from the ordinance or request
-            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff') or '00003250722'
-            staff = Staff.objects.filter(staff_id=staff_id).first()
+            staff_id = getattr(ordinance.staff, 'staff_id', None) or request.data.get('staff_id') or request.data.get('staff')
+            if staff_id:
+                # Format staff_id properly (pad with leading zeros if needed)
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+            staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
             
-            if staff:
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
                 # Create activity log
                 create_activity_log(
                     act_type="Ordinance Archived",
                     act_description=f"Ordinance {ordinance.ord_num} '{ordinance.ord_title}' archived",
                     staff=staff,
-                    record_id=ordinance.ord_num,
-                    feat_name="Ordinance Management"
+                    record_id=ordinance.ord_num
                 )
                 logger.info(f"Activity logged for ordinance archiving: {ordinance.ord_num}")
             else:
-                logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                logger.warning(f"No valid staff with staff_id found for ordinance archiving logging: {ordinance.ord_num}")
                 
         except Exception as log_error:
             logger.error(f"Failed to log activity for ordinance archiving: {str(log_error)}")
@@ -945,28 +1731,25 @@ class OrdinanceArchiveView(generics.UpdateAPIView):
 
 # Ordinance File Views
 class OrdinanceFileView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     queryset = OrdinanceFile.objects.all()
     serializer_class = OrdinanceFileSerializer
 
     def create(self, request, *args, **kwargs):
-        # Get file data from request
-        file_data = {
-            'of_name': request.data.get('of_name'),
-            'of_type': request.data.get('of_type'),
-            'of_path': request.data.get('of_path'),
-            'of_url': request.data.get('of_url')
-        }
+        # Handle file uploads like resolution does
+        files = request.data.get('files', [])
         
-        print(f"Creating ordinance file with data: {file_data}")
+        if not files:
+            return Response(
+                {"error": "No files provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        serializer = self.get_serializer(data=file_data)
-        if not serializer.is_valid():
-            print(f"Serializer errors: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Call serializer's upload method and get created files
+        created_files = self.get_serializer()._upload_files(files)
         
-        file_obj = serializer.save()
-        print(f"Created ordinance file with ID: {file_obj.of_id}")
-        
+        # Return the created file data
+        serializer = self.get_serializer(created_files, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class OrdinanceFileDetailView(generics.RetrieveUpdateDestroyAPIView):

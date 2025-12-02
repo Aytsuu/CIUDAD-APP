@@ -1,19 +1,25 @@
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { api2 } from "@/api/api";
 import { 
 	getResident, 
-	getPatients, 
 	getPatientDetails, 
-	getAllFollowUpVisits, 
 	getAllTransientAddresses,
 	getChildData,
 	checkPatientExistsGet,
-	getChildren
+	getChildren,
+	getPatientCount,
+	getPatientHistory
  } from "../restful-api/get";
-import { AppointmentFilters } from "../restful-api/get";
-import { PatientFilters } from "../restful-api/get";
 
 
-
+export const usePatientCount = () => {
+	return useQuery({
+		queryKey: ['patientCount'],
+		queryFn: getPatientCount,
+		staleTime: 60000, // 1 minute
+		refetchInterval: 3000, // 
+	})
+}
 
 export const useChildData = (id: any,) => {
 	return useQuery({
@@ -54,14 +60,30 @@ export const patientQueryKey = {
 	search: (params:any) => [...patientQueryKey.allPatients, "search", params]  
 }
 
-export const usePatients = (filters: PatientFilters, options = {}) => {
+export const usePatients = (page: number, pageSize: number, searchQuery: string, status: string) => {
+	const normalizedStatus = typeof status === 'string' ? status.toLowerCase() : '';
+	const shouldSendStatus = normalizedStatus && normalizedStatus !== 'all';
+
 	return useQuery({
-		queryKey: patientQueryKey.lists(),
-		queryFn: () => getPatients(filters),
-		staleTime: 30 * 1,
-		retry: 3,
-		refetchInterval: 3000,
-		...options
+		queryKey: ['patients', page, pageSize, searchQuery, shouldSendStatus ? normalizedStatus : 'all'],
+		queryFn: async () => {
+			try {
+				const res = await api2.get("/patientrecords/patient/view/create/", {
+					params: {
+						page,
+						page_size: pageSize,
+						search: searchQuery,
+						status: status
+					}
+				});
+				return res.data;
+			} catch (error) {
+				throw error;
+			}
+		},
+		staleTime: 5000,
+		retry: 1,
+		refetchInterval: 5000
 	})
 }
 
@@ -78,23 +100,30 @@ export const usePatientDetails = (patientId: string, options = {}) => {
 }
 
 
-// follow-up visit query keys
-export const followUpVisitQueryKey = {
-  allFollowUpVisits: ["followUpVisits"],
-  lists: () => [...followUpVisitQueryKey.allFollowUpVisits, "list"],
-}
-
-export const useAllFollowUpVisits = (filters: AppointmentFilters, options = {}) => {
-  return useQuery({
-    queryKey: ['followUpVisits', filters],
-    queryFn: () => getAllFollowUpVisits(filters),
-    staleTime: 60 * 2,
-    retry: 3,
-	refetchOnMount: false,
-	refetchInterval: 2 * 1000,
-	placeholderData: keepPreviousData,
-    ...options,
-  })
+// follow-up visits query for searching, pagination, and filtering
+export const useAllFollowUpVisits = (page: number, pageSize: number, searchcQuery: string, status: string, time_frame: string) => {
+	return useQuery({
+		queryKey: ['followUpVisits', page, pageSize, searchcQuery, status, time_frame],
+		queryFn: async () => {
+			try {
+				const res = await api2.get("patientrecords/follow-up-visits-all/", {
+					params: {
+						page,
+						page_size: pageSize,
+						search: searchcQuery,
+						status: status !== 'All' ? status : undefined,
+						time_frame: time_frame !== 'All' ? time_frame : undefined
+					}
+				});
+				return res.data;
+			} catch (error) {
+				throw error;
+			}
+		},
+		staleTime: 5000,
+		retry: 1,
+		refetchInterval: 50000
+	})
 }
 
 
@@ -127,6 +156,19 @@ export const useGetChildren = (patientId: string) => {
 		queryKey: ['getchildren', patientId],
 		queryFn: () => getChildren(patientId),
 		staleTime: 300000, // 5 minutes
+		enabled: !!patientId,
+	})
+}
+
+// patient history query (HistoricalPatient)
+export const usePatientHistory = (patientId: string) => {
+	return useQuery({
+		queryKey: ['patientHistory', patientId],
+		queryFn: () => getPatientHistory(patientId),
+		staleTime: 0, // always considered stale so refetch is instant when requested
+		refetchOnMount: 'always',
+		refetchOnWindowFocus: false,
+		retry: 2,
 		enabled: !!patientId,
 	})
 }

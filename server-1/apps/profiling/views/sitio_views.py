@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 from ..serializers.sitio_serializers import *
 from ..double_queries import *
 from django.db import transaction
@@ -8,6 +9,23 @@ from django.db import transaction
 class SitioListView(generics.ListAPIView):
   serializer_class = SitioBaseSerializer
   queryset = Sitio.objects.all()
+
+class SitioUpdateView(APIView):
+  def patch(self, request, *args, **kwargs):
+    sitio_list = request.data
+    instances = [
+      Sitio(
+        sitio_id=s['sitio_id'],
+        sitio_name=s['sitio_name']
+      )
+      for s in sitio_list
+    ]
+    if len(sitio_list) > 0:
+      for instance in instances:
+        instance.save()
+    
+    return Response(SitioBaseSerializer(Sitio.objects.all(), many=True).data, 
+                    status=status.HTTP_200_OK) 
 
 class SitioCreateView(generics.CreateAPIView):
   serializer_class = SitioBaseSerializer

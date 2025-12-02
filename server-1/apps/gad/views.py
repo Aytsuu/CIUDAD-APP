@@ -10,12 +10,104 @@ from django.db.models.functions import ExtractYear
 import logging
 from rest_framework.views import APIView
 from django.db import transaction
-from apps.act_log.utils import ActivityLogMixin
+from apps.act_log.utils import ActivityLogMixin, create_activity_log, resolve_staff_from_request
 from apps.pagination import StandardResultsPagination
 from django.db.models import Q
 from utils.supabase_client import remove_from_storage
+from django.db.models import Sum, DecimalField
+from django.db.models.functions import Coalesce
+from decimal import Decimal
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
+
+Staff = apps.get_model('administration', 'Staff')
+
+def create_gad_announcement(development_plan, staff, reason="mandated"):
+    """
+    Create an announcement for a GAD development plan.
+    
+    Args:
+        development_plan: DevelopmentPlan instance
+        staff: Staff instance (for announcement creator)
+        reason: "mandated" or "proposal_resolution"
+    """
+    try:
+        from apps.announcement.models import Announcement, AnnouncementRecipient
+        from apps.announcement.serializers import BulkAnnouncementRecipientSerializer
+        
+        # Check if announcement already exists for this dev plan
+        project_title = development_plan.dev_project or 'Untitled Project'
+        
+        # Format date
+        if development_plan.dev_date:
+            if isinstance(development_plan.dev_date, str):
+                date_str = development_plan.dev_date
+            else:
+                date_str = development_plan.dev_date.strftime('%B %d, %Y')
+        else:
+            date_str = 'TBD'
+        
+        # Build announcement title and details
+        if reason == "mandated":
+            ann_title = f"GAD Development Plan: {project_title}"
+        else:  # proposal_resolution
+            ann_title = f"GAD Development Plan Approved: {project_title}"
+        
+        # Build details with only project, date, and client
+        ann_details = f"Project: {project_title}\n"
+        ann_details += f"Date: {date_str}\n"
+        
+        if development_plan.dev_client:
+            ann_details += f"Client Focus: {development_plan.dev_client}\n"
+        
+        # Check if announcement already exists (to avoid duplicates)
+        existing_announcement = Announcement.objects.filter(
+            ann_title=ann_title,
+            ann_created_at__date=timezone.now().date()
+        ).first()
+        
+        if existing_announcement:
+            logger.info(f"Announcement already exists for dev plan {development_plan.dev_id}")
+            return existing_announcement
+        
+        # Create announcement
+        announcement = Announcement.objects.create(
+            ann_title=ann_title,
+            ann_details=ann_details,
+            ann_created_at=timezone.now(),
+            ann_start_at=timezone.now(),
+            ann_end_at=timezone.now() + timedelta(days=7),  # Active for 7 days
+            ann_type="GENERAL",
+            ann_to_email=True,
+            ann_to_sms=True,
+            ann_status="ACTIVE",
+            staff=staff if staff else None
+        )
+        
+        # Create recipient for residents only
+        recipients_data = [{
+            'ann': announcement.ann_id,
+            'ar_category': 'resident',
+            'ar_type': 'RESIDENT'
+        }]
+        
+        # Use BulkAnnouncementRecipientSerializer to create recipients and send notifications/emails
+        bulk_serializer = BulkAnnouncementRecipientSerializer(
+            data={'recipients': recipients_data}
+        )
+        
+        if bulk_serializer.is_valid():
+            bulk_serializer.save()
+            logger.info(f"Announcement created successfully for dev plan {development_plan.dev_id}")
+        else:
+            logger.error(f"Failed to create announcement recipients: {bulk_serializer.errors}")
+        
+        return announcement
+        
+    except Exception as e:
+        logger.error(f"Error creating announcement for dev plan {development_plan.dev_id}: {str(e)}", exc_info=True)
+        return None
 
 class GAD_Budget_TrackerView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = GAD_Budget_TrackerSerializer
@@ -141,6 +233,7 @@ class GAD_Budget_YearView(generics.ListCreateAPIView):
     queryset = GAD_Budget_Year.objects.all()
     serializer_class = GADBudgetYearSerializer
     permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
     
     def get_queryset(self):
         queryset = GAD_Budget_Year.objects.all()
@@ -338,14 +431,95 @@ class ProjectProposalView(ActivityLogMixin, generics.ListCreateAPIView):
                 logger.error(f"Serializer validation failed: {serializer.errors}")
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            # Save the instance
+            # Save the instance and log activity
             try:
                 instance = serializer.save()
                 logger.info(f"Successfully created proposal with ID: {instance.gpr_id}")
                 
+                # Log the activity if staff exists with staff_id
+                try:
+                    staff, staff_identifier = resolve_staff_from_request(request)
+                    
+                    # Only log if we have a valid staff with staff_id
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        create_activity_log(
+                            act_type="Project Proposal Created",
+                            act_description=f"Project proposal {instance.gpr_id} created for development plan {instance.dev_id}",
+                            staff=staff,
+                            record_id=str(instance.gpr_id)
+                        )
+                        logger.info(f"Activity logged for project proposal creation: {instance.gpr_id}")
+                        
+                        # Always log GAD Development Plan Updated when a project proposal is created
+                        try:
+                            from apps.council.models import Resolution
+                            dev_plan = instance.dev
+                            
+                            # Check if there's a resolution linked to this proposal
+                            has_resolution = Resolution.objects.filter(
+                                gpr_id=instance.gpr_id,
+                                res_is_archive=False
+                            ).exists()
+                            
+                            # Build description with dev plan details - highlight the dev plan
+                            project_title = dev_plan.dev_project or 'N/A'
+                            description_parts = [f"GAD Development Plan ({project_title})"]
+                            
+                            if dev_plan.dev_date:
+                                date_str = dev_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(dev_plan.dev_date, str) else dev_plan.dev_date
+                                description_parts.append(f"Date: {date_str}")
+                            if dev_plan.dev_client:
+                                description_parts.append(f"Client: {dev_plan.dev_client}")
+                            
+                            if has_resolution:
+                                description_parts.append("now has both project proposal and resolution")
+                            else:
+                                description_parts.append("now has project proposal")
+                            
+                            description = ". ".join(description_parts)
+                            
+                            create_activity_log(
+                                act_type="GAD Development Plan Updated",
+                                act_description=description,
+                                staff=staff,
+                                record_id=str(dev_plan.dev_id)
+                            )
+                            logger.info(f"Activity logged: Dev plan {dev_plan.dev_id} updated with project proposal")
+                        except Exception as check_error:
+                            logger.debug(f"Error logging dev plan update for project proposal: {str(check_error)}")
+                            # Don't fail if this check fails
+                    else:
+                        logger.warning(
+                            f"No valid staff with staff_id resolved for activity logging "
+                            f"(input id: {staff_identifier or 'not provided'})"
+                        )
+                except Exception as log_error:
+                    logger.error(f"Failed to log activity for project proposal creation: {str(log_error)}")
+                    # Don't fail the request if logging fails
+                
                 # Verify the instance was actually saved
                 saved_instance = ProjectProposal.objects.get(pk=instance.gpr_id)
                 logger.info(f"Verified saved instance: {saved_instance.gpr_id}")
+                
+                # Check if there's already a resolution for this proposal's dev plan
+                # If so, create announcement (dev plan now has both proposal and resolution)
+                try:
+                    from apps.council.models import Resolution
+                    dev_plan = instance.dev
+                    if dev_plan:
+                        # Check if there's a resolution linked to this proposal
+                        has_resolution = Resolution.objects.filter(
+                            gpr_id=instance.gpr_id,
+                            res_is_archive=False
+                        ).exists()
+                        
+                        if has_resolution:
+                            # Create announcement since dev plan now has both proposal and resolution
+                            staff_for_announcement, _ = resolve_staff_from_request(request)
+                            create_gad_announcement(dev_plan, staff_for_announcement, reason="proposal_resolution")
+                except Exception as ann_error:
+                    logger.error(f"Failed to create announcement when proposal created with existing resolution: {str(ann_error)}")
+                    # Don't fail if announcement creation fails
                 
             except Exception as save_error:
                 logger.error(f"Error saving proposal: {str(save_error)}", exc_info=True)
@@ -496,10 +670,6 @@ class ProposalSuppDocDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             # Already archived - permanent delete
             instance.delete()
-
-            
-Staff = apps.get_model('administration', 'Staff')
-
 class StaffListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     queryset = Staff.objects.select_related('rp__per', 'pos').only(
@@ -554,8 +724,8 @@ class ProjectProposalForBT(generics.ListAPIView):
             # Get the project titles from dev_project (which is a JSONField)
             projects = dev_plan.dev_project if isinstance(dev_plan.dev_project, list) else [dev_plan.dev_project] if dev_plan.dev_project else []
             
-            # Get budget items from dev_gad_items
-            budget_items = dev_plan.dev_gad_items or []
+            # Get budget items from dev_budget_items
+            budget_items = dev_plan.dev_budget_items or []
             
             for project_index, project_title in enumerate(projects):
                 if not project_title:  # Skip empty project titles
@@ -630,7 +800,7 @@ class ProjectProposalForProposal(generics.ListAPIView):
                 dev_date__year=year
             ).values(
                 'dev_id', 'dev_client', 'dev_issue', 'dev_project', 
-                'dev_indicator', 'dev_gad_items', 'dev_date'
+                'dev_indicator', 'dev_budget_items', 'dev_date'
             )
             
             available_projects = []
@@ -653,7 +823,7 @@ class ProjectProposalForProposal(generics.ListAPIView):
                 participants = parse_dev_indicator_to_participants(dev_plan.get('dev_indicator'))
 
                 # ---- budget items (normalize to {name, pax, amount})
-                budget_items_raw = dev_plan.get('dev_gad_items') or []
+                budget_items_raw = dev_plan.get('dev_budget_items') or []
                 norm_budget_items = []
                 for item in (budget_items_raw or []):
                     if not isinstance(item, dict):
@@ -696,18 +866,129 @@ class ProjectProposalForProposal(generics.ListAPIView):
                 {"error": "Internal server error", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+class GADBudgetAggregatesView(APIView):
+    """Returns budget totals for a given year (excluding archived entries)"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request, year):
+        try:
+            # Get the yearly budget from GAD_Budget_Year
+            yearly_budget = GAD_Budget_Year.objects.filter(
+                gbudy_year=year,
+                gbudy_is_archive=False
+            ).first()
+            
+            if not yearly_budget:
+                return Response({
+                    'total_budget': 0,
+                    'total_expenses': 0,
+                    'pending_expenses': 0,
+                    'remaining_balance': 0,
+                })
+            
+            # Get active entries for calculating pending expenses
+            entries_queryset = GAD_Budget_Tracker.objects.filter(
+                gbudy__gbudy_year=year,
+                gbud_is_archive=False
+            )
+            
+            # Calculate pending expenses (entries with 0 actual expense)
+            pending_expenses_queryset = entries_queryset.filter(gbud_actual_expense=0)
+            pending_aggregates = pending_expenses_queryset.aggregate(
+                pending_expenses=Coalesce(Sum('gbud_proposed_budget'), 0, output_field=DecimalField())
+            )
+            
+            total_budget = Decimal(str(yearly_budget.gbudy_budget))
+            total_expenses = Decimal(str(yearly_budget.gbudy_expenses))
+            pending_expenses = Decimal(str(pending_aggregates['pending_expenses']))
+            remaining = total_budget - total_expenses
+            
+            return Response({
+                'total_budget': float(total_budget),
+                'total_expenses': float(total_expenses),
+                'pending_expenses': float(pending_expenses),
+                'remaining_balance': float(remaining),
+            })
+        except Exception as e:
+            logger.error(f"Error calculating budget aggregates: {str(e)}")
+            return Response({
+                'total_budget': 0,
+                'total_expenses': 0,
+                'pending_expenses': 0,
+                'remaining_balance': 0,
+            })
+
+class ProjectProposalGrandTotalView(APIView):
+    """Returns grand total for all non-archived project proposals"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        try:
+            queryset = ProjectProposal.objects.filter(
+                gpr_is_archive=False
+            ).select_related('dev')
+            
+            total = Decimal('0')
+            
+            for proposal in queryset:
+                if proposal.dev and proposal.dev.dev_budget_items:
+                    for item in proposal.dev.dev_budget_items:
+                        if not isinstance(item, dict):
+                            continue
+                        
+                        # Get amount
+                        amount = item.get('amount') or item.get('price') or 0
+                        try:
+                            amount = Decimal(str(amount))
+                        except:
+                            amount = Decimal('0')
+                        
+                        # Get pax and parse if string
+                        pax = item.get('pax', 1)
+                        if isinstance(pax, str):
+                            # Extract first number from string like "10 pax"
+                            match = re.search(r'(\d+)', pax)
+                            pax = int(match.group(1)) if match else 1
+                        else:
+                            pax = int(pax) if pax else 1
+                        
+                        total += amount * pax
+            
+            return Response({
+                'grand_total': float(total)
+            })
+        except Exception as e:
+            logger.error(f"Error calculating grand total: {str(e)}")
+            return Response({
+                'grand_total': 0
+            })
 
 # ===========================================================================================================
 
 class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = GADDevelopmentPlanSerializer
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
+        # Auto-archive GAD development plans that have passed
+        # COMMENTED OUT: Archiving disabled
+        # from .signals import archive_passed_gad_plans
+        # archive_passed_gad_plans()
+        
         year = self.request.query_params.get('year')
         qs = DevelopmentPlan.objects.all()
+        
         if year:
             qs = qs.filter(dev_date__year=year)
+        
+        # Archive filter - MUST come before search
+        dev_archived = self.request.query_params.get('dev_archived', None)
+        if dev_archived is not None:
+            # Convert string to boolean
+            is_archived = dev_archived.lower() == 'true'
+            qs = qs.filter(dev_archived=is_archived)
         
         # Add search functionality
         search = self.request.query_params.get('search', None)
@@ -719,7 +1000,9 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                 Q(dev_indicator__icontains=search)
             )
         
-        return qs.order_by('-dev_date')
+        # Support dynamic ordering
+        ordering = self.request.query_params.get('ordering', '-dev_date')
+        return qs.order_by(ordering)
     
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -734,38 +1017,118 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
     
     def create(self, request, *args, **kwargs):
         try:
-            # Create the development plan first
+            # Create the development plan
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             development_plan = serializer.save()
             
-            # Log the activity
+            # Log activity if staff exists
             try:
-                from apps.act_log.utils import create_activity_log
-                from apps.administration.models import Staff
+                staff, staff_identifier = resolve_staff_from_request(request)
                 
-                # Get staff member from the request or use default
-                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
-                staff = Staff.objects.filter(staff_id=staff_id).first()
-                
-                if staff:
-                    # Create activity log
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Build comprehensive activity log description
+                    description_parts = []
+                    
+                    # Project title
+                    project_title = development_plan.dev_project or 'N/A'
+                    description_parts.append(f"Project: {project_title}")
+                    
+                    # Date
+                    if development_plan.dev_date:
+                        if isinstance(development_plan.dev_date, str):
+                            date_str = development_plan.dev_date
+                        else:
+                            date_str = development_plan.dev_date.strftime('%Y-%m-%d')
+                        description_parts.append(f"Date: {date_str}")
+                    
+                    # Client focused
+                    if development_plan.dev_client:
+                        description_parts.append(f"Client: {development_plan.dev_client}")
+                    
+                    # Gender issue
+                    if development_plan.dev_issue:
+                        issue = development_plan.dev_issue[:100] + '...' if len(development_plan.dev_issue) > 100 else development_plan.dev_issue
+                        description_parts.append(f"Issue: {issue}")
+                    
+                    # Responsible person(s)
+                    if development_plan.dev_res_person:
+                        try:
+                            import json
+                            if isinstance(development_plan.dev_res_person, str):
+                                # Try to parse if it's a JSON string
+                                try:
+                                    res_persons = json.loads(development_plan.dev_res_person)
+                                except:
+                                    res_persons = [development_plan.dev_res_person]
+                            else:
+                                res_persons = development_plan.dev_res_person
+                            
+                            if isinstance(res_persons, list) and len(res_persons) > 0:
+                                res_person_str = ", ".join(str(p) for p in res_persons if p)
+                                if res_person_str:
+                                    description_parts.append(f"Responsible Person(s): {res_person_str}")
+                        except Exception as e:
+                            logger.debug(f"Error parsing responsible persons: {str(e)}")
+                    
+                    # Budget total
+                    try:
+                        budget_items = development_plan.dev_budget_items or []
+                        if isinstance(budget_items, str):
+                            import json
+                            try:
+                                budget_items = json.loads(budget_items)
+                            except:
+                                budget_items = []
+                        
+                        if isinstance(budget_items, list) and len(budget_items) > 0:
+                            total_budget = Decimal('0')
+                            for item in budget_items:
+                                if isinstance(item, dict):
+                                    quantity = Decimal(str(item.get('quantity', 0) or 0))
+                                    price = Decimal(str(item.get('price', 0) or 0))
+                                    total_budget += quantity * price
+                            
+                            if total_budget > 0:
+                                description_parts.append(f"Budget: ₱{total_budget:,.2f}")
+                    except Exception as e:
+                        logger.debug(f"Error calculating budget: {str(e)}")
+                    
+                    # Mandated status
+                    if development_plan.dev_mandated:
+                        description_parts.append("Status: Mandated")
+                    
+                    # Build final description
+                    description = f"GAD Development Plan created. {'. '.join(description_parts)}"
+                    
                     create_activity_log(
                         act_type="GAD Development Plan Created",
-                        act_description=f"GAD development plan '{development_plan.dev_project}' created for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
+                        act_description=description,
                         staff=staff,
-                        record_id=str(development_plan.dev_id),
-                        feat_name="GAD Development Plan Management"
+                        record_id=str(development_plan.dev_id)
                     )
                     logger.info(f"Activity logged for GAD development plan creation: {development_plan.dev_id}")
                 else:
-                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
-                    
+                    logger.warning(
+                        f"No valid staff with staff_id resolved for activity logging "
+                        f"(input id: {staff_identifier or 'not provided'})"
+                    )
             except Exception as log_error:
                 logger.error(f"Failed to log activity for GAD development plan creation: {str(log_error)}")
                 # Don't fail the request if logging fails
             
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # Create announcement if dev plan is mandated
+            if development_plan.dev_mandated:
+                try:
+                    staff_for_announcement, _ = resolve_staff_from_request(request)
+                    create_gad_announcement(development_plan, staff_for_announcement, reason="mandated")
+                except Exception as ann_error:
+                    logger.error(f"Failed to create announcement for mandated dev plan: {str(ann_error)}")
+                    # Don't fail the request if announcement creation fails
+            
+            response_data = serializer.data
+            return Response(response_data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
             logger.error(f"Error creating GAD development plan: {str(e)}")
@@ -775,11 +1138,271 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
             )
 
 # GET years with data
+
+class GADDevelopmentPlanBulkUpdate(APIView):
+    permission_classes = [AllowAny]
+    
+    def patch(self, request):
+        """Bulk archive/restore development plans"""
+        dev_ids = request.data.get('dev_ids', [])
+        dev_archived = request.data.get('dev_archived', False)
+        
+        if not dev_ids:
+            return Response(
+                {"error": "dev_ids is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get plans BEFORE updating for activity logging (important: fetch before update)
+        plans = list(DevelopmentPlan.objects.filter(dev_id__in=dev_ids))
+        
+        if not plans:
+            return Response(
+                {"error": "No development plans found with the provided IDs"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Perform the update
+        updated = DevelopmentPlan.objects.filter(
+            dev_id__in=dev_ids
+        ).update(dev_archived=dev_archived)
+        
+        # Log activity for each plan (using the plans fetched before update)
+        try:
+            logger.info(f"Bulk update: {len(plans)} plans to {('archive' if dev_archived else 'restore')}")
+            logger.info(f"Request data: {request.data}")
+            logger.info(f"Request user: {request.user if hasattr(request, 'user') else 'No user'}")
+            
+            staff, staff_identifier = resolve_staff_from_request(request)
+            
+            logger.info(f"Resolved staff: {staff}, staff_id: {staff.staff_id if staff and hasattr(staff, 'staff_id') else 'N/A'}, identifier: {staff_identifier}")
+            
+            # Only log if we have a valid staff with staff_id
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                action = "archived" if dev_archived else "restored"
+                act_type = "GAD Development Plan Archived" if dev_archived else "GAD Development Plan Restored"
+                
+                logged_count = 0
+                for plan in plans:
+                    try:
+                        # Build comprehensive activity log description
+                        description_parts = []
+                        
+                        # Project title
+                        project_title = plan.dev_project or 'N/A'
+                        description_parts.append(f"Project: {project_title}")
+                        
+                        # Date
+                        if plan.dev_date:
+                            if isinstance(plan.dev_date, str):
+                                date_str = plan.dev_date
+                            else:
+                                date_str = plan.dev_date.strftime('%Y-%m-%d')
+                            description_parts.append(f"Date: {date_str}")
+                        
+                        # Client focused
+                        if plan.dev_client:
+                            description_parts.append(f"Client: {plan.dev_client}")
+                        
+                        # Build final description
+                        description = f"GAD Development Plan {action}. {'. '.join(description_parts)}"
+                        
+                        result = create_activity_log(
+                            act_type=act_type,
+                            act_description=description,
+                            staff=staff,
+                            record_id=str(plan.dev_id)
+                        )
+                        if result:
+                            logged_count += 1
+                            logger.info(f"Activity logged for plan {plan.dev_id}: {description}")
+                        else:
+                            logger.warning(f"Activity log creation returned None for plan {plan.dev_id}")
+                    except Exception as e:
+                        logger.error(f"Failed to log activity for plan {plan.dev_id}: {str(e)}", exc_info=True)
+                
+                logger.info(f"Successfully logged {logged_count} out of {len(plans)} GAD development plan(s) {action}")
+            else:
+                logger.warning(
+                    f"No valid staff with staff_id resolved for activity logging. "
+                    f"Staff: {staff}, Has staff_id attr: {hasattr(staff, 'staff_id') if staff else False}, "
+                    f"Staff_id value: {staff.staff_id if staff and hasattr(staff, 'staff_id') else 'N/A'}, "
+                    f"Input identifier: {staff_identifier or 'not provided'}"
+                )
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for bulk update: {str(log_error)}", exc_info=True)
+            # Don't fail the request if logging fails
+        
+        return Response({
+            "updated": updated,
+            "dev_archived": dev_archived
+        }, status=status.HTTP_200_OK)
+
+class GADDevelopmentPlanBulkDelete(APIView):
+    permission_classes = [AllowAny]
+
+    def delete(self, request):
+        dev_ids = request.data.get('dev_ids', [])
+        if not dev_ids:
+            return Response(
+                {"error": "dev_ids is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        deleted_count, _ = DevelopmentPlan.objects.filter(dev_id__in=dev_ids).delete()
+
+        return Response(
+            {"deleted": deleted_count},
+            status=status.HTTP_200_OK
+        )
+class GADDevelopmentPlanArchiveView(generics.UpdateAPIView):
+    queryset = DevelopmentPlan.objects.filter(dev_archived=False)
+    serializer_class = GADDevelopmentPlanSerializer
+    lookup_field = 'dev_id'
+    permission_classes = [AllowAny]
+
+    def update(self, request, *args, **kwargs):
+        try:
+            # Get the instance before updating
+            instance = self.get_object()
+            
+            # Perform the update
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            development_plan = serializer.save(dev_archived=True)
+            
+            # Log activity if staff exists
+            try:
+                staff, staff_identifier = resolve_staff_from_request(request)
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Build comprehensive activity log description
+                    description_parts = []
+                    
+                    # Project title
+                    project_title = development_plan.dev_project or 'N/A'
+                    description_parts.append(f"Project: {project_title}")
+                    
+                    # Date
+                    if development_plan.dev_date:
+                        if isinstance(development_plan.dev_date, str):
+                            date_str = development_plan.dev_date
+                        else:
+                            date_str = development_plan.dev_date.strftime('%Y-%m-%d')
+                        description_parts.append(f"Date: {date_str}")
+                    
+                    # Client focused
+                    if development_plan.dev_client:
+                        description_parts.append(f"Client: {development_plan.dev_client}")
+                    
+                    # Build final description
+                    description = f"GAD Development Plan archived. {'. '.join(description_parts)}"
+                    
+                    create_activity_log(
+                        act_type="GAD Development Plan Archived",
+                        act_description=description,
+                        staff=staff,
+                        record_id=str(development_plan.dev_id)
+                    )
+                    logger.info(f"Activity logged for GAD development plan archive: {development_plan.dev_id}")
+                else:
+                    logger.warning(
+                        f"No valid staff with staff_id resolved for activity logging "
+                        f"(input id: {staff_identifier or 'not provided'})"
+                    )
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for GAD development plan archive: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error archiving GAD development plan: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+class GADDevelopmentPlanRestoreView(generics.UpdateAPIView):
+    queryset = DevelopmentPlan.objects.filter(dev_archived=True)
+    serializer_class = GADDevelopmentPlanSerializer
+    lookup_field = 'dev_id'
+    permission_classes = [AllowAny]
+
+    def update(self, request, *args, **kwargs):
+        try:
+            # Get the instance before updating
+            instance = self.get_object()
+            
+            # Perform the update
+            serializer = self.get_serializer(instance, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            development_plan = serializer.save(dev_archived=False)
+            
+            # Log activity if staff exists
+            try:
+                staff, staff_identifier = resolve_staff_from_request(request)
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Build comprehensive activity log description
+                    description_parts = []
+                    
+                    # Project title
+                    project_title = development_plan.dev_project or 'N/A'
+                    description_parts.append(f"Project: {project_title}")
+                    
+                    # Date
+                    if development_plan.dev_date:
+                        if isinstance(development_plan.dev_date, str):
+                            date_str = development_plan.dev_date
+                        else:
+                            date_str = development_plan.dev_date.strftime('%Y-%m-%d')
+                        description_parts.append(f"Date: {date_str}")
+                    
+                    # Client focused
+                    if development_plan.dev_client:
+                        description_parts.append(f"Client: {development_plan.dev_client}")
+                    
+                    # Build final description
+                    description = f"GAD Development Plan restored. {'. '.join(description_parts)}"
+                    
+                    create_activity_log(
+                        act_type="GAD Development Plan Restored",
+                        act_description=description,
+                        staff=staff,
+                        record_id=str(development_plan.dev_id)
+                    )
+                    logger.info(f"Activity logged for GAD development plan restore: {development_plan.dev_id}")
+                else:
+                    logger.warning(
+                        f"No valid staff with staff_id resolved for activity logging "
+                        f"(input id: {staff_identifier or 'not provided'})"
+                    )
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for GAD development plan restore: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"Error restoring GAD development plan: {str(e)}")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 class GADDevelopmentPlanYears(APIView):
+    permission_classes = [AllowAny]
     def get(self, request, *args, **kwargs):
         # Add search functionality for years
         search = request.query_params.get('search', None)
+        dev_archived = request.query_params.get('dev_archived', None)
         queryset = DevelopmentPlan.objects.all()
+        
+        # Filter by archived status if provided
+        if dev_archived is not None:
+            is_archived = dev_archived.lower() == 'true'
+            queryset = queryset.filter(dev_archived=is_archived)
         
         if search:
             queryset = queryset.filter(
@@ -793,6 +1416,7 @@ class GADDevelopmentPlanYears(APIView):
         return Response(sorted(years, reverse=True))
 
 class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
+    permission_classes = [AllowAny]
     queryset = DevelopmentPlan.objects.all()
     serializer_class = GADDevelopmentPlanSerializer
     lookup_field = 'dev_id'
@@ -802,6 +1426,38 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
             # Get the instance before updating
             instance = self.get_object()
             
+            # Store old values for comparison
+            old_values = {
+                'dev_project': instance.dev_project,
+                'dev_date': instance.dev_date,
+                'dev_client': instance.dev_client,
+                'dev_issue': instance.dev_issue,
+                'dev_res_person': instance.dev_res_person,
+                'dev_indicator': instance.dev_indicator,
+                'dev_budget_items': instance.dev_budget_items,
+                'dev_mandated': instance.dev_mandated,
+            }
+            
+            # Calculate old budget
+            old_budget = Decimal('0')
+            try:
+                old_budget_items = old_values['dev_budget_items'] or []
+                if isinstance(old_budget_items, str):
+                    import json
+                    try:
+                        old_budget_items = json.loads(old_budget_items)
+                    except:
+                        old_budget_items = []
+                
+                if isinstance(old_budget_items, list):
+                    for item in old_budget_items:
+                        if isinstance(item, dict):
+                            quantity = Decimal(str(item.get('quantity', item.get('pax', 0)) or 0))
+                            price = Decimal(str(item.get('price', item.get('amount', 0)) or 0))
+                            old_budget += quantity * price
+            except:
+                pass
+            
             # Perform the update
             serializer = self.get_serializer(instance, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -809,29 +1465,137 @@ class GADDevelopmentPlanUpdate(generics.RetrieveUpdateAPIView):
             
             # Log the activity
             try:
-                from apps.act_log.utils import create_activity_log
-                from apps.administration.models import Staff
+                staff, staff_identifier = resolve_staff_from_request(request)
                 
-                # Get staff member from the request or use default
-                staff_id = request.data.get('staff') or '00003250722'  # Default staff ID
-                staff = Staff.objects.filter(staff_id=staff_id).first()
-                
-                if staff:
-                    # Create activity log
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Track what changed
+                    changes = []
+                    
+                    # Project title
+                    if old_values['dev_project'] != development_plan.dev_project:
+                        old_proj = old_values['dev_project'] or 'N/A'
+                        new_proj = development_plan.dev_project or 'N/A'
+                        changes.append(f"Project: '{old_proj}' → '{new_proj}'")
+                    
+                    # Date
+                    old_date = old_values['dev_date']
+                    new_date = development_plan.dev_date
+                    if old_date != new_date:
+                        old_date_str = old_date.strftime('%Y-%m-%d') if old_date and not isinstance(old_date, str) else (old_date or 'N/A')
+                        new_date_str = new_date.strftime('%Y-%m-%d') if new_date and not isinstance(new_date, str) else (new_date or 'N/A')
+                        changes.append(f"Date: '{old_date_str}' → '{new_date_str}'")
+                    
+                    # Client focused
+                    if old_values['dev_client'] != development_plan.dev_client:
+                        old_client = old_values['dev_client'] or 'N/A'
+                        new_client = development_plan.dev_client or 'N/A'
+                        changes.append(f"Client: '{old_client}' → '{new_client}'")
+                    
+                    # Gender issue
+                    if old_values['dev_issue'] != development_plan.dev_issue:
+                        old_issue = (old_values['dev_issue'] or 'N/A')[:50]
+                        new_issue = (development_plan.dev_issue or 'N/A')[:50]
+                        changes.append(f"Issue: '{old_issue}' → '{new_issue}'")
+                    
+                    # Responsible person(s)
+                    old_res_person = old_values['dev_res_person']
+                    new_res_person = development_plan.dev_res_person
+                    if old_res_person != new_res_person:
+                        try:
+                            import json
+                            # Parse old
+                            if isinstance(old_res_person, str):
+                                try:
+                                    old_res = json.loads(old_res_person)
+                                except:
+                                    old_res = [old_res_person] if old_res_person else []
+                            else:
+                                old_res = old_res_person if old_res_person else []
+                            
+                            # Parse new
+                            if isinstance(new_res_person, str):
+                                try:
+                                    new_res = json.loads(new_res_person)
+                                except:
+                                    new_res = [new_res_person] if new_res_person else []
+                            else:
+                                new_res = new_res_person if new_res_person else []
+                            
+                            old_res_str = ", ".join(str(p) for p in old_res if p) if isinstance(old_res, list) else str(old_res or 'N/A')
+                            new_res_str = ", ".join(str(p) for p in new_res if p) if isinstance(new_res, list) else str(new_res or 'N/A')
+                            changes.append(f"Responsible Person(s): '{old_res_str}' → '{new_res_str}'")
+                        except Exception as e:
+                            logger.debug(f"Error comparing responsible persons: {str(e)}")
+                    
+                    # Budget total
+                    try:
+                        budget_items = development_plan.dev_budget_items or []
+                        if isinstance(budget_items, str):
+                            import json
+                            try:
+                                budget_items = json.loads(budget_items)
+                            except:
+                                budget_items = []
+                        
+                        new_budget = Decimal('0')
+                        if isinstance(budget_items, list) and len(budget_items) > 0:
+                            for item in budget_items:
+                                if isinstance(item, dict):
+                                    quantity = Decimal(str(item.get('quantity', item.get('pax', 0)) or 0))
+                                    price = Decimal(str(item.get('price', item.get('amount', 0)) or 0))
+                                    new_budget += quantity * price
+                        
+                        if old_budget != new_budget:
+                            changes.append(f"Budget: ₱{old_budget:,.2f} → ₱{new_budget:,.2f}")
+                    except Exception as e:
+                        logger.debug(f"Error comparing budget: {str(e)}")
+                    
+                    # Mandated status
+                    if old_values['dev_mandated'] != development_plan.dev_mandated:
+                        old_mandated = "Mandated" if old_values['dev_mandated'] else "Not Mandated"
+                        new_mandated = "Mandated" if development_plan.dev_mandated else "Not Mandated"
+                        changes.append(f"Status: '{old_mandated}' → '{new_mandated}'")
+                    
+                    # Build final description
+                    if changes:
+                        description = f"GAD Development Plan updated: {', '.join(changes)}"
+                    else:
+                        # If no changes detected, show current state
+                        description_parts = []
+                        project_title = development_plan.dev_project or 'N/A'
+                        description_parts.append(f"Project: {project_title}")
+                        if development_plan.dev_date:
+                            date_str = development_plan.dev_date.strftime('%Y-%m-%d') if not isinstance(development_plan.dev_date, str) else development_plan.dev_date
+                            description_parts.append(f"Date: {date_str}")
+                        if development_plan.dev_client:
+                            description_parts.append(f"Client: {development_plan.dev_client}")
+                        description = f"GAD Development Plan updated. {'. '.join(description_parts)}"
+                    
                     create_activity_log(
                         act_type="GAD Development Plan Updated",
-                        act_description=f"GAD development plan '{development_plan.dev_project}' updated for {development_plan.dev_date} with budget ₱{development_plan.dev_gad_budget}",
+                        act_description=description,
                         staff=staff,
-                        record_id=str(development_plan.dev_id),
-                        feat_name="GAD Development Plan Management"
+                        record_id=str(development_plan.dev_id)
                     )
                     logger.info(f"Activity logged for GAD development plan update: {development_plan.dev_id}")
                 else:
-                    logger.warning(f"Staff not found for ID: {staff_id}, cannot log activity")
+                    logger.warning(
+                        f"No valid staff with staff_id found for activity logging (input id: {staff_identifier or 'not provided'})"
+                    )
                     
             except Exception as log_error:
                 logger.error(f"Failed to log activity for GAD development plan update: {str(log_error)}")
                 # Don't fail the request if logging fails
+            
+            # Create announcement if dev_mandated changed from False to True
+            if not old_values['dev_mandated'] and development_plan.dev_mandated:
+                try:
+                    staff_for_announcement, _ = resolve_staff_from_request(request)
+                    create_gad_announcement(development_plan, staff_for_announcement, reason="mandated")
+                except Exception as ann_error:
+                    logger.error(f"Failed to create announcement for mandated dev plan: {str(ann_error)}")
+                    # Don't fail the request if announcement creation fails
             
             return Response(serializer.data, status=status.HTTP_200_OK)
             

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getActiveBusinesses,
   getBusinessRespondent,
+  getDeceasedResidentsList,
   getFamFilteredByHouse,
   getFamiliesTable,
   getFamilyComposition,
@@ -20,34 +21,6 @@ import {
   getSitioList,
 } from "../restful-api/profilingGetAPI";
 import { api } from "@/api/api";
-
-// ================ ALL =================
-export const useProfilingAllRecord = (
-  page: number,
-  pageSize: number,
-  searchQuery: string,
-) => {
-  return useQuery({
-    queryKey: ['profilingAllRecord', page, pageSize, searchQuery],
-    queryFn: async () => {
-      try {
-        const res = await api.get('profiling/all/', {
-          params: {
-            page,
-            page_size: pageSize,
-            search: searchQuery
-          }
-        });
-
-        return res.data;
-      } catch (err) {
-        console.error(err);
-        throw err;
-      }
-    },
-    staleTime: 5000
-  })
-} 
  
 // ================ ADDRESS =================
 export const usePerAddressesList = () => {
@@ -107,6 +80,15 @@ export const usePersonalModification = (per_id?: string) => {
   })
 }
 
+export const useDeceasedResidentsList = () => {
+  return useQuery({
+    queryKey: ["deceasedResidentsList"],
+    queryFn: getDeceasedResidentsList,
+    staleTime: 30000, // Cache for 30 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes
+  });
+};
+
 export const useResidentsList = (
   is_staff: boolean = false,
   exclude_independent: boolean = false,
@@ -127,11 +109,14 @@ export const useResidentsList = (
 export const useResidentsTable = (
   page: number,
   pageSize: number,
-  searchQuery: string
+  searchQuery: string,
+  age: string,
+  voter: string,
+  disable: string,
 ) => {
   return useQuery({
-    queryKey: ["residentsTableData", page, pageSize, searchQuery],
-    queryFn: () => getResidentsTable(page, pageSize, searchQuery),
+    queryKey: ["residentsTableData", page, pageSize, searchQuery, age, voter, disable],
+    queryFn: () => getResidentsTable(page, pageSize, searchQuery, age, voter, disable),
     staleTime: 5000,
   });
 };
@@ -159,7 +144,7 @@ export const useRequests = (
   selectedRequestType: string
 ) => {
   return useQuery({
-    queryKey: ["requests", page, pageSize, searchQuery, selectedRequestType],
+    queryKey: ["registrationRequests", page, pageSize, searchQuery, selectedRequestType],
     queryFn: () =>
       getRequests(page, pageSize, searchQuery, selectedRequestType),
     staleTime: 5000,
@@ -192,11 +177,12 @@ export const useSitioList = () => {
 export const useFamiliesTable = (
   page: number,
   pageSize: number,
-  searchQuery: string
+  searchQuery: string,
+  occupancy: string
 ) => {
   return useQuery({
-    queryKey: ["familiesTableData", page, pageSize, searchQuery],
-    queryFn: () => getFamiliesTable(page, pageSize, searchQuery),
+    queryKey: ["familiesTableData", page, pageSize, searchQuery, occupancy],
+    queryFn: () => getFamiliesTable(page, pageSize, searchQuery, occupancy),
     staleTime: 5000,
   });
 };
@@ -239,10 +225,11 @@ export const useActiveBusinesses = (
   page: number,
   pageSize: number,
   searchQuery: string,
+  size?: string
 ) => {
   return useQuery({
-    queryKey: ["activeBusinesses", page, pageSize, searchQuery],
-    queryFn: () => getActiveBusinesses(page, pageSize, searchQuery),
+    queryKey: ["activeBusinesses", page, pageSize, searchQuery, size],
+    queryFn: () => getActiveBusinesses(page, pageSize, searchQuery, size),
     staleTime: 5000,
   });
 };
@@ -377,21 +364,36 @@ export const useHouseholdData = (hh_id: string) => {
         const res = await api.get(`profiling/household/${hh_id}/data/`)
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     }
   })
 }
 
+export const useOwnedHouses = (residentId: string) => {
+  return useQuery({
+    queryKey: ['ownedHouses', residentId],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`profiling/household/owned-by-${residentId}/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000
+  })
+}
+
 export const useHouseholdTable = (
   page: number,
   pageSize: number,
-  searchQuery: string
+  searchQuery: string,
+  nhts: string
 ) => {
   return useQuery({
-    queryKey: ["householdTable", page, pageSize, searchQuery],
-    queryFn: () => getHouseholdTable(page, pageSize, searchQuery),
+    queryKey: ["householdTable", page, pageSize, searchQuery, nhts],
+    queryFn: () => getHouseholdTable(page, pageSize, searchQuery, nhts),
     staleTime: 5000,
   });
 };

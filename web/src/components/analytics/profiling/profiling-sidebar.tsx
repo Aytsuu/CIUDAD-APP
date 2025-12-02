@@ -1,6 +1,6 @@
 import { useGetSidebarAnalytics } from "./profiling-analytics-queries";
 import { Card } from "@/components/ui/card";
-import { Clock, ChevronRight, UsersRound } from "lucide-react";
+import { ChevronRight, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { Link, useNavigate } from "react-router";
 import { formatTimeAgo } from "@/helpers/dateHelper";
@@ -10,6 +10,9 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 export const ProfilingSidebar = () => {
   const navigate = useNavigate();
   const { data: profilingSidebar, isLoading } = useGetSidebarAnalytics();
+  const requests = profilingSidebar?.data || [];
+  const total = profilingSidebar?.count || 0;
+
   const formatName = (
     firstName: string,
     middleName: string,
@@ -20,7 +23,7 @@ export const ProfilingSidebar = () => {
   };
 
   const formatRequestList = React.useCallback(() => {
-    const formatted = profilingSidebar?.map((request: any) => {
+    const formatted = requests?.map((request: any) => {
       if (request?.compositions?.length == 1) {
         const personal = request.compositions[0];
         return {
@@ -42,7 +45,6 @@ export const ProfilingSidebar = () => {
           per_addresses: personal.per_addresses,
         };
       } else {
-        console.log(request)
         const respondent = request.compositions.filter(
           (comp: any) => comp.acc !== null
         )[0];
@@ -56,18 +58,17 @@ export const ProfilingSidebar = () => {
     });
 
     return formatted || [];
-  }, [profilingSidebar]);
+  }, [requests]);
 
   const handleClick = (data: Record<string, any>) => {
-    console.log(data)
-    if(data?.respondent) {
+    if (data?.respondent) {
       navigate("/profiling/request/pending/family/registration", {
         state: {
           params: {
             data: data,
           },
-        }
-      })
+        },
+      });
     } else {
       navigate("/profiling/request/pending/individual/registration", {
         state: {
@@ -78,15 +79,25 @@ export const ProfilingSidebar = () => {
             data: data,
           },
         },
-      }); 
+      });
     }
   };
 
   return (
-    <Card className="w-full bg-white h-full flex flex-col border-none">
+    <Card className={`bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm  mb-4 ${total > 0 ? "flex flex-col" : "hidden"}`}>
+      {/* Sidebar Header */}
+      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Resident Registration</h3>
+            <p className="text-xs text-gray-600 mt-1">Latest updates and activity</p>
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {isLoading ? (
+        {isLoading && (
           <div className="p-4 space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
@@ -97,7 +108,9 @@ export const ProfilingSidebar = () => {
               </div>
             ))}
           </div>
-        ) : profilingSidebar?.length > 0 ? (
+        )}
+        
+        {total > 0 && !isLoading && (
           <div className="p-4 space-y-3">
             {formatRequestList().map((data: any, index: number) => (
               <Card
@@ -124,11 +137,13 @@ export const ProfilingSidebar = () => {
                       </div>
                     </div>
                     {data?.respondent && (
-                      <TooltipLayout 
+                      <TooltipLayout
                         trigger={
                           <div className="flex gap-1">
-                            <UsersRound size={18} className="text-blue-600"/>
-                            <p className="text-sm font-medium text-blue-700">+{data?.compositions?.length - 1}</p>
+                            <UsersRound size={18} className="text-blue-600" />
+                            <p className="text-sm font-medium text-blue-700">
+                              +{data?.compositions?.length - 1}
+                            </p>
                           </div>
                         }
                         content={`Family registration request with ${data?.compositions?.length} members`}
@@ -141,26 +156,20 @@ export const ProfilingSidebar = () => {
               </Card>
             ))}
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-              <Clock className="w-8 h-8 text-blue-500" />
-            </div>
-            <h3 className="text-sm font-medium text-blue-700 mb-1">
-              No recent requests
-            </h3>
-            <p className="text-sm text-gary-500">
-              Registration requests recently submitted will appear here
-            </p>
-          </div>
         )}
       </div>
 
       {/* Footer */}
-      {profilingSidebar?.length > 0 && (
+      {total > 0 && (
         <div className="p-4 border-t border-gray-100">
           <Link to="/profiling/request/pending/individual">
-            <Button variant={"link"}>View All Requests ({formatRequestList()?.length > 100 ? "100+" : formatRequestList().length})</Button>
+            <Button variant={"link"}>
+              View All Requests (
+              {formatRequestList()?.length > 100
+                ? "100+"
+                : formatRequestList().length}
+              )
+            </Button>
           </Link>
         </div>
       )}

@@ -18,7 +18,7 @@ export const getCombinedStock = async (page: number, pageSize: number, search?: 
 
 export const getImmunizationStocks = async () => {
   try {
-    const res = await api2.get("inventory/immunization_stock/");
+    const res = await api2.get("inventory/immunization_supplies-stocks/");
     if (res.status == 200) {
       return res.data;
     }
@@ -32,14 +32,14 @@ export const getImmunizationStocks = async () => {
 
 export const getSupplies = async () => {
   try {
-    const res = await api2.get("inventory/imz_supplieslist-view/");
+    const res = await api2.get("inventory/imz_supplieslist-table/");
     if (res.status === 200) {
       // Transform the data to match your SelectLayout options format
-      return res.data.map((supplies: any) => ({
+      // Adjusted to match the actual API response structure
+      return res.data.results.map((supplies: any) => ({
         id: supplies.imz_id.toString(),
         name: supplies.imz_name,
-        type: supplies.vac_type_choices,
-        categoryId: supplies.vaccat_id
+        category: supplies.category
       }));
     }
     console.error(res.status);

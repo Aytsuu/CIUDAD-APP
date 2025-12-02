@@ -4,11 +4,11 @@ import AnimalBites from "@/pages/animalbites/overall";
 
 export const bites_route = [
     {
-        path: '/Animalbite_viewing',
+        path: '/services/animalbites',
         element: <AnimalBites></AnimalBites>
     },
     {
-        path: '/Animalbite_individual/:id',
+        path: '/services/animalbites/records',
         element: <IndividualPatientHistory />
     }
 ]

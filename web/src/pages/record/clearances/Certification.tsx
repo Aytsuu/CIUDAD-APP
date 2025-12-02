@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, CheckCircle , Eye } from 'lucide-react';
+import { Search, CheckCircle , Eye, Plus, SquarePen } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
@@ -14,18 +14,21 @@ import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import { getCertificates, markCertificateAsIssued, type Certificate, type MarkCertificateVariables } from "@/pages/record/clearances/queries/certFetchQueries";
 import TemplateMainPage from "../council/templates/template-main";
+import TemplateCreateForm from "../council/templates/template-create";
+import TemplateUpdateForm from "../council/templates/template-update";
+import { useGetTemplateRecord } from "../council/templates/queries/template-FetchQueries";
 import { calculateAge } from '@/helpers/ageCalculator';
 import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
+import { getAllPurposes, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Combobox } from "@/components/ui/combobox";
 import { ComboCheckboxStandalone } from "@/components/ui/combo-checkbox";
 import { useAuth } from "@/context/AuthContext";
-import { useResidentsList } from "@/pages/record/profiling/queries/profilingFetchQueries";
+import { useResidentsList, useDeceasedResidentsList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { formatDate } from "@/helpers/dateHelper";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
-import { useEffect } from "react";
 
 interface ExtendedCertificate extends Certificate {
   AsignatoryStaff?: string;
@@ -33,7 +36,6 @@ interface ExtendedCertificate extends Certificate {
   custodyChildren?: string[];
   // BURIAL props
   deceasedName?: string;
-  deceasedAge?: string;
   deceasedBirthdate?: string;
   deceasedAddress?: string;
   // FIRE VICTIM props
@@ -64,6 +66,27 @@ function CertificatePage() {
   
   const { data: staffList = []} = useGetStaffList();
   const { data: residentsList = [] } = useResidentsList();
+  const { data: deceasedResidentsList = [] } = useDeceasedResidentsList();
+
+  // Fetch purposes for filter dropdown
+  const { data: allPurposes = [] } = useQuery<Purpose[]>({
+    queryKey: ["allPurposes"],
+    queryFn: getAllPurposes,
+  });
+
+  // Filter purposes to show only Personal category purposes
+  const personalPurposes = useMemo(() => {
+    return allPurposes
+      .filter(purpose => purpose.pr_category === "Personal" && !purpose.pr_is_archive)
+      .map(purpose => ({
+        id: purpose.pr_purpose.toLowerCase(),
+        name: purpose.pr_purpose
+      }));
+  }, [allPurposes]);
+
+  //template details fetch
+  const { data: templates = [] } = useGetTemplateRecord();
+  const [isTempDialogOpen, setIsTempDialogOpen] = useState(false); 
 
   const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [viewingCertificate, setViewingCertificate] = useState<ExtendedCertificate | null>(null);
@@ -74,9 +97,10 @@ function CertificatePage() {
   
   // BURIAL fields
   const [deceasedName, setDeceasedName] = useState("");
-  const [deceasedAge, setDeceasedAge] = useState("");
   const [deceasedBirthdate, setDeceasedBirthdate] = useState("");
   const [deceasedAddress, setDeceasedAddress] = useState("");
+  const [selectedDeceasedId, setSelectedDeceasedId] = useState("");
+  const [isManualDeceasedInput, setIsManualDeceasedInput] = useState(false);
   
   // FIRE VICTIM fields
   const [dateOfConflagration, setDateOfConflagration] = useState("");
@@ -92,6 +116,10 @@ function CertificatePage() {
   const [childName, setChildName] = useState("");
   const [childAge, setChildAge] = useState("");
   const [childBirthdate, setChildBirthdate] = useState("");
+  
+  // Proof of Custody manual input
+  const [isManualCustodyInput, setIsManualCustodyInput] = useState(false);
+  const [manualCustodyNames, setManualCustodyNames] = useState("");
 
   const staffOptions = useMemo(() => {
     return staffList.map((staff) => ({
@@ -99,6 +127,9 @@ function CertificatePage() {
       name: staff.full_name,
     }));
   }, [staffList]);
+
+
+
 
   const residentOptions = useMemo(() => {
     if (!residentsList || residentsList.length === 0) return [];
@@ -136,10 +167,35 @@ function CertificatePage() {
     }));
   }, [residentsList]);
 
+  const deceasedResidentsOptions = useMemo(() => {
+    if (!deceasedResidentsList || deceasedResidentsList.length === 0) return [];
+    
+    return deceasedResidentsList.map((resident: any) => ({
+      id: resident.rp_id,
+      name: (
+        <div className="flex gap-4 items-center">
+          <span className="bg-red-500 text-white py-1 px-2 text-[14px] rounded-md shadow-md">
+            #{resident.rp_id}
+          </span>
+          {resident.name}
+        </div>
+      ),
+      displayName: resident.name,
+      per_id: resident.personal_info?.per_id,
+      personal_info: resident.personal_info
+    }));
+  }, [deceasedResidentsList]);
 
   const { data: certificatesData, isLoading, error } = useQuery({
     queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
-    queryFn: () => getCertificates(searchTerm, currentPage, 10, filterType === "all" ? undefined : filterType, undefined),
+    queryFn: () => getCertificates(
+      searchTerm, 
+      currentPage, 
+      10, 
+      filterType === "all" ? undefined : filterType, 
+      filterPurpose === "all" ? undefined : filterPurpose, 
+      "Paid"
+    ),
   });
 
   // Handle loading state
@@ -155,9 +211,19 @@ function CertificatePage() {
   const totalCount = certificatesData?.count || 0;
   const totalPages = Math.ceil(totalCount / 10);
 
-
-  // Since we're now using backend filtering, we don't need frontend filtering
-  const filteredCertificates = certificates;
+  // Sort certificates by request date (latest first) and apply filters
+  const filteredCertificates = useMemo(() => {
+    const result = [...certificates];
+    
+    // Sort by request date descending (latest first)
+    result.sort((a, b) => {
+      const dateA = new Date(a.req_request_date || 0).getTime();
+      const dateB = new Date(b.req_request_date || 0).getTime();
+      return dateB - dateA; // Descending order (latest first)
+    });
+    
+    return result;
+  }, [certificates]);
 
   const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
     mutationFn: markCertificateAsIssued,
@@ -199,13 +265,6 @@ function CertificatePage() {
       markData.nrc_id = certificate.nrc_id;
     }
 
-    console.log("Mark as Printed payload:", {
-      staffId,
-      is_nonresident: markData.is_nonresident,
-      cr_id: markData.cr_id,
-      nrc_id: markData.nrc_id,
-    });
-
     markAsIssuedMutation.mutate(markData);
   };
 
@@ -214,11 +273,13 @@ function CertificatePage() {
     setViewingCertificate(certificate);
     setSelectedStaffId(""); // Reset selected staff every time
     setPurposeInput("");
+    
     // Reset all certificate-specific fields
     setDeceasedName("");
-    setDeceasedAge("");
     setDeceasedBirthdate("");
     setDeceasedAddress("");
+    setSelectedDeceasedId("");
+    setIsManualDeceasedInput(false);
     setDateOfConflagration("");
     setPartnerName("");
     setLiveInYears("");
@@ -227,17 +288,142 @@ function CertificatePage() {
     setChildAge("");
     setChildBirthdate("");
     setCustody([]);
+    setIsManualCustodyInput(false);
+    setManualCustodyNames("");
+    
+    // Auto-populate burial fields if the person is deceased and purpose is burial
+    if (certificate.req_purpose?.toLowerCase() === "burial" && 
+        certificate.resident_details?.per_is_deceased && 
+        !certificate.is_nonresident) {
+      const resident = certificate.resident_details;
+      if (resident) {
+        setDeceasedName(`${resident.per_fname} ${resident.per_lname}`);
+        
+        // Handle address - per_addresses is an array of address objects
+        let addressString = "";
+        if (resident.per_addresses && resident.per_addresses.length > 0) {
+          const address = resident.per_addresses[0];
+          const addressParts = [
+            address.add_street,
+            address.sitio,  // Include sitio from the Sitio model
+            address.add_external_sitio,
+            address.add_barangay,
+            address.add_city,
+            address.add_province
+          ].filter(part => part && part.trim() !== "");
+          addressString = addressParts.join(", ");
+        }
+        setDeceasedAddress(addressString);
+        
+        setDeceasedBirthdate(resident.per_dob || "");
+      }
+    }
+    
     setIsDialogOpen(true);
   }
+
+  const handleDeceasedSelection = (deceasedId: string) => {
+    setSelectedDeceasedId(deceasedId);
+    
+    // Find the selected deceased resident
+    const selectedDeceased = deceasedResidentsOptions.find((option: any) => option.id === deceasedId);
+    if (selectedDeceased && selectedDeceased.personal_info) {
+      const personalInfo = selectedDeceased.personal_info;
+      
+      // Auto-populate fields with deceased person's information
+      setDeceasedName(`${personalInfo.per_fname} ${personalInfo.per_lname}`);
+      
+      // Handle address - per_addresses is an array of address objects
+      let addressString = "";
+      if (personalInfo.per_addresses && personalInfo.per_addresses.length > 0) {
+        const address = personalInfo.per_addresses[0];
+        const addressParts = [
+          address.add_street,
+          address.sitio,  // Include sitio from the Sitio model
+          address.add_external_sitio,
+          address.add_barangay,
+          address.add_city,
+          address.add_province
+        ].filter(part => part && part.trim() !== "");
+        addressString = addressParts.join(", ");
+      }
+      setDeceasedAddress(addressString);
+      
+      setDeceasedBirthdate(personalInfo.per_dob || "");
+    }
+  };
+
+  const handleToggleManualDeceasedInput = () => {
+    setIsManualDeceasedInput(!isManualDeceasedInput);
+    if (!isManualDeceasedInput) {
+      // Switching to manual input - clear dropdown selection
+      setSelectedDeceasedId("");
+    } else {
+      // Switching back to dropdown - clear manual inputs
+      setDeceasedName("");
+      setDeceasedBirthdate("");
+      setDeceasedAddress("");
+    }
+  };
+
+  // Helper function to extract address from certificate
+  const getAddressFromCertificate = (certificate: Certificate): string => {
+    // For non-residents, use nrc_address
+    if (certificate.is_nonresident && certificate.nrc_address) {
+      return certificate.nrc_address;
+    }
+    
+    // For residents, check per_addresses array first, then per_address
+    if (certificate.resident_details) {
+      const resident = certificate.resident_details;
+      
+      // Try to construct address from per_addresses array
+      if (resident.per_addresses && resident.per_addresses.length > 0) {
+        const address = resident.per_addresses[0];
+        const addressParts = [
+          address.add_street,
+          address.sitio,  // Include sitio from the Sitio model
+          address.add_external_sitio,
+          address.add_barangay,
+          address.add_city,
+          address.add_province
+        ].filter(part => part && part.trim() !== "");
+        
+        if (addressParts.length > 0) {
+          return addressParts.join(", ");
+        }
+      }
+      
+      // Fallback to per_address if available
+      if (resident.per_address) {
+        return resident.per_address;
+      }
+    }
+    
+    return "";
+  };
 
   const handleViewFile2 = () => {
     setIsDialogOpen(false); 
 
     if (viewingCertificate && selectedStaffId) {
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
-      const custodies = custody
-        .map(id => residentOptions.find((resident: any) => resident.id === id)?.displayName)
-        .filter(Boolean) as string[];
+  
+      // Handle custody names - either from selection or manual input
+      let custodies: string[] = [];
+      if (isManualCustodyInput && manualCustodyNames.trim()) {
+        // Split manual input by comma and trim each name
+        custodies = manualCustodyNames.split(',').map(name => name.trim()).filter(Boolean);
+      } else {
+        custodies = custody
+          .map(lowercaseId => {
+            const resident = residentOptions.find((resident: any) => 
+              resident.id.toLowerCase() === lowercaseId
+            );
+            return resident?.displayName;
+          })
+          .filter(Boolean) as string[];
+      }
       
       // Create certificate details with both certificate and staff data
       const certDetails: ExtendedCertificate = {
@@ -247,7 +433,6 @@ function CertificatePage() {
         custodyChildren: custodies,
         // BURIAL fields
         deceasedName: deceasedName || undefined,
-        deceasedAge: deceasedAge || undefined,
         deceasedBirthdate: deceasedBirthdate || undefined,
         deceasedAddress: deceasedAddress || undefined,
         // FIRE VICTIM fields
@@ -267,10 +452,12 @@ function CertificatePage() {
       
       // Reset for next use
       setCustody([]);
+      setIsManualCustodyInput(false);
+      setManualCustodyNames("");
       setDeceasedName("");
-      setDeceasedAge("");
       setDeceasedBirthdate("");
       setDeceasedAddress("");
+      setIsManualDeceasedInput(false);
       setDateOfConflagration("");
       setPartnerName("");
       setLiveInYears("");
@@ -283,6 +470,8 @@ function CertificatePage() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Clear any selected certificate when changing pages to prevent template from showing
+    setSelectedCertificate(null);
   };
 
   // const handleRowClick = (row: Certificate) => {
@@ -332,14 +521,40 @@ function CertificatePage() {
       ),
     },
     {
-      accessorKey: "resident_details.per_fname",
-      header: "First Name",
-      cell: ({ row }) => <div>{row.original.resident_details?.per_fname || row.original.nrc_requester || 'N/A'}</div>,
-    },
-    {
-      accessorKey: "resident_details.per_lname",
-      header: "Last Name",
-      cell: ({ row }) => <div>{row.original.resident_details?.per_lname || 'N/A'}</div>,
+      accessorKey: "requester",
+      header: ({ column }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Requester
+          <ArrowUpDown size={14} />
+        </div>
+      ),
+      cell: ({ row }) => {
+        if (row.original.is_nonresident) {
+          // Use individual name fields: lname fname mname (all uppercase)
+          const nameParts = [
+            row.original.nrc_lname,
+            row.original.nrc_fname,
+            row.original.nrc_mname
+          ].filter(part => part && part.trim() !== '');
+          
+          return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
+        }
+        
+        // For residents, format as "Last Name First Name Middle Name" (all uppercase)
+        const resident = row.original.resident_details;
+        if (!resident) return <div>N/A</div>;
+        
+        const nameParts = [
+          resident.per_lname,
+          resident.per_fname,
+          resident.per_mname
+        ].filter(part => part && part.trim() !== '');
+        
+        return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
+      },
     },
     {
       accessorKey: "req_request_date",
@@ -362,6 +577,10 @@ function CertificatePage() {
           bg = "bg-[#fffbe6]";
           text = "text-[#b59f00]";
           border = "border border-[#f7e7b6]";
+        } else if (capitalizedValue === "Burial") {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
         } else {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
@@ -461,6 +680,51 @@ function CertificatePage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          {(templates.length > 0 ? (
+            <DialogLayout
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <SquarePen size={20} />
+                </Button>
+              }
+              className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
+              title="Template Common Details"
+              description="Edit the needed details"
+              mainContent={
+                <div className="w-full h-full">
+                  <TemplateUpdateForm 
+                    temp_id={templates[0].temp_id}
+                    temp_contact_num={templates[0].temp_contact_num}
+                    temp_email={templates[0].temp_email}
+                    template_files={templates[0].template_files}
+                    onSuccess={() => setIsTempDialogOpen(false)} 
+                  />
+                </div>
+              }
+              isOpen={isTempDialogOpen}
+              onOpenChange={setIsTempDialogOpen}
+            />
+          ) : (
+            <DialogLayout
+              trigger={
+                <Button className="w-full sm:w-auto">
+                  <Plus size={20} />
+                </Button>
+              }
+              className="max-w-[30%] max-h-[80%] flex flex-col overflow-auto scrollbar-custom"
+              title="Template Common Details"
+              description="please provide the needed details"
+              mainContent={
+                <div className="w-full h-full">
+                  <TemplateCreateForm onSuccess={() => setIsTempDialogOpen(false)} />
+                </div>
+              }
+              isOpen={isTempDialogOpen}
+              onOpenChange={setIsTempDialogOpen}
+            />
+          ))}      
+
           <SelectLayout
             placeholder="Filter by type"
             label=""
@@ -479,8 +743,7 @@ function CertificatePage() {
             className="bg-white"
             options={[
               { id: "all", name: "All Purposes" },
-              { id: "employment", name: "Employment" },
-              { id: "bir", name: "BIR" },
+              ...personalPurposes
             ]}
             value={filterPurpose}
             onChange={(value) => setFilterPurpose(value)}
@@ -532,11 +795,12 @@ function CertificatePage() {
       {selectedCertificate && (
         <TemplateMainPage
           key={selectedCertificate.cr_id + Date.now()}
-          fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_requester?.split(' ')[0] || ''}
-          lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_requester?.split(' ').slice(1).join(' ') || ''}
+          fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_fname || ''}
+          mname={selectedCertificate.resident_details?.per_mname || selectedCertificate.nrc_mname || ''}
+          lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_lname || ''}
           age={calculateAge(selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A")}
           birthdate={selectedCertificate.nrc_birthdate || selectedCertificate.resident_details?.per_dob || "N/A"}
-          address={selectedCertificate.nrc_address || selectedCertificate.resident_details?.per_address || "N/A"}
+          address={getAddressFromCertificate(selectedCertificate) || ""}
           purpose={selectedCertificate.req_purpose}
           Signatory={selectedCertificate.AsignatoryStaff}
           Custodies={selectedCertificate.custodyChildren}
@@ -544,7 +808,6 @@ function CertificatePage() {
           issuedDate={new Date().toISOString()}
           isNonResident={selectedCertificate.is_nonresident}
           deceasedName={selectedCertificate.deceasedName}
-          deceasedAge={selectedCertificate.deceasedAge}
           deceasedBirthdate={selectedCertificate.deceasedBirthdate}
           deceasedAddress={selectedCertificate.deceasedAddress}
           dateOfConflagration={selectedCertificate.dateOfConflagration}
@@ -565,10 +828,13 @@ function CertificatePage() {
           setIsDialogOpen(open);
           if (!open) {
             setCustody([]);
+            setIsManualCustodyInput(false);
+            setManualCustodyNames("");
             setDeceasedName("");
-            setDeceasedAge("");
             setDeceasedBirthdate("");
             setDeceasedAddress("");
+            setSelectedDeceasedId("");
+            setIsManualDeceasedInput(false);
             setDateOfConflagration("");
             setPartnerName("");
             setLiveInYears("");
@@ -611,42 +877,62 @@ function CertificatePage() {
                 {/* BURIAL FIELDS */}
                 {viewingCertificate?.req_purpose?.toLowerCase() === "burial" && (
                   <>
-                    <Label className="pb-1">Deceased Name</Label>
-                    <div className="w-full pb-3">
-                      <Input 
-                        placeholder="Enter deceased name"
-                        value={deceasedName}
-                        onChange={(e) => setDeceasedName(e.target.value)}
-                      />
+                    <div className="flex items-center justify-between">
+                      <Label className="pb-1">Deceased Person</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleToggleManualDeceasedInput}
+                        className="text-xs bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                      >
+                        {isManualDeceasedInput ? "Select from List" : "Manual Input"}
+                      </Button>
                     </div>
-
-                    <Label className="pb-1">Deceased Age</Label>
-                    <div className="w-full pb-3">
-                      <Input 
-                        placeholder="Enter deceased age"
-                        value={deceasedAge}
-                        onChange={(e) => setDeceasedAge(e.target.value)}
-                      />
-                    </div>
-
-                    <Label className="pb-1">Deceased Birthdate</Label>
-                    <div className="w-full pb-3">
-                      <Input 
-                        type="date"
-                        placeholder="Enter deceased birthdate"
-                        value={deceasedBirthdate}
-                        onChange={(e) => setDeceasedBirthdate(e.target.value)}
-                      />
-                    </div>
-
-                    <Label className="pb-1">Deceased Address</Label>
-                    <div className="w-full pb-3">
-                      <Input 
-                        placeholder="Enter deceased address"
-                        value={deceasedAddress}
-                        onChange={(e) => setDeceasedAddress(e.target.value)}
-                      />
-                    </div>
+                    
+                    {!isManualDeceasedInput ? (
+                      <div className="w-full pb-3">
+                        <Combobox
+                          options={deceasedResidentsOptions}
+                          value={selectedDeceasedId}
+                          onChange={(value) => handleDeceasedSelection(value || "")}
+                          placeholder="Select deceased person"
+                          emptyMessage="No deceased residents found"
+                          triggerClassName="w-full"
+                          contentClassName="w-full"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-3 pb-3">
+                        <div>
+                          <Label className="pb-1">Deceased Name</Label>
+                          <Input 
+                            placeholder="Enter deceased person's name"
+                            value={deceasedName}
+                            onChange={(e) => setDeceasedName(e.target.value)}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="pb-1">Deceased Birthdate</Label>
+                          <Input 
+                            type="date"
+                            placeholder="Enter birthdate"
+                            value={deceasedBirthdate}
+                            onChange={(e) => setDeceasedBirthdate(e.target.value)}
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label className="pb-1">Deceased Address</Label>
+                          <Input 
+                            placeholder="Enter address"
+                            value={deceasedAddress}
+                            onChange={(e) => setDeceasedAddress(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -740,17 +1026,53 @@ function CertificatePage() {
 
                 {/* PROOF OF CUSTODY FIELDS */}
                 {viewingCertificate?.req_purpose?.toLowerCase() === "proof of custody" && (
-                  <div className="w-full pb-3">
-                    <ComboCheckboxStandalone
-                      value={custody}
-                      onChange={setCustody}
-                      label="Custodies"
-                      options={residentOptions}
-                      placeholder="Select child/children"
-                      showBadges={true}
-                      maxDisplayValues={2}
-                    />
-                  </div>
+                  <>
+                    <div className="flex items-center justify-between">
+                      <Label className="pb-1">Children under Custody</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsManualCustodyInput(!isManualCustodyInput);
+                          if (!isManualCustodyInput) {
+                            // Switching to manual input - clear dropdown selection
+                            setCustody([]);
+                          } else {
+                            // Switching back to dropdown - clear manual input
+                            setManualCustodyNames("");
+                          }
+                        }}
+                        className="text-xs bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800"
+                      >
+                        {isManualCustodyInput ? "Select from List" : "Manual Input"}
+                      </Button>
+                    </div>
+                    
+                    {!isManualCustodyInput ? (
+                      <div className="w-full pb-3">
+                        <ComboCheckboxStandalone
+                          value={custody}
+                          onChange={setCustody}
+                          options={residentOptions}
+                          placeholder="Select child/children"
+                          showBadges={true}
+                          maxDisplayValues={Infinity}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full pb-3">
+                        <Input 
+                          placeholder="Enter names separated by commas (e.g., John Doe, Jane Doe)"
+                          value={manualCustodyNames}
+                          onChange={(e) => setManualCustodyNames(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Separate multiple names with commas
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}                  
 
                 <div className="flex justify-end">

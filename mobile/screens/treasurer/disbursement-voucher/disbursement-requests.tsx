@@ -1,5 +1,5 @@
 import { api } from "@/api/api";
-import { DisbursementVoucher, DisbursementFile, Staff, DisbursementParams, DisbursementFileParams, DisbursementFileInput } from "./disbursement-types"
+import { DisbursementVoucher, DisbursementFile, Staff, DisbursementFileParams, DisbursementFileInput } from "./disbursement-types"
 
 export const getDisbursementVouchers = async (
   page: number = 1,
@@ -35,7 +35,7 @@ export const getDisbursementVouchers = async (
       count: Array.isArray(data) ? data.length : 0
     };
   } catch (err) {
-    console.error('Error fetching disbursement vouchers:', err);
+    // console.error('Error fetching disbursement vouchers:', err);
     return { results: [], count: 0 };
   }
 };
@@ -45,7 +45,7 @@ export const getDisbursementVoucherYears = async (): Promise<number[]> => {
     const res = await api.get('treasurer/disbursement-vouchers/years/');
     return res.data || [];
   } catch (err) {
-    console.error('Error fetching disbursement years:', err);
+    // console.error('Error fetching disbursement years:', err);
     return [];
   }
 };

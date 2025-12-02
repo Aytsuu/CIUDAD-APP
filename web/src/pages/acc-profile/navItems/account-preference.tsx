@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Shield, Check } from "lucide-react";
+import { Shield, Check } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -52,14 +52,18 @@ export default function Preferences() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-52">
+      <div className="">
+        <h1 className="text-2xl font-semibold text-gray-700">User Preferences</h1>
+        <p className="text-gray-500 text-sm">Customize your account settings and notifications.</p>
+      </div>
       {/* Notifications Settings */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <Bell size={18} /> Notifications
+        <CardHeader className="">
+          <CardTitle className="flex text-xl items-center gap-2">
+            Notifications
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="pb-4">
             Manage how you receive notifications and alerts
           </CardDescription>
         </CardHeader>

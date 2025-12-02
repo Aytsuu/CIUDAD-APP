@@ -57,7 +57,7 @@ async function generatePDF(
     try {
       doc.addImage(barangayLogoBase64, "JPEG", leftLogoX, yPos, logoWidth, logoHeight);
     } catch (e) {
-      console.error("Error adding barangay logo:", e);
+      // console.error("Error adding barangay logo:", e);
     }
   }
 
@@ -65,7 +65,7 @@ async function generatePDF(
     try {
       doc.addImage(cityLogoBase64, "JPEG", rightLogoX, yPos, logoWidth, logoHeight);
     } catch (e) {
-      console.error("Error adding city logo:", e);
+      // console.error("Error adding city logo:", e);
     }
   }
 
@@ -196,10 +196,12 @@ headerText.forEach((line) => {
 
 interface EnhancedAttendanceSheetViewProps extends AttendanceSheetViewProps {
   citylogo?: string;
+  numberOfRows?: number; // Add this prop
 }
 
 const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
   selectedAttendees = [],
+  numberOfRows, // Add this prop
   activity = "Untitled Activity",
   date = "No date provided",
   time = "N/A",
@@ -216,12 +218,19 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
   const isMounted = useRef(true);
 
   const formattedTime = formatTimeTo12Hour(time);
-  const attendanceData = selectedAttendees.map((attendee) => ({
-    Number: "",
-    nameOfAttendee: attendee.name,
-    designation: attendee.designation,
-    Sign: "",
-  }));
+  const attendanceData = numberOfRows && numberOfRows > 0 
+    ? Array.from({ length: numberOfRows }, (_, _index) => ({
+        Number: "",
+        nameOfAttendee: "",
+        designation: "",
+        Sign: "",
+      }))
+    : selectedAttendees.map((attendee) => ({
+        Number: "",
+        nameOfAttendee: attendee.name,
+        designation: attendee.designation,
+        Sign: "",
+      }));
 
   const maxRowsPerPage = 1000;
   const dataChunks = splitDataIntoChunks(attendanceData, maxRowsPerPage);
@@ -243,7 +252,7 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
         }
       };
       img.onerror = () => {
-        console.error("Failed to load image:", imageSrc);
+        // console.error("Failed to load image:", imageSrc);
         callback("");
       };
     };
@@ -287,7 +296,7 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
           onLoad?.();
         }
       } catch (error) {
-        console.error("PDF generation error:", error);
+        // console.error("PDF generation error:", error);
         if (isMounted.current) {
           setGenerationError(true);
           setIsGenerating(false);
@@ -305,6 +314,7 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
     time,
     place,
     selectedAttendees,
+    numberOfRows, // Add numberOfRows to dependency array
     formattedTime,
     sanRoqueLogoBase64,
     cityLogoBase64,

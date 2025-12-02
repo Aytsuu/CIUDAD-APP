@@ -10,7 +10,7 @@ export const useDeleteResolution = () => {
   const { toast } = useToastContext();
 
   return useMutation({
-    mutationFn: (res_num: String) => deleteResolution(res_num),
+    mutationFn: (res_num: string) => deleteResolution(res_num),
     onMutate: async (res_num) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['resData'] });
@@ -25,9 +25,9 @@ export const useDeleteResolution = () => {
       // Show success toast
       toast.success("Resolution deleted");
     },
-    onError: (err) => {
+    onError: (_err) => {
       toast.error("Failed to delete resolution");
-      console.error("Failed to delete resolution:", err);
+      // console.error("Failed to delete resolution:", err);
     }
   });
 };
@@ -36,7 +36,7 @@ export const useDeleteResolution = () => {
 
 //Resolution Restore or Archive
 interface ArchiveResolutionPayload {
-  res_num: String;
+  res_num: string;
   res_is_archive: boolean;
 }
 
@@ -61,7 +61,7 @@ export const useArchiveOrRestoreResolution = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err: any, data) => {
-        console.error(`Error ${data.res_is_archive ? 'archiving' : 'restoring'} resolution:`, err);
+        // console.error(`Error ${data.res_is_archive ? 'archiving' : 'restoring'} resolution:`, err);
         toast.error(err.message || `Failed to ${data.res_is_archive ? 'archive' : 'restore'} resolution`);
     },
   });

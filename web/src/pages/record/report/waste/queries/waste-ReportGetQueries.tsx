@@ -31,10 +31,16 @@ export type WasteReport = {
 };
   
 // Retrieving income/expense data
-export const useWasteReport = (searchQuery?: string, reportMatter?: string) => {
-    return useQuery<WasteReport[]>({
-        queryKey: ["wastereport", searchQuery, reportMatter],
-        queryFn: () => getWasteReport(searchQuery, reportMatter),
+export const useWasteReport = (
+    page: number = 1,
+    pageSize: number = 10,
+    searchQuery?: string,
+    reportMatter?: string,
+    status?: string
+) => {
+    return useQuery<{ results: WasteReport[]; count: number }>({
+        queryKey: ["wastereport", page, pageSize, searchQuery, reportMatter, status],
+        queryFn: () => getWasteReport(page, pageSize, searchQuery, reportMatter, status),
         staleTime: 1000 * 60 * 30,
     });
 };

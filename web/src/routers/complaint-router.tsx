@@ -1,9 +1,10 @@
 import ComplaintRecord from "@/pages/record/complaint/complaint-record/ComplaintRecord";
 import { ComplaintForm } from "@/pages/record/complaint/complaint-report/FormComplaint";
 import { ComplaintViewRecord } from "@/pages/record/complaint/ComplaintReportRecord";
-import ArchiveComplaints from "@/pages/record/complaint/complaint-archive/ArchiveComplaint";
-import ComplaintRequest from "@/pages/record/complaint/complaint-request/ComplaintRequest";
-import ComplaintRejected from "@/pages/record/complaint/complain-rejected/ComplaintRejected";
+import ComplaintRequest from "@/pages/record/complaint/ComplaintRequest";
+import ComplaintArchive from "@/pages/record/complaint/ComplaintArchive";
+import ComplaintCancelled from "@/pages/record/complaint/ComplaintCancelled";
+import ComplaintRejected from "@/pages/record/complaint/ComplaintRejected";
 
 export const complaint_router = [
   {
@@ -15,19 +16,23 @@ export const complaint_router = [
     element: <ComplaintViewRecord />,
   },
   {
-    path: "complaint/report/",
-    element: <ComplaintForm />,
+    path: "complaint/archive/",
+    element: <ComplaintArchive />,
   },
   {
-    path: "complaint/archive/",
-    element: <ArchiveComplaints />,
+    path: "complaint/report/",
+    element: <ComplaintForm />,
   },
   {
     path: "complaint/request/",
     element: <ComplaintRequest />,
   },
   {
-    path: "complaint/request/rejected",
+    path: "complaint/request/cancelled/",
+    element: <ComplaintCancelled />,
+  },
+  {
+    path: "complaint/request/rejected/",
     element: <ComplaintRejected />,
   },
 ];

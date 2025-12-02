@@ -202,7 +202,7 @@ export default function CompleteScanProcess({params} : {params: Record<string, a
               </Text>
             </View>
             <Text className="text-gray-600 text-sm leading-5">
-              Your personal information is encrypted and stored securely. We only use this data for identity verification purposes.
+              Your personal information is stored securely. We only use this data for identity verification purposes.
             </Text>
           </View>
 

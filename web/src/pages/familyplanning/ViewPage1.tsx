@@ -135,20 +135,6 @@ export const FamilyPlanningView = () => {
       }
     }
 
-    // Uncomment and fix this section if you need to process medical history records
-    /*
-    if (recordData?.medical_history_records) {
-      recordData?.medical_history_records.forEach(record => {
-        const isExactStandard = exactStandardConditions.some(condition =>
-          condition.toLowerCase() === record.illname.toLowerCase()
-        );
-        if (!isExactStandard) {
-          illnesses.push(record.illname);
-        }
-      });
-    }
-    */
-
     return illnesses;
   };
 
@@ -368,7 +354,7 @@ export const FamilyPlanningView = () => {
                 <Label className=" text-xs">NO. OF LIVING CHILDREN:</Label>
                 <InputLine
                   className="h-4 mt-1"
-                  value={recordData.obstetricalHistory?.numOfLivingChildren}
+                  value={recordData.obstetricalHistory?.numOfLivingChildren || recordData?.num_of_children}
                 />
               </div>
               <div>
@@ -1045,7 +1031,7 @@ export const FamilyPlanningView = () => {
       <div className="flex justify-end mt-4 no-print">
         <Button
           onClick={() =>
-            navigate("/familyplanning/view2", { state: { fprecordId: fprecordId } })
+            navigate("/services/familyplanning/view2", { state: { fprecordId: fprecordId } })
           }
         >
           Next (Side B)

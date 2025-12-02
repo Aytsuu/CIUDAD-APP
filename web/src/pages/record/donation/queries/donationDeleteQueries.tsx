@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { deldonationreq } from "../request-db/donationDelRequest";
 import { Donation } from "../donation-types";
 
@@ -10,42 +9,25 @@ export const useDeleteDonation = () => {
   return useMutation({
     mutationFn: (don_num: string) => deldonationreq(don_num),
     onSuccess: (_, don_num) => {
-      // Optimistically update the cache
       queryClient.setQueryData(["donations"], (old: Donation[] = []) => 
         old.filter(donation => donation.don_num !== don_num)
       );
-      
-      // Invalidate the query to trigger refetch
       queryClient.invalidateQueries({ queryKey: ["donations"] });
 
-      toast.success("Donation deleted successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Donation deleted successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to delete donation", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to delete donation");
     },
     onMutate: async (don_num) => {
-      // Cancel any outgoing refetches to avoid overwriting
       await queryClient.cancelQueries({ queryKey: ['donations'] });
-
-      // Snapshot the previous value
       const previousDonations = queryClient.getQueryData(['donations']);
-
-      // Optimistically update to the new value
       queryClient.setQueryData(['donations'], (old: Donation[] = []) => 
         old.filter(donation => donation.don_num !== don_num)
       );
-
-      // Return a context with the previous value
       return { previousDonations };
     },
     onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ['donations'] });
     }
   });

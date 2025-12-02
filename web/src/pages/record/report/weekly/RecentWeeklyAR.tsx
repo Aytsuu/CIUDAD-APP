@@ -1,18 +1,15 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { getWeekNumber, getMonthName } from "@/helpers/dateHelper";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getWeekNumber, getMonthName, getRangeOfDaysInWeek } from "@/helpers/dateHelper";
 import { Clock, FileText } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export default function RecentWeeklyAR({
-  recentReports
-} : {
-  recentReports: Record<string, any>[]
+  recentReports,
+}: {
+  recentReports: Record<string, any>[];
 }) {
+  const navigate = useNavigate();
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -26,7 +23,24 @@ export default function RecentWeeklyAR({
           recentReports.map((report, index) => (
             <div
               key={`recent-${report.id}-${index}`}
-              className="p-3 bg-muted/20 rounded-lg border hover:bg-muted/40 transition-colors"
+              className="p-3 bg-muted/20 rounded-lg border hover:bg-muted transition-all cursor-pointer hover:shadow-md"
+              onClick={() => {
+                navigate("/report/acknowledgement/document", {
+                  state: {
+                    params: {
+                      type: "WAR",
+                      data: {
+                        ...report,
+                        reportPeriod: getRangeOfDaysInWeek(
+                          getWeekNumber(report.created_for),
+                          getMonthName(report.created_for),
+                          new Date().getFullYear()
+                        ),
+                      },
+                    },
+                  },
+                });
+              }}
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium">
@@ -44,33 +58,24 @@ export default function RecentWeeklyAR({
                 created: {getMonthName(report.created_at)} •{" "}
                 {new Date(report.created_at).toLocaleDateString()}
               </div>
-              <div className="space-y-1">
-                {report.war_composition
-                  .slice(0, 2)
-                  .map((comp: any, compIndex: number) => (
-                    <div key={`recent-comp-${compIndex}`} className="text-xs">
-                      <span className="font-mono text-primary">
-                        {comp.ar.id}
-                      </span>
-                      {comp.ar.ar_status && (
-                        <Badge
-                          variant={
-                            comp.ar.status === "Signed"
-                              ? "default"
-                              : "secondary"
-                          }
-                          className="text-xs ml-2 h-4"
-                        >
-                          {comp.ar.status}
-                        </Badge>
-                      )}
+              <div className="flex gap-2">
+                <p className="text-xs">composed of:</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {report.war_composition
+                    .slice(0, 2)
+                    .map((comp: any, compIndex: number) => (
+                      <div key={`recent-comp-${compIndex}`} className="text-xs">
+                        <span className="font-mono text-primary">
+                          AR-{comp.ar.id}
+                        </span>
+                      </div>
+                    ))}
+                  {report.war_composition.length > 2 && (
+                    <div className="text-xs text-muted-foreground">
+                      +{report.war_composition.length - 2} more
                     </div>
-                  ))}
-                {report.war_composition.length > 2 && (
-                  <div className="text-xs text-muted-foreground">
-                    +{report.war_composition.length - 2} more
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           ))

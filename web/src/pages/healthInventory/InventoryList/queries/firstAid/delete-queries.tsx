@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { CircleCheck, CircleX, Loader2 } from 'lucide-react';
+import {  Loader2 } from 'lucide-react';
 import { handleDeleteFirstAidList } from '../../restful-api/firstAid/FirstAidDeleteAPI';
+import { showErrorToast,showSuccessToast } from '@/components/ui/toast';
 
 export const useDeleteFirstAid = () => {
   const queryClient = useQueryClient();
@@ -20,9 +21,7 @@ export const useDeleteFirstAid = () => {
     // On success, dismiss loading and show success
     onSuccess: () => {
       toast.dismiss("delete-loading");
-      toast.success("First aid item deleted successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
+     showSuccessToast("First aid item deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ["firstAid"] });
     },
     
@@ -30,9 +29,7 @@ export const useDeleteFirstAid = () => {
     onError: (error: any) => {
       toast.dismiss("delete-loading");
       const message = error?.response?.data?.error || "Failed to delete first aid item";
-      toast.error(message, {
-        icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-      });
+      showErrorToast(message);
     }
   });
 };

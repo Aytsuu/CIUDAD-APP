@@ -1,43 +1,44 @@
-# Rest Framework imports
+# Imports
+# Rest Framework
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
-# Local imports
+# Local
 from apps.complaint.models import Complaint, Complainant, Accused, ComplaintComplainant, ComplaintAccused, Complaint_File
 from apps.complaint.serializers import ComplaintSerializer
 from apps.account.models import Account
 from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
 from apps.administration.models import Staff
-from apps.notification.create_notification import create_notification
+from apps.notification.utils import create_notification, reminder_notification
 from ..serializers import ComplaintFileSerializer
-# from apps.complaint.serializers.create_complaint_serializer import ComplaintSerializer
 
-# Django imports
+# Django
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
+from django.utils import timezone
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.base import ContentFile
 
-# Utility imports
+# Utility
 from utils.supabase_client import upload_to_storage
 
-# Python imports
+# Python
 import json
 import logging
+import base64
+import io
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
-import base64
-import io
-from django.core.files.base import ContentFile
-from django.core.files.uploadedfile import InMemoryUploadedFile
 
 class ComplaintCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     serializer_class = ComplaintSerializer
 
-    # @transaction.atomic
     def post(self, request, *args, **kwargs):
         try:
             logger.info(f"Received data keys: {request.data.keys()}")
@@ -100,12 +101,13 @@ class ComplaintCreateView(APIView):
             }
 
             # Add staff_id if provided
-            if request.data.get("staff_id"):
+            if request.data.get("staff"):
                 try:
-                    staff_instance = Staff.objects.get(staff_id=request.data["staff_id"])
-                    complaint_data["staff_id"] = staff_instance.pk
+                    staff_instance = Staff.objects.get(staff_id=request.data["staff"])
+                    complaint_data["staff"] = staff_instance.pk
+                    complaint_data["comp_status"] = "Accepted"
                 except Staff.DoesNotExist:
-                    logger.warning(f"Staff with ID {request.data['staff_id']} not found")
+                    logger.warning(f"Staff with ID {request.data['staff']} not found")
 
             # Validate required fields
             required_fields = [
@@ -174,7 +176,6 @@ class ComplaintCreateView(APIView):
                     ]
                     ComplaintAccused.objects.bulk_create(complaint_accused)
                 
-                # Handle file uploads using the same pattern as medicine
                 files = request.data.get("files", [])
                 uploaded_files = []
                 
@@ -200,40 +201,43 @@ class ComplaintCreateView(APIView):
                     complaint, context={"request": request}
                 )
 
-
                 # Create notification
                 try:
+                    # Get all staff with ADMIN position
+                    staff = Staff.objects.filter(staff_staff_type="BARANGAY STAFF", pos__pos_title="ADMIN").select_related("rp")
                     recipients = []
                     
-                    for complainant in complainant_instances:
-                        if not complainant.rp_id:
-                            continue
-                        recipients.append(complainant.rp_id)
-                            
-                    if recipients:
-                        create_notification(
-                            title="Complaint Filed Successfully",
-                            message=f"Your complaint regarding {complaint.comp_incident_type} has been successfully filed and is now under review. Complaint ID: {complaint.comp_id}",
-                            sender=request.user,
-                            recipients=recipients, 
-                            notif_type="Info",
-                            target_obj=complaint,
-                        )
-                        logger.info(f"Notifications sent to {len(recipients)} complainants with sender {request.user.acc_id}")
-                    else:
-                        if not sender_id:
-                            logger.warning("No complainant account found to use as sender")
-                        if not complainant_account_ids:
-                            logger.info("No complainant accounts found for notification")
+                    for staff in staff:
+                        if staff.rp:
+                            print(f"Staff RP ID: {staff.rp.rp_id}")
+                            recipients.append(staff.rp)
                         
+                        complaint_payload = ComplaintSerializer(complaint, context={"request": request}).data
+                        
+                        notification = create_notification(
+                            title="New Complaint Filed",
+                            message=(
+                                f"A {complaint.comp_incident_type} complaint is awaiting your review. "
+                            ),
+                            recipients=recipients,
+                            notif_type="REQUEST",
+                            web_route="complaint/view/",
+                            web_params={"comp_id": str(complaint.comp_id),},
+                            mobile_route="/(my-request)/complaint-tracking/compMainView",
+                            mobile_params={"comp_id": str(complaint.comp_id)},
+                        )
+
+                    else:
+                        logger.warning("No ADMIN staff found to notify.")
+
                 except Exception as notif_error:
                     logger.error(f"Failed to create/send notifications: {notif_error}")
-                    # Don't fail the entire request if notification fails
                 
                 logger.info(f"Complaint created with ID: {complaint.comp_id}")
                 return Response(
                     response_serializer.data, status=status.HTTP_201_CREATED
                 )
+                
             else:
                 logger.error(f"Serializer errors: {serializer.errors}")
                 return Response(

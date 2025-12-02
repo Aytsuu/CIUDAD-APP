@@ -29,11 +29,8 @@ export const PostPartumSchema = z.object({
         attendedBy: z.string().optional(),
         outcome: z.string(),
         ttStatus: z.string(),
-        // ironSupplement: z.string().date().optional(),
         lochialDischarges: z.string(),
-        // vitASupplement: z.string().date().optional(),
         noOfPadPerDay: positiveNumberSchema.default(0),
-        // mebendazole: z.string().date().optional(),
         dateBfInitiated: z.string().date().optional(),
         timeBfInitiated: z.string().optional(),
         nextVisitDate: z.string().date().optional(),
@@ -45,9 +42,18 @@ export const PostPartumSchema = z.object({
             systolic: z.string(),
             diastolic: z.string(),
         }),
+        temp: z.string(),
+        rr: z.string(),
+        o2: z.string(),
+        pulse: z.string(),
         feeding: z.string(),
         findings: z.string(),
         nursesNotes: z.string(),
-    })
+    }),
+
+    // forward record to
+    assigned_to: z.string().optional(),
+    status: z.string().optional(),
+    forwarded_status: z.string().optional(),
 
 })

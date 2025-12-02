@@ -5,7 +5,7 @@ export const getProjectProposalYears = async (): Promise<number[]> => {
     const res = await api.get('gad/project-proposal-years/');
     return res.data || [];
   } catch (err) {
-    console.error('Error fetching proposal years:', err);
+    // console.error('Error fetching proposal years:', err);
     return [];
   }
 };
@@ -53,7 +53,7 @@ export const getProjectProposals = async (
     
     return { results: [], count: 0 };
   } catch (err) {
-    console.error('Error fetching project proposals:', err);
+    // console.error('Error fetching project proposals:', err);
     return { results: [], count: 0 };
   }
 };
@@ -151,4 +151,9 @@ const transformProposalWithData = (proposal: any, suppDocs: any[]) => {
   };
   
   return transformed;
+};
+
+export const getProjectProposalGrandTotal = async () => {
+  const response = await api.get(`/gad/project-proposals-grand-total/`);
+  return response.data;
 };

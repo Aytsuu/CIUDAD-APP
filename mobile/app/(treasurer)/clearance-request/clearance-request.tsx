@@ -1,3 +1,3 @@
-import ClearanceRequestList from '@/screens/treasurer/clearance-request'
+import ClearanceRequestMain from '@/screens/treasurer/clearance-request/index'
 
-export default ClearanceRequestList 
+export default ClearanceRequestMain 

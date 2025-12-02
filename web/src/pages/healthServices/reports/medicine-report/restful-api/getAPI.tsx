@@ -2,12 +2,39 @@
 import { api2 } from "@/api/api";
 
 
-export const getMedicineMonthly = async (year?: string): Promise<any> => {
+
+export const getMedicineMonthly = async (page: number, pageSize: number, search?: string): Promise<any> => {
   try {
-    const url = year
-      ? `/reports/medicine-records/monthly/?year=${year}`
-      : `/reports/medicine-records/monthly/`;
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('page_size', pageSize.toString());
+    if (search) params.append('search', search);
+
+    const response = await api2.get<any>(`/reports/medicine-records/monthly/?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching medicine records:", error);
+    throw error;
+  }
+};
+
+
+// queries/fetchQueries.ts
+export const getMedicineDetailedReports = async (
+  month: string, 
+  page: number = 1, 
+  pageSize: number = 30, 
+  search?: string
+): Promise<any> => {
+  try {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('page_size', pageSize.toString());
+    if (search) params.append('search', search);
+
+    const url = `/reports/medicine-reports/${month}/?${params.toString()}`;
     const response = await api2.get<any>(url);
+    console.log("Medicine Reports Response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching Medicine records:", error);
@@ -15,20 +42,6 @@ export const getMedicineMonthly = async (year?: string): Promise<any> => {
   }
 };
 
-
-
-
-export const getMedicineDetailedReports = async (month: string): Promise<any> => {
-  try {
-    const url = `/reports/medicine-reports/${month}/`;
-    const response = await api2.get<any>(url);
-    console.log("First Aid Reports Response:", response.data);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching First Aid records:", error);
-    throw error;
-  }
-};
 
 
 export  const getMedicineChart = async(month:string)=>{

@@ -172,14 +172,23 @@
   };
 
   export const medicineRecordColumns: ColumnDef<any>[] = [
+     {
+    accessorKey: "id",
+    header: "#",
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">{row.original.index}</div>
+      </div>
+    ),
+  },
     {
       accessorKey: "medicine",
       header: "Medicine Details",
       cell: ({ row }) => (
-        <div className="min-w-[250px] px-3 py-2">
-          <div className="font-semibold text-gray-900">{row.original.medicine_name || "Unknown"}</div>
+        <div className="text-center px-3 py-2">
+          <div className="font-semibold text-gray-900">{row.original.med_details?.med_name || "Unknown"}</div>
           <div className="text-sm text-gray-600 mt-1">
-            {row.original.dosage} {row.original.form}
+            {row.original.med_details?.med_dsg} {row.original.med_details?.med_form}
           </div>
         </div>
       )
@@ -191,17 +200,19 @@
         <div className="flex justify-center min-w-[200px] px-2">
           <div className="flex flex-col">
             <div className="text-sm">
-              {row.original.medrec_qty} {row.original.minv_details?.minv_qty_unit === "boxes" ? "pcs" : row.original.minv_details?.minv_qty_unit}
-            </div>
+ {row.original.total_allocated_qty}{" "}
+            {row.original.unit=== "boxes"
+              ? "pcs"
+              : row.original.unit}             </div>
           </div>
         </div>
       )
     },
     {
-      accessorKey: "requested_at",
-      header: "Date Requested",
+      accessorKey: "date_given",
+      header: "Date Given",
       cell: ({ row }) => {
-        const requestedAt = new Date(row.original.requested_at || Date.now());
+        const requestedAt = new Date(row.original.fulfilled_at || Date.now());
         return (
           <div className="min-w-[140px] px-3 py-2">
             <div className="text-sm font-medium">{requestedAt.toLocaleDateString()}</div>
@@ -233,7 +244,7 @@
                   </div>
                 </div>
 
-                <SignatureModal signature={row.original.signature} isOpen={isSignatureModalOpen} onClose={() => setIsSignatureModalOpen(false)} />
+                <SignatureModal signature={row.original.medreq_details?.signature} isOpen={isSignatureModalOpen} onClose={() => setIsSignatureModalOpen(false)} />
               </>
             ) : (
               <div className="text-xs text-gray-400 italic">No signature</div>
@@ -243,12 +254,22 @@
       }
     },
     {
+    id: "reason",
+      header: "Reason",
+      cell: ({ row }) => (
+        <div className="min-w-[200px] max-w-[300px] px-3 py-2">
+          <div className="text-sm text-gray-700 line-clamp-3">{row.original.reason || "No reason provided"}</div>
+        </div>
+      )
+
+    },
+    {
       id: "actions",
       header: "Documents",
       cell: ({ row }) => {
         const [isModalOpen, setIsModalOpen] = useState(false);
         const [isLoading, setIsLoading] = useState(false);
-        const files = row.original.files || [];
+        const files = row.original.medicine_files || [];
 
         const handleOpenModal = async () => {
           setIsModalOpen(true);
@@ -270,20 +291,21 @@
         };
 
         return (
-          <div className="px-3 py-2 min-w-[150px]">
-            {files.length > 0 ? (
-              <>
-                <button onClick={handleOpenModal} className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded transition-colors flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                  </svg>
-                  View Documents ({files.length})
-                </button>
-                <DocumentModal files={files} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} isLoading={isLoading} />
-              </>
-            ) : (
-              <span className="text-xs text-gray-400 italic">No documents</span>
-            )}
+         
+          <div className="px-3 py-2 min-w-[150px] flex justify-center">
+          {files.length > 0 ? (
+            <>
+            <button onClick={handleOpenModal} className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded transition-colors flex items-center">
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              View Documents ({files.length})
+            </button>
+            <DocumentModal files={files} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} isLoading={isLoading} />
+            </>
+          ) : (
+            <span className="text-xs text-gray-400 italic">No documents</span>
+          )}
           </div>
         );
       }

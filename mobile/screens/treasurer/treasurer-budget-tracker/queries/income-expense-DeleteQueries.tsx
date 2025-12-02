@@ -1,10 +1,8 @@
-import { api } from "@/api/api";
 import { useToastContext } from "@/components/ui/toast";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { archiveOrRestoreExpense } from "../request/income-expense-DeleteRequest";
 import { updateIncomeExpenseMain } from "../request/income-expense-PostRequest";
 import { updateExpenseParticular } from "../request/income-expense-PostRequest";
-import { updateBudgetPlanDetail } from "../request/income-expense-PostRequest";
 import { deleteIncomeExpense } from "../request/income-expense-DeleteRequest";
 import { deleteIncome } from "../request/income-expense-DeleteRequest";
 import { archiveOrRestoreIncome } from "../request/income-expense-DeleteRequest";
@@ -61,7 +59,7 @@ export const useArchiveOrRestoreExpense = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err: any) => {
-      console.error('Error archiving entry:', err);
+      // console.error('Error archiving entry:', err);
       toast.error(err.message || 'Failed to archive entry');
     },
   });
@@ -91,9 +89,9 @@ export const useDeleteIncomeExpense = () => {
       // Show success toast
       toast.success("Expense Entry Deleted");
     },
-    onError: (err) => {
+    onError: (_err) => {
       toast.error("Failed to delete entry");
-      console.error("Failed to delete entry:", err);
+      // console.error("Failed to delete entry:", err);
     }
   });
 };
@@ -123,9 +121,9 @@ export const useDeleteIncome = () => {
       // Show success toast
       toast.success("Income Entry Deleted");
     },
-    onError: (err) => {
+    onError: (_err) => {
       toast.error("Failed to delete entry");
-      console.error("Failed to delete entry:", err);
+      // console.error("Failed to delete entry:", err);
     }
   });
 };
@@ -172,7 +170,7 @@ export const useArchiveOrRestoreIncome = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err: any) => {
-      console.error('Error archiving entry:', err);
+      // console.error('Error archiving entry:', err);
       toast.error(err.message || 'Failed to archive entry');
     },
   });

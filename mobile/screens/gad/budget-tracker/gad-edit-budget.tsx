@@ -13,7 +13,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateAndTimeInput } from "@/components/ui/form/form-date-time-input";
-import { useGADBudgetEntry } from "./queries/btracker-fetch";
+import { useGADBudgetEntry, useProjectProposalsAvailability } from "./queries/btracker-fetch";
 import { useGetGADYearBudgets } from "./queries/btracker-yearqueries";
 import { useUpdateGADBudget } from "./queries/btracker-update";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
@@ -21,7 +21,9 @@ import BudgetTrackerSchema, {
   FormValues,
 } from "@/form-schema/gad-budget-tracker-schema";
 import PageLayout from "@/screens/_PageLayout";
-import { useProjectProposalsAvailability } from "./queries/btracker-fetch";
+import { BudgetYear } from "./gad-btracker-types";
+import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 function GADViewEditEntryForm() {
   const router = useRouter();
@@ -44,11 +46,15 @@ function GADViewEditEntryForm() {
   } = useGetGADYearBudgets();
   const { data: budgetEntry, isLoading: entryLoading } =
     useGADBudgetEntry(gbud_num);
-  const { mutate: updateBudget } = useUpdateGADBudget(yearBudgets || []);
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const { mutate: updateBudget, isPending } =
+    useUpdateGADBudget(yearBudgetsArray);
 
   const calculateRemainingBalance = (): number => {
     if (!yearBudgets || !year) return 0;
-    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+    const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === year
+    );
     if (!currentYearBudget) return 0;
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
@@ -115,11 +121,14 @@ function GADViewEditEntryForm() {
         gbud_actual_expense: budgetEntry.gbud_actual_expense
           ? Number(budgetEntry.gbud_actual_expense)
           : 0,
-        gbud_reference_num: budgetEntry.gbud_reference_num || "",
+        gbud_reference_num: budgetEntry.gbud_reference_num || null,
         gbud_remaining_bal: budgetEntry.gbud_remaining_bal
           ? Number(budgetEntry.gbud_remaining_bal)
           : 0,
-        gbudy: yearBudgets?.find((b) => b.gbudy_year === year)?.gbudy_num || 0,
+        gbudy:
+          yearBudgets?.results?.find(
+            (b: BudgetYear) => b.gbudy_year === year
+          )?.gbudy_num || 0,
         dev: budgetEntry.dev || 0,
         gbud_project_index: budgetEntry.gbud_project_index || 0,
       };
@@ -142,7 +151,9 @@ function GADViewEditEntryForm() {
   // Set year budget
   useEffect(() => {
     if (yearBudgets && !yearBudgetsLoading && year) {
-      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+      const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === year
+    );
       if (currentYearBudget) {
         form.setValue("gbudy", currentYearBudget.gbudy_num);
       } else {
@@ -242,11 +253,11 @@ function GADViewEditEntryForm() {
           { gbud_num, budgetData, files, filesToDelete },
           {
             onSuccess: (data) => {
-              console.log("Update successful:", data);
+              // console.log("Update successful:", data);
               resolve(data);
             },
             onError: (error) => {
-              console.error("Update failed:", error);
+              // console.error("Update failed:", error);
               reject(error);
             },
           }
@@ -259,7 +270,7 @@ function GADViewEditEntryForm() {
       setIsEditing(false);
       router.back();
     } catch (error) {
-      console.error("Error details:", error);
+      // console.error("Error details:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -277,7 +288,7 @@ function GADViewEditEntryForm() {
         rightAction={<View />}
       >
         <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" />
+          <LoadingState/>
         </View>
       </PageLayout>
     );
@@ -330,8 +341,6 @@ function GADViewEditEntryForm() {
                 onPress={async () => {
                   // Get current form values
                   const values = form.getValues();
-
-                  // CRITICAL FIX: Update the gbud_remaining_bal to ensure it passes validation
                   const currentActualExpense =
                     Number(values.gbud_actual_expense) || 0;
                   const originalActualExpense = budgetEntry?.gbud_actual_expense
@@ -373,11 +382,7 @@ function GADViewEditEntryForm() {
                     {isSubmitting ? "Saving..." : "Save Changes"}
                   </Text>
                   {isSubmitting && (
-                    <ActivityIndicator
-                      size="small"
-                      color="white"
-                      className="ml-2"
-                    />
+                     <LoadingModal visible={isSubmitting} />
                   )}
                 </View>
               </TouchableOpacity>
@@ -396,7 +401,7 @@ function GADViewEditEntryForm() {
       }
     >
       <ScrollView
-        className="flex-1 p-4"
+        className="flex-1 p-4 px-6"
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View className="space-y-4">
@@ -421,7 +426,7 @@ function GADViewEditEntryForm() {
                   <TextInput
                     value={field.value}
                     onChangeText={field.onChange}
-                    className={`border rounded p-3 text-[12px] font-PoppinsRegular text-gray-400 ${
+                    className={`border rounded-lg p-3 text-[12px] font-PoppinsRegular text-gray-400 ${
                       fieldState.error ? "border-red-500" : "border-gray-300"
                     }`}
                     editable={false}
@@ -525,8 +530,7 @@ function GADViewEditEntryForm() {
                 <MediaPicker
                   selectedImages={mediaFiles}
                   setSelectedImages={setMediaFiles}
-                  multiple={true}
-                  maxImages={5}
+                  limit={5}
                   editable={isEditing}
                 />
               </View>

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCertificates, getCertificateById, searchCertificates, getPersonalClearances, getPurposeAndRates, getAnnualGrossSales, getBusinessByResidentId } from "../restful-API/certificationReqGetAPI";
+import { getCertificates, getCertificateById, searchCertificates, getPersonalClearances, getPurposeAndRates, getAnnualGrossSales, getBusinessByResidentId, checkResidentVoterId } from "../restful-API/certificationReqGetAPI";
 
 export interface PurposeAndRate {
     pr_id: number;
@@ -12,11 +12,12 @@ export interface PurposeAndRate {
 
 export interface AnnualGrossSales {
     ags_id: number;
-    ags_minimum: number;
-    ags_maximum: number;
-    ags_rate: number;
+    ags_minimum: string | number;
+    ags_maximum: string | number;
+    ags_rate: string | number;
     ags_date: string;
     ags_is_archive: boolean;
+    staff_id?: string;
 }
 
 // Query hooks for fetching data
@@ -71,6 +72,7 @@ export interface Business {
     bus_name: string;
     bus_gross_sales: number;
     bus_street: string;
+    bus_location: string;
     sitio: string;
     bus_date_verified: string | null;
     bus_status: string;
@@ -90,5 +92,15 @@ export const useBusinessByResidentId = (rpId: string) => {
         queryKey: ["business-by-resident", rpId],
         queryFn: () => getBusinessByResidentId(rpId),
         enabled: !!rpId, 
+    });
+};
+
+// Check if resident has voter ID
+export const useResidentVoterId = (rpId: string | undefined, userPersonalData?: any) => {
+    return useQuery<boolean>({
+        queryKey: ["resident-voter-id", rpId],
+        queryFn: () => checkResidentVoterId(rpId || "", userPersonalData),
+        enabled: !!rpId,
+        retry: false,
     });
 };

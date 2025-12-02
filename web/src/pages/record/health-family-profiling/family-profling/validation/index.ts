@@ -44,11 +44,11 @@ export function validateStep4(formData: any): Step4ValidationResult {
   const tbErrors: string[] = [];
   
   // Debug logging for form data structure
-  console.log('=== VALIDATION DEBUG START ===');
-  console.log('Full form data:', formData);
-  console.log('NCD Records:', formData?.ncdRecords);
-  console.log('TB Records:', formData?.tbRecords);
-  console.log('Environmental Form:', formData?.environmentalForm);
+  // console.log('=== VALIDATION DEBUG START ===');
+  // console.log('Full form data:', formData);
+  // console.log('NCD Records:', formData?.ncdRecords);
+  // console.log('TB Records:', formData?.tbRecords);
+  // console.log('Environmental Form:', formData?.environmentalForm);
   
   // Validate environmental form
   const envForm = formData?.environmentalForm;
@@ -113,12 +113,12 @@ export function validateStep4(formData: any): Step4ValidationResult {
   const allErrors = [...environmentalErrors, ...ncdErrors, ...tbErrors];
   
   // Debug logging for validation results
-  console.log('=== VALIDATION RESULTS ===');
-  console.log('Environmental errors:', environmentalErrors);
-  console.log('NCD errors:', ncdErrors);
-  console.log('TB errors:', tbErrors);
-  console.log('All errors:', allErrors);
-  console.log('=== VALIDATION DEBUG END ===');
+  // console.log('=== VALIDATION RESULTS ===');
+  // console.log('Environmental errors:', environmentalErrors);
+  // console.log('NCD errors:', ncdErrors);
+  // console.log('TB errors:', tbErrors);
+  // console.log('All errors:', allErrors);
+  // console.log('=== VALIDATION DEBUG END ===');
   
   return {
     isValid: allErrors.length === 0,
@@ -212,3 +212,4 @@ export function groupValidationErrors(validationResult: FullValidationResult): G
     totalCount: environmentalCount + ncdCount + tbCount + surveyCount
   };
 }
+

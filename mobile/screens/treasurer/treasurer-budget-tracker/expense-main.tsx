@@ -3,17 +3,15 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   FlatList,
   Modal,
   Image,
   ScrollView,
-  ActivityIndicator
+  RefreshControl
 } from 'react-native';
 import {
   X,
   Search,
-  Calendar,
   ChevronLeft,
   Plus,
   Archive,
@@ -26,6 +24,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { Button } from '@/components/ui/button';
+import { SearchInput } from '@/components/ui/search-input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
@@ -36,6 +35,8 @@ import { useArchiveOrRestoreExpense } from './queries/income-expense-DeleteQueri
 import { useDeleteIncomeExpense } from './queries/income-expense-DeleteQueries';
 import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
 
 const monthOptions = [
   { id: "All", name: "All" },
@@ -61,6 +62,7 @@ const ExpenseTracking = () => {
   const totInc = parseFloat(params.totalInc as string) || 0;
 
   const [activeTab, setActiveTab] = useState('active');
+  const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('All');
   const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
@@ -68,22 +70,37 @@ const ExpenseTracking = () => {
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedTab, setSelectedTab] = useState('expense');
+  const [isRefreshing, setIsRefreshing] = useState(false); 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const { data: fetchedData = [], isLoading, isError, refetch } = useIncomeExpense(
+  const { 
+    data: responseData = { results: [], count: 0 }, 
+    isLoading, 
+    isError, 
+    refetch 
+  } = useIncomeExpense(
+    1, // page
+    1000, // pageSize - large number to get all data
     year ? parseInt(year) : new Date().getFullYear(),
     debouncedSearchQuery,
-    selectedMonth
+    selectedMonth,
+    activeTab === 'archive' // Send archive status to backend
   );
 
+
+  // Extract the actual data array (backend already filtered it)
+  const fetchedData = responseData.results || [];
+
+
   const { data: budgetItems = [] } = useBudgetItems(Number(year));
-  const { data: fetchedMain = [] } = useIncomeExpenseMainCard();
+  const { data: fetchedMain = { results: [], count: 0 } } = useIncomeExpenseMainCard();
   const { mutate: archiveRestore, isPending: isArchivePending } = useArchiveOrRestoreExpense();
   const { mutate: deleteEntry, isPending: isDeletePending } = useDeleteIncomeExpense();
 
-  const matchedYearData = fetchedMain.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = fetchedMain.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
+
 
   const trackingOptions = [
     { label: 'Income', value: 'income' },
@@ -95,10 +112,6 @@ const ExpenseTracking = () => {
     value: month.id
   }));
 
-  // Filter the data based only on archive status
-  const filteredData = fetchedData.filter(row => 
-    activeTab === 'active' ? row.iet_is_archive === false : row.iet_is_archive === true
-  );
 
   // Handle search input change
   const handleSearchChange = (text: string) => {
@@ -129,6 +142,7 @@ const ExpenseTracking = () => {
       params: {
         iet_num: Number(item.iet_num),
         iet_serial_num: item.iet_serial_num || '',
+        iet_check_num: item.iet_check_num || '',
         iet_datetime: item.iet_datetime || '',
         iet_entryType: item.iet_entryType || 'Expense',
         iet_particular_id: String(item.exp_id),
@@ -235,19 +249,33 @@ const ExpenseTracking = () => {
     await archiveRestore(allValues);
   };
 
-  const handleRefresh = () => {
-    refetch();
+
+  //Refresh the page
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
+  
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );
 
   const renderItem = ({ item }: { item: any }) => (
-    <Card className="mb-4 border border-gray-200">
+    <Card className="mb-4 border border-gray-200 bg-white">
       <CardHeader className="flex-row justify-between items-center">
         <CardTitle className="text-lg text-[#2a3a61]">
-          {new Date(item.iet_datetime).toLocaleString("en-US", {
-              timeZone: "UTC",
-              dateStyle: "medium",
-              timeStyle: "short"
-          })}
+          {new Date(item.iet_datetime).toLocaleString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+          })}             
         </CardTitle>
         {activeTab === 'active' ? (
           <View className="flex-row gap-1">
@@ -369,33 +397,47 @@ const ExpenseTracking = () => {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="font-semibold text-lg text-[#2a3a61]">
+        <Text className="text-gray-900 text-[13px]">
           {year} Expense Tracking
         </Text>
       }
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
       }
+      wrapScroll={false} 
     >
       <View className="flex-1">
+        {showSearch && (
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={() => {}} // Can leave empty since you're using debounce
+          />
+        )}
 
         {/* Search and Filters */}
-        <View className="px-4 pb-4">
-          <View className="flex-row items-center gap-2 mb-2">
-            <View className="relative flex-1">
-              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-              <TextInput
-                placeholder="Search..."
-                className="pl-5 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
-                value={searchQuery}
-                onChangeText={handleSearchChange}
+        <View className="px-6 pb-4">
+          <View className="flex-row justify-between items-center gap-2 pb-6">
+            <View className="flex-1">
+              <SelectLayout
+                options={monthFilterOptions}
+                className="h-8 w-full"
+                selectedValue={selectedMonth}
+                onSelect={handleMonthChange}
+                placeholder="Select Month"
+                isInModal={false}
               />
             </View>
             
-            <View className="w-[120px] pb-5">
+            <View className="flex-1">
               <SelectLayout
                 options={trackingOptions}
-                className="h-8"
+                className="h-8 w-full"
                 selectedValue={selectedTab}
                 onSelect={handleTabSelect}
                 placeholder="Type"
@@ -404,30 +446,16 @@ const ExpenseTracking = () => {
             </View>
           </View>
 
-          {/* Month Filter */}
-          <View className="pb-6">
-            <SelectLayout
-              options={monthFilterOptions}
-              className="h-8"
-              selectedValue={selectedMonth}
-              onSelect={handleMonthChange}
-              placeholder="Select Month"
-              isInModal={false}
-            />
-          </View>
-          
           <Button
             onPress={handleCreate}
-            className="bg-primaryBlue mt-2"
+            className="bg-primaryBlue mt-2 rounded-xl"
           >
-            <Text className="text-white text-[17px]">
-              <Plus size={16} color="white" className="mr-2" /> Create
-            </Text>
+            <Text className="text-white text-[17px]">  Create </Text>
           </Button>
         </View>
 
         {/* Tabs */}
-        <View className="px-4">
+        <View className="px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="bg-blue-50 mb-3 mt-5 flex-row justify-between">
               <TabsTrigger 
@@ -476,20 +504,30 @@ const ExpenseTracking = () => {
             {/* Active Entries */}
             <TabsContent value="active">
               {isLoading || isArchivePending || isDeletePending ? (
-                <View className="h-64 justify-center items-center">
-                  <ActivityIndicator size="large" color="#2a3a61" />
-                  <Text className="text-sm text-gray-500 mt-2">
-                    {isArchivePending ? "Updating entry records..." : 
-                    isDeletePending ? "Deleting entry..." : 
-                    "Loading..."}
-                  </Text>
-                </View>
+                // <View className="h-64 justify-center items-center">
+                //   <ActivityIndicator size="large" color="#2a3a61" />
+                //   <Text className="text-sm text-gray-500 mt-2">
+                //     {isArchivePending ? "Updating entry records..." : 
+                //     isDeletePending ? "Deleting entry..." : 
+                //     "Loading..."}
+                //   </Text>
+                // </View>
+                renderLoadingState() 
               ) : (
                 <FlatList
-                  data={filteredData.filter(item => !item.iet_is_archive)}
+                  data={fetchedData} // No filtering needed - backend already sent active records
                   renderItem={renderItem}
                   keyExtractor={item => item.iet_num.toString()}
                   contentContainerStyle={{ paddingBottom: 500 }}
+                  showsVerticalScrollIndicator={false} 
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#00a8f0']}
+                      tintColor="#00a8f0"
+                    />
+                  }                  
                   ListEmptyComponent={
                     <Text className="text-center text-gray-500 py-4">
                       No active entries found
@@ -502,20 +540,30 @@ const ExpenseTracking = () => {
             {/* Archived Entries */}
             <TabsContent value="archive">
               {isLoading || isArchivePending || isDeletePending ? (
-                <View className="h-64 justify-center items-center">
-                  <ActivityIndicator size="large" color="#2a3a61" />
-                  <Text className="text-sm text-gray-500 mt-2">
-                    {isArchivePending ? "Updating entry records..." : 
-                    isDeletePending ? "Deleting entry..." : 
-                    "Loading..."}
-                  </Text>
-                </View>
+                // <View className="h-64 justify-center items-center">
+                //   <ActivityIndicator size="large" color="#2a3a61" />
+                //   <Text className="text-sm text-gray-500 mt-2">
+                //     {isArchivePending ? "Updating entry records..." : 
+                //     isDeletePending ? "Deleting entry..." : 
+                //     "Loading..."}
+                //   </Text>
+                // </View>
+                renderLoadingState() 
               ) : (
                 <FlatList
-                  data={filteredData.filter(item => item.iet_is_archive)}
+                  data={fetchedData} // No filtering needed - backend already sent archived records
                   renderItem={renderItem}
                   keyExtractor={item => item.iet_num.toString()}
                   contentContainerStyle={{ paddingBottom: 500 }}
+                  showsVerticalScrollIndicator={false}   
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#00a8f0']}
+                      tintColor="#00a8f0"
+                    />
+                  }                                                    
                   ListEmptyComponent={
                     <Text className="text-center text-gray-500 py-4">
                       No archived entries found

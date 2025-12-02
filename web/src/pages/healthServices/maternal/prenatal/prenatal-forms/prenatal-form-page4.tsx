@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useFormContext, type UseFormReturn } from "react-hook-form"
 import { Form } from "@/components/ui/form/form"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Trash } from "lucide-react"
+import { Loader2, SquarePen } from "lucide-react"
 
 import type { z } from "zod"
 
@@ -17,11 +17,15 @@ import { FormSelect } from "@/components/ui/form/form-select"
 import { FormTextArea } from "@/components/ui/form/form-text-area"
 import { Card, CardContent } from "@/components/ui/card"
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal"
+import { ProtectedComponent } from "@/ProtectedComponent" 
+import { Combobox } from "@/components/ui/combobox"
 
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
 
 import { useAddPrenatalRecord } from "../../queries/maternalAddQueries"
 import { usePrenatalPatientPrenatalCare } from "../../queries/maternalFetchQueries"
+import { useMaternalStaff } from "../../queries/maternalFetchQueries"
+import { useAuth } from "@/context/AuthContext"
 
 
 export default function PrenatalFormFourthPq({
@@ -37,16 +41,64 @@ export default function PrenatalFormFourthPq({
   const addPrenatalRecordMutation = useAddPrenatalRecord()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [prenatalCareData, setPrenatalCareData] = useState<prenatalCareTypes[]>([])
+  const [prenatalCareHistoryTableData, setPrenatalCareHistoryTableData] = useState<any[]>([])
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("")
+  const [selectedStaffPosition, setSelectedStaffPosition] = useState<string>("")
+  const { user } = useAuth()
 
-  // Watch values from other parts of the form to auto-fill
+  // watch values
   const patId = form.watch("pat_id") || ""
   const pregnancyId = form.watch("pregnancy_id") || ""
   const momWt = form.watch("motherPersonalInfo.motherWt")
   const aogWks = form.watch("followUpSchedule.aogWeeks")
   const aogDays = form.watch("followUpSchedule.aogDays")
 
+  // fetch hooks
   const { data: prenatalCareHistory, isLoading: isLoadingPrenatalCare } = usePrenatalPatientPrenatalCare(patId, pregnancyId)
+  const { data: staffsData, isLoading: isLoadingStaff } = useMaternalStaff()
+  
+  // user's staff ID
+  const currentUserStaffId = user?.staff?.staff_id || ""
 
+  // staff options for forward to
+  const staffOptions = 
+    staffsData && Array.isArray(staffsData.staff)
+      ? staffsData.staff
+          .filter((staff: any) => {
+            // Exclude logged-in user
+            if (String(staff.staff_id || "") === String(currentUserStaffId)) return false
+            
+            // Only include HEALTH STAFF
+            if (staff.staff_type !== "HEALTH STAFF") return false
+            
+            // Only include ADMIN or DOCTOR positions
+            const position = (staff.position || "").toUpperCase()
+            return position === "ADMIN" || position === "DOCTOR"
+          })
+          .map((staff: any) => {
+            const fullName = staff.full_name || `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || "Unknown Staff"
+            const position = staff.position || staff.pos || ""
+            // Create a searchable ID that includes name and position for searching
+            const searchableId = `${fullName} ${position}`.toLowerCase()
+            
+            return {
+              id: searchableId,
+              name: position ? (
+                <div className="flex items-center gap-2">
+                  <span className="border border-green-300 rounded px-2 py-1 text-xs bg-green-500 text-white">{position}</span>
+                  <span>{fullName}</span>
+                </div>
+              ) : (
+                fullName
+              ),
+              realId: String(staff.staff_id || ""),
+            }
+          })
+      : []
+
+
+  // prenatal care types
   type prenatalCareTypes = {
     date: string
     aog: {
@@ -66,17 +118,19 @@ export default function PrenatalFormFourthPq({
     notes: {
       complaints?: string
       advises?: string
+      temp?: string
+      resRate?: string
+      pulseRate?: string
+      o2?: string
     }
   }
 
-  const [prenatalCareData, setPrenatalCareData] = useState<prenatalCareTypes[]>([])
-  const [prenatalCareHistoryTableData, setPrenatalCareHistoryTableData] = useState<any[]>([])
+  
 
   const today = new Date().toLocaleDateString("en-CA")
 
   useEffect(() => {
     setValue("prenatalCare.date", today)
-    console.log("🔍 Initial date set:", today)
   }, [setValue, today])
 
   useEffect(() => {
@@ -89,13 +143,9 @@ export default function PrenatalFormFourthPq({
   // prenatal care fetching
   useEffect(() => {
     if (prenatalCareHistory && !isLoadingPrenatalCare) {
-      console.log("🔍 Raw prenatal care history:", prenatalCareHistory)
-      
-      // Extract prenatal_records array
       const prenatalRecords = prenatalCareHistory.prenatal_records || []
       
       if (prenatalRecords.length > 0) {
-        // Flatten all prenatal_care_entries from all records
         const allCareEntries: prenatalCareTypes[] = []
         
         prenatalRecords.forEach((record: any) => {
@@ -121,6 +171,7 @@ export default function PrenatalFormFourthPq({
               notes: {
                 complaints: entry.pfpc_complaints === "None" ? "None" : entry.pfpc_complaints || undefined,
                 advises: entry.pfpc_advises === "None" ? "None" : entry.pfpc_advises || undefined,
+
               },
             }
             
@@ -128,7 +179,7 @@ export default function PrenatalFormFourthPq({
           })
         })
         
-        console.log("🔍 Mapped prenatal care entries:", allCareEntries)
+        // console.log("🔍 Mapped prenatal care entries:", allCareEntries)
         setPrenatalCareHistoryTableData(allCareEntries)
       } else {
         setPrenatalCareHistoryTableData([])
@@ -136,13 +187,12 @@ export default function PrenatalFormFourthPq({
     }
   }, [prenatalCareHistory, isLoadingPrenatalCare])
 
-  // Function to get combined data (history + current session)
   const getAllPrenatalCareData = (): prenatalCareTypes[] => {
     return [...prenatalCareHistoryTableData, ...prenatalCareData]
   }
 
   const addPrenatalCare = () => {
-    console.log("🔍 Adding prenatal care entry...")
+    // console.log("🔍 Adding prenatal care entry...")
     
     // Get values directly from the form state for the temporary input fields
     const date = getValues("prenatalCare.date")
@@ -156,20 +206,28 @@ export default function PrenatalFormFourthPq({
     const fetalPos = getValues("prenatalCare.leopoldsFindings.fetalPosition")
     const complaints = getValues("prenatalCare.notes.complaints")
     const advises = getValues("prenatalCare.notes.advises")
+    const temp = getValues("prenatalCare.notes.temp")
+    const resRate = getValues("prenatalCare.notes.resRate")
+    const pulseRate = getValues("prenatalCare.notes.pulseRate")
+    const o2 = getValues("prenatalCare.notes.o2")
 
-    console.log("🔍 Form values retrieved:", {
-      date,
-      weight,
-      aogWks,
-      aogDays,
-      systolic,
-      diastolic,
-      fundalHt,
-      fetalHR,
-      fetalPos,
-      complaints,
-      advises
-    })
+    // console.log("🔍 Form values retrieved:", {
+    //   date,
+    //   weight,
+    //   aogWks,
+    //   aogDays,
+    //   systolic,
+    //   diastolic,
+    //   fundalHt,
+    //   fetalHR,
+    //   fetalPos,
+    //   complaints,
+    //   advises,
+    //   temp,
+    //   resRate,
+    //   pulseRate,
+    //   o2,
+    // })
 
 
     const newEntry: prenatalCareTypes = {
@@ -185,10 +243,14 @@ export default function PrenatalFormFourthPq({
       notes: {
         complaints: complaints || undefined,
         advises: advises || undefined,
+        temp: temp || undefined,
+        resRate: resRate || undefined,
+        pulseRate: pulseRate || undefined,
+        o2: o2 || undefined,
       },
     }
 
-    console.log("✅ New entry created:", newEntry)
+    // console.log("New entry created:", newEntry)
     setPrenatalCareData((prev) => [...prev, newEntry])
 
     // Clear the input fields in the form state
@@ -203,12 +265,16 @@ export default function PrenatalFormFourthPq({
     setValue("prenatalCare.leopoldsFindings.fetalPosition", "")
     setValue("prenatalCare.notes.complaints", "")
     setValue("prenatalCare.notes.advises", "")
+    setValue("prenatalCare.notes.temp", "")
+    setValue("prenatalCare.notes.resRate", "")
+    setValue("prenatalCare.notes.pulseRate", "")
+    setValue("prenatalCare.notes.o2", "")
 
-    console.log("✅ Prenatal care data added successfully. Total entries:", prenatalCareData.length + 1)
+    // console.log("Prenatal care data added successfully. Total entries:", prenatalCareData.length + 1)
   }
 
   const removePrenatalCareEntry = (index: number) => {
-    console.log("🔍 Removing prenatal care entry at index:", index)
+    // console.log("🔍 Removing prenatal care entry at index:", index)
     setPrenatalCareData((prev) => prev.filter((_, i) => i !== index))
   }
 
@@ -216,6 +282,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "date",
       header: "Date",
+      size: 100,
       cell: ({ row }) => {
         return <div className="text-center">{row.original.date}</div>
       },
@@ -223,6 +290,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "aog",
       header: "AOG",
+      size: 100,
       cell: ({ row }) => {
         return (
           <div className="text-center">
@@ -234,6 +302,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "wt",
       header: "Weight",
+      size: 100,
       cell: ({ row }) => {
         return <div className="text-center">{row.original.wt || ""} kg</div>
       },
@@ -241,6 +310,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "bp",
       header: "Blood Pressure",
+      size: 100,
       cell: ({ row }) => {
         return (
           <div className="text-center">
@@ -252,6 +322,7 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "leopoldsFindings",
       header: "Leopold's Findings",
+      size: 200,
       cell: ({ row }) => {
         return (
           <div className="text-center">
@@ -265,11 +336,16 @@ export default function PrenatalFormFourthPq({
     {
       accessorKey: "notes",
       header: "Notes",
+      size: 250,
       cell: ({ row }) => {
         return (
           <div className="text-center">
             Complaint/s: {row.original.notes.complaints || "N/A"} <br />
-            Advises: {row.original.notes.advises || "N/A"}
+            Advises: {row.original.notes.advises || "N/A"} <br />
+            Temperature: {row.original.notes.temp || "N/A"} <br />
+            Respiratory Rate: {row.original.notes.resRate || "N/A"} <br />
+            Pulse Rate: {row.original.notes.pulseRate || "N/A"} <br />
+            O2 Saturation: {row.original.notes.o2 || "N/A"}
           </div>
         )
       },
@@ -278,29 +354,24 @@ export default function PrenatalFormFourthPq({
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <Button variant="destructive" onClick={() => removePrenatalCareEntry(row.index)}>
-          <Trash className="h-4 w-4" />
-        </Button>
+        <div className="flex justify-center gap-2">
+          <ProtectedComponent exclude={['BARANGAY HEALTH WORKERS']}>
+            <Button variant="outline" onClick={() => removePrenatalCareEntry(row.index)}>
+              <SquarePen className="h-4 w-4" />
+            </Button>
+          </ProtectedComponent>
+        </div>
+        
       ),
     },
   ]
-
   
-
-   const handleFormSubmit = async (e: React.FormEvent) => {
+  // form submission handler
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsConfirmOpen(false)
-    setIsSubmitting(true)
     
     try {
-      // Check if there's any prenatal care data to submit
-      if (prenatalCareData.length === 0) {
-        console.warn("No prenatal care data to submit")
-        alert("Please add at least one prenatal care entry before submitting.")
-        setIsSubmitting(false)
-        return
-      }
-
       const transformedPrenatalCare = prenatalCareData.map(entry => ({
         ...entry,
         date: entry.date,
@@ -320,27 +391,55 @@ export default function PrenatalFormFourthPq({
         },
         notes: {
           ...(entry.notes.complaints && { complaints: entry.notes.complaints }),
-          ...(entry.notes.advises && { advises: entry.notes.advises })
+          ...(entry.notes.advises && { advises: entry.notes.advises }),
+          ...(entry.notes.temp && { temp: entry.notes.temp }),
+          ...(entry.notes.resRate && { resRate: entry.notes.resRate }),
+          ...(entry.notes.pulseRate && { pulseRate: entry.notes.pulseRate }),
+          ...(entry.notes.o2 && { o2: entry.notes.o2 })
         }
       }))
 
-      console.log("Transformed prenatal care data:", transformedPrenatalCare)
+      // console.log("Transformed prenatal care data:", transformedPrenatalCare)
 
       setValue("prenatalCare", transformedPrenatalCare)
-      console.log("Prenatal care data set in form as array")
+      // console.log("Prenatal care data set in form as array")
 
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Handle forward record logic based on position
+      if (selectedStaffId) {
+        // Determine status based on staff position
+        let forwardStatus = "pending_review"
+        let forwardedStatus = "completed"
+        
+        if (selectedStaffPosition.toUpperCase() === "ADMIN") {
+          forwardStatus = "tbc_by_midwife"
+          forwardedStatus = "pending"
+          // console.log("Forwarding to ADMIN staff - setting status to: tbc_by_midwife, forwarded_status to: pending")
+        } else if (selectedStaffPosition.toUpperCase() === "DOCTOR") {
+          forwardStatus = "check_up"
+          forwardedStatus = "completed"
+          // console.log("Forwarding to DOCTOR staff - setting status to: check_up, forwarded_status to: completed")
+        }
+        
+        // Store forward information in form for backend
+        form.setValue("assigned_to", selectedStaffId)
+        form.setValue("status", forwardStatus)
+        form.setValue("forwarded_status", forwardedStatus)
+        
+        // console.log("Forward record: Staff ID:", selectedStaffId, "Status:", forwardStatus, "Forwarded Status:", forwardedStatus)
+      }
+
+      setIsSubmitting(true)
+      
+      await new Promise(resolve => setTimeout(resolve, 50))
 
       onSubmit()
       
     } catch (error) {
-      console.error("Error in handleFormSubmit:", error)
+      // console.error("Error in handleFormSubmit:", error)
       alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
       setIsSubmitting(false)
     }
   }
-
 
 
   return (
@@ -352,7 +451,7 @@ export default function PrenatalFormFourthPq({
             <h3 className="text-md font-semibold mt-2 mb-4">PRENATAL CARE</h3>
             <Card className="border rounded-md border-gray p-5">
               <CardContent>
-                <div className="flex mb-7">
+                <div className="flex flex-1 gap-4 mb-7">
                   <FormDateTimeInput
                     control={control}
                     name="prenatalCare.date"
@@ -409,6 +508,33 @@ export default function PrenatalFormFourthPq({
                   </div>
                 </div>
 
+                <div className="grid grid-cols-4 gap-3 mb-7">
+                  <FormInput
+                    control={control}
+                    name="prenatalCare.notes.temp"
+                    label="Temperature"
+                    placeholder="Temperature in °C"
+                  />
+                  <FormInput
+                    control={control}
+                    name="prenatalCare.notes.resRate"
+                    label="Respiratory Rate"
+                    placeholder="Respiratory Rate in bpm"
+                  />
+                  <FormInput
+                    control={control}
+                    name="prenatalCare.notes.pulseRate"
+                    label="Pulse Rate"
+                    placeholder="Pulse Rate in bpm"
+                  />
+                  <FormInput
+                    control={control}
+                    name="prenatalCare.notes.o2"
+                    label="Oxygen Saturation"
+                    placeholder="O2 in %"
+                  />
+                </div>
+
                 <div className="grid grid-cols-3 gap-3 mb-7">
                   <FormInput
                     control={control}
@@ -461,24 +587,37 @@ export default function PrenatalFormFourthPq({
             <div className="mt-10 border h-[40rem] overflow-auto">
               <DataTable columns={prenatalCareColumn} data={getAllPrenatalCareData()} />
             </div>
+            <div>
+              <div className="flex flex-col gap-2 mt-4">
+                <Label className="text-sm font-medium">Forward record to</Label>
+                <Combobox
+                  options={staffOptions}
+                  value={staffOptions.find((opt: any) => opt.realId === selectedStaffId)?.id || ""}
+                  placeholder={isLoadingStaff ? "Loading staff..." : "Select staff"}
+                  emptyMessage="No staff found"
+                  onChange={(value:any) => {
+                    // Find the realId and position from the selected option
+                    const selectedOption = staffOptions.find((opt: any) => opt.id === value)
+                    const realStaffId = selectedOption?.realId || value
+                    
+                    // Extract position from the searchable ID (format: "name position")
+                    const fullStaffData = staffsData?.staff.find((staff: any) => String(staff.staff_id) === realStaffId)
+                    const position = fullStaffData?.position || fullStaffData?.pos || ""
+                    
+                    // console.log("Selected staff:", value, "Real ID:", realStaffId, "Position:", position)
+                    setSelectedStaffId(realStaffId)
+                    setSelectedStaffPosition(position)
+                  }}
+                />
+              </div>
+            </div>
             <div className="mt-8 sm:mt-10 flex justify-end">
               <Button type="button" variant="outline" className="mt-4 mr-4 w-[120px] bg-transparent" onClick={back}>
                 Prev
               </Button>
-              <Button 
-                type="submit" 
-                className="mt-4 mr-4 w-[120px]"
-                disabled={isSubmitting || addPrenatalRecordMutation.isPending}
-                onClick={() => setIsConfirmOpen(true)}
-              >
-                
-                {isSubmitting ? 
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    "Submitting..." 
-                  </>
-                : "Submit"
-                }
+              <Button type="submit" className="mt-4 mr-4 w-[120px]" disabled={isSubmitting || addPrenatalRecordMutation.isPending}>
+                {(addPrenatalRecordMutation.isPending || isSubmitting) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit
               </Button>
             </div>
           </form>

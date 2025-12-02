@@ -45,6 +45,14 @@ class UpdateQueries:
       json=data
     )
     return response
+  
+  def group_position(self, data):
+    response = requests.patch(''
+      f"{self.client}/administration/position/update/group/",
+      json=data
+    )
+
+    return response
 
   
 # DELETE QUERIES

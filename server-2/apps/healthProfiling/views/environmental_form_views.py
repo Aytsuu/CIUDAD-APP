@@ -73,18 +73,58 @@ class EnvironmentalFormSubmitView(APIView):
             # Handle sanitary facility data
             if 'sanitary_facility' in data:
                 sanitary_data = data['sanitary_facility']
-                
+
+                # Map the selected specific facility type ID to a human-readable description
+                # The frontend selects use IDs like 'santype1', 'unsanType1', etc. We store the NAME into sf_desc.
+                sanitary_options = {
+                    'santype1': 'Pour/flush type with septic tank',
+                    'santype2': 'Pour/flush toilet connected to septic tank AND to sewerage',
+                    'santype3': 'Ventilated Pit (VIP) Latrine',
+                }
+                unsanitary_options = {
+                    'unsanType1': 'Water-sealed toilet without septic tank',
+                    'unsantype2': 'Overhung latrine',
+                    'unsantype3': 'Open Pit Latrine',
+                    'unsantype4': 'Without toilet',
+                }
+
+                facility_type = sanitary_data.get('facility_type', '')  # 'SANITARY' | 'UNSANITARY'
+                # Accept both snake_case and camelCase keys from the client
+                sanitary_specific_id = sanitary_data.get('sanitary_facility_type') or sanitary_data.get('sanitaryFacilityType')
+                unsanitary_specific_id = sanitary_data.get('unsanitary_facility_type') or sanitary_data.get('unsanitaryFacilityType')
+
+                # Prefer explicit name fields if the frontend sends them
+                sanitary_specific_name = sanitary_data.get('sanitary_facility_type_name') or sanitary_data.get('sanitaryFacilityTypeName')
+                unsanitary_specific_name = sanitary_data.get('unsanitary_facility_type_name') or sanitary_data.get('unsanitaryFacilityTypeName')
+
+                sf_desc = None
+                if facility_type == 'SANITARY':
+                    if sanitary_specific_name:
+                        sf_desc = sanitary_specific_name
+                    elif sanitary_specific_id:
+                        # If ID is provided map to name; if unknown, assume it's already a name
+                        sf_desc = sanitary_options.get(sanitary_specific_id, sanitary_specific_id)
+                elif facility_type == 'UNSANITARY':
+                    if unsanitary_specific_name:
+                        sf_desc = unsanitary_specific_name
+                    elif unsanitary_specific_id:
+                        sf_desc = unsanitary_options.get(unsanitary_specific_id, unsanitary_specific_id)
+
                 sanitary_facility, created = SanitaryFacility.objects.get_or_create(
                     hh=household,
                     defaults={
-                        'sf_type': sanitary_data.get('facility_type', ''),
-                        'sf_toilet_type': sanitary_data.get('toilet_facility_type', '')
+                        'sf_type': facility_type,
+                        'sf_toilet_type': sanitary_data.get('toilet_facility_type', ''),
+                        'sf_desc': sf_desc or '',
                     }
                 )
-                
+
                 if not created:
-                    sanitary_facility.sf_type = sanitary_data.get('facility_type', sanitary_facility.sf_type)
+                    sanitary_facility.sf_type = facility_type or sanitary_facility.sf_type
                     sanitary_facility.sf_toilet_type = sanitary_data.get('toilet_facility_type', sanitary_facility.sf_toilet_type)
+                    # Only update description when we can resolve it; otherwise leave as-is to avoid overwriting with None
+                    if sf_desc is not None:
+                        sanitary_facility.sf_desc = sf_desc
                     sanitary_facility.save()
 
                 results['sanitary_facility'] = 'created' if created else 'updated'

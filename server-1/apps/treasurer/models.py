@@ -31,7 +31,6 @@ class Budget_Plan_Detail(models.Model):
     dtl_id = models.BigAutoField(primary_key = True)
     dtl_budget_item = models.CharField(max_length=200)
     dtl_proposed_budget = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    # dtl_budget_category = models.CharField(max_length=200)
     plan = models.ForeignKey(Budget_Plan, on_delete=models.CASCADE, related_name='budget_detail')
     class Meta: 
         db_table = 'budget_plan_detail'
@@ -168,10 +167,10 @@ class Invoice(models.Model):
         related_name='treasurer_invoices' 
     )
 
-    spay_id = models.ForeignKey(
+    pay_id = models.ForeignKey(
         'clerk.ServiceChargePaymentRequest',
         on_delete=models.CASCADE, 
-        db_column='spay_id',
+        db_column='pay_id',
         null=True,
         blank=True,
         related_name='treasurer_spay_invoices' 
@@ -179,7 +178,7 @@ class Invoice(models.Model):
 
     class Meta:
         db_table = 'invoice'
-
+        
 #======================================================================================
 
 class Expense_Particular(models.Model):
@@ -350,4 +349,3 @@ class Purpose_And_Rates(models.Model):
 
     class Meta:
         db_table = 'purpose_and_rate'
-

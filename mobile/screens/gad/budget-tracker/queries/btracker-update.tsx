@@ -29,7 +29,6 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
           file.file && typeof file.file === 'string' && file.file.startsWith('data:')
         );
         if (validFiles.length > 0) {
-          console.log('Uploading files:', validFiles); // Debug log
           await updateGADBudgetFile(data.gbud_num, validFiles, false);
         }
       }
@@ -37,14 +36,13 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       return updatedEntry;
     },
     onSuccess: (_data, variables) => {
-      console.log('Mutation successful');
       const year = new Date(variables.budgetData.gbud_datetime).getFullYear().toString();
       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.budgetData.gbud_num] });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
       toast.success('Budget entry updated successfully');
     },
     onError: (error: any) => {
-      console.error('Mutation error:', error);
       toast.error(error.message || 'Failed to update budget entry');
     },
   });

@@ -91,3 +91,12 @@ export type StockRecords = {
   // wasted_items: number;
 
 };
+
+
+
+export function isVaccine(record: any): record is { type: "vaccine" } {
+  return record?.type === "vaccine";
+}
+export function isSupply(record: any): record is { type: "supply" } {
+  return record?.type === "supply";
+}

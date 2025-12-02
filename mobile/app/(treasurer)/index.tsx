@@ -1,6 +1,5 @@
-import IncomeExpenseMain from "@/screens/treasurer/treasurer-budget-tracker/income-expense-main"
+import Treasurer from "@/screens/treasurer"
 
-
-export default () => {
-    return <IncomeExpenseMain/>
+export default () =>{
+    return <Treasurer/>
 }

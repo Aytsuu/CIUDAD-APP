@@ -8,15 +8,11 @@ import {
   useAddRequest,
   useAddBusinessRespondent,
 } from "../../queries/authPostQueries";
-import { capitalizeAllFields } from "@/helpers/capitalize";
 import { useRegistrationTypeContext } from "@/contexts/RegistrationTypeContext";
 import { View, Text } from "react-native";
 import { Button } from "@/components/ui/button";
-import { useDispatch } from "react-redux";
-import { setAuthData } from "@/redux/auth-redux/authSlice";
 
 export default function IndividualScan() {
-  const dispatch = useDispatch()
   const { getValues, reset } = useRegistrationFormContext();
   const { type } = useRegistrationTypeContext();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
@@ -42,16 +38,11 @@ export default function IndividualScan() {
               ...acc,
               ...(email !== "" && {email: email})
             },
-          ],
+            role: "Independent",
+          }],
         },
         {
           onSuccess: (data) => {
-            console.log(data)
-            dispatch(setAuthData({ 
-              accessToken: data.access_token, 
-              user: data.user,
-              refreshToken: data.refresh_token 
-            }));
             setShowFeedback(false);
             setTimeout(() => {
               setStatus("success");
@@ -84,11 +75,6 @@ export default function IndividualScan() {
         }
       }, {
         onSuccess: (data) => {
-          dispatch(setAuthData({ 
-            accessToken: data.access_token, 
-            user: data.user,
-            refreshToken: data.refresh_token 
-          }));
           setShowFeedback(false);
           setTimeout(() => {
             setStatus("success");
@@ -133,8 +119,8 @@ export default function IndividualScan() {
           onPress={() => {
             setShowFeedback(false);  
             if(type == 'business') {
-              // reset()
-              router.replace('/(tabs)')
+              reset()
+              router.replace('/(auth)')
             } else {
               setTimeout(() => {
                 setStatus('message')

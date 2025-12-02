@@ -17,8 +17,6 @@ export type TemplateRecord = {
     }[];
 };
   
-
-
 export const useGetTemplateRecord = () => {
     return useQuery<TemplateRecord[]>({
         queryKey: ["templateRec"],
@@ -26,9 +24,6 @@ export const useGetTemplateRecord = () => {
         staleTime: 1000 * 60 * 30, // 30 minutes stale time
     });
 };
-
-
-
 
 export type PurposeRates = {
     pr_id: string;

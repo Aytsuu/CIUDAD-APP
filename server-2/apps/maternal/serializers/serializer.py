@@ -1,8 +1,4 @@
 from rest_framework import serializers
-from django.db import transaction 
-from datetime import date
-from django.utils import timezone
-from django.db.models import Max
 
 from apps.patientrecords.models import *
 from apps.maternal.models import *
@@ -11,6 +7,27 @@ from apps.patientrecords.serializers.patients_serializers import *
 from apps.administration.models import Staff 
 
 from utils.supabase_client import upload_to_storage
+
+
+# Staff Serializer
+class StaffSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    first_name = serializers.CharField(source='rp.per.per_fname', read_only=True)
+    last_name = serializers.CharField(source='rp.per.per_lname', read_only=True)
+    middle_name = serializers.CharField(source='rp.per.per_mname', read_only=True)
+    position = serializers.CharField(source='pos.pos_title', read_only=True)
+    
+    class Meta:
+        model = Staff
+        fields = ['staff_id', 'first_name', 'last_name', 'middle_name', 'position', 'full_name', 'staff_type']
+    
+    def get_full_name(self, obj):
+        try:
+            per = obj.rp.per
+            middle_initial = f"{per.per_mname[0]}." if per.per_mname else ""
+            return f"{per.per_fname} {middle_initial} {per.per_lname}".strip()
+        except:
+            return "Unknown"
 
 
 # serializer for models not in maternal
@@ -23,9 +40,24 @@ class MedicalHistorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MedicalHistoryCreateSerializer(serializers.ModelSerializer):
+    year = serializers.CharField(write_only=True, required=False, allow_null=True, allow_blank=True)
+    
     class Meta:
         model = MedicalHistory
-        fields = ['ill_date', 'ill']
+        fields = ['ill_date', 'ill', 'year']
+    
+    def validate(self, attrs):
+        # If 'year' is provided, use it for 'ill_date'
+        year = attrs.pop('year', None)
+        if year is not None and year != '':
+            # Keep the full date string (YYYY-MM-DD, YYYY-MM, or YYYY)
+            attrs['ill_date'] = str(year).strip()
+        elif 'ill_date' not in attrs or attrs.get('ill_date') is None or attrs.get('ill_date') == '':
+            # If no year or ill_date provided, default to current year
+            from datetime import datetime
+            attrs['ill_date'] = str(datetime.now().year)
+        
+        return attrs
     
     def create(self, validated_data):
         cleaned_data = {k: v for k, v in validated_data.items() if v is not None}
@@ -73,7 +105,7 @@ class ObstetricalHistoryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Obstetrical_History
         fields = ['obs_ch_born_alive', 'obs_living_ch', 'obs_abortion', 'obs_still_birth', 'obs_lg_babies',
-                  'obs_lg_babies_str', 'obs_gravida', 'obs_para', 'obs_fullterm', 'obs_preterm', 'obs_record_from']
+                  'obs_lg_babies_str', 'obs_gravida', 'obs_para', 'obs_fullterm', 'obs_preterm', 'obs_lmp']
 # end of serializer for models not in maternal
 
 class PreviousHospitalizationCreateSerializer(serializers.ModelSerializer):
@@ -84,13 +116,16 @@ class PreviousHospitalizationCreateSerializer(serializers.ModelSerializer):
 class PreviousPregnancyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Previous_Pregnancy
-        fields = ['date_of_delivery', 'outcome', 'type_of_delivery', 'babys_wt', 'gender', 'ballard_score', 'apgar_score']
+        fields = ['date_of_delivery', 'outcome', 'type_of_delivery', 'babys_wt', 'gender', 'ballard_score', 'apgar_score','patrec_id']
         extra_kwargs = { 'date_of_delivery': {'required': False, 'allow_null': True} }
 
 class TTStatusCreateSerializer(serializers.ModelSerializer):
+    # vaccineType is not a model field - it's used to pass vaccine stock info for creating VaccinationRecord
+    vaccineType = serializers.CharField(required=False, allow_blank=True, allow_null=True, write_only=True)
+    
     class Meta:
         model = TT_Status
-        fields = ['tts_status', 'tts_date_given', 'tts_tdap']
+        fields = ['tts_status', 'tts_date_given', 'tts_tdap', 'vaccineType']
 
 class LaboratoryResultImgCreateSerializer(serializers.ModelSerializer):
     # image_url, image_name, image_type, image_size will be handled in create method
@@ -243,12 +278,12 @@ class PrenatalPatientObstetricalHistorySerializer(serializers.ModelSerializer):
         
         except Exception as e:
             return None
-
+        
 
 class PrenatalDetailViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Prenatal_Form
-        fields = ['pf_id', 'pf_lmp', 'pf_edc', 'created_at']
+        fields = ['pf_id', 'pf_edc', 'created_at']
 
 
 class PrenatalCareSerializer(serializers.ModelSerializer):
@@ -258,3 +293,4 @@ class PrenatalCareSerializer(serializers.ModelSerializer):
             'pfpc_id', 'pf_id', 'pfpc_date', 'pfpc_aog_wks', 'pfpc_aog_days', 'pfpc_fundal_ht',
             'pfpc_fetal_hr', 'pfpc_fetal_pos', 'pfpc_complaints', 'pfpc_advises'
         ]
+

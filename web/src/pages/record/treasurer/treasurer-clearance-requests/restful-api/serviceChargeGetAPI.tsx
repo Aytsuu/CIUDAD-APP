@@ -10,6 +10,11 @@ export type ServiceCharge = {
   comp_id: number;
   staff_id: number | null;
   complainant_name: string | null;
+  complainant_names?: string[] | null;
+  complainant_addresses?: string[] | null;
+  accused_names?: string[] | null;
+  accused_addresses?: string[] | null;
+  pay_reason?: string | null;
   payment_request: {
     spay_id: number;
     spay_status: string;
@@ -19,9 +24,27 @@ export type ServiceCharge = {
   } | null;
 };
 
-export async function getTreasurerServiceCharges(): Promise<ServiceCharge[]> {
-  const { data } = await api.get<ServiceCharge[]>('/clerk/treasurer/service-charges/');
-  return (data ?? []).filter(item => !item.sr_code || String(item.sr_code).trim() === '');
+export type ServiceChargeResponse = {
+  results: ServiceCharge[];
+  count: number;
+  next: string | null;
+  previous: string | null;
+};
+
+export async function getTreasurerServiceCharges(
+  search?: string,
+  page?: number,
+  pageSize?: number,
+  tab?: "unpaid" | "paid" | "declined"
+): Promise<ServiceChargeResponse> {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (page) params.append('page', page.toString());
+  if (pageSize) params.append('page_size', pageSize.toString());
+  if (tab) params.append('tab', tab);
+  
+  const { data } = await api.get<ServiceChargeResponse>(`/clerk/treasurer/service-charges/?${params.toString()}`);
+  return data ?? { results: [], count: 0, next: null, previous: null };
 }
 
 export type PurposeRate = {
@@ -39,25 +62,26 @@ export async function getServiceChargeRate(): Promise<PurposeRate | null> {
   );
   // Filter for Service Charge purpose and return the first match
   const serviceChargeRate = data?.find(item => 
-    item.pr_purpose === 'Summons' && 
+    item.pr_purpose === 'Summon' && 
     item.pr_category === 'Service Charge' && 
     !item.pr_is_archive
   );
   return serviceChargeRate ?? null;
 }
 
-export async function createServiceChargePaymentRequest(params: { sr_id: string; pr_id: number | string; spay_amount?: number; spay_status?: string; }): Promise<any> {
+export async function createServiceChargePaymentRequest(params: { sr_id: string; pr_id: number | string; spay_amount?: number; spay_status?: string; pay_sr_type?: string; }): Promise<any> {
   const payload = {
     sr_id: params.sr_id,
     pr_id: params.pr_id,
     spay_amount: params.spay_amount,
     spay_status: params.spay_status ?? 'Unpaid',
+    pay_sr_type: params.pay_sr_type ?? 'File Action',
   } as const;
-  const { data } = await api.post('/clerk/service-charge-payment-request/', payload);
+  const { data } = await api.post('/clerk/service-charge-payment-req/', payload);
   return data;
 }
 
 export async function acceptSummonRequest(sr_id: string): Promise<any> {
-  const { data } = await api.put(`/clerk/update-summon-request/${sr_id}/`, { sr_req_status: 'Accepted' });
+  const { data } = await api.put(`/clerk/update-summon-case/${sr_id}/`, { sr_req_status: 'Accepted' });
   return data;
 }

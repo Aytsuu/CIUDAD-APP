@@ -15,407 +15,43 @@ from apps.complaint.models import Complainant, Accused, ComplaintAccused
 from apps.treasurer.models import Invoice
 from apps.act_log.utils import create_activity_log
 from .models import (
-    SummonDateAvailability,
-    SummonTimeAvailability,
     ClerkCertificate,
     IssuedCertificate,
     BusinessPermitRequest,
     IssuedBusinessPermit,
-    Business,
-    ServiceChargeRequest,
-    BusinessPermitFile,
 )
 from rest_framework.generics import RetrieveAPIView
 from django.http import Http404 
 from django.db.models import Q
+from utils.supabase_client import upload_to_storage
+import base64
+import uuid
 
 logger = logging.getLogger(__name__)
-
-# ==================== MIGHT DELETE LATER ========================
-# class ServiceChargeRequestView(generics.ListCreateAPIView):
-#     permission_classes = [AllowAny]
-#     serializer_class = ServiceChargeRequestSerializer
-
-#     def get_queryset(self):
-#         queryset = ServiceChargeRequest.objects.filter(
-#             sr_payment_status="Paid", 
-#             sr_type="Summon"
-#         ).select_related(
-#             'comp'
-#         )
-        
-#         # Only apply prefetch_related if there are records with complaints
-#         if queryset.filter(comp__isnull=False).exists():
-#             queryset = queryset.prefetch_related(
-#                 Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-#                 Prefetch('comp__complaintaccused_set', queryset=ComplaintAccused.objects.select_related('acsd')),
-#                 'file_action_file'
-#             )
-        
-#         return queryset.order_by('-sr_req_date')
-
-# class FileActionrequestView(generics.ListCreateAPIView):
-#     serializer_class = FileActionRequestSerializer
-#     queryset = ServiceChargeRequest.objects.all()
-
-# class FileActionrequestView(generics.ListCreateAPIView):
-#     serializer_class = FileActionRequestSerializer
     
-#     def get_queryset(self):
-#         return ServiceChargeRequest.objects.select_related(
-#             'comp',
-#             'file_action_file'
-#         ).prefetch_related(
-#             Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-#             Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add'))
-#         ).order_by('-sr_req_date')
 
-# class ServiceChargeRequestDetailView(generics.RetrieveAPIView):
-#     serializer_class = ServiceChargeRequestDetailSerializer
-#     lookup_field = 'sr_id'
-    
-#     def get_queryset(self):
-#         return ServiceChargeRequest.objects.filter(
-#             sr_payment_status="Paid",
-#             sr_type="Summon"
-#         ).select_related(
-#             'comp',
-#             'file_action_file',
-#             'parent_summon'
-#         ).prefetch_related(
-#             Prefetch('comp__complainant', queryset=Complainant.objects.select_related('add')),
-#             Prefetch('comp__complaintaccused_set__acsd', queryset=Accused.objects.select_related('add')),
-#             Prefetch('case', queryset=CaseActivity.objects.prefetch_related(
-#                 'supporting_docs',
-#                 'srf'
-#             ))
-#         )
-            
-# class CaseActivityView(generics.ListCreateAPIView):
-#     serializer_class = CaseActivitySerializer
-#     queryset = CaseActivity.objects.all()
-
-# class CaseActivityView(generics.ListCreateAPIView):
-#     serializer_class = CaseActivitySerializer
-    
-#     def get_queryset(self):
-#         return CaseActivity.objects.select_related(
-#             'sr',
-#             'srf'
-#         ).prefetch_related(
-#             'supporting_docs'
-#         ).order_by('-ca_date_of_issuance')
-
-# class CaseSuppDocView(generics.ListCreateAPIView):
-#     serializer_class = CaseSuppDocSerializer
-    
-#     def get_queryset(self):
-#         queryset = CaseSuppDoc.objects.all()
-#         ca_id = self.kwargs.get('ca_id')
-#         if ca_id is not None:
-#             queryset = queryset.filter(ca_id=ca_id)
-#         return queryset
-    
-# class DeleteCaseSuppDocView(generics.RetrieveDestroyAPIView):
-#     queryset = CaseSuppDoc.objects.all()
-#     serializer_class = CaseSuppDocSerializer
-#     lookup_field = 'csd_id'
-
-# class UpdateCaseSuppDocView(generics.UpdateAPIView):
-#     serializer_class = CaseSuppDocSerializer
-#     queryset = CaseSuppDoc.objects.all()
-#     lookup_field = 'csd_id'
-
-#     def update(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-# class CaseSuppDocView(generics.ListCreateAPIView):
-#     serializer_class = CaseSuppDocSerializer
-    
-#     def get_queryset(self):
-#         queryset = CaseSuppDoc.objects.all()
-#         ca_id = self.kwargs.get('ca_id')
-#         if ca_id is not None:
-#             queryset = queryset.filter(ca_id=ca_id)
-#         return queryset
-    
-# class DeleteCaseSuppDocView(generics.RetrieveDestroyAPIView):
-#     queryset = CaseSuppDoc.objects.all()
-#     serializer_class = CaseSuppDocSerializer
-#     lookup_field = 'csd_id'
-
-# class UpdateCaseSuppDocView(generics.UpdateAPIView):
-#     serializer_class = CaseSuppDocSerializer
-#     queryset = CaseSuppDoc.objects.all()
-#     lookup_field = 'csd_id'
-
-#     def update(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data, status=status.HTTP_200_OK)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class UpdateServiceChargeRequestView(ActivityLogMixin, generics.UpdateAPIView):
-    serializer_class = ServiceChargeRequestSerializer
-    queryset = ServiceChargeRequest.objects.all()
-    lookup_field = 'sr_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-# class ServiceChargeRequestFileView(generics.ListCreateAPIView):
-#     serializer_class = ServiceChargeRequestFileSerializer
-#     queryset = ServiceChargeRequestFile.objects.all()
-# =======================================================
-
-# class ServiceChargeRequestView(generics.ListAPIView):
-#     serializer_class = ServiceChargeRequestSerializer
-    
-#     def get_queryset(self):
-#         queryset = ServiceChargeRequest.objects.filter(
-#             sr_req_status='Pending',
-#             sr_type = 'Summon'  
-#         ).select_related(
-#             'comp_id'
-#         ).prefetch_related(
-#             'comp_id__complainant',
-#             'comp_id__accused'
-#         )
-#         return queryset
-
-class SummonRequestPendingListView(generics.ListAPIView):
-    serializer_class = SummonRequestPendingListSerializer
-    
-    def get_queryset(self):
-        queryset = ServiceChargeRequest.objects.filter(
-            sr_req_status='Pending',
-            sr_type='Summon'
-        ).select_related('comp_id').prefetch_related(
-            'comp_id__complaintcomplainant_set__cpnt',
-            'comp_id__complaintaccused_set__acsd'
-        )
-        return queryset
-    
-class SummonRequestRejectedListView(generics.ListAPIView):
-    serializer_class = SummonRequestRejectedListSerializer
-    
-    def get_queryset(self):
-        queryset = ServiceChargeRequest.objects.filter(
-            sr_req_status__iexact='Rejected',
-            sr_type='Summon'
-        ).select_related('comp_id').prefetch_related(
-            'servicechargedecision',  
-            'comp_id__complaintcomplainant_set__cpnt',  
-            'comp_id__complaintaccused_set__acsd' 
-        )
-        return queryset
-    
-class SummonRequestAcceptedListView(generics.ListAPIView):
-    serializer_class = SummonRequestAcceptedListSerializer
-    
-    def get_queryset(self):
-        queryset = ServiceChargeRequest.objects.filter(
-            sr_req_status__iexact='Accepted',
-            sr_type='Summon'
-        ).select_related('comp_id').prefetch_related(
-            'servicechargedecision',  
-            'comp_id__complaintcomplainant_set__cpnt',  
-            'comp_id__complaintaccused_set__acsd' 
-        )
-        return queryset
-    
-class SummonCaseListView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SummonCaseListSerializer
-
-    def get_queryset(self):
-        queryset = ServiceChargeRequest.objects.filter(
-            sr_type="Summon",
-            servicechargepaymentrequest__spay_status="Paid"
-        ).select_related(
-            'comp_id'
-        ).prefetch_related(
-            Prefetch('comp_id__complaintcomplainant_set__cpnt'),
-            Prefetch('comp_id__complaintaccused_set__acsd'),
-            'servicechargedecision',
-            'servicechargepaymentrequest'
-        ).distinct()
-        
-        return queryset.order_by('sr_code')
-
-
-class ServiceChargeRequestDetailView(RetrieveAPIView):
-    serializer_class = ServiceChargeRequestDetailSerializer
-    queryset = ServiceChargeRequest.objects.all()
-    lookup_field = 'sr_id' 
-
-class SummonScheduleByServiceRequestView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SummonScheduleDetailSerializer
-    
-    def get_queryset(self):
-        sr_id = self.kwargs['sr_id']
-        return SummonSchedule.objects.filter(
-            sr_id=sr_id
-        ).select_related(
-            'sr_id',
-            'sd_id',
-            'st_id'
-        ).order_by('sd_id__sd_date', 'st_id__st_start_time')
-
-class SummonScheduleCreateView(ActivityLogMixin, generics.ListCreateAPIView):
-    serializer_class = SummonScheduleSerializer
-    queryset = SummonSchedule.objects.all()
-    
-class UpdateSummonScheduleView(ActivityLogMixin, generics.UpdateAPIView):
-    serializer_class = SummonScheduleSerializer
-    queryset = SummonSchedule.objects.all()
-    lookup_field = 'ss_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    
 class ServiceChargePaymentRequestView(generics.ListCreateAPIView):
     serializer_class = ServiceChargePaymentRequestSerializer
     queryset = ServiceChargePaymentRequest.objects.all()
     
-class UpdateSummonRequestView(generics.UpdateAPIView):
-    serializer_class = SummonRequestSerializer
-    queryset = ServiceChargeRequest.objects.all()
-    lookup_field = 'sr_id'
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
+#========================== CASE TACKING VIEW ========================
+# class CaseTrackingView(generics.RetrieveAPIView):
+#     serializer_class = CaseTrackingSerializer
+#     def get_object(self):
+#         comp_id = self.kwargs.get('comp_id')
         
-        # Check if status is being updated to "Paid" and sr_code needs to be generated
-        if (request.data.get('status') == 'Paid' or 
-            request.data.get('sr_req_status') == 'Paid') and not instance.sr_code:
+#         try:
+#             case = ServiceChargeRequest.objects.get(comp_id=comp_id)
             
-            # Generate sr_code using the logic: 0000-25, 0001-25, etc.
-            sr_count = ServiceChargeRequest.objects.count() + 1
-            year_suffix = timezone.now().year % 100
-            sr_code = f"{sr_count:04d}-{year_suffix:02d}"
-            
-            # Add sr_code to the request data
-            request.data['sr_code'] = sr_code
-            
-            logger.info(f"Generated sr_code: {sr_code} for ServiceChargeRequest: {instance.sr_id}")
-        
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#             return case
+#         except ServiceChargeRequest.DoesNotExist:
+#             raise Http404("Case not found for this complaint")
     
-class SummonSuppDocView(generics.ListCreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SummonSuppDocCreateSerializer
-    queryset = SummonSuppDoc.objects.all()
-
-    
-class SummonSuppDocRetrieveView(generics.ListCreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = SummonSuppDocViewSieralizer
-
-    def get_queryset(self):
-        ss_id = self.kwargs.get('ss_id')
-        if ss_id:
-            # Use the exact field name from your model
-            return SummonSuppDoc.objects.filter(ss_id=ss_id)
-        return SummonSuppDoc.objects.all()
-    
-
-class ServiceChargeDecisionView(generics.ListCreateAPIView):
-    serializer_class = ServiceChargeDecisionSerializer
-    queryset = ServiceChargeDecision.objects.all()
-
-class SummonDateAvailabilityView(generics.ListCreateAPIView):
-    serializer_class = SummonDateAvailabilitySerializer
-    queryset = SummonDateAvailability.objects.all()
-
-
-class DeleteSummonDateAvailability(generics.RetrieveDestroyAPIView):
-    queryset = SummonDateAvailability.objects.all()
-    serializer_class = SummonDateAvailabilitySerializer
-    lookup_field = 'sd_id'
-
-class SummonTimeAvailabilityView(generics.ListCreateAPIView):
-    serializer_class = SummonTimeAvailabilitySerializer
-    queryset = SummonTimeAvailability.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        if isinstance(request.data, list):
-            serializer = self.get_serializer(data=request.data, many=True)
-            serializer.is_valid(raise_exception=True)
-            SummonTimeAvailability.objects.bulk_create([
-                SummonTimeAvailability(**data) for data in serializer.validated_data
-            ])
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return super().create(request, *args, **kwargs)
-
-class SummonTimeAvailabilityByDateView(generics.ListAPIView):
-    serializer_class = SummonTimeAvailabilitySerializer
-
-    def get_queryset(self):
-        sd_id = self.kwargs.get('sd_id')  # get from URL path
-        queryset = SummonTimeAvailability.objects.all()
-        if sd_id is not None:
-            queryset = queryset.filter(sd_id=sd_id)
-        return queryset
-
-class DeleteSummonTimeAvailabilityView(generics.RetrieveDestroyAPIView):
-    queryset = SummonTimeAvailability.objects.all()
-    serializer_class = SummonTimeAvailabilitySerializer
-    lookup_field = 'st_id'
-
-
-class UpdateSummonTimeAvailabilityView(generics.UpdateAPIView):
-    serializer_class = SummonTimeAvailabilitySerializer
-    queryset = SummonTimeAvailability.objects.all()
-    lookup_field = 'st_id'
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CaseTrackingView(generics.RetrieveAPIView):
-    serializer_class = CaseTrackingSerializer
-    def get_object(self):
-        comp_id = self.kwargs.get('comp_id')
-        
-        try:
-            case = ServiceChargeRequest.objects.get(comp_id=comp_id)
-            
-            return case
-        except ServiceChargeRequest.DoesNotExist:
-            raise Http404("Case not found for this complaint")
-    
-    def get(self, request, *args, **kwargs):
-        case = self.get_object()
-        serializer = self.get_serializer(case)
-        return Response(serializer.data)
+#     def get(self, request, *args, **kwargs):
+#         case = self.get_object()
+#         serializer = self.get_serializer(case)
+#         return Response(serializer.data)
 
 
 
@@ -424,29 +60,49 @@ class CaseTrackingView(generics.RetrieveAPIView):
 class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = ClerkCertificateSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        return (
-            ClerkCertificate.objects.filter(
-                cr_req_payment_status="Paid"
+        queryset = ClerkCertificate.objects.select_related(
+            'rp_id__per',
+            'pr_id'
+        ).prefetch_related(
+            'rp_id__per__personal_addresses__add'
+        ).prefetch_related(
+            Prefetch(
+                'issuedcertificate_set',
+                queryset=IssuedCertificate.objects.select_related('certificate', 'staff')
             )
-            .exclude(
-                issuedcertificate__isnull=False
+        ).all()
+
+        # Search functionality - matching web version
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(cr_id__icontains=search) |
+                Q(rp_id__per__per_fname__icontains=search) |
+                Q(rp_id__per__per_lname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(cr_req_status__icontains=search) |
+                Q(cr_req_payment_status__icontains=search)
             )
-            .select_related(
-                'rp_id__per',
-                'pr_id'
-            )
-            .prefetch_related(
-                'rp_id__per__personal_addresses__add'
-            )
-            .prefetch_related(
-                Prefetch(
-                    'issuedcertificate_set',
-                    queryset=IssuedCertificate.objects.select_related('certificate', 'staff')
-                )
-            )
-        )
+
+        # Status filter - matching web version
+        status_filter = self.request.GET.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(cr_req_status=status_filter)
+
+        # Payment status filter - matching web version
+        payment_status = self.request.GET.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(cr_req_payment_status=payment_status)
+
+        # Purpose filter - matching web version
+        purpose_filter = self.request.query_params.get('purpose', None)
+        if purpose_filter:
+            queryset = queryset.filter(pr_id__pr_purpose=purpose_filter)
+
+        return queryset.order_by('-cr_req_request_date')
 
     def create(self, request, *args, **kwargs):
         try:
@@ -479,12 +135,20 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
                     staff = Staff.objects.filter(staff_id=staff_id_str).first()
                     
                     if staff:
+                        # Get resident name
+                        resident_name = "Unknown"
+                        if certificate.rp_id and certificate.rp_id.per:
+                            per = certificate.rp_id.per
+                            resident_name = f"{per.per_fname} {per.per_lname}"
+                        
+                        # Get purpose
+                        purpose = certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'
+                        
                         create_activity_log(
                             act_type="Personal Clearance Request Created",
-                            act_description=f"Personal clearance request {certificate.cr_id} created for {certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'}",
+                            act_description=f"Personal clearance request {certificate.cr_id} created for {resident_name} ({purpose})",
                             staff=staff,
-                            record_id=certificate.cr_id,
-                            feat_name="Personal Clearance Management"
+                            record_id=certificate.cr_id
                         )
                         logger.info(f"Activity logged for certificate creation: {certificate.cr_id}")
                     else:
@@ -504,6 +168,14 @@ class CertificateListView(ActivityLogMixin, generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
+            
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            # Fallback for non-paginated requests
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -523,11 +195,13 @@ class NonResidentsCertReqView(ActivityLogMixin, generics.ListCreateAPIView):
         queryset = NonResidentCertificateRequest.objects.select_related('pr_id').all()
         
         # Search functionality
-        search = self.request.query_params.get('search', None)
+        search = self.request.GET.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(nrc_id__icontains=search) |
-                Q(nrc_requester__icontains=search) |
+                Q(nrc_lname__icontains=search) |
+                Q(nrc_fname__icontains=search) |
+                Q(nrc_mname__icontains=search) |
                 Q(nrc_address__icontains=search) |
                 Q(pr_id__pr_purpose__icontains=search) |
                 Q(nrc_req_status__icontains=search) |
@@ -535,12 +209,12 @@ class NonResidentsCertReqView(ActivityLogMixin, generics.ListCreateAPIView):
             )
         
         # Status filter
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.GET.get('status', None)
         if status_filter:
             queryset = queryset.filter(nrc_req_status=status_filter)
         
         # Payment status filter
-        payment_status = self.request.query_params.get('payment_status', None)
+        payment_status = self.request.GET.get('payment_status', None)
         if payment_status:
             queryset = queryset.filter(nrc_req_payment_status=payment_status)
         
@@ -577,12 +251,78 @@ class UpdateNonResidentCertReqView(ActivityLogMixin, generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         old_payment_status = instance.nrc_req_payment_status
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        old_status = instance.nrc_req_status
+        
+        # If req_status is being set to Declined or Cancelled, also set payment status to the same value
+        request_data = request.data.copy()
+        if 'nrc_req_status' in request_data:
+            new_status = request_data.get('nrc_req_status')
+            if new_status in ['Declined', 'Cancelled']:
+                # Only set payment status if not explicitly provided in request
+                if 'nrc_req_payment_status' not in request_data:
+                    request_data['nrc_req_payment_status'] = new_status
+        
+        serializer = self.get_serializer(instance, data=request_data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
-        # Check if payment status changed to "Paid" and create automatic income entry
+        # Get updated instance to check for changes
+        instance.refresh_from_db()
         new_payment_status = instance.nrc_req_payment_status
+        new_status = instance.nrc_req_status
+        
+        # Log request status change activity if it changed to Declined
+        if old_status != new_status and new_status == "Declined":
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from instance
+                if not staff and hasattr(instance, 'staff_id') and instance.staff_id:
+                    staff_id = getattr(instance.staff_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get non-resident name
+                    resident_name = f"{instance.nrc_fname} {instance.nrc_lname}".strip()
+                    if not resident_name:
+                        resident_name = "Unknown"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Get decline reason
+                    decline_reason = instance.nrc_reason if hasattr(instance, 'nrc_reason') and instance.nrc_reason and instance.nrc_reason != 'None' else 'No reason provided'
+                    
+                    # Create activity log for non-resident certificate decline
+                    create_activity_log(
+                        act_type="Certificate Status Updated",
+                        act_description=f"Non-resident certificate {instance.nrc_id} request status changed from '{old_status}' to '{new_status}' for {resident_name} ({purpose}). Reason: {decline_reason}",
+                        staff=staff,
+                        record_id=instance.nrc_id
+                    )
+                    logger.info(f"Activity logged for non-resident certificate status decline: {instance.nrc_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for non-resident certificate status decline logging: {instance.nrc_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log non-resident certificate status decline activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+        
+        # Check if payment status changed to "Paid" and create automatic income entry
         if old_payment_status != "Paid" and new_payment_status == "Paid":
             try:
                 from apps.treasurer.utils import create_automatic_income_entry
@@ -641,12 +381,131 @@ class CertificateStatusUpdateView(ActivityLogMixin, generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         old_payment_status = instance.cr_req_payment_status
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        old_status = instance.cr_req_status
+        
+        # If req_status is being set to Declined or Cancelled, also set payment status to the same value
+        request_data = request.data.copy()
+        if 'cr_req_status' in request_data:
+            new_status = request_data.get('cr_req_status')
+            if new_status in ['Declined', 'Cancelled']:
+                # Only set payment status if not explicitly provided in request
+                if 'cr_req_payment_status' not in request_data:
+                    request_data['cr_req_payment_status'] = new_status
+        
+        serializer = self.get_serializer(instance, data=request_data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         
-        # Check if payment status changed to "Paid" and create automatic income entry
+        # Get updated instance to check for changes
+        instance.refresh_from_db()
         new_payment_status = instance.cr_req_payment_status
+        new_status = instance.cr_req_status
+        
+        # Debug logging
+        logger.info(f"CertificateStatusUpdateView update: cr_id={instance.cr_id}, old_payment_status={old_payment_status}, new_payment_status={new_payment_status}, old_status={old_status}, new_status={new_status}")
+        
+        # Log request status change activity if it changed to Declined
+        if old_status != new_status and new_status == "Declined":
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Get decline reason
+                    decline_reason = instance.cr_reason if hasattr(instance, 'cr_reason') and instance.cr_reason and instance.cr_reason != 'None' else 'No reason provided'
+                    
+                    # Create activity log for certificate decline
+                    create_activity_log(
+                        act_type="Certificate Status Updated",
+                        act_description=f"Certificate {instance.cr_id} request status changed from '{old_status}' to '{new_status}' for {resident_name} ({purpose}). Reason: {decline_reason}",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for certificate status decline: {instance.cr_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for certificate status decline logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log certificate status decline activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+        
+        # Log payment status change activity if it changed
+        if old_payment_status != new_payment_status:
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for certificate {instance.cr_id} changed from '{old_payment_status}' to '{new_payment_status}' for {resident_name} ({purpose})",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for certificate status update payment change: {instance.cr_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for certificate status update payment change logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log certificate status update payment change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+        
+        # Check if payment status changed to "Paid" and create automatic income entry
         if old_payment_status != "Paid" and new_payment_status == "Paid":
             try:
                 from apps.treasurer.utils import create_automatic_income_entry
@@ -707,7 +566,119 @@ class CertificateDetailView(ActivityLogMixin, generics.RetrieveUpdateAPIView):  
         old_payment_status = instance.cr_req_payment_status
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        
+        # Debug logging
+        logger.info(f"CertificateDetailView update: cr_id={instance.cr_id}, old_payment_status={old_payment_status}, new_data={request.data}")
+        
+        old_status = instance.cr_req_status
+        
         self.perform_update(serializer)
+        
+        # Get updated instance to check for changes
+        instance.refresh_from_db()
+        new_payment_status = instance.cr_req_payment_status
+        new_status = instance.cr_req_status
+        
+        # Log request status change activity if it changed to Declined
+        if old_status != new_status and new_status == "Declined":
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Get decline reason
+                    decline_reason = instance.cr_reason if hasattr(instance, 'cr_reason') and instance.cr_reason and instance.cr_reason != 'None' else 'No reason provided'
+                    
+                    # Create activity log for certificate decline
+                    create_activity_log(
+                        act_type="Certificate Status Updated",
+                        act_description=f"Certificate {instance.cr_id} request status changed from '{old_status}' to '{new_status}' for {resident_name} ({purpose}). Reason: {decline_reason}",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for certificate status decline: {instance.cr_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for certificate status decline logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log certificate status decline activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+        
+        # Log payment status change activity if it changed
+        if old_payment_status != new_payment_status:
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for certificate {instance.cr_id} changed from '{old_payment_status}' to '{new_payment_status}' for {resident_name} ({purpose})",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for certificate payment status change: {instance.cr_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for certificate payment status change logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log certificate payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
         
         # Check if payment status changed to "Paid" and create automatic income entry
         new_payment_status = instance.cr_req_payment_status
@@ -762,10 +733,12 @@ class CancelCertificateView(APIView):
         try:
             cert = ClerkCertificate.objects.get(cr_id=cr_id)
             cert.cr_req_status = 'Cancelled'
+            # Also set payment status to Cancelled when cancelling
+            cert.cr_req_payment_status = 'Cancelled'
             # set rejection date for cancelled requests
             cert.cr_date_rejected = timezone.now()
             cert.cr_reason = 'Cancelled by user'
-            cert.save(update_fields=['cr_req_status', 'cr_date_rejected', 'cr_reason'])
+            cert.save(update_fields=['cr_req_status', 'cr_req_payment_status', 'cr_date_rejected', 'cr_reason'])
             return Response({
                 'message': 'Cancelled',
                 'cr_id': cert.cr_id,
@@ -777,18 +750,145 @@ class CancelCertificateView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+class CancelBusinessPermitView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, bpr_id):
+        try:
+            permit = BusinessPermitRequest.objects.get(bpr_id=bpr_id)
+            old_status = permit.req_status
+            # Accept req_status from request, default to 'Cancelled' if not provided
+            new_status = request.data.get('req_status', 'Cancelled')
+            permit.req_status = new_status
+            
+            # If req_status is Declined or Cancelled, also set payment status to the same value
+            if new_status in ['Declined', 'Cancelled']:
+                # Use payment status from request if provided, otherwise set to same as req_status
+                permit.req_payment_status = request.data.get('req_payment_status', new_status)
+            
+            # Set cancellation date for cancelled requests
+            permit.req_date_completed = timezone.now().date()
+            # Save the decline/cancel reason
+            permit.bus_reason = request.data.get('bus_reason')
+            permit.save(update_fields=['req_status', 'req_payment_status', 'req_date_completed', 'bus_reason'])
+            
+            # Log activity if status changed to Declined
+            if old_status != permit.req_status and permit.req_status == "Declined":
+                try:
+                    from apps.act_log.utils import create_activity_log
+                    from apps.administration.models import Staff
+                    
+                    # Get staff member
+                    staff = None
+                    staff_id = request.data.get('staff_id')
+                    
+                    if staff_id:
+                        # Format staff_id properly (pad with leading zeros if needed)
+                        if len(str(staff_id)) < 11:
+                            staff_id = str(staff_id).zfill(11)
+                        staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    # Fallback: try to get staff from instance
+                    if not staff and hasattr(permit, 'staff_id') and permit.staff_id:
+                        staff_id = getattr(permit.staff_id, 'staff_id', None)
+                        if staff_id and len(str(staff_id)) < 11:
+                            staff_id = str(staff_id).zfill(11)
+                        staff = Staff.objects.filter(staff_id=staff_id).first()
+                    
+                    # Only log if we have a valid staff with staff_id
+                    if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                        # Get business name and owner
+                        business_name = permit.bus_permit_name or "Unknown Business"
+                        owner_name = "Unknown Owner"
+                        if permit.rp_id and permit.rp_id.per:
+                            per = permit.rp_id.per
+                            owner_name = f"{per.per_fname} {per.per_lname}"
+                        elif hasattr(permit, 'bus_nonresident_name') and permit.bus_nonresident_name:
+                            owner_name = permit.bus_nonresident_name
+                        
+                        # Get purpose
+                        purpose = permit.pr_id.pr_purpose if permit.pr_id else 'N/A'
+                        
+                        # Get decline reason
+                        decline_reason = permit.bus_reason if hasattr(permit, 'bus_reason') and permit.bus_reason else 'No reason provided'
+                        
+                        # Create activity log for business permit decline
+                        create_activity_log(
+                            act_type="Business Permit Status Updated",
+                            act_description=f"Business permit {permit.bpr_id} request status changed from '{old_status}' to '{permit.req_status}' for '{business_name}' (Owner: {owner_name}) - {purpose}. Reason: {decline_reason}",
+                            staff=staff,
+                            record_id=permit.bpr_id
+                        )
+                        logger.info(f"Activity logged for business permit status decline: {permit.bpr_id}")
+                    else:
+                        logger.warning(f"No valid staff with staff_id found for business permit status decline logging: {permit.bpr_id}")
+                        
+                except Exception as log_error:
+                    logger.error(f"Failed to log business permit status decline activity: {str(log_error)}")
+                    # Don't fail the request if logging fails
+            
+            return Response({
+                'message': permit.req_status,
+                'bpr_id': permit.bpr_id,
+                'req_status': permit.req_status,
+                'req_date_completed': permit.req_date_completed,
+                'bus_reason': permit.bus_reason
+            }, status=status.HTTP_200_OK)
+        except BusinessPermitRequest.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class IssuedCertificateListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = IssuedCertificateSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         try:
-            base_qs = IssuedCertificate.objects.all()
-            logger.info(f"Found {base_qs.count()} issued certificates (base)")
-            sample = list(base_qs.values('ic_id', 'ic_date_of_issuance', 'certificate_id', 'staff_id')[:5])
-            logger.info(f"IssuedCertificate sample: {sample}")
-            return base_qs.select_related('certificate__rp_id__per', 'staff')
+            queryset = IssuedCertificate.objects.select_related(
+                'certificate__rp_id__per',
+                'certificate__pr_id',
+                'nonresidentcert__pr_id',
+                'staff'
+            ).all()
+
+            # Search functionality - matching web version
+            search = self.request.query_params.get('search', None)
+            if search:
+                queryset = queryset.filter(
+                    Q(ic_id__icontains=search) |
+                    # Resident certificate search
+                    Q(certificate__rp_id__per__per_fname__icontains=search) |
+                    Q(certificate__rp_id__per__per_lname__icontains=search) |
+                    Q(certificate__rp_id__per__per_mname__icontains=search) |
+                    Q(certificate__pr_id__pr_purpose__icontains=search) |
+                    # Non-resident certificate search
+                    Q(nonresidentcert__nrc_fname__icontains=search) |
+                    Q(nonresidentcert__nrc_lname__icontains=search) |
+                    Q(nonresidentcert__nrc_mname__icontains=search) |
+                    Q(nonresidentcert__pr_id__pr_purpose__icontains=search) |
+                    Q(ic_date_of_issuance__icontains=search)
+                )
+
+            # Purpose filter - matching web version
+            purpose_filter = self.request.query_params.get('purpose', None)
+            if purpose_filter:
+                queryset = queryset.filter(
+                    Q(certificate__pr_id__pr_purpose=purpose_filter) |
+                    Q(nonresidentcert__pr_id__pr_purpose=purpose_filter)
+                )
+
+            # Date range filter - matching web version
+            date_from = self.request.query_params.get('date_from', None)
+            date_to = self.request.query_params.get('date_to', None)
+            if date_from:
+                queryset = queryset.filter(ic_date_of_issuance__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(ic_date_of_issuance__lte=date_to)
+
+            return queryset.order_by('-ic_date_of_issuance')
         except Exception as e:
             logger.error(f"Error in get_queryset: {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
@@ -797,11 +897,15 @@ class IssuedCertificateListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
-            for cert in queryset:
-                logger.info(f"Processing certificate: {cert.ic_id}")
-                logger.info(f"- Certificate: {cert.certificate.cr_id if cert.certificate else 'No certificate'}")
-                logger.info(f"- Staff: {cert.staff.staff_id if cert.staff else 'No staff'}")
-
+            logger.info(f"Found {queryset.count()} issued certificates")
+            
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            # Fallback for non-paginated requests
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -897,13 +1001,21 @@ class MarkCertificateAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                 from apps.act_log.utils import create_activity_log
                 
                 if staff:
+                    # Get resident name
+                    resident_name = "Unknown"
+                    if certificate.rp_id and certificate.rp_id.per:
+                        per = certificate.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = certificate.pr_id.pr_purpose if certificate.pr_id else 'N/A'
+                    
                     # Create activity log
                     create_activity_log(
                         act_type="Certificate Issued",
-                        act_description=f"Certificate {cr_id} marked as issued/printed",
+                        act_description=f"Certificate {cr_id} issued to {resident_name} ({purpose})",
                         staff=staff,
-                        record_id=str(issued_certificate.ic_id),
-                        feat_name="Certificate Management"
+                        record_id=str(issued_certificate.ic_id)
                     )
                     logger.info(f"Activity logged for certificate issuance: {issued_certificate.ic_id}")
                 else:
@@ -931,20 +1043,59 @@ class MarkCertificateAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
 class BusinessPermitListView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BusinessPermitSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        return BusinessPermitRequest.objects.filter(
-            req_payment_status="Paid"
-        ).exclude(
-            # Exclude business permits that are already issued
-            issuedbusinesspermit__isnull=False
-        ).select_related('bus_id').all()
+        queryset = BusinessPermitRequest.objects.select_related(
+            'bus_id',
+            'rp_id__per',
+            'pr_id',
+            'ags_id'
+        ).all()
+
+        # Search functionality - matching web version
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(bpr_id__icontains=search) |
+                Q(bus_permit_name__icontains=search) |
+                Q(bus_permit_address__icontains=search) |
+                Q(rp_id__per__per_fname__icontains=search) |
+                Q(rp_id__per__per_lname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(req_status__icontains=search) |
+                Q(req_payment_status__icontains=search)
+            )
+
+        # Status filter - matching web version
+        status_filter = self.request.GET.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(req_status=status_filter)
+
+        # Payment status filter - matching web version
+        payment_status = self.request.GET.get('payment_status', None)
+        if payment_status:
+            queryset = queryset.filter(req_payment_status=payment_status)
+
+        # Business type filter - matching web version
+        business_type = self.request.query_params.get('business_type', None)
+        if business_type:
+            queryset = queryset.filter(bus_id__bus_type=business_type)
+
+        return queryset.order_by('-req_request_date', '-bpr_id')
 
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
             logger.info(f"Found {queryset.count()} business permits")
             
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
+            # Fallback for non-paginated requests
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -971,7 +1122,7 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
         queryset = BusinessPermitRequest.objects.select_related('bus_id').all()
         
         # Search functionality
-        search = self.request.query_params.get('search', None)
+        search = self.request.GET.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(bpr_id__icontains=search) |
@@ -983,16 +1134,16 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
             )
 
         # Status filter
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.GET.get('status', None)
         if status_filter:
             queryset = queryset.filter(req_status=status_filter)
 
         # Payment status filter
-        payment_status = self.request.query_params.get('payment_status', None)
+        payment_status = self.request.GET.get('payment_status', None)
         if payment_status:
             queryset = queryset.filter(req_payment_status=payment_status)
 
-        return queryset.order_by('-req_request_date')
+        return queryset.order_by('-req_request_date', '-bpr_id')
     
     def list(self, request, *args, **kwargs):
         try:
@@ -1001,10 +1152,18 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
             
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
+                # Add file information to each permit clearance
+                data = serializer.data
+                for item in data:
+                    item['has_files'] = self._check_has_files(item['bpr_id'])
+                return self.get_paginated_response(data)
             
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
+            data = serializer.data
+            # Add file information to each permit clearance
+            for item in data:
+                item['has_files'] = self._check_has_files(item['bpr_id'])
+            return Response(data)
         except Exception as e:
             logger.error(f"Error in PermitClearanceView.list: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
@@ -1016,35 +1175,47 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
+    def _check_has_files(self, bpr_id):
+        """Check if a business permit request has files"""
+        try:
+            from .models import BusinessPermitFile
+            return BusinessPermitFile.objects.filter(bpr_id=bpr_id).exists()
+        except Exception:
+            return False
+    
     def create(self, request, *args, **kwargs):
         try:
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
                 permit_clearance = serializer.save()
+                
                 # Create BusinessPermitFile rows if provided
                 try:
                     from .models import BusinessPermitFile
                     create_payload = []
-                    prev_url = request.data.get('previous_permit_image')
+                    prev_url = request.data.get('permit_image')
                     assess_url = request.data.get('assessment_image')
+                    
                     if prev_url:
-                        prev_name = str(prev_url).split('/')[-1] if isinstance(prev_url, str) else ''
                         create_payload.append(BusinessPermitFile(
-                            bpf_name=prev_name or 'previous_permit',
-                            bpf_type='previous_permit',
+                            bpf_type='permit',
                             bpf_url=prev_url,
                             bpr_id=permit_clearance
                         ))
                     if assess_url:
-                        assess_name = str(assess_url).split('/')[-1] if isinstance(assess_url, str) else ''
                         create_payload.append(BusinessPermitFile(
-                            bpf_name=assess_name or 'assessment',
                             bpf_type='assessment',
                             bpf_url=assess_url,
                             bpr_id=permit_clearance
                         ))
                     if create_payload:
-                        BusinessPermitFile.objects.bulk_create(create_payload)
+                        # Create files individually to ensure they get proper IDs
+                        for file_data in create_payload:
+                            BusinessPermitFile.objects.create(
+                                bpf_type=file_data.bpf_type,
+                                bpf_url=file_data.bpf_url,
+                                bpr_id=file_data.bpr_id
+                            )
                 except Exception as file_err:
                     logger.error(f"Failed creating BusinessPermitFile entries: {str(file_err)}")
                 
@@ -1058,13 +1229,21 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                     
                     if staff:
+                        # Get business name and owner
+                        business_info = permit_clearance.bus_permit_name or "Unknown Business"
+                        owner_name = "Unknown Owner"
+                        if permit_clearance.rp_id and permit_clearance.rp_id.per:
+                            per = permit_clearance.rp_id.per
+                            owner_name = f"{per.per_fname} {per.per_lname}"
+                        elif hasattr(permit_clearance, 'bus_nonresident_name') and permit_clearance.bus_nonresident_name:
+                            owner_name = permit_clearance.bus_nonresident_name
+                        
                         # Create activity log
                         create_activity_log(
                             act_type="Business Permit Request Created",
-                            act_description=f"Business permit request {permit_clearance.bpr_id} created",
+                            act_description=f"Business permit request {permit_clearance.bpr_id} created for '{business_info}' (Owner: {owner_name})",
                             staff=staff,
-                            record_id=permit_clearance.bpr_id,
-                            feat_name="Business Permit Management"
+                            record_id=permit_clearance.bpr_id
                         )
                         logger.info(f"Activity logged for business permit creation: {permit_clearance.bpr_id}")
                     else:
@@ -1103,16 +1282,44 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
 class IssuedBusinessPermitListView(generics.ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = IssuedBusinessPermitSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
         try:
             queryset = IssuedBusinessPermit.objects.select_related(
-                'permit_request__bus_id',
+                'bpr_id__bus_id',
+                'bpr_id__rp_id__per',
+                'bpr_id__pr_id',
                 'staff'
             ).all()
+
+            # Search functionality - matching web version
+            search = self.request.query_params.get('search', None)
+            if search:
+                queryset = queryset.filter(
+                    Q(ibp_id__icontains=search) |
+                    Q(bpr_id__bus_permit_name__icontains=search) |
+                    Q(bpr_id__rp_id__per__per_fname__icontains=search) |
+                    Q(bpr_id__rp_id__per__per_lname__icontains=search) |
+                    Q(bpr_id__pr_id__pr_purpose__icontains=search) |
+                    Q(ibp_date_of_issuance__icontains=search)
+                )
+
+            # Purpose filter - matching web version
+            purpose_filter = self.request.query_params.get('purpose', None)
+            if purpose_filter:
+                queryset = queryset.filter(bpr_id__pr_id__pr_purpose=purpose_filter)
+
+            # Date range filter - matching web version
+            date_from = self.request.query_params.get('date_from', None)
+            date_to = self.request.query_params.get('date_to', None)
+            if date_from:
+                queryset = queryset.filter(ibp_date_of_issuance__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(ibp_date_of_issuance__lte=date_to)
             
             logger.info(f"Found {queryset.count()} issued business permits")
-            return queryset
+            return queryset.order_by('-ibp_date_of_issuance')
         except Exception as e:
             logger.error(f"Error in get_queryset: {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
@@ -1121,6 +1328,11 @@ class IssuedBusinessPermitListView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+            
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         except Exception as e:
@@ -1158,7 +1370,7 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                 )
             
             # Check if already issued
-            if IssuedBusinessPermit.objects.filter(permit_request=permit_request).exists():
+            if IssuedBusinessPermit.objects.filter(bpr_id=permit_request).exists():
                 return Response(
                     {"error": f"Business permit {bpr_id} is already issued"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -1168,15 +1380,71 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
             from apps.administration.models import Staff
             staff, created = Staff.objects.get_or_create(staff_id=staff_id)
             
-            # Generate unique ibp_id
-            import uuid
-            ibp_id = f"IBP{uuid.uuid4().hex[:8].upper()}"
+            try:
+                if getattr(permit_request, 'req_status', None) != 'Completed':
+                    permit_request.req_status = 'Completed'
+                    # If completion date empty, set to today
+                    if not getattr(permit_request, 'req_date_completed', None):
+                        permit_request.req_date_completed = timezone.now().date()
+                    permit_request.save(update_fields=['req_status', 'req_date_completed'])
+                    
+                    # Update business gross sales if this is a business clearance with new gross sales
+                    if (permit_request.bus_id and 
+                        permit_request.bus_clearance_gross_sales and 
+                        permit_request.pr_id and 
+                        permit_request.pr_id.pr_purpose and 
+                        'business clearance' in permit_request.pr_id.pr_purpose.lower()):
+                        
+                        try:
+                            from apps.profiling.models import Business
+                            business = Business.objects.get(bus_id=permit_request.bus_id.bus_id)
+                            old_gross_sales = business.bus_gross_sales
+                            business.bus_gross_sales = float(permit_request.bus_clearance_gross_sales)
+                            business.save(update_fields=['bus_gross_sales'])
+                            
+                            logger.info(f"Updated business {permit_request.bus_id.bus_id} gross sales from {old_gross_sales} to {permit_request.bus_clearance_gross_sales}")
+                            
+                            # Log the business gross sales update activity
+                            try:
+                                from apps.act_log.utils import create_activity_log
+                                create_activity_log(
+                                    act_type="Business Gross Sales Updated",
+                                    act_description=f"Business {permit_request.bus_id.bus_name} gross sales updated from ₱{old_gross_sales:,.2f} to ₱{permit_request.bus_clearance_gross_sales:,.2f} via business clearance completion",
+                                    staff=staff,
+                                    record_id=permit_request.bus_id.bus_id
+                                )
+                            except Exception as log_err:
+                                logger.error(f"Failed to log business gross sales update activity: {str(log_err)}")
+                                
+                        except Business.DoesNotExist:
+                            logger.error(f"Business {permit_request.bus_id.bus_id} not found for gross sales update")
+                        except Exception as bus_update_err:
+                            logger.error(f"Failed to update business gross sales: {str(bus_update_err)}")
+                            
+            except Exception as update_err:
+                logger.error(f"Failed to update BusinessPermitRequest {bpr_id} to Completed: {str(update_err)}")
+
+            # Generate sequential IBP ID like CR000-25 → IBP000-25 (length 10)
+            from .models import IssuedBusinessPermit as _IssuedBusinessPermit
+            year_suffix = timezone.now().year % 100
+            try:
+                existing_count = _IssuedBusinessPermit.objects.filter(
+                    ibp_id__endswith=f"-{year_suffix:02d}"
+                ).count()
+            except Exception:
+                existing_count = _IssuedBusinessPermit.objects.count()
+            seq = existing_count + 1
+            ibp_id = f"IBP{seq:03d}-{year_suffix:02d}"
+            # Ensure uniqueness in rare race conditions
+            while _IssuedBusinessPermit.objects.filter(ibp_id=ibp_id).exists():
+                seq += 1
+                ibp_id = f"IBP{seq:03d}-{year_suffix:02d}"
             
             # Create issued business permit (no file field needed)
             issued_permit = IssuedBusinessPermit.objects.create(
                 ibp_id=ibp_id,
                 ibp_date_of_issuance=timezone.now().date(),
-                permit_request=permit_request,
+                bpr_id=permit_request,
                 staff=staff
             )
             
@@ -1185,13 +1453,21 @@ class MarkBusinessPermitAsIssuedView(ActivityLogMixin, generics.CreateAPIView):
                 from apps.act_log.utils import create_activity_log
                 
                 if staff:
+                    # Get business name and owner
+                    business_info = issued_permit.bpr_id.bus_permit_name or "Unknown Business"
+                    owner_name = "Unknown Owner"
+                    if issued_permit.bpr_id.rp_id and issued_permit.bpr_id.rp_id.per:
+                        per = issued_permit.bpr_id.rp_id.per
+                        owner_name = f"{per.per_fname} {per.per_lname}"
+                    elif hasattr(issued_permit.bpr_id, 'bus_nonresident_name') and issued_permit.bpr_id.bus_nonresident_name:
+                        owner_name = issued_permit.bpr_id.bus_nonresident_name
+                    
                     # Create activity log
                     create_activity_log(
                         act_type="Business Permit Issued",
-                        act_description=f"Business permit {bpr_id} marked as issued/printed",
+                        act_description=f"Business permit {bpr_id} issued for '{business_info}' (Owner: {owner_name})",
                         staff=staff,
-                        record_id=issued_permit.ibp_id,
-                        feat_name="Business Permit Management"
+                        record_id=issued_permit.ibp_id
                     )
                     logger.info(f"Activity logged for business permit issuance: {issued_permit.ibp_id}")
                 else:
@@ -1226,6 +1502,7 @@ class PersonalClearancesView(generics.ListAPIView):
     def get_queryset(self):
         queryset = ClerkCertificate.objects.select_related(
             'rp_id__per',
+            'rp_id__voter',  # Include voter for eligibility check
             'pr_id'
         ).only(
             'cr_id',
@@ -1234,12 +1511,15 @@ class PersonalClearancesView(generics.ListAPIView):
             'cr_req_status',
             'rp_id__per__per_fname',
             'rp_id__per__per_lname',
+            'rp_id__per__per_dob',
+            'rp_id__per__per_disability',
+            'rp_id__voter',
             'pr_id__pr_purpose',
             'pr_id__pr_rate'
         ).all()
 
         # Search functionality
-        search = self.request.query_params.get('search', None)
+        search = self.request.GET.get('search', None)
         if search:
             queryset = queryset.filter(
                 Q(cr_id__icontains=search) |
@@ -1251,12 +1531,12 @@ class PersonalClearancesView(generics.ListAPIView):
             )
 
         # Status filter
-        status_filter = self.request.query_params.get('status', None)
+        status_filter = self.request.GET.get('status', None)
         if status_filter:
             queryset = queryset.filter(cr_req_status=status_filter)
 
         # Payment status filter
-        payment_status = self.request.query_params.get('payment_status', None)
+        payment_status = self.request.GET.get('payment_status', None)
         if payment_status:
             queryset = queryset.filter(cr_req_payment_status=payment_status)
 
@@ -1323,30 +1603,34 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
                 clearance_request = serializer.save()
+                
                 # Create BusinessPermitFile rows if provided
                 try:
                     from .models import BusinessPermitFile
                     create_payload = []
-                    prev_url = request.data.get('previous_permit_image')
+                    prev_url = request.data.get('permit_image')
                     assess_url = request.data.get('assessment_image')
+                    
                     if prev_url:
-                        prev_name = str(prev_url).split('/')[-1] if isinstance(prev_url, str) else ''
                         create_payload.append(BusinessPermitFile(
-                            bpf_name=prev_name or 'previous_permit',
-                            bpf_type='previous_permit',
+                            bpf_type='permit',
                             bpf_url=prev_url,
                             bpr_id=clearance_request
                         ))
                     if assess_url:
-                        assess_name = str(assess_url).split('/')[-1] if isinstance(assess_url, str) else ''
                         create_payload.append(BusinessPermitFile(
-                            bpf_name=assess_name or 'assessment',
                             bpf_type='assessment',
                             bpf_url=assess_url,
                             bpr_id=clearance_request
                         ))
                     if create_payload:
-                        BusinessPermitFile.objects.bulk_create(create_payload)
+                        # Create files individually to ensure they get proper IDs
+                        for file_data in create_payload:
+                            BusinessPermitFile.objects.create(
+                                bpf_type=file_data.bpf_type,
+                                bpf_url=file_data.bpf_url,
+                                bpr_id=file_data.bpr_id
+                            )
                 except Exception as file_err:
                     logger.error(f"Failed creating BusinessPermitFile entries: {str(file_err)}")
                 
@@ -1360,13 +1644,21 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                     staff = Staff.objects.filter(staff_id=staff_id).first()
                     
                     if staff:
+                        # Get business name and owner
+                        business_info = clearance_request.bus_permit_name or "Unknown Business"
+                        owner_name = "Unknown Owner"
+                        if clearance_request.rp_id and clearance_request.rp_id.per:
+                            per = clearance_request.rp_id.per
+                            owner_name = f"{per.per_fname} {per.per_lname}"
+                        elif hasattr(clearance_request, 'bus_nonresident_name') and clearance_request.bus_nonresident_name:
+                            owner_name = clearance_request.bus_nonresident_name
+                        
                         # Create activity log
                         create_activity_log(
                             act_type="Business Clearance Request Created",
-                            act_description=f"Business clearance request {clearance_request.bpr_id} created",
+                            act_description=f"Business clearance request {clearance_request.bpr_id} created for '{business_info}' (Owner: {owner_name})",
                             staff=staff,
-                            record_id=clearance_request.bpr_id,
-                            feat_name="Business Clearance Management"
+                            record_id=clearance_request.bpr_id
                         )
                         logger.info(f"Activity logged for business clearance creation: {clearance_request.bpr_id}")
                     else:
@@ -1419,10 +1711,6 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                     'error': f'Business permit request with bpr_id {bpr_id} not found'
                 }, status=status.HTTP_404_NOT_FOUND)
             
-            print(f"Updating business permit request: {instance.bpr_id}")
-            print(f"Current payment status: {instance.req_payment_status}")
-            print(f"Request data: {request.data}")
-            
             # Store old payment status for comparison
             old_payment_status = instance.req_payment_status
             
@@ -1442,14 +1730,59 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                     else:
                         instance.req_date_completed = request.data.get('req_date_completed')
                 except Exception as date_error:
-                    print(f"Date conversion error: {date_error}")
                     # Fallback: use current date
                     instance.req_date_completed = timezone.now().date()
             
-            print(f"New payment status: {instance.req_payment_status}")
-            print(f"Completion date: {instance.req_date_completed}")
-            
             instance.save(update_fields=['req_payment_status', 'req_date_completed'])
+            
+            # Log payment status change activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id') or getattr(instance, 'staff_id', None)
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get business name and owner for better description
+                    business_name = instance.bus_permit_name or "Unknown Business"
+                    owner_name = "Unknown Owner"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        owner_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for business permit {instance.bpr_id} changed from '{old_payment_status}' to '{instance.req_payment_status}' for '{business_name}' (Owner: {owner_name}) - {purpose}",
+                        staff=staff,
+                        record_id=instance.bpr_id
+                    )
+                    logger.info(f"Activity logged for business permit payment status change: {instance.bpr_id}")
+                else:
+                    logger.warning(f"No valid staff with staff_id found for business permit payment status change logging: {instance.bpr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log business permit payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
             
             # Check if payment status changed to "Paid" and create automatic income entry
             if old_payment_status != "Paid" and instance.req_payment_status == "Paid":
@@ -1509,9 +1842,6 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
                 'completion_date': instance.req_date_completed
             }, status=status.HTTP_200_OK)
         except Exception as e:
-            print(f"Error updating business permit request status: {str(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
             return Response({
                 'error': str(e),
                 'detail': 'An error occurred while updating business permit request status'
@@ -1521,21 +1851,112 @@ class ClearanceRequestView(ActivityLogMixin, generics.CreateAPIView):
 # ---------------------- Treasurer: Service Charge Requests ----------------------
 class ServiceChargeTreasurerListView(generics.ListAPIView):
     serializer_class = ServiceChargeTreasurerListSerializer
+    pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        # Only Summon requests that do NOT have an sr_code yet (null or empty)
-        queryset = ServiceChargeRequest.objects.filter(
-            sr_type='Summon'
-        ).filter(
-            Q(sr_code__isnull=True) | Q(sr_code__exact='')
+        # Get data directly from ServiceChargePaymentRequest table
+        from .models import ServiceChargePaymentRequest
+        from datetime import timedelta
+        
+        # Check for and auto-decline overdue charges before returning data
+        self._auto_decline_overdue_charges()
+        
+        queryset = ServiceChargePaymentRequest.objects.filter(
         ).select_related(
             'comp_id',
-            'servicechargepaymentrequest__pr_id'
+            'pr_id'
         ).prefetch_related(
-            'comp_id__complaintcomplainant_set__cpnt'
-        )
+            'comp_id__complaintcomplainant_set__cpnt',
+            'comp_id__complaintaccused_set__acsd'
+        ) 
 
-        return queryset.order_by('-sr_req_date')
+        # Filter by resident if provided (can be complainant OR accused)
+        rp_filter = self.request.GET.get('rp', None) or self.request.GET.get('rp_id', None)
+        if rp_filter:
+            queryset = queryset.filter(
+                Q(comp_id__complaintcomplainant__cpnt__rp_id__rp_id=rp_filter) |
+                Q(comp_id__complaintaccused__acsd__rp_id__rp_id=rp_filter)
+            ).distinct()
+
+        sr_type_filter = self.request.GET.get('sr_type', None)
+        if sr_type_filter:
+            queryset = queryset.filter(pay_sr_type=sr_type_filter)
+
+        # Add search functionality
+        search_query = self.request.GET.get('search', None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(pay_id__icontains=search_query) |
+                Q(pay_sr_type__icontains=search_query) |
+                Q(pay_status__icontains=search_query) |
+                Q(comp_id__comp_incident_type__icontains=search_query) |
+                Q(comp_id__comp_location__icontains=search_query)
+            ).distinct()
+
+        # Add tab-based filtering (unpaid/paid/declined)
+        tab_filter = self.request.GET.get('tab', None)
+        if tab_filter:
+            if tab_filter == 'unpaid':
+                # Unpaid: pay_status is Unpaid AND pay_req_status is NOT Declined
+                queryset = queryset.filter(
+                    pay_status='Unpaid',
+                    pay_req_status__in=['Pending', 'Completed']
+                )
+            elif tab_filter == 'paid':
+                # Paid: pay_status is Paid
+                queryset = queryset.filter(pay_status='Paid')
+            elif tab_filter == 'declined':
+                # Declined: pay_req_status is Declined
+                queryset = queryset.filter(pay_req_status='Declined')
+        
+        # Legacy status filtering (for backward compatibility)
+        status_filter = self.request.GET.get('status', None)
+        if status_filter and status_filter != 'all' and not tab_filter:
+            if status_filter == 'pending':
+                queryset = queryset.filter(pay_req_status='Pending')
+            elif status_filter == 'completed':
+                queryset = queryset.filter(pay_req_status='Completed')
+            elif status_filter == 'declined':
+                queryset = queryset.filter(pay_req_status='Declined')
+
+        # Legacy payment status filtering (for backward compatibility)
+        payment_status_filter = self.request.GET.get('payment_status', None)
+        if payment_status_filter and not tab_filter:
+            queryset = queryset.filter(pay_status=payment_status_filter)
+
+        return queryset.order_by('-pay_date_req')
+    
+    def _auto_decline_overdue_charges(self):
+        """
+        Automatically decline unpaid service charges that are 7 days overdue
+        This method is called every time the service charges are fetched
+        """
+        try:
+            from .models import ServiceChargePaymentRequest
+            from datetime import timedelta
+            
+            # Calculate the cutoff date (7 days ago)
+            cutoff_date = timezone.now() - timedelta(days=7)
+            
+            # Find overdue unpaid charges
+            overdue_charges = ServiceChargePaymentRequest.objects.filter(
+                pay_status='Unpaid',
+                pay_req_status='Pending',
+                pay_date_req__lt=cutoff_date,
+                pay_sr_type='Summon'
+            )
+            
+            if overdue_charges.exists():
+                # Update all overdue charges to declined
+                updated_count = overdue_charges.update(
+                    pay_req_status='Declined'
+                )
+                
+                if updated_count > 0:
+                    logger.info(f'Auto-declined {updated_count} overdue service charges via API call')
+                    
+        except Exception as e:
+            logger.error(f'Error in auto_decline_overdue_charges: {str(e)}')
 
 
 # ---------------------- Business Permit Files ----------------------
@@ -1547,6 +1968,8 @@ class BusinessPermitFilesView(generics.ListAPIView):
     
     def get(self, request, bpr_id):
         try:
+            from .models import BusinessPermitFile
+            
             # Fetch all files for this business permit request
             files = BusinessPermitFile.objects.filter(bpr_id=bpr_id)
             
@@ -1561,9 +1984,7 @@ class BusinessPermitFilesView(generics.ListAPIView):
             for file in files:
                 files_data.append({
                     'bpf_id': file.bpf_id,
-                    'bpf_name': file.bpf_name,
                     'bpf_type': file.bpf_type,
-                    'bpf_path': file.bpf_path,
                     'bpf_url': file.bpf_url,
                 })
             
@@ -1577,4 +1998,775 @@ class BusinessPermitFilesView(generics.ListAPIView):
             return Response({
                 'error': str(e),
                 'detail': 'An error occurred while fetching business permit files'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BusinessPermitUploadView(APIView):
+    
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        try:
+            # Get the uploaded file
+            uploaded_file = request.FILES.get('file')
+            if not uploaded_file:
+                return Response({
+                    'error': 'No file provided'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Get file metadata
+            file_name = request.data.get('file_name', uploaded_file.name)
+            file_type = request.data.get('file_type', uploaded_file.content_type)
+            bucket_name = request.data.get('bucket_name', 'business-permit-file-bucket')
+            
+            # Generate unique filename
+            unique_id = str(uuid.uuid4())[:8]
+            timestamp = int(timezone.now().timestamp())
+            file_extension = file_name.split('.')[-1] if '.' in file_name else 'jpg'
+            unique_filename = f"business_permit_{unique_id}_{timestamp}.{file_extension}"
+            
+            # Convert file to base64 for Supabase upload
+            file_content = uploaded_file.read()
+            file_b64 = base64.b64encode(file_content).decode('utf-8')
+            
+            # Prepare file data for Supabase upload
+            file_data = {
+                'file': file_b64,
+                'name': unique_filename,
+                'type': file_type
+            }
+            
+            # Upload to Supabase storage
+            file_url = upload_to_storage(file_data, bucket_name, 'business-permits')
+            
+            if not file_url:
+                return Response({
+                    'error': 'Failed to upload file to storage'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Return success response
+            return Response({
+                'file_url': file_url,
+                'file_name': unique_filename,
+                'file_path': f'business-permits/{unique_filename}',
+                'bucket': bucket_name,
+                'message': 'File uploaded successfully'
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f"Error uploading business permit file: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while uploading the file'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UpdateServiceChargePaymentStatusView(APIView):
+    """
+    Update the payment status of a ServiceChargePaymentRequest
+    """
+    def put(self, request, pay_id):
+        try:
+            from .models import ServiceChargePaymentRequest
+            
+            # Get the payment request
+            payment_request = ServiceChargePaymentRequest.objects.get(pay_id=pay_id)
+            
+            # Store old values for logging
+            old_pay_status = payment_request.pay_status
+            old_pay_req_status = payment_request.pay_req_status
+            
+            # Update payment status if provided
+            if 'pay_status' in request.data:
+                payment_request.pay_status = request.data['pay_status']
+                if request.data['pay_status'] == "Paid":
+                    payment_request.pay_date_paid = timezone.now()
+                    # DO NOT automatically change pay_req_status to Completed
+                    # pay_req_status should only change to Completed when explicitly updated
+            
+            # Update request status if provided
+            if 'pay_req_status' in request.data:
+                new_req_status = request.data['pay_req_status']
+                payment_request.pay_req_status = new_req_status
+                # If declining or cancelling, also set pay_status to the same value and clear payment date
+                if new_req_status in ['Declined', 'Cancelled']:
+                    # Use pay_status from request if provided, otherwise set to same as pay_req_status
+                    payment_request.pay_status = request.data.get('pay_status', new_req_status)
+                    payment_request.pay_date_paid = None
+            
+            # Update reason if provided (for declining)
+            if 'pay_reason' in request.data:
+                payment_request.pay_reason = request.data['pay_reason']
+            
+            payment_request.save()
+            
+            # Log activity for status changes
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(payment_request, 'sr_id') and payment_request.sr_id:
+                    if hasattr(payment_request.sr_id, 'ra_id') and payment_request.sr_id.ra_id:
+                        staff_id = getattr(payment_request.sr_id.ra_id, 'staff_id', None)
+                        if staff_id and len(str(staff_id)) < 11:
+                            staff_id = str(staff_id).zfill(11)
+                        staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Only log if we have a valid staff with staff_id
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    # Get resident name(s) from the complaint's complainants
+                    resident_names = []
+                    if payment_request.comp_id:
+                        try:
+                            # Get complainants from the complaint
+                            complainants = payment_request.comp_id.complainant.all().select_related('rp_id__per')
+                            
+                            for complainant in complainants:
+                                if complainant.rp_id and complainant.rp_id.per:
+                                    per = complainant.rp_id.per
+                                    name = f"{per.per_fname} {per.per_lname}".strip()
+                                    if name:
+                                        resident_names.append(name)
+                            
+                            # If no resident profiles found, try using complainant name directly
+                            if not resident_names:
+                                for complainant in complainants:
+                                    if complainant.cpnt_name:
+                                        resident_names.append(complainant.cpnt_name)
+                        except Exception as e:
+                            logger.warning(f"Error fetching resident names from complaint: {str(e)}")
+                    
+                    # Build service charge info with resident name(s)
+                    if resident_names:
+                        resident_info = ", ".join(resident_names)
+                        service_charge_info = f"Service Charge for {resident_info}"
+                    else:
+                        # Fallback to payment ID if no resident names found
+                        service_charge_info = f"Service Charge {payment_request.pay_id}"
+                    
+                    # Get purpose
+                    purpose = "N/A"
+                    if hasattr(payment_request, 'pr_id') and payment_request.pr_id:
+                        purpose = payment_request.pr_id.pr_purpose
+                    
+                    # Get decline reason if declining
+                    decline_reason = ""
+                    if old_pay_req_status != payment_request.pay_req_status and payment_request.pay_req_status == "Declined":
+                        decline_reason = payment_request.pay_reason if hasattr(payment_request, 'pay_reason') and payment_request.pay_reason else 'No reason provided'
+                    
+                    # Create activity log for status changes
+                    changes = []
+                    if old_pay_status != payment_request.pay_status:
+                        changes.append(f"payment status: '{old_pay_status}' → '{payment_request.pay_status}'")
+                    if old_pay_req_status != payment_request.pay_req_status:
+                        changes.append(f"request status: '{old_pay_req_status}' → '{payment_request.pay_req_status}'")
+                    
+                    if changes:
+                        # Build description with decline reason if applicable
+                        description = f"Service charge payment {payment_request.pay_id} status updated: {', '.join(changes)} for {service_charge_info} ({purpose})"
+                        if decline_reason:
+                            description += f". Reason: {decline_reason}"
+                        
+                        create_activity_log(
+                            act_type="Service Charge Payment Status Updated",
+                            act_description=description,
+                            staff=staff,
+                            record_id=str(payment_request.pay_id)
+                        )
+                        logger.info(f"Activity logged for service charge payment status change: {payment_request.pay_id}")
+                else:
+                    logger.warning(f"No staff found for service charge payment status change logging: {payment_request.pay_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log service charge payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
+            return Response({
+                'message': 'Payment status updated successfully',
+                'pay_id': payment_request.pay_id,
+                'pay_status': payment_request.pay_status,
+                'pay_req_status': payment_request.pay_req_status,
+                'pay_date_paid': payment_request.pay_date_paid
+            }, status=status.HTTP_200_OK)
+            
+        except ServiceChargePaymentRequest.DoesNotExist:
+            return Response({
+                'error': 'Payment request not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while updating payment status'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ===========================Certificate Analytics Views=====================
+
+class CertificateAnalyticsView(APIView):
+    """
+    Analytics view for certificate data including purpose trending and statistics
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            from django.db.models import Count
+            from datetime import date, timedelta
+            try:
+                from dateutil.relativedelta import relativedelta
+            except ImportError:
+                # Fallback if dateutil is not available
+                from datetime import timedelta
+                def relativedelta(**kwargs):
+                    months = kwargs.get('months', 0)
+                    return timedelta(days=months * 30)  # Approximate
+            
+            # Get date range parameters
+            months_back = int(request.query_params.get('months', 6))
+            end_date = date.today()
+            start_date = end_date - relativedelta(months=months_back)
+            
+            # Total certificates count
+            total_certificates = ClerkCertificate.objects.count()
+            total_issued = IssuedCertificate.objects.count()
+            total_pending = ClerkCertificate.objects.filter(cr_req_status='Pending').count()
+            total_completed = ClerkCertificate.objects.filter(cr_req_status='Completed').count()
+            total_rejected = ClerkCertificate.objects.filter(cr_req_status='Rejected').count()
+            
+            # Purpose trending data using Django ORM
+            purpose_trends = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=start_date,
+                cr_req_request_date__date__lte=end_date,
+                pr_id__isnull=False
+            ).values('pr_id__pr_purpose').annotate(
+                count=Count('cr_id')
+            ).order_by('-count')[:10]
+            
+            # Monthly certificate requests
+            monthly_requests = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=start_date,
+                cr_req_request_date__date__lte=end_date
+            ).extra(
+                select={'month': "DATE_TRUNC('month', cr_req_request_date)"}
+            ).values('month').annotate(
+                count=Count('cr_id')
+            ).order_by('month')
+            
+            # Payment status breakdown
+            payment_status_breakdown = ClerkCertificate.objects.values(
+                'cr_req_payment_status'
+            ).annotate(
+                count=Count('cr_id')
+            ).order_by('-count')
+            
+            # Recent certificate requests (last 7 days) using Django ORM
+            recent_requests = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=date.today() - timedelta(days=7)
+            ).select_related('pr_id', 'rp_id__per').values(
+                'cr_id',
+                'cr_req_request_date',
+                'cr_req_status',
+                'pr_id__pr_purpose',
+                'rp_id__per__per_fname',
+                'rp_id__per__per_lname'
+            ).order_by('-cr_req_request_date')[:10]
+            
+            # Most requested purposes (all time) using Django ORM
+            top_purposes = ClerkCertificate.objects.filter(
+                pr_id__isnull=False
+            ).values(
+                'pr_id__pr_purpose',
+                'pr_id__pr_category'
+            ).annotate(
+                count=Count('cr_id')
+            ).order_by('-count')[:15]
+            
+            # Certificate completion rate
+            completion_rate = 0
+            if total_certificates > 0:
+                completion_rate = round((total_completed / total_certificates) * 100, 2)
+            
+            # Average processing time (in days)
+            completed_certificates = ClerkCertificate.objects.filter(
+                cr_req_status='Completed',
+                cr_date_completed__isnull=False
+            ).extra(
+                select={
+                    'processing_days': "EXTRACT(EPOCH FROM (cr_date_completed - cr_req_request_date)) / 86400"
+                }
+            ).values('processing_days')
+            
+            avg_processing_days = 0
+            if completed_certificates.exists():
+                total_days = sum(cert['processing_days'] for cert in completed_certificates if cert['processing_days'])
+                avg_processing_days = round(total_days / completed_certificates.count(), 1) if completed_certificates.count() > 0 else 0
+            
+            analytics_data = {
+                'overview': {
+                    'total_certificates': total_certificates,
+                    'total_issued': total_issued,
+                    'total_pending': total_pending,
+                    'total_completed': total_completed,
+                    'total_rejected': total_rejected,
+                    'completion_rate': completion_rate,
+                    'avg_processing_days': avg_processing_days
+                },
+                'purpose_trends': list(purpose_trends),
+                'monthly_requests': list(monthly_requests),
+                'payment_status_breakdown': list(payment_status_breakdown),
+                'recent_requests': list(recent_requests),
+                'top_purposes': list(top_purposes),
+                'date_range': {
+                    'start_date': start_date.isoformat(),
+                    'end_date': end_date.isoformat(),
+                    'months_back': months_back
+                }
+            }
+            
+            return Response(analytics_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            logger.error(f"Error in certificate analytics: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching certificate analytics',
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CertificatePurposeTrendingView(APIView):
+    """
+    Detailed trending analysis for certificate purposes
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            from django.db.models import Count
+            from datetime import date, timedelta
+            try:
+                from dateutil.relativedelta import relativedelta
+            except ImportError:
+                # Fallback if dateutil is not available
+                from datetime import timedelta
+                def relativedelta(**kwargs):
+                    months = kwargs.get('months', 0)
+                    return timedelta(days=months * 30)  # Approximate
+            
+            # Get parameters
+            months_back = int(request.query_params.get('months', 12))
+            end_date = date.today()
+            start_date = end_date - relativedelta(months=months_back)
+            
+            # Purpose trending over time (monthly) using Django ORM
+            purpose_monthly_trends = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=start_date,
+                cr_req_request_date__date__lte=end_date,
+                pr_id__isnull=False
+            ).extra(
+                select={'month': "DATE_TRUNC('month', cr_req_request_date)"}
+            ).values(
+                'month',
+                'pr_id__pr_purpose'
+            ).annotate(
+                count=Count('cr_id')
+            ).order_by('month', '-count')
+            
+            # Top 10 purposes with growth rate
+            current_period_start = end_date - relativedelta(months=3)
+            previous_period_start = current_period_start - relativedelta(months=3)
+            
+            # Current period data using Django ORM
+            current_period_data = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=current_period_start,
+                cr_req_request_date__date__lte=end_date,
+                pr_id__isnull=False
+            ).values('pr_id__pr_purpose').annotate(
+                current_count=Count('cr_id')
+            )
+            current_period = {item['pr_id__pr_purpose']: item['current_count'] for item in current_period_data}
+            
+            # Previous period data using Django ORM
+            previous_period_data = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=previous_period_start,
+                cr_req_request_date__date__lt=current_period_start,
+                pr_id__isnull=False
+            ).values('pr_id__pr_purpose').annotate(
+                previous_count=Count('cr_id')
+            )
+            previous_period = {item['pr_id__pr_purpose']: item['previous_count'] for item in previous_period_data}
+            
+            # Calculate growth rates
+            growth_analysis = []
+            all_purposes = set(current_period.keys()) | set(previous_period.keys())
+            
+            for purpose in all_purposes:
+                current = current_period.get(purpose, 0)
+                previous = previous_period.get(purpose, 0)
+                growth_rate = 0
+                if previous > 0:
+                    growth_rate = round(((current - previous) / previous) * 100, 2)
+                elif current > 0:
+                    growth_rate = 100  # New purpose
+                
+                growth_analysis.append({
+                    'purpose': purpose,
+                    'current_count': current,
+                    'previous_count': previous,
+                    'growth_rate': growth_rate,
+                    'trend': 'increasing' if growth_rate > 10 else 'decreasing' if growth_rate < -10 else 'stable'
+                })
+            
+            # Sort by current count and take top 10
+            growth_analysis.sort(key=lambda x: x['current_count'], reverse=True)
+            top_growth_purposes = growth_analysis[:10]
+            
+            # Purpose category breakdown using Django ORM
+            category_breakdown = ClerkCertificate.objects.filter(
+                cr_req_request_date__date__gte=start_date,
+                cr_req_request_date__date__lte=end_date,
+                pr_id__isnull=False
+            ).values('pr_id__pr_category').annotate(
+                count=Count('cr_id')
+            ).order_by('-count')
+            
+            trending_data = {
+                'purpose_monthly_trends': list(purpose_monthly_trends),
+                'top_growth_purposes': top_growth_purposes,
+                'category_breakdown': list(category_breakdown),
+                'date_range': {
+                    'start_date': start_date.isoformat(),
+                    'end_date': end_date.isoformat(),
+                    'months_back': months_back
+                }
+            }
+            
+            return Response(trending_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error in certificate purpose trending: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching purpose trending data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ===========================Business Permit Analytics Views=====================
+
+class BusinessPermitAnalyticsView(APIView):
+    """
+    Analytics view for business permit data including statistics and trends
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            from django.db.models import Count
+            from datetime import date, timedelta
+            try:
+                from dateutil.relativedelta import relativedelta
+            except ImportError:
+                # Fallback if dateutil is not available
+                from datetime import timedelta
+                def relativedelta(**kwargs):
+                    months = kwargs.get('months', 0)
+                    return timedelta(days=months * 30)  # Approximate
+            
+            # Get date range parameters
+            months_back = int(request.query_params.get('months', 6))
+            end_date = date.today()
+            start_date = end_date - relativedelta(months=months_back)
+            
+            # Total business permits count
+            total_permits = BusinessPermitRequest.objects.count()
+            total_issued = IssuedBusinessPermit.objects.count()
+            total_pending = BusinessPermitRequest.objects.filter(req_status='Pending').count()
+            total_completed = BusinessPermitRequest.objects.filter(req_status='Completed').count()
+            total_rejected = BusinessPermitRequest.objects.filter(req_status='Rejected').count()
+            
+            # Purpose trending data using Django ORM
+            purpose_trends = BusinessPermitRequest.objects.filter(
+                req_request_date__gte=start_date,
+                req_request_date__lte=end_date,
+                pr_id__isnull=False
+            ).values('pr_id__pr_purpose').annotate(
+                count=Count('bpr_id')
+            ).order_by('-count')[:10]
+            
+            # Monthly business permit requests
+            monthly_requests = BusinessPermitRequest.objects.filter(
+                req_request_date__gte=start_date,
+                req_request_date__lte=end_date
+            ).extra(
+                select={'month': "DATE_TRUNC('month', req_request_date)"}
+            ).values('month').annotate(
+                count=Count('bpr_id')
+            ).order_by('month')
+            
+            # Payment status breakdown
+            payment_status_breakdown = BusinessPermitRequest.objects.values(
+                'req_payment_status'
+            ).annotate(
+                count=Count('bpr_id')
+            ).order_by('-count')
+            
+            # Recent business permit requests (last 7 days) using Django ORM
+            recent_requests = BusinessPermitRequest.objects.filter(
+                req_request_date__gte=date.today() - timedelta(days=7)
+            ).select_related('pr_id', 'rp_id__per').values(
+                'bpr_id',
+                'req_request_date',
+                'req_status',
+                'pr_id__pr_purpose',
+                'rp_id__per__per_fname',
+                'rp_id__per__per_lname',
+                'bus_permit_name',
+                'bus_permit_address'
+            ).order_by('-req_request_date')[:10]
+            
+            # Most requested purposes (all time) using Django ORM
+            top_purposes = BusinessPermitRequest.objects.filter(
+                pr_id__isnull=False
+            ).values(
+                'pr_id__pr_purpose',
+                'pr_id__pr_category'
+            ).annotate(
+                count=Count('bpr_id')
+            ).order_by('-count')[:15]
+            
+            # Business permit completion rate
+            completion_rate = 0
+            if total_permits > 0:
+                completion_rate = round((total_completed / total_permits) * 100, 2)
+            
+            # Average processing time (in days) - using Python calculation instead of SQL
+            completed_permits = BusinessPermitRequest.objects.filter(
+                req_status='Completed',
+                req_date_completed__isnull=False
+            ).values('req_request_date', 'req_date_completed')
+            
+            avg_processing_days = 0
+            if completed_permits.exists():
+                total_days = 0
+                count = 0
+                for permit in completed_permits:
+                    if permit['req_request_date'] and permit['req_date_completed']:
+                        processing_days = (permit['req_date_completed'] - permit['req_request_date']).days
+                        if processing_days >= 0:  # Only count positive processing days
+                            total_days += processing_days
+                            count += 1
+                
+                if count > 0:
+                    avg_processing_days = round(total_days / count, 1)
+            
+            analytics_data = {
+                'overview': {
+                    'total_permits': total_permits,
+                    'total_issued': total_issued,
+                    'total_pending': total_pending,
+                    'total_completed': total_completed,
+                    'total_rejected': total_rejected,
+                    'completion_rate': completion_rate,
+                    'avg_processing_days': avg_processing_days
+                },
+                'purpose_trends': list(purpose_trends),
+                'monthly_requests': list(monthly_requests),
+                'payment_status_breakdown': list(payment_status_breakdown),
+                'recent_requests': list(recent_requests),
+                'top_purposes': list(top_purposes),
+                'date_range': {
+                    'start_date': start_date.isoformat(),
+                    'end_date': end_date.isoformat(),
+                    'months_back': months_back
+                }
+            }
+            
+            return Response(analytics_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            import traceback
+            logger.error(f"Error in business permit analytics: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching business permit analytics',
+                'traceback': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BusinessPermitSidebarView(APIView):
+    """
+    Sidebar data for business permit analytics
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            from datetime import date, timedelta
+            
+            # Recent business permit requests (last 7 days)
+            recent_requests = BusinessPermitRequest.objects.filter(
+                req_request_date__gte=date.today() - timedelta(days=7)
+            ).select_related('pr_id', 'rp_id__per').values(
+                'bpr_id',
+                'req_request_date',
+                'req_status',
+                'req_payment_status',
+                'pr_id__pr_purpose',
+                'rp_id__per__per_fname',
+                'rp_id__per__per_lname',
+                'bus_permit_name',
+                'bus_permit_address'
+            ).order_by('-req_request_date')[:10]
+            
+            sidebar_data = {
+                'recent_requests': list(recent_requests)
+            }
+            
+            return Response(sidebar_data, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Error in business permit sidebar: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching business permit sidebar data'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CombinedCertificateListView(ActivityLogMixin, generics.ListAPIView):
+    """
+    Combined view for both resident and non-resident certificates with configurable payment status
+    """
+    permission_classes = [AllowAny]
+    pagination_class = StandardResultsPagination
+    
+    def get_queryset(self):
+        # Get payment status filter from request
+        payment_status = self.request.GET.get('payment_status', 'Unpaid')  # Default to 'Unpaid' for backward compatibility
+        
+        # Get resident certificates with specified payment status and exclude cancelled
+        resident_queryset = ClerkCertificate.objects.select_related(
+            'rp_id__per',
+            'pr_id'
+        ).filter(
+            cr_req_payment_status=payment_status,
+            cr_req_status__in=['Pending', 'Completed', 'In Progress']  # Exclude 'Cancelled'
+        )
+        
+        # Get non-resident certificates with specified payment status and exclude cancelled
+        non_resident_queryset = NonResidentCertificateRequest.objects.select_related('pr_id').filter(
+            nrc_req_payment_status=payment_status,
+            nrc_req_status__in=['Pending', 'Completed', 'In Progress']  # Exclude 'Cancelled'
+        )
+        
+        # Search functionality
+        search = self.request.GET.get('search', None)
+        if search:
+            resident_queryset = resident_queryset.filter(
+                Q(cr_id__icontains=search) |
+                Q(rp_id__per__per_fname__icontains=search) |
+                Q(rp_id__per__per_lname__icontains=search) |
+                Q(rp_id__per__per_mname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(cr_req_status__icontains=search)
+            )
+            
+            non_resident_queryset = non_resident_queryset.filter(
+                Q(nrc_id__icontains=search) |
+                Q(nrc_lname__icontains=search) |
+                Q(nrc_fname__icontains=search) |
+                Q(nrc_mname__icontains=search) |
+                Q(pr_id__pr_purpose__icontains=search) |
+                Q(nrc_req_status__icontains=search)
+            )
+        
+        # Status filter
+        status_filter = self.request.GET.get('status', None)
+        if status_filter:
+            resident_queryset = resident_queryset.filter(cr_req_status=status_filter)
+            non_resident_queryset = non_resident_queryset.filter(nrc_req_status=status_filter)
+        
+        # Purpose filter
+        purpose_filter = self.request.query_params.get('purpose', None)
+        if purpose_filter:
+            resident_queryset = resident_queryset.filter(pr_id__pr_purpose=purpose_filter)
+            non_resident_queryset = non_resident_queryset.filter(pr_id__pr_purpose=purpose_filter)
+        
+        # Combine and order by date
+        combined_queryset = list(resident_queryset.order_by('-cr_req_request_date')) + list(non_resident_queryset.order_by('-nrc_req_date'))
+        
+        # Sort combined results by date (most recent first)
+        combined_queryset.sort(key=lambda x: getattr(x, 'cr_req_request_date', getattr(x, 'nrc_req_date', None)), reverse=True)
+        
+        return combined_queryset
+    
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            
+            # Manual pagination since we're combining two different model types
+            page_size = int(request.GET.get('page_size', 10))
+            page = int(request.GET.get('page', 1))
+            
+            start_idx = (page - 1) * page_size
+            end_idx = start_idx + page_size
+            
+            paginated_queryset = queryset[start_idx:end_idx]
+            
+            # Serialize the data
+            serialized_data = []
+            for item in paginated_queryset:
+                if hasattr(item, 'cr_id'):  # Resident certificate
+                    serializer = ClerkCertificateSerializer(item)
+                    data = serializer.data
+                    data['is_nonresident'] = False
+                    # Standardize field names
+                    data['req_request_date'] = data.get('cr_req_request_date')
+                    data['req_purpose'] = data.get('purpose', {}).get('pr_purpose', '')
+                    data['req_payment_status'] = data.get('cr_req_payment_status')
+                else:  # Non-resident certificate
+                    serializer = NonResidentCertReqSerializer(item)
+                    data = serializer.data
+                    data['is_nonresident'] = True
+                    # Map non-resident fields to match resident structure
+                    data['cr_id'] = data.get('nrc_id')
+                    data['req_request_date'] = data.get('nrc_req_date')
+                    data['req_purpose'] = data.get('purpose', {}).get('pr_purpose', '')
+                    data['req_payment_status'] = data.get('nrc_req_payment_status')
+                    data['resident_details'] = None
+                
+                serialized_data.append(data)
+            
+            # Calculate pagination info
+            total_count = len(queryset)
+            has_next = end_idx < total_count
+            has_previous = page > 1
+            
+            response_data = {
+                'count': total_count,
+                'next': f"?page={page + 1}" if has_next else None,
+                'previous': f"?page={page - 1}" if has_previous else None,
+                'results': serialized_data
+            }
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            logger.error(f"Error in CombinedCertificateListView: {str(e)}")
+            return Response({
+                'error': str(e),
+                'detail': 'An error occurred while fetching combined certificates'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

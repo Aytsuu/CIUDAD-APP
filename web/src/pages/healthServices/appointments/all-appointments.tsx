@@ -1,27 +1,29 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react"
-import { ArrowUpDown, Search, FileInput, AlertCircle, Loader2, FileText } from "lucide-react"
+import { useState, useMemo, useEffect, useCallback } from "react"
+import { ArrowUpDown, Search, AlertCircle, FileText } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { DataTable } from "@/components/ui/table/data-table"
 import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { SelectLayout } from "@/components/ui/select/select-layout"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { TooltipProvider } from "@/components/ui/tooltip"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { useLoading } from "@/context/LoadingContext"
+import { ExportButton } from "@/components/ui/export";
 
 import { getAgeInUnit } from "@/helpers/ageCalculator"
 
 import ScheduleTab from "./appointments-tab";
 
 import { useAllFollowUpVisits } from "../../record/health/patientsRecord/queries/fetch"
+import { useDebounce } from "@/hooks/use-debounce";
+import { capitalize } from "@/helpers/capitalize";
 
-// main component
+import TableLoading from "../../../components/ui/table-loading";
+
+// main component           
 export default function ScheduleRecords() {
   type ScheduleRecord = {
     id: number;
@@ -49,21 +51,24 @@ export default function ScheduleRecords() {
   const [timeFrame, setTimeFrame] = useState("all");
   const [isTimeFrameLoading, setIsTimeFrameLoading] = useState(false);
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 300); // debounce the search term to avoid requests on every keystroke
   const { showLoading, hideLoading } = useLoading(); // for loading state
 
   // fetch data
   const {
     data: paginatedData,
     isLoading,
-    error,
+    error,  
     refetch
-  } = useAllFollowUpVisits({
+  } = useAllFollowUpVisits(
     page,
-    page_size: pageSize,
-    status: selectedFilter !== "All" ? selectedFilter : undefined,
-    search: searchTerm || undefined,
-    time_frame: timeFrame,
-  })
+    pageSize,
+    debouncedSearchTerm,
+    selectedFilter,
+    timeFrame
+  )
+
+  
 
   // age unit handler
   function getBestAgeUnit(dob: string): { value: number; unit: string } {
@@ -110,10 +115,10 @@ export default function ScheduleRecords() {
         const record: ScheduleRecord = {
           id: visit.followv_id || visit.id || 0,
           patient: {
-            firstName: patientInfo.per_fname || "Unknown",
-            lastName: patientInfo.per_lname || "Unknown",
+            firstName: patientInfo.per_fname || "",
+            lastName: patientInfo.per_lname || "",
             middleName: patientInfo.per_mname || "",
-            gender: patientInfo.per_sex || "Unknown",
+            gender: patientInfo.per_sex || "",
             age: ageInfo,
             ageTime: ageUnit,
             patientId: patientDetails.pat_id || patientInfo.pat_id || "",
@@ -121,9 +126,9 @@ export default function ScheduleRecords() {
           scheduledDate: formatDate(visit.followv_date || visit.date),
           purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
           status: visit.followv_status || "Pending",
-          sitio: address.add_sitio || "Unknown",
-          type: patientDetails.pat_type || "Unknown",
-          patrecType: patientDetails.patrec_type || "Unknown",
+          sitio: address.add_sitio || "",
+          type: patientDetails.pat_type || "",
+          patrecType: patientDetails.patrec_type || "",
         }
 
         return record
@@ -155,18 +160,14 @@ export default function ScheduleRecords() {
     setPage(1) 
   }
 
-  const handleTimeFrameChange = (timeFrame: string) => {
+const handleTimeFrameChange = (timeFrame: string) => {
     setIsTimeFrameLoading(true);
     setTimeFrame(timeFrame)
     setPage(1)
-
-    setTimeout(() => {
-      setIsTimeFrameLoading(false);
-    }, 1000)
   }
 
-  // determine if missed 
-  const getAppointmentStatus = (scheduledDate: string, currentStatus: string) => {
+  // determine if missed (stable via useCallback)
+  const getAppointmentStatus = useCallback((scheduledDate: string, currentStatus: string) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const appointmentDate = new Date(scheduledDate);
@@ -176,11 +177,12 @@ export default function ScheduleRecords() {
       return "Missed";
     }
     return currentStatus;
-  };
+  }, []);
 
-  const columns: ColumnDef<ScheduleRecord>[] = [
+  const columns: ColumnDef<ScheduleRecord>[] = useMemo(() => [
     {
       accessorKey: "no",
+      size: 80,
       header: "No.",
       cell: ({ row }) => (
         <div className="flex justify-center">
@@ -192,6 +194,7 @@ export default function ScheduleRecords() {
     },
     {
       accessorKey: "patient",
+      size: 250,
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
@@ -202,7 +205,7 @@ export default function ScheduleRecords() {
         const fullName = `${patient.lastName}, ${patient.firstName} ${patient.middleName}`.trim();
 
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex justify-start">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-gray-600">
@@ -221,7 +224,7 @@ export default function ScheduleRecords() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
+        <div className="flex justify-center">
           <div className="text-center">
             <div className="font-medium">{row.original.scheduledDate}</div>
           </div>
@@ -230,15 +233,17 @@ export default function ScheduleRecords() {
     },
     {
       accessorKey: "purpose",
+      size: 200,
       header: "Purpose",
       cell: ({ row }) => (
-        <div className="flex justify-start min-w-[150px] px-2">
-          <div className="w-full break-words">{row.original.purpose}</div>
+        <div className="flex justify-center px-2">
+          <div className="w-full break-words">{capitalize(row.original.purpose)}</div>
         </div>
       )
     },
     {
       accessorKey: "status",
+      // size: 80,
       header: "Status",
       cell: ({ row }) => {
         const actualStatus = getAppointmentStatus(row.original.scheduledDate, row.original.status);
@@ -250,7 +255,7 @@ export default function ScheduleRecords() {
         }
 
         return (
-          <div className="flex justify-center min-w-[100px] px-2">
+          <div className="flex justify-center">
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[actualStatus as keyof typeof statusColors]}`}>{actualStatus}</span>
           </div>
         );
@@ -258,46 +263,49 @@ export default function ScheduleRecords() {
     },
     {
       accessorKey: "sitio",
+      // size: 80,
       header: "Sitio",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
+        <div className="flex justify-center min-w-[120px]">
           <div className="text-center w-full">{row.original.sitio}</div>
         </div>
       )
     },
     {
       accessorKey: "type",
+      // size: 80,
       header: "Type",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.type}</div>
+        <div className="flex justify-center">
+          <div className="w-full">{row.original.type}</div>
         </div>
       )
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <TooltipProvider>
-            <TooltipLayout
-              trigger={
-                <div
-                  className="bg-white hover:bg-gray-50 border text-black px-4 py-2 rounded cursor-pointer"
-                  onClick={() => {
-                    console.log("View patient:", row.original.patient.patientId)
-                  }}
-                >
-                  <p className="font-semibold">View</p>
-                </div>
-              }
-              content="View Schedule Details"
-            />
-          </TooltipProvider>
-        </div>
-      )
-    }
-  ];
+    }, 
+    // {
+    //   accessorKey: "action",
+    //   size: 100,
+    //   header: "Action",
+    //   cell: ({ row }) => (
+    //     <div className="flex justify-center">
+    //       <TooltipProvider> 
+    //         <TooltipLayout
+    //           trigger={
+    //             <div
+    //               className="bg-white hover:bg-gray-50 text-black px-4 py- rounded cursor-pointer"
+    //               onClick={() => {
+    //                 console.log("View patient:", row.original.patient.patientId)
+    //               }}
+    //             >
+    //               <ViewButton onClick={() => {}} />
+    //             </div>
+    //           }
+    //           content="View Schedule Details"
+    //         />
+    //       </TooltipProvider>
+    //     </div>
+    //   )
+    // }
+  ], [getAppointmentStatus]);
 
   const filter = [
     { id: "All", name: "All" },
@@ -307,26 +315,36 @@ export default function ScheduleRecords() {
     { id: "cancelled", name: "Cancelled" },
   ]
 
-
-  // Export to CSV
-  const exportToCSV = () => {
-    const headers = ["ID", "Patient Name", "Date", "Purpose", "Status", "Sitio", "Type"];
-    const csvData = transformedData.map((record: any) => {
-      const fullName = `${record.patient.lastName}, ${record.patient.firstName} ${record.patient.middleName}`;
-      const actualStatus = getAppointmentStatus(record.scheduledDate, record.status);
-      return [record.id, fullName, record.scheduledDate, record.purpose, actualStatus, record.sitio, record.type];
-    });
-
-    const csvContent = [headers, ...csvData].map((row) => row.map((field: any) => `"${field}"`).join(",")).join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "follow-up-visits.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+  // export columns
+  const exportColumns = [
+    { 
+      key: "patient", 
+      header: "Patient Name",
+      format: (row: ScheduleRecord) => 
+        `${row.patient.firstName}, ${row.patient.lastName} ${row.patient.middleName}`.trim()
+    },
+    { 
+      key: "age", 
+      header: "Age",
+      format: (row: ScheduleRecord) => `${row.patient.age} ${row.patient.ageTime}`
+    },
+    { 
+      key: "sex", 
+      header: "Sex",
+      format: (row: ScheduleRecord) => row.patient.gender
+    },
+    { 
+      key: "scheduledDate", 
+      header: "Scheduled Date",
+      format: (row: ScheduleRecord) => row.scheduledDate || "Not Provided"
+    },
+    { 
+      key: "sitio", 
+      header: "Sitio",
+      format: (row: ScheduleRecord) => row.sitio || "Not Provided"
+    },
+    { key: "pat_type", header: "Type", format: (row: ScheduleRecord) => row.type || "Not Provided" },
+  ];
 
   useEffect(() => {
     if (isLoading) {
@@ -336,10 +354,17 @@ export default function ScheduleRecords() {
     }
   }, [isLoading, showLoading, hideLoading]);
 
+  // Clear the temporary timeframe loading flag when query completes
+  useEffect(() => {
+    if (!isLoading) {
+      setIsTimeFrameLoading(false);
+    }
+  }, [isLoading, paginatedData]);
+
   // Error state
   if (error) {
     return (
-      <LayoutWithBack title="Scheduled Appointments" description="View patient appointment schedules">
+      <MainLayoutComponent title="Scheduled Appointments" description="View patient appointment schedules">
         <div className="flex flex-col items-center justify-center h-64">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-red-600 mb-2 text-lg font-semibold">Error loading data</p>
@@ -348,26 +373,21 @@ export default function ScheduleRecords() {
             Try Again
           </Button>
         </div>
-      </LayoutWithBack>
+      </MainLayoutComponent>
     );
   }
 
   const showLoadingState = isLoading || isTimeFrameLoading;
 
   return (
-    <LayoutWithBack title="Follow-up Visits" description="View patient appointment schedules">
+    <MainLayoutComponent title="Follow-up Visits" description="View patient appointment schedules">
       <div className="w-full h-full bg-white/40 p-2 flex flex-col">
         <div className="flex justify-between mb-4 w-full">
           <div>
             <ScheduleTab onTimeFrameChange={handleTimeFrameChange} />
           </div>
 
-          <div className="flex justify-center items-center">
-            <span className="text-sm font-semibold text-center text-white bg-blue-500 rounded-lg py-2 px-3 hover:bg-blue-600 shadow-md transition-colors duration-200 ease-in-out cursor-pointer">
-              
-              Defaulters Tracking
-            </span>
-          </div>
+          {/* defaulters tracking */}
         </div> 
         <div className="relative w-full hidden lg:flex justify-between items-center mb-4 gap-2">
           <div className="flex flex-col md:flex-row gap-4 w-full">
@@ -376,7 +396,13 @@ export default function ScheduleRecords() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
                 <Input placeholder="Search schedules..." className="pl-10 w-full bg-white" value={searchTerm} onChange={(e) => handleSearch(e.target.value)} />
               </div>
-              <SelectLayout placeholder="Select status" label="" className="w-full md:w-[200px] bg-white text-black" options={filter} value={selectedFilter} onChange={handleFilterChange} />
+              <SelectLayout 
+                placeholder="Select status" 
+                className="w-full md:w-[200px] bg-white text-black" 
+                options={filter} 
+                value={selectedFilter} 
+                onChange={handleFilterChange} 
+              />
             </div>
           </div>
         </div>
@@ -389,31 +415,21 @@ export default function ScheduleRecords() {
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <FileInput />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={exportToCSV}>Export as CSV</DropdownMenuItem>
-                  <DropdownMenuItem>Export as Excel</DropdownMenuItem>
-                  <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <ExportButton
+                data={transformedData}
+                filename={`follow-up-visits-${new Date().toISOString().split("T")[0]}`}
+                columns={exportColumns}
+              />
             </div>
           </div>
 
           <div className="w-full overflow-x-auto">
             {showLoadingState ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="animate-spin" /> Loading...
-              </div>
+             <TableLoading/>
             ) : transformedData.length > 0 ? (
               <DataTable columns={columns} data={transformedData} />
             ) : (
-              <div className="flex justify-center">
+              <div className="flex justify-center h-48">
                 <p className="flex text-gray-500 items-center"> 
                   <FileText size={28}/> 
                   No follow-up visits found for {timeFrame === "today" ? "today" : timeFrame === "thisWeek" ? "this week" : "this month"}
@@ -422,7 +438,7 @@ export default function ScheduleRecords() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+          <div className="flex flex-col border-t sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-gray-600 pl-0 sm:pl-4">
               Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, paginatedData?.count) || 0} of {paginatedData?.count} rows
@@ -433,6 +449,6 @@ export default function ScheduleRecords() {
           </div>
         </div>
       </div>
-    </LayoutWithBack>
+    </MainLayoutComponent>
   );
 }

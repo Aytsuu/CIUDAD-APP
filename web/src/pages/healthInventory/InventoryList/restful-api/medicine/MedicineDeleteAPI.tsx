@@ -7,7 +7,6 @@ export const handleDeleteMedicineList = async (id: string) => {
     return res.data;
   } catch (error: any) {
     console.error("Error deleting medicine:", error);
-    // ❗ Re-throw the error so it can be caught in the calling function
     throw error;
   }
 };

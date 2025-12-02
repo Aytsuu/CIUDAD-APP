@@ -1,8 +1,8 @@
 import '@/global.css';
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FormInput } from "@/components/ui/form/form-input";
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import IllegalDumpResSchema from '@/form-schema/waste/waste-illegal-dump-res';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,11 +16,13 @@ import { FormSingleCheckbox } from '@/components/ui/form/form-single-checkbox';
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useGetWasteSitio } from '../queries/illegal-dump-fetch-queries';
 import { useAddWasteReport } from '../queries/illegal-dum-add-queries';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 
 
 export default function IllegalDumpResubmitForm() {
+  const {user} = useAuth()  
   const params = useLocalSearchParams();    
   const router = useRouter();
   const { data: fetchedSitio = [], isLoading } = useGetWasteSitio();
@@ -45,8 +47,6 @@ export default function IllegalDumpResubmitForm() {
     waste_report_file,
     waste_report_rslv_file
   } = params;
-
-  console.log('waste_report_file:', waste_report_file);
 
 
   const [selectedImages, setSelectedImages] = React.useState<MediaItem[]>([])
@@ -92,7 +92,9 @@ export default function IllegalDumpResubmitForm() {
 
     const allValues = {
       ...values,
-      files      
+      files,
+      rp_id: user?.rp,
+      phone: user?.phone      
     }
 
     addReport(allValues, {
@@ -104,30 +106,31 @@ export default function IllegalDumpResubmitForm() {
 
 
   return (
-    <_ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} className="text-black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">Report Illegal Dumping</Text>}
-      showExitButton={false}
-      loading={ isLoading || isCreating }
-      loadingMessage={
-        isCreating ? "Submitting report..." : 
-        "Loading..."
-      }
+      headerTitle={<Text className="text-[13px]">Report Illegal Dumping</Text>}
       footer={
         <View className="w-full">
             <TouchableOpacity
                 className="bg-primaryBlue py-4 rounded-md w-full items-center"
                 onPress={handleSubmit(onSubmit)}
+                disabled={isCreating}
             >
-                <Text className="text-white text-base font-semibold">Submit</Text>
+              <View className="flex-row justify-center items-center gap-2">
+                  {isCreating && (
+                      <ActivityIndicator size="small" color="white" className="ml-2" />
+                  )}                           
+                  <Text className="text-white text-base font-semibold">
+                      {isCreating ? "Submitting..." : "Submit"}
+                  </Text>                                   
+              </View> 
             </TouchableOpacity>
         </View>        
-      }
-      stickyFooter={true}      
+      }  
     >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="mb-8 p-5">
@@ -180,8 +183,7 @@ export default function IllegalDumpResubmitForm() {
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
-                multiple={true}
-                maxImages={3}
+                limit={3}
               /> 
             </View>
 
@@ -194,6 +196,6 @@ export default function IllegalDumpResubmitForm() {
           </View>
         </View>
       </ScrollView>
-    </_ScreenLayout>
+    </PageLayout>
   );
 }

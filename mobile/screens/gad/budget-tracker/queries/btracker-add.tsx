@@ -29,41 +29,37 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
         }
       }
 
-      // Create budget entry
+
       const budgetEntry = await createGADBudget(data.budgetData);
-      
-       // ✅ Fixed: Only process files that have proper data
       if (data.files && data.files.length > 0) {
-        // Filter for valid files with base64 data (already formatted with data: prefix)
         const validFiles = data.files.filter(file => 
           file.file && 
           typeof file.file === 'string' && 
           file.file.startsWith('data:')
         );
 
-        console.log(`Processing ${validFiles.length} valid files out of ${data.files.length} total files`);
+        // console.log(`Processing ${validFiles.length} valid files out of ${data.files.length} total files`);
 
         if (validFiles.length > 0) {
           await Promise.all(
             validFiles.map(async (file) => {
               try {
-                // ✅ Fixed: Send the file with proper base64 data
                 const filePayload = {
                   id: file.id,
                   name: file.name,
                   type: file.type,
-                  file: file.file, // This now contains the properly formatted base64 data
+                  file: file.file, 
                 };
 
                 return await createGADBudgetFile(budgetEntry.gbud_num, [filePayload]);
               } catch (error) {
-                console.error("Error creating file entry:", error);
+                // console.error("Error creating file entry:", error);
                 return null;
               }
             })
           );
         } else {
-          console.warn('No valid files to upload after filtering');
+          // console.warn('No valid files to upload after filtering');
         }
       }
 
@@ -74,6 +70,7 @@ export const useCreateGADBudget = (yearBudgets: BudgetYear[], budgetEntries: Bud
       queryClient.invalidateQueries({
         queryKey: ['gad-budgets', year],
       });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
       
       toast.success('Budget entry created successfully');
     },

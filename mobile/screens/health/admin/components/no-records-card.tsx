@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text } from "react-native";
 import { FileText } from "lucide-react-native";
 
 // Ensure you import `onRefresh` if it's defined elsewhere

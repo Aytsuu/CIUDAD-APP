@@ -12,14 +12,20 @@ from .views.patient_views import *
 from .views.illness_views import *
 from .views.disability_views import *
 from .views.mobile_views import *
-from apps.administration.views.staff_views import HealthStaffListView
+from apps.administration.views.staff_views import *
 from.views.family_views import MyChildrenSimpleAPIView
+# from .views.monthly_morbidity_views import MonthlyMorbidityView
+
 urlpatterns = [
     path('residents-available/', get_resident_profile_list, name='residents-available-list'),
 
     path('patient-record/', PatientRecordView.as_view(), name='patient-record'),
     path('patients/', PatientListView.as_view(), name='patient-list'),
+    path('patients/count/', PatientCountView.as_view(), name='patient-count'),
+    path('children/',ChildPatientsWithoutRecordsView.as_view(), name='children-without-records'),
+    path('patient/check-or-create/', check_or_create_patient, name='check-or-create-patient'), # for mobile prenatal appointment
     path('patient/view/create/', PatientView.as_view(), name='patient-create-view'),
+    path('patient/history/', PatientHistoryView.as_view(), name='patient-history'),
     path('patient/<str:pat_id>/', PatientDetailView.as_view(), name='patient-detail'),
     path('patient/<str:pat_id>/update/', PatientUpdateView.as_view(), name='patient-update'),
 	 
@@ -42,11 +48,11 @@ urlpatterns = [
     
     path('body-measurements/', BodyMeasurementView.as_view(), name='body-measurements'),
     path('body-measurements/<str:pat_id>/', BodyMeasurementView.as_view(), name='body-measurements-by-patient'),
+    path('children-body-measurements/<str:pat_id>/', ChildrenBodyMeasurementView.as_view(), name='children-body-measurements'),
    
     path("findings/", FindingView.as_view(), name="findings"),
 
-    path('followup-complete/<str:pat_id>/', GetCompletedFollowUpVisits.as_view(), name='followup-complete'),
-    path('followup-pending/<str:pat_id>/', GetPendingFollowUpVisits.as_view(), name='followup-pending'),
+    path('patient-followup-visits/<str:pat_id>/', GetPatientFollowUpVisits.as_view(), name='patient-followup-visits'),
     path('previous-measurement/<str:pat_id>/', GetPreviousHeightWeightAPIView.as_view(), name='previous-height-weight'),
    
     path('illness/', IllnessView.as_view(), name="illness"),
@@ -84,6 +90,7 @@ urlpatterns = [
     path('patient/by-resident/<str:rp_id>/',get_patient_by_resident_id,name='get-patient-by-resident-id'),
     path('appointments/by-resident/<str:rp_id>/', get_appointments_by_resident_id, name='get_appointments_by_resident_id'),
     path('parent-children/<str:pat_id>/', MyChildrenSimpleAPIView.as_view(), name='parent-children-simple'),
-
+    path('all-appointments/', AllAppointmentsView.as_view(), name='all-appointments'),
     # path('patient-by-resident/<str:rp_id>/', get_patient_by_resident_id, name='patient-by-resident-id'),
+
 ]

@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { format, isValid } from "date-fns";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 
 export const VitalSignsCard= ({ processedRecords, currentRecord, extractDOBFromRecord }:any) => {

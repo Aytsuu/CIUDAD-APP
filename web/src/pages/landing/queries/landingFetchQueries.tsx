@@ -1,18 +1,18 @@
 import { api } from "@/api/api";
 import { useQuery } from "@tanstack/react-query";
 
-export const useBrgyCouncil = () => {
+export const useLandingDetails = (id: number) => {
   return useQuery({
-    queryKey: ['brgyCouncil'],
+    queryKey: ['landingData'],
     queryFn: async () => {
       try {
-        const res = await api.get('administration/staff/landing-page/');
+        const res = await api.get(`landing/retrieve/${id}/`);
         return res.data;
-      } catch (err) {
+      } catch(err) {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 1000 * 60 * 10,
+    retry: false
   })
 }
-

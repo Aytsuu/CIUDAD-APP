@@ -1,7 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-from django.db.models import OuterRef, Exists, Prefetch, Q, Count
+from django.db.models import OuterRef, Exists, Prefetch, Q, Count, Case, When, IntegerField
 from rest_framework.response import Response
 
 from apps.maternal.serializers.serializer import *
@@ -18,7 +19,202 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# medical history GET
+# for charts 
+class MaternalPatientsListView(APIView):
+    def get(self, request, month):
+        try:
+            # Validate month format (YYYY-MM)
+            try:
+                year, month_num = map(int, month.split('-'))
+                if month_num < 1 or month_num > 12:
+                    raise ValueError
+            except ValueError:
+                return Response({
+                    'success': False,
+                    'error': 'Invalid month format. Use YYYY-MM.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get maternal patients with records created in the specified month
+            queryset = Patient.objects.filter(
+                Exists(PatientRecord.objects.filter(
+                    pat_id=OuterRef('pat_id'),
+                    patrec_type__in=['Prenatal', 'Postpartum Care'],
+                    created_at__year=year,
+                    created_at__month=month_num
+                ))
+            ).annotate(
+                completed_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
+            ).distinct()
+
+            # Serialize the data
+            serializer = PatientSerializer(queryset, many=True)
+            
+            # Count prenatal and postpartum records for the month
+            prenatal_count = PatientRecord.objects.filter(
+                patrec_type='Prenatal',
+                created_at__year=year,
+                created_at__month=month_num
+            ).count()
+            
+            postpartum_count = PatientRecord.objects.filter(
+                patrec_type='Postpartum Care',
+                created_at__year=year,
+                created_at__month=month_num
+            ).count()
+
+            return Response({
+                'success': True,
+                'month': month,
+                'patients': serializer.data,
+                'total_patients': queryset.count(),
+                'prenatal_records': prenatal_count,
+                'postpartum_records': postpartum_count,
+                'total_records': prenatal_count + postpartum_count
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.error(f"Error fetching maternal patients for month {month}: {e}")
+            return Response({
+                'success': False,
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PrenatalFormListWithCareView(generics.ListAPIView):
+    """List prenatal forms with embedded prenatal care entries.
+
+    Optional filters:
+        - pregnancy_id: Get forms from a specific pregnancy (overrides default latest behavior)
+
+    Pagination: Disabled (returns full list). Re‑enable if dataset grows.
+    """
+    serializer_class = PrenatalFormListWithCareSerializer
+
+    def get_queryset(self):
+        qs = Prenatal_Form.objects.select_related('pregnancy_id').prefetch_related('pf_prenatal_care').all()
+        pregnancy_id = self.request.query_params.get('pregnancy_id')
+
+        if pregnancy_id:
+            # Explicit pregnancy_id filter
+            qs = qs.filter(pregnancy_id__pregnancy_id=pregnancy_id)
+        else:
+            # Default: Get the latest pregnancy and return only its forms
+            latest_pregnancy = Pregnancy.objects.order_by(
+                Case(
+                    When(status='active', then=0),
+                    default=1,
+                    output_field=IntegerField(),
+                ),
+                '-created_at'
+            ).first()
+            
+            if latest_pregnancy:
+                qs = qs.filter(pregnancy_id__pregnancy_id=latest_pregnancy.pregnancy_id)
+            else:
+                qs = qs.none()
+
+        return qs.order_by('-created_at')
+
+
+class PatientCombinedFollowUpsView(APIView):
+    """Return combined prenatal follow-up visits (FollowUpVisit linked via Prenatal_Form.followv_id)
+    and postpartum assessments (ppa entries) for a patient, flattened into a unified list."""
+    def get(self, request, pat_id):
+        try:
+            patient = Patient.objects.get(pat_id=pat_id)
+        except Patient.DoesNotExist:
+            return Response({'error': 'Patient not found'}, status=404)
+
+        status_filter = request.GET.get('status', '').lower().strip()
+        type_filter = request.GET.get('type', '').lower().strip()
+        from_date = request.GET.get('from_date')
+        to_date = request.GET.get('to_date')
+        try:
+            limit = int(request.GET.get('limit', 200))
+        except ValueError:
+            limit = 200
+
+        # Collect pregnancies for patient (active first, then others by created desc)
+        pregnancies = Pregnancy.objects.filter(pat_id=patient).order_by(
+            Case(When(status='active', then=0), default=1, output_field=IntegerField()), '-created_at'
+        )
+
+        combined = []
+        for preg in pregnancies:
+            # Prenatal follow-up visits via Prenatal_Form.followv_id
+            prenatal_forms = Prenatal_Form.objects.filter(pregnancy_id=preg).select_related('followv_id').order_by('-created_at')
+            for pf in prenatal_forms:
+                if pf.followv_id:
+                    fu = pf.followv_id
+                    visit_date = fu.followv_date
+                    # Date filtering
+                    if from_date and visit_date < from_date:
+                        continue
+                    if to_date and visit_date > to_date:
+                        continue
+                    combined.append({
+                        'source': 'prenatal',
+                        'pregnancy_id': preg.pregnancy_id,
+                        'visit_id': fu.followv_id,
+                        'linked_form_id': pf.pf_id,
+                        'status': fu.followv_status,
+                        'description': fu.followv_description,
+                        'visit_date': visit_date,
+                        'created_at': fu.created_at,
+                        'completed_at': fu.completed_at,
+                    })
+
+            # Postpartum assessments as follow-up style entries
+            postpartum_records = PostpartumRecord.objects.filter(pregnancy_id=preg).select_related('followv_id').prefetch_related('postpartum_assessment').order_by('-created_at')
+            for ppr in postpartum_records:
+                assessments = ppr.postpartum_assessment.all() if hasattr(ppr, 'postpartum_assessment') else []
+                for ass in assessments:
+                    visit_date = ass.ppa_date_of_visit
+                    if from_date and visit_date < from_date:
+                        continue
+                    if to_date and visit_date > to_date:
+                        continue
+                    
+                    # Use FollowUpVisit description if available, otherwise use findings
+                    description = 'Postpartum assessment'
+                    if ppr.followv_id:
+                        description = ppr.followv_id.followv_description
+                    elif ass.ppa_findings:
+                        description = ass.ppa_findings
+                    
+                    combined.append({
+                        'source': 'postpartum',
+                        'pregnancy_id': preg.pregnancy_id,
+                        'visit_id': ass.ppa_id,
+                        'linked_record_id': ppr.ppr_id,
+                        'status': 'completed',  # postpartum assessments implicitly completed
+                        'description': description,
+                        'visit_date': visit_date,
+                        'created_at': visit_date,  # use visit date as created date
+                        'completed_at': visit_date,  # use visit date as completed date
+                    })
+
+        # Optional filtering by status/type after aggregation
+        if status_filter:
+            combined = [c for c in combined if c.get('status', '').lower() == status_filter]
+        if type_filter in ('prenatal', 'postpartum'):
+            combined = [c for c in combined if c.get('source') == type_filter]
+
+        # Sort by visit_date descending
+        combined.sort(key=lambda x: x.get('visit_date') or '', reverse=True)
+
+        # Apply limit
+        combined = combined[:limit]
+
+        return Response({
+            'patient_id': pat_id,
+            'count': len(combined),
+            'limit_applied': limit,
+            'results': combined,
+            'has_more': len(combined) == limit  # simple indicator; real pagination would refine
+        })
+
+
 # medical history GET
 class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
     def get(self, request, pat_id):
@@ -42,7 +238,8 @@ class PrenatalPatientMedHistoryView(generics.RetrieveAPIView):
                 })
 
             medical_history_obj = MedicalHistory.objects.filter(
-                patrec__in=all_patrec_w_medhis 
+                patrec__in=all_patrec_w_medhis,
+                is_from_famhistory=False  # EXCLUDE family history records
             ).select_related('ill', 'patrec').order_by('-created_at')
             
             # Apply search filter if search query is provided
@@ -233,14 +430,10 @@ class MaternalPatientListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = Patient.objects.filter(
-            Exists(PatientRecord.objects.filter(
-                pat_id=OuterRef('pat_id'),
-                patrec_type__in=['Prenatal', 'Postpartum Care']
+            Exists(Pregnancy.objects.filter(
+                pat_id=OuterRef('pat_id')
             ))
-        ).annotate(
-            completed_pregnancy_count=Count('pregnancy', filter=Q(pregnancy__status='active'))
-        ).distinct()
-
+        )
 
         params = self.request.query_params
         status = params.get('status')
@@ -276,8 +469,78 @@ class MaternalPatientListView(generics.ListAPIView):
         return queryset
 
 
-# Fix: Use APIView and return Response in get method
+class ForwardedMidwifeMaternalListView(generics.ListAPIView):
+    serializer_class = PatientSerializer
+    pagination_class = StandardResultsPagination
 
+    def get_queryset(self):
+        # Get all prenatal forms that match and strip in Python since DB has trailing spaces
+        matching_pf_ids = []
+        for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False):
+            status = (pf.status or '').strip()
+            forwarded_status = (pf.forwarded_status or '').strip()
+            if status == 'tbc_by_midwife' and forwarded_status == 'pending':
+                matching_pf_ids.append(pf.pf_id)
+        
+        logger.info(f"Debug: Found {len(matching_pf_ids)} matching prenatal forms: {matching_pf_ids}")
+        
+        # Now get patients from these forms
+        if not matching_pf_ids:
+            return Patient.objects.none()
+        
+        queryset = Patient.objects.filter(
+            Exists(PatientRecord.objects.filter(
+                pat_id=OuterRef('pat_id'),
+                prenatal_form__pf_id__in=matching_pf_ids
+            ))
+        )
+        
+        logger.info(f"Debug: ForwardedMidwifeMaternalListView returning {queryset.count()} patients")
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        """Override list to include patrec_type in response"""
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = serializer.data
+            
+            # Add patrec_type for each patient
+            for patient_data in data:
+                patient_id = patient_data.get('pat_id')
+                patrec = PatientRecord.objects.filter(
+                    pat_id=patient_id,
+                    prenatal_form__pf_id__in=[pf.pf_id for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False)]
+                ).first()
+                if patrec:
+                    patient_data['patrec_type'] = patrec.patrec_type
+                else:
+                    patient_data['patrec_type'] = None
+            
+            return self.get_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+        
+        # Add patrec_type for each patient
+        for patient_data in data:
+            patient_id = patient_data.get('pat_id')
+            patrec = PatientRecord.objects.filter(
+                pat_id=patient_id,
+                prenatal_form__pf_id__in=[pf.pf_id for pf in Prenatal_Form.objects.filter(assigned_to__isnull=False)]
+            ).first()
+            if patrec:
+                patient_data['patrec_type'] = patrec.patrec_type
+            else:
+                patient_data['patrec_type'] = None
+        
+        return Response(data)
+
+
+# Counts
 class MaternalCountView(generics.ListAPIView):
     def get(self, request):
         try:
@@ -403,7 +666,7 @@ def get_latest_patient_prenatal_record(request, pat_id):
                 status__in=['completed', 'pregnancy loss']
             ).order_by('-created_at').first()
 
-            # Get latest occupation from any prenatal form for this patient
+            # GET latest occupation from any prenatal form for this patient
             latest_occupation = None
             latest_pf_with_occupation = Prenatal_Form.objects.filter(
                 patrec_id__pat_id=patient,
@@ -433,9 +696,9 @@ def get_latest_patient_prenatal_record(request, pat_id):
         latest_pf = Prenatal_Form.objects.filter(
             pregnancy_id=active_pregnancy
         ).select_related(
-            'pregnancy_id', 'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'bm_id', 'staff_id'
+            'pregnancy_id', 'patrec_id', 'vital_id', 'spouse_id', 'followv_id', 'bm_id', 'staff'
         ).prefetch_related(
-            'pf_previous_hospitalization', 'tt_status', 'lab_result__lab_result_img',
+            'pf_previous_hospitalization', #'lab_result__lab_result_img',
             'pf_anc_visit', 'pf_checklist', 'pf_birth_plan', 
             'pf_obstetric_risk_code', 'pf_prenatal_care'
         ).order_by('-created_at').first()
@@ -449,10 +712,10 @@ def get_latest_patient_prenatal_record(request, pat_id):
             }, status=status.HTTP_200_OK)
 
         serializer = PrenatalDetailSerializer(latest_pf)
-        # Attach spouse info if available
+        
         result_data = serializer.data
         if spouse_data:
-            result_data['spouse_details'] = spouse_data
+            result_data['spouse_details'] = spouse_data # spouse data if available 
 
         return Response({
             'pat_id': pat_id,
@@ -510,7 +773,8 @@ class PatientPregnancyRecordsListView(generics.ListAPIView):
         if filters:
             pregnancies = pregnancies.filter(filters)
 
-        pregnancies = pregnancies.order_by('-created_at').prefetch_related(
+        # Order pregnancies by pregnancy_id (string contains zero-padded numeric suffix so lexical desc works for latest first)
+        pregnancies = pregnancies.order_by('-pregnancy_id').prefetch_related(
             Prefetch('prenatal_form', queryset=Prenatal_Form.objects.all().order_by('-created_at')),
             Prefetch('postpartum_record', queryset=PostpartumRecord.objects.prefetch_related('postpartum_delivery_record', 'vital_id').order_by('-created_at'))
         )
@@ -671,13 +935,10 @@ def get_prenatal_patient_tt_status(request, pat_id):
     try:
         patient = Patient.objects.get(pat_id=pat_id)
 
-        tt_statuses = TT_Status.objects.filter(
-            pf_id__patrec_id__pat_id=patient,
-            pf_id__patrec_id__patrec_type__in=['Prenatal', 'Postpartum Care']
-        ).select_related(
-            'pf_id__patrec_id',
-            'pf_id__pregnancy_id'
-        ).order_by('-tts_date_given')
+        # TT_Status now links directly to Patient (pat_id). Fetch records by patient and
+        # return only the core TT fields. We intentionally avoid any pf_id-derived metadata
+        # because `pf_id` is no longer a reliable FK on TT_Status.
+        tt_statuses = TT_Status.objects.filter(pat_id=patient).order_by('-tts_date_given')
 
         if not tt_statuses.exists():
             return Response({
@@ -685,28 +946,17 @@ def get_prenatal_patient_tt_status(request, pat_id):
                 'message': 'No TT status records found for this patient'
             }, status=status.HTTP_200_OK)
 
-        tt_data = []
-        for tt_status in tt_statuses:
-            tt_data.append({
-                'tts_id': tt_status.tts_id,
-                'tts_status': tt_status.tts_status,
-                'tts_date_given': tt_status.tts_date_given,
-                'tts_tdap': tt_status.tts_tdap,
-                'prenatal_form': {
-                    'pf_id': tt_status.pf_id.pf_id,
-                    'pregnancy_id': tt_status.pf_id.pregnancy_id.pregnancy_id if tt_status.pf_id.pregnancy_id else None,
-                    'created_at': tt_status.pf_id.created_at
-                },
-                'patient_record': {
-                    'patrec_id': tt_status.pf_id.patrec_id.patrec_id,
-                    'patrec_type': tt_status.pf_id.patrec_id.patrec_type,
-                }
-            })
+        tt_data = [
+            {
+                'tts_id': t.tts_id,
+                'tts_status': t.tts_status,
+                'tts_date_given': t.tts_date_given,
+                'tts_tdap': t.tts_tdap,
+            }
+            for t in tt_statuses
+        ]
 
-        return Response({
-            'patient': patient.pat_id,
-            'tt_status': tt_data
-        }, status=status.HTTP_200_OK)
+        return Response({'patient': patient.pat_id, 'tt_status': tt_data}, status=status.HTTP_200_OK)
 
     except Patient.DoesNotExist:
         return Response({
@@ -878,3 +1128,31 @@ def get_illness_list(request):
         return Response({
             'error': f'Failed to fetch illness list: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_maternal_staff(request):
+    """
+    Get all staff members with roles: BARANGAY HEALTH WORKERS, ADMIN, and DOCTOR
+    """
+    try:
+        staff_members = Staff.objects.filter(
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=['ADMIN', 'MIDWIFE', 'BARANGAY HEALTH WORKERS']
+        ).select_related('rp__per', 'pos').order_by('rp__per__per_lname', 'rp__per__per_fname')
+        
+        serializer = StaffSerializer(staff_members, many=True)
+        
+        return Response({
+            'success': True,
+            'staff': serializer.data,
+            'count': staff_members.count()
+        }, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        logger.error(f'Error fetching maternal staff: {str(e)}')
+        return Response({
+            'success': False,
+            'error': f'Failed to fetch staff list: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    

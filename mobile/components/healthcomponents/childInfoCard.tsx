@@ -191,7 +191,7 @@ export const ChildHealthRecordCard: React.FC<any> = ({ child }) => {
           </View>
 
           {/* Feeding Type */}
-          {feedingType && (
+          {/* {feedingType && (
             <View className="flex-row items-center">
               <View className="w-6 h-6 bg-green-50 rounded-md items-center justify-center mr-2">
                 <Milk size={12} color="#059669" />
@@ -203,7 +203,7 @@ export const ChildHealthRecordCard: React.FC<any> = ({ child }) => {
                 </Text>
               </View>
             </View>
-          )}
+          )} */}
 
           {/* Address */}
           <View className="flex-row items-start">
@@ -281,12 +281,12 @@ export const ChildHealthRecordCard: React.FC<any> = ({ child }) => {
                     </Text>
                   </View>
                 )}
-                {ttStatus && (
+                {/* {ttStatus && (
                   <View className="flex-row justify-between">
                     <Text className="text-xs text-gray-600">TT Status:</Text>
                     <Text className="text-xs font-medium text-gray-800">{ttStatus}</Text>
                   </View>
-                )}
+                )} */}
               </View>
             </View>
           )}

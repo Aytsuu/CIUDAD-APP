@@ -1,6 +1,6 @@
 // confirmation.tsx
 import { View, ScrollView, TouchableWithoutFeedback, Animated } from "react-native"
-import { Check, ArrowLeft, Clock, Package } from "lucide-react-native"
+import { Check, ArrowLeft, Package } from "lucide-react-native"
 import { Text } from "@/components/ui/text"
 import { Button } from "@/components/ui/button"
 import { router, useLocalSearchParams } from "expo-router"
@@ -9,7 +9,7 @@ import * as React from "react"
 export default function Confirmation() {
   const params = useLocalSearchParams()
   const orderItemsString = params.orderItems as string
-  const medreqId = params.medreqId as string
+  // const medreqId = params.medreqId as string
   const status = params.status as string || "submitted"
   // Animation values
   const fadeAnim = React.useRef(new Animated.Value(0)).current
@@ -59,11 +59,11 @@ export default function Confirmation() {
     <View className="flex-1 bg-white">
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 pt-12 pb-4 mt-4">
-        <TouchableWithoutFeedback onPress={() => router.back()}>
+        {/* <TouchableWithoutFeedback onPress={() => router.back()}>
           <View className="flex-row items-center">
             <ArrowLeft size={24} color="#263D67" strokeWidth={2} />
           </View>
-        </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback> */}
       </View>
 
       

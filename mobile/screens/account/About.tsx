@@ -1,4 +1,4 @@
-import { TouchableOpacity, View, Text, ScrollView } from "react-native";
+import { TouchableOpacity, View, Text } from "react-native";
 import PageLayout from "../_PageLayout";
 import { ChevronLeft } from "@/lib/icons/ChevronLeft";
 import { router } from "expo-router";

@@ -1,38 +1,106 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Bell, MoreHorizontal, Eye, CheckCheck, Trash2, ExternalLink } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText, Info, Clock, AlertTriangle  } from "lucide-react";
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
+import { showNotificationToast } from "@/components/ui/toast";
+import { useUpdateBulkNotification, useUpdateNotification } from "../../queries/updateNotificationQueries";
+import { MdNotificationAdd } from "react-icons/md";
+import { Button } from "@/components/ui/button/button";
+import ciudadLogo from "@/assets/images/ciudad_logo.svg";
 
 interface Notification {
   notif_id: string;
   notif_title: string;
   notif_message: string;
+  notif_type: string;
   is_read: boolean;
   notif_created_at: string;
-  redirect_url?: string;
-  sender_name?: string;
-  sender_avatar?: string;
+  redirect_url?: {
+    path: string;
+    params: Record<string, any>;
+  };
   resident?: {
-    rp_id: string;
+    acc_id: string;
     name?: string;
   };
 }
 
+interface NotificationTypeIconProps {
+  notif_type?: string;
+  className?: string;
+}
+
+// Icon component based on notification type
+const NotificationTypeIcon: React.FC<NotificationTypeIconProps> = ({ notif_type, className = "" }) => {
+  const baseClass = "w-10 h-10 rounded-full flex items-center justify-center";
+  
+  switch (notif_type) {
+    case "REQUEST":
+      return (
+        <div className={`${baseClass} bg-blue-100 ${className}`}>
+          <FileText className="w-5 h-5 text-blue-600" />
+        </div>
+      );
+    case "REMINDER":
+      return (
+        <div className={`${baseClass} bg-amber-100 ${className}`}>
+          <Clock className="w-5 h-5 text-amber-600" />
+        </div>
+      );
+    case "INFO":
+      return (
+        <div className={`${baseClass} bg-indigo-100 ${className}`}>
+          <Info className="w-5 h-5 text-indigo-600" />
+        </div>
+      );
+    case "REPORT":
+      return (
+        <div className={`${baseClass} bg-red-100 ${className}`}>
+          <AlertTriangle className="w-5 h-5 text-red-600" />
+        </div>
+      )
+    default:
+      return (
+        <div className={`${baseClass} bg-gray-100 ${className}`}>
+          <Bell className="w-5 h-5 text-gray-600" />
+        </div>
+      );
+  }
+};
+
 export const NotificationBell: React.FC = () => {
-  const navigate = useNavigate(); // Add this hook
+  const navigate = useNavigate(); 
+  const {mutate: bulkMarkAsRead} = useUpdateBulkNotification();
+  const {mutate: MarkAsRead} = useUpdateNotification();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [displayCount, setDisplayCount] = useState(10);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [filterType, setFilterType] = useState<"all" | "read" | "unread">("all");
   const [open, setOpen] = useState(false);
-
-  // Fetch notifications via query
   const { data, isLoading, isError, refetch } = fetchNotification();
-
-  // Update local state when data is fetched
+  
+  // Auto-refetch notifications every 30 seconds as fallback
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 30000); // 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [refetch]);
+  
+  // Request notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission);
+      });
+    }
+  }, []);
+  
   useEffect(() => {
     if (data) {
       setNotifications(data);
@@ -42,99 +110,109 @@ export const NotificationBell: React.FC = () => {
 
   // Listen for live FCM push notifications in foreground
   useEffect(() => {
+    console.log('Setting up FCM listener...');
+    
     const unsubscribe = listenForMessages((payload) => {
-      const newNotif: Notification = {
-        notif_id: payload.data?.notification_id || Date.now().toString(),
-        notif_title: payload.notification?.title || "No title",
-        notif_message: payload.notification?.body || "No message",
-        is_read: false,
-        notif_created_at: new Date().toISOString(),
-        redirect_url: payload.data?.redirect_url,
-        sender_name: payload.data?.sender_name,
-        sender_avatar: payload.data?.sender_avatar,
-      };
+      console.log('📩 FCM message received:', JSON.stringify(payload, null, 2));
+      
+      try {
+        let redirectUrl = undefined;
+        
+        // Check if data exists and has web_route
+        if (payload.data?.web_route) {
+          try {
+            // Parse web_params if it's a JSON string
+            let params = {};
+            if (payload.data.web_params) {
+              params = typeof payload.data.web_params === 'string' 
+                ? JSON.parse(payload.data.web_params)
+                : payload.data.web_params;
+            }
+            
+            redirectUrl = {
+              path: payload.data.web_route,
+              params: params
+            };
+          } catch (e) {
+            console.error("Failed to parse web params:", e);
+          }
+        }
+        
+        const notifTitle = payload.notification?.title || "No title";
+        const notifMessage = payload.notification?.body || "No message";
+        const notifType = payload.data?.notif_type || "";
 
-      setNotifications((prev) => [newNotif, ...prev]);
-      setUnreadCount((prev) => prev + 1);
+        const newNotif: Notification = {
+          notif_id: payload.data?.notification_id || Date.now().toString(),
+          notif_title: notifTitle,
+          notif_message: notifMessage,
+          notif_type: notifType,
+          is_read: false,
+          notif_created_at: new Date().toISOString(),
+          redirect_url: redirectUrl,
+        };
+
+        // Update state first
+        setNotifications((prev) => {
+          console.log('📝 Adding notification to state. Current count:', prev.length);
+          return [newNotif, ...prev];
+        });
+        setUnreadCount((prev) => prev + 1);
+
+        // Show toast notification with navigation support
+        showNotificationToast({
+          title: notifTitle,
+          description: notifMessage,
+          avatarSrc: ciudadLogo,
+          timestamp: "just now",
+          notif_type: notifType, // Pass the notification type for proper icon display
+          onClick: redirectUrl ? () => {
+            const { path, params } = redirectUrl;
+            console.log('🔗 Navigating to:', path, 'with params:', params);
+            navigate(path, {
+              state: {
+                params: params
+              }
+            });
+          } : undefined,
+        });
+        
+        // Refetch to sync with server
+        setTimeout(() => refetch(), 1000);
+        
+      } catch (error) {
+        console.error('❌ Error processing notification:', error);
+      }
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      console.log('Cleaning up FCM listener');
+      unsubscribe();
+    };
+  }, [navigate, refetch]);
 
-  const markAsRead = async (notif_id: string) => {
-    try {
-      const response = await fetch(`/api/notifications/mark-read/${notif_id}/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      if (!response.ok) throw new Error("Failed to mark as read");
-
-      setNotifications((prev) =>
-        prev.map((n) => (n.notif_id === notif_id ? { ...n, is_read: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(prev - 1, 0));
-    } catch (err) {
-      console.error("Failed to mark notification as read:", err);
-    }
+  const markAsRead = (notif_id: string) => {
+    MarkAsRead(notif_id, {
+      onSuccess: () => {
+        setNotifications((prev) => 
+          prev.map((n) => n.notif_id === notif_id ? {...n, is_read: true} : n)
+        );
+        setUnreadCount((prev) => Math.max(prev - 1, 0));
+      }
+    });
   };
 
-  const deleteNotification = async (notif_id: string) => {
-    try {
-      const response = await fetch(`/api/notifications/${notif_id}/`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
+  const markAllAsRead = () => {
+    const unreadIds = notifications.filter((n) => !n.is_read).map((n)=> n.notif_id);
 
-      if (!response.ok) throw new Error("Failed to delete notification");
+    if (unreadIds.length === 0) return;
 
-      setNotifications((prev) => {
-        const notif = prev.find((n) => n.notif_id === notif_id);
-        if (notif && !notif.is_read) {
-          setUnreadCount((count) => Math.max(count - 1, 0));
-        }
-        return prev.filter((n) => n.notif_id !== notif_id);
-      });
-    } catch (err) {
-      console.error("Failed to delete notification:", err);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    try {
-      const unreadIds = notifications
-        .filter((n) => !n.is_read)
-        .map((n) => n.notif_id);
-
-      if (unreadIds.length === 0) return;
-
-      const response = await fetch(`/api/notifications/mark-all-read/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ notification_ids: unreadIds }),
-      });
-
-      if (!response.ok) throw new Error("Failed to mark all as read");
-
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, is_read: true }))
-      );
-      setUnreadCount(0);
-    } catch (err) {
-      console.error("Failed to mark all as read:", err);
-      notifications.forEach((n) => {
-        if (!n.is_read) markAsRead(n.notif_id);
-      });
-    }
+    bulkMarkAsRead(unreadIds, {
+      onSuccess: () => {
+        setNotifications((prev) => prev.map((n) => ({...n, is_read: true})));
+        setUnreadCount(0);
+      }
+    });
   };
 
   const handleNotificationClick = (notification: Notification) => {
@@ -143,8 +221,15 @@ export const NotificationBell: React.FC = () => {
       markAsRead(notification.notif_id);
     }
     
+    // Navigate using the redirect_url
     if (notification.redirect_url) {
-      navigate(notification.redirect_url);
+      const { path, params } = notification.redirect_url;
+      console.log('🔗 Navigating to:', path, 'with params:', params);
+      navigate(path, {
+        state: {
+          params: params
+        }
+      });
     }
     
     setOpen(false);
@@ -159,50 +244,65 @@ export const NotificationBell: React.FC = () => {
     switch (action) {
       case "view":
         if (notification?.redirect_url) {
-          if (notification.redirect_url.startsWith('http://') || notification.redirect_url.startsWith('https://')) {
-            window.open(notification.redirect_url, '_blank');
-          } else {
-            navigate(notification.redirect_url);
-          }
+          const { path, params } = notification.redirect_url;
+          console.log('🔗 Navigating to:', path, 'with params:', params);
+          navigate(path, {
+            state: {
+              params: params
+            }
+          });
         }
         setOpen(false);
         break;
       case "mark_read":
         markAsRead(notif_id);
         break;
-      case "delete":
-        deleteNotification(notif_id);
-        break;
     }
   };
+
+  /* 
+    Main Options navigation
+  */
 
   const handleHeaderMenuAction = (action: string) => {
     if (action === "mark_all_read") {
       markAllAsRead();
     }
+    if(action === "view_notification") {
+      navigate("/notification");
+      setOpen(false);
+    }
+    if(action === "notification_settings"){
+      navigate("/manage/preferences");
+      setOpen(false);
+    }
   };
 
   const headerMenuOptions = [
-    ...(unreadCount > 0
-      ? [
-          {
-            id: "mark_all_read",
-            name: "Mark All as Read",
-            icon: <CheckCheck className="h-4 w-4" />,
-          },
-        ]
-      : []),
+    {
+      id: "mark_all_read",
+      name: "Mark All as Read",
+      icon: <CheckCheck className="h-4 w-4" />,
+    },
+    {
+      id: "view_notification",
+      name: "Open Notification",
+      icon: <MdNotificationAdd className="h-4 w-4" />,
+    },
+    {
+      id: "notification_settings",
+      name: "Notification Settings",
+      icon: <Settings className="h-4 w-4" />,
+    }
   ];
 
   const getNotificationMenuOptions = (notification: Notification) => {
     const options = [];
-
-    // Show "View Notification" if there's a redirect URL
     if (notification.redirect_url) {
       options.push({
         id: "view",
         name: "View Notification",
-        icon: <ExternalLink className="h-4 w-4 text-blue-500" />,
+        icon: <ExternalLink className="h-4 w-4" />,
       });
     }
 
@@ -210,15 +310,9 @@ export const NotificationBell: React.FC = () => {
       options.push({
         id: "mark_read",
         name: "Mark as Read",
-        icon: <Eye className="h-4 w-4 text-green-500" />,
+        icon: <Eye className="h-4 w-4 " />,
       });
     }
-
-    options.push({
-      id: "delete",
-      name: "Delete",
-      icon: <Trash2 className="h-4 w-4 text-red-500" />,
-    });
 
     return options;
   };
@@ -233,51 +327,55 @@ export const NotificationBell: React.FC = () => {
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
+  const loadMoreNotifications = () => {
+    setDisplayCount((prev) => prev + 10);
+  };
+
+  const filteredNotifications = notifications.filter((n) => {
+    if (filterType === "unread") return !n.is_read;
+    return true;
+  });
+
+  const displayedNotifications = filteredNotifications.slice(0, displayCount);
+  const hasMore = displayCount < filteredNotifications.length;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="relative cursor-pointer p-3 hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-300">
+        <div className="relative cursor-pointer p-3 hover:bg-gray-100 rounded-lg transition-colors duration-200">
           <Bell
-            className={`h-6 w-6 transition-all duration-300 ${
-              unreadCount > 0 ? "text-blue-600" : "text-gray-600"
+            className={`h-6 w-6 transition-colors duration-200 ${
+              unreadCount > 0 ? "text-gray-700" : "text-gray-600"
             }`}
           />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs flex items-center justify-center">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
+           <Badge className="absolute -top-0.5 -right-1 h-5 w-5 rounded-full bg-red-500 hover:bg-red-400 text-white text-xs flex items-center justify-center">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Badge>
           )}
         </div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-96 p-0 shadow-2xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden"
+        className="w-96 p-0 shadow-lg border border-gray-200 bg-white rounded-lg overflow-hidden"
         align="end"
         side="bottom"
         sideOffset={8}
         alignOffset={-50}
       >
         <div className="w-full">
-          <div className="p-4 border-b bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white rounded-lg shadow-sm">
-                <Bell className="h-5 w-5 text-blue-600" />
+          <div className="px-4 py-3 border-b border-gray-100 bg-white">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h1 className="font-bold text-lg text-darkBlue2">Notifications</h1>
               </div>
-              <div>
-                <h4 className="font-semibold text-gray-800">Notifications</h4>
-                {unreadCount > 0 && (
-                  <p className="text-xs text-gray-600">{unreadCount} unread</p>
-                )}
-              </div>
-            </div>
-            {headerMenuOptions.length > 0 && (
               <div className="flex items-center gap-1">
                 <DropdownLayout
                   trigger={
                     <button
-                      className="p-2 hover:bg-white/70 rounded-xl transition-all duration-200"
+                      className="p-1.5 hover:bg-gray-100 rounded-md transition-colors duration-200"
                       title="Options"
                     >
-                      <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                      <MoreHorizontal className="h-5 w-5 text-gray-600" />
                     </button>
                   }
                   options={headerMenuOptions}
@@ -285,25 +383,54 @@ export const NotificationBell: React.FC = () => {
                   contentClassName="w-48"
                 />
               </div>
-            )}
+            </div>
+            
+            <div className="flex-1 justify-start">
+              <Button
+                onClick={() => {
+                  setFilterType("all");
+                  setDisplayCount(10);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium shadow-none rounded-full transition-colors duration-200 mr-2 ${
+                  filterType === "all" 
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
+                    : "bg-gray-100 text-black/90 hover:bg-gray-200"
+                }`}
+              >
+                All
+              </Button>
+              <Button
+                onClick={() => {
+                  setFilterType("unread");
+                  setDisplayCount(10);
+                }}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium shadow-none rounded-full transition-colors duration-200 ${
+                  filterType === "unread" 
+                    ? "bg-blue-100 text-blue-700 hover:bg-blue-100" 
+                    : "bg-gray-100 text-black/90 hover:bg-gray-200"
+                }`}
+              >
+                Unread
+              </Button>
+            </div>
           </div>
 
           <div className="max-h-96 overflow-y-auto">
             {isLoading ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                  <Bell className="h-8 w-8 text-gray-400" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                  <Bell className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-gray-500 font-medium">
+                <p className="text-gray-500 text-sm">
                   Loading notifications...
                 </p>
               </div>
             ) : isError ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Bell className="h-8 w-8 text-red-400" />
+                <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Bell className="h-6 w-6 text-red-400" />
                 </div>
-                <p className="text-red-500 font-medium">
+                <p className="text-red-500 text-sm font-medium">
                   Failed to load notifications
                 </p>
                 <button
@@ -313,79 +440,53 @@ export const NotificationBell: React.FC = () => {
                   Try again
                 </button>
               </div>
-            ) : notifications.length === 0 ? (
+            ) : filteredNotifications.length === 0 ? (
               <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Bell className="h-8 w-8 text-gray-400" />
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Bell className="h-6 w-6 text-gray-400" />
                 </div>
-                <p className="text-gray-500 font-medium">No notifications yet</p>
-                <p className="text-gray-400 text-sm mt-1">
-                  We'll let you know when something happens
+                <p className="text-gray-400 text-xs mt-1">
+                  {filterType === "all" && "We'll let you know when something happens"}
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
-                {notifications.slice(0, 10).map((item) => (
+              <div>
+                {displayedNotifications.map((item) => (
                   <div
                     key={item.notif_id}
                     onClick={() => handleNotificationClick(item)}
-                    className={`group cursor-pointer px-4 py-3 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-200 ${
-                      !item.is_read
-                        ? "bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-l-4 border-blue-400"
-                        : ""
+                    className={`cursor-pointer px-4 py-3 hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0 ${
+                      !item.is_read ? "bg-blue-50" : "bg-white"
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-11 w-11 ring-2 ring-white shadow-lg">
-                        <AvatarImage
-                          src={item.sender_avatar}
-                          alt={item.sender_name || "System"}
-                        />
-                        <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium">
-                          {item.sender_name?.charAt(0) || "S"}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative flex-shrink-0">
+                        <NotificationTypeIcon notif_type={item.notif_type} />
+                        {!item.is_read && (
+                          <div className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-blue-500 rounded-full border-2 border-white"></div>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p
-                                className={`font-semibold text-sm ${
-                                  !item.is_read ? "text-gray-900" : "text-gray-700"
-                                }`}
-                              >
-                                {item.notif_title || "Notification"}
-                              </p>
-                              {!item.is_read && (
-                                <div className="h-2 w-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-sm"></div>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-2 leading-relaxed">
+                            <p className="text-sm text-gray-900 mb-0.5">
+                              <span className="font-semibold">{item.notif_title}</span>
+                            </p>
+                            <p className="text-sm text-gray-500 line-clamp-2 mb-1">
                               {item.notif_message || "No message content"}
                             </p>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-gray-500 font-medium">
-                                {formatTimeAgo(item.notif_created_at)}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                {item.sender_name || "System"}
-                              </span>
-                              {item.redirect_url && (
-                                <span className="text-xs text-blue-500 flex items-center gap-1">
-                                  <ExternalLink className="h-3 w-3" />
-                                  Click to view
-                                </span>
-                              )}
-                            </div>
+                            <span className="text-xs text-gray-400 w-full">
+                              {formatTimeAgo(item.notif_created_at)}
+                            </span>
                           </div>
                           <div
-                            className="flex items-center gap-1"
+                            className="flex items-start"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <DropdownLayout
                               trigger={
                                 <button
-                                  className="p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                                  className="p-1 hover:bg-gray-200 rounded-md transition-colors duration-200"
                                   title="More options"
                                 >
                                   <MoreHorizontal className="h-4 w-4 text-gray-500" />
@@ -403,19 +504,23 @@ export const NotificationBell: React.FC = () => {
                     </div>
                   </div>
                 ))}
+
+                {hasMore && (
+                  <div className="p-3 text-center border-t border-gray-100 bg-gray-50">
+                    <Button
+                      onClick={loadMoreNotifications}
+                      variant="ghost"
+                      className="w-full text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    >
+                      See Previous Notifications
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
-
-          {notifications.length > 10 && (
-            <div className="p-3 text-center text-sm text-gray-500 border-t bg-gradient-to-r from-gray-50 to-blue-50">
-              <button className="text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 hover:underline">
-                View all {notifications.length} notifications
-              </button>
-            </div>
-          )}
         </div>
       </PopoverContent>
     </Popover>
   );
-}
+};

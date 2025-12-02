@@ -2,6 +2,7 @@ from rest_framework import generics
 from .serializers import *
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.http import Http404
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
@@ -15,8 +16,45 @@ from rest_framework.permissions import AllowAny
 import logging
 from apps.pagination import StandardResultsPagination
 from django.db.models.functions import ExtractYear
+from apps.gad.serializers import GADBudgetYearSerializer
+from apps.gad.models import GAD_Budget_Year
 
 logger = logging.getLogger(__name__)
+
+class BudgetPlanAnalyticsView(ActivityLogMixin, generics.RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = BudgetPlanSerializer
+
+    def get_object(self):
+        current_year = str(timezone.now().year)
+        
+        budget_plan = Budget_Plan.objects.filter(
+            plan_year=current_year
+        ).select_related(
+            'staff_id__rp__per'
+        ).only(
+            'plan_id',
+            'plan_year',
+            'plan_budgetaryObligations',
+            'plan_balUnappropriated',
+            'plan_issue_date',
+            'plan_is_archive',  
+            'staff_id__rp__per__per_lname',
+            'staff_id__rp__per__per_fname',
+            'staff_id__rp__per__per_mname',
+        ).first()
+        
+        return budget_plan 
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            if instance is None:
+                return Response({})  
+            serializer = self.get_serializer(instance)
+            return Response(serializer.data)
+        except Exception as ex:
+            return Response({})  
 
 class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -66,6 +104,38 @@ class BudgetPlanActiveView(ActivityLogMixin, generics.ListCreateAPIView):
             ).distinct()
 
         return queryset.order_by('plan_id')
+    
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.plan_year:
+                    description_parts.append(f"Year: {instance.plan_year}")
+                if instance.plan_issue_date:
+                    date_str = instance.plan_issue_date.strftime('%Y-%m-%d') if not isinstance(instance.plan_issue_date, str) else instance.plan_issue_date
+                    description_parts.append(f"Issue Date: {date_str}")
+                if instance.plan_budgetaryObligations:
+                    description_parts.append(f"Budgetary Obligations: ₱{instance.plan_budgetaryObligations:,.2f}")
+                
+                description = ". ".join(description_parts) if description_parts else "Budget_Plan record created"
+                
+                create_activity_log(
+                    act_type="Budget Plan Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.plan_id)
+                )
+                logger.info(f"Activity logged for budget plan creation: {instance.plan_id}")
+            else:
+                logger.debug(f"Skipping activity log for Budget_Plan create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for budget plan creation: {str(e)}")
+        return instance
     
 class BudgetPlanInactiveView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -230,9 +300,44 @@ class UpdateBudgetPlan(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+        old_is_archive = instance.plan_is_archive
+        
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_instance = serializer.save()
+            
+            # Log activity if archive status changed
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                new_is_archive = updated_instance.plan_is_archive
+                
+                if old_is_archive != new_is_archive:
+                    staff_id = request.data.get('staff_id') or (updated_instance.staff_id.staff_id if updated_instance.staff_id else None)
+                    
+                    if staff_id:
+                        if isinstance(staff_id, str) and len(staff_id) < 11:
+                            staff_id = staff_id.zfill(11)
+                        elif isinstance(staff_id, int):
+                            staff_id = str(staff_id).zfill(11)
+                        
+                        staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+                        
+                        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                            act_type = "Budget Plan Archived" if new_is_archive else "Budget Plan Restored"
+                            act_description = f"Budget Plan for year {updated_instance.plan_year} {'archived' if new_is_archive else 'restored'}. Budgetary Obligations: ₱{updated_instance.plan_budgetaryObligations:,.2f}"
+                            
+                            create_activity_log(
+                                act_type=act_type,
+                                act_description=act_description,
+                                staff=staff,
+                                record_id=str(updated_instance.plan_id)
+                            )
+                            logger.info(f"Activity logged for budget plan {'archive' if new_is_archive else 'restore'}: {updated_instance.plan_id}")
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for budget plan update: {str(log_error)}")
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -249,6 +354,19 @@ class UpdateBudgetDetails(generics.UpdateAPIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class GADBudgetYearByYearView(generics.RetrieveAPIView):
+    serializer_class = GADBudgetYearSerializer
+    lookup_field = 'gbudy_year'
+    lookup_url_kwarg = 'year'
+
+    def get_object(self):
+        year = self.kwargs.get('year')
+        try:
+            return GAD_Budget_Year.objects.get(gbudy_year=year)
+        except GAD_Budget_Year.DoesNotExist:
+            raise NotFound(f"GAD budget record for year {year} not found")
     
 # -------------------------------- DISBURSEMENT ------------------------------------
 class DisbursementArchiveMixin:
@@ -288,7 +406,7 @@ class DisbursementRestoreView(generics.UpdateAPIView):
         archive_field = 'dis_is_archive' if hasattr(serializer.instance, 'dis_is_archive') else 'disf_is_archive'
         serializer.save(**{archive_field: False})
 
-class DisbursementVoucherView(generics.ListCreateAPIView):
+class DisbursementVoucherView(ActivityLogMixin, generics.ListCreateAPIView):
     serializer_class = Disbursement_VoucherSerializer
     permission_classes = [AllowAny]
     pagination_class = StandardResultsPagination
@@ -317,6 +435,40 @@ class DisbursementVoucherView(generics.ListCreateAPIView):
             
         return queryset
     
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        try:
+            from apps.act_log.utils import create_activity_log, resolve_staff_from_request
+            
+            staff, staff_identifier = resolve_staff_from_request(self.request)
+            
+            if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                description_parts = []
+                if instance.dis_num:
+                    description_parts.append(f"Voucher Number: {instance.dis_num}")
+                if instance.dis_payee:
+                    description_parts.append(f"Payee: {instance.dis_payee}")
+                if instance.dis_fund:
+                    description_parts.append(f"Amount: ₱{instance.dis_fund:,.2f}")
+                if instance.dis_date:
+                    date_str = instance.dis_date.strftime('%Y-%m-%d') if not isinstance(instance.dis_date, str) else instance.dis_date
+                    description_parts.append(f"Date: {date_str}")
+                
+                description = ". ".join(description_parts) if description_parts else "Disbursement Voucher record created"
+                
+                create_activity_log(
+                    act_type="Disbursement Voucher Create",
+                    act_description=description,
+                    staff=staff,
+                    record_id=str(instance.dis_num)
+                )
+                logger.info(f"Activity logged for disbursement voucher creation: {instance.dis_num}")
+            else:
+                logger.debug(f"Skipping activity log for Disbursement Voucher create: No valid staff")
+        except Exception as e:
+            logger.error(f"Failed to log activity for disbursement voucher creation: {str(e)}")
+        return instance
+    
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.filter_queryset(self.get_queryset())
@@ -340,6 +492,84 @@ class DisbursementVoucherDetailView(DisbursementArchiveMixin, generics.RetrieveU
     serializer_class = Disbursement_VoucherSerializer
     lookup_field = 'dis_num'
     permission_classes = [AllowAny]
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        old_is_archive = instance.dis_is_archive
+        
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_instance = serializer.save()
+            
+            # Log activity if archive status changed
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                new_is_archive = updated_instance.dis_is_archive
+                
+                if old_is_archive != new_is_archive:
+                    staff_id = request.data.get('staff_id') or (updated_instance.staff.staff_id if updated_instance.staff else None)
+                    
+                    if staff_id:
+                        if isinstance(staff_id, str) and len(staff_id) < 11:
+                            staff_id = staff_id.zfill(11)
+                        elif isinstance(staff_id, int):
+                            staff_id = str(staff_id).zfill(11)
+                        
+                        staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+                        
+                        if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                            act_type = "Disbursement Voucher Archived" if new_is_archive else "Disbursement Voucher Restored"
+                            act_description = f"Disbursement Voucher {updated_instance.dis_num} {'archived' if new_is_archive else 'restored'}. Payee: {updated_instance.dis_payee}. Amount: ₱{updated_instance.dis_fund:,.2f}"
+                            
+                            create_activity_log(
+                                act_type=act_type,
+                                act_description=act_description,
+                                staff=staff,
+                                record_id=str(updated_instance.dis_num)
+                            )
+                            logger.info(f"Activity logged for disbursement voucher {'archive' if new_is_archive else 'restore'}: {updated_instance.dis_num}")
+            except Exception as log_error:
+                logger.error(f"Failed to log activity for disbursement voucher update: {str(log_error)}")
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        permanent = request.query_params.get('permanent', 'false').lower() == 'true'
+        
+        # Log activity before deletion
+        try:
+            from apps.act_log.utils import create_activity_log
+            from apps.administration.models import Staff
+            
+            staff_id = request.data.get('staff_id') or (instance.staff.staff_id if instance.staff else None)
+            
+            if staff_id:
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                
+                staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+                
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    act_type = "Disbursement Voucher Deleted" if permanent else "Disbursement Voucher Archived"
+                    act_description = f"Disbursement Voucher {instance.dis_num} {'permanently deleted' if permanent else 'archived'}. Payee: {instance.dis_payee}. Amount: ₱{instance.dis_fund:,.2f}"
+                    
+                    create_activity_log(
+                        act_type=act_type,
+                        act_description=act_description,
+                        staff=staff,
+                        record_id=str(instance.dis_num)
+                    )
+                    logger.info(f"Activity logged for disbursement voucher {'deletion' if permanent else 'archive'}: {instance.dis_num}")
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for disbursement voucher deletion: {str(log_error)}")
+        
+        return super().destroy(request, *args, **kwargs)
 
 
 class DisbursementVoucherArchiveView(DisbursementArchiveView):
@@ -425,9 +655,6 @@ class DisbursementFileCreateView(generics.CreateAPIView):
             dis_num_id = self.kwargs.get('dis_num') or request.data.get('dis_num')
             files = request.data.get('files', [])
             
-            print(f"Received file upload request for dis_num: {dis_num_id}")
-            print(f"Number of files: {len(files)}")
-            
             if not dis_num_id:
                 return Response({"error": "dis_num is required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -456,7 +683,7 @@ class DisbursementFileCreateView(generics.CreateAPIView):
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
-            print(f"ERROR in DisbursementFileCreateView: {str(e)}")
+            # print(f"ERROR in DisbursementFileCreateView: {str(e)}")
             import traceback
             traceback.print_exc()
             
@@ -523,7 +750,7 @@ class UpdateBudgetPlanDetailView(generics.RetrieveUpdateAPIView):
         return super().update(request, *args, **kwargs)
 
 
-class Income_Expense_TrackingView(generics.ListCreateAPIView):
+class Income_Expense_TrackingView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
     pagination_class = StandardResultsPagination
@@ -579,9 +806,43 @@ class DeleteIncomeExpenseView(generics.DestroyAPIView):
 
     def get_object(self):
         iet_num = self.kwargs.get('iet_num')
-        return get_object_or_404(Income_Expense_Tracking, iet_num=iet_num) 
+        return get_object_or_404(Income_Expense_Tracking, iet_num=iet_num)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Log activity before deletion
+        try:
+            from apps.act_log.utils import create_activity_log
+            from apps.administration.models import Staff
+            
+            staff_id = request.data.get('staff_id') or (instance.staff_id.staff_id if instance.staff_id else None)
+            
+            if staff_id:
+                if isinstance(staff_id, str) and len(staff_id) < 11:
+                    staff_id = staff_id.zfill(11)
+                elif isinstance(staff_id, int):
+                    staff_id = str(staff_id).zfill(11)
+                
+                staff = Staff.objects.filter(staff_id=staff_id).first() if staff_id else None
+                
+                if staff and hasattr(staff, 'staff_id') and staff.staff_id:
+                    budget_item = instance.exp_id.exp_budget_item if instance.exp_id else "N/A"
+                    amount = instance.iet_amount if hasattr(instance, 'iet_amount') else "N/A"
+                    
+                    create_activity_log(
+                        act_type="Income and Expense Deleted",
+                        act_description=f"Income and Expense entry {instance.iet_serial_num} deleted. Budget Item: {budget_item}. Amount: ₱{amount:,.2f}" if isinstance(amount, (int, float)) else f"Income and Expense entry {instance.iet_serial_num} deleted. Budget Item: {budget_item}",
+                        staff=staff,
+                        record_id=str(instance.iet_num)
+                    )
+                    logger.info(f"Activity logged for income and expense deletion: {instance.iet_num}")
+        except Exception as log_error:
+            logger.error(f"Failed to log activity for income and expense deletion: {str(log_error)}")
+        
+        return super().destroy(request, *args, **kwargs) 
 
-class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
+class UpdateIncomeExpenseView(ActivityLogMixin, generics.RetrieveUpdateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_Expense_TrackingSerializers
     queryset = Income_Expense_Tracking.objects.all()
@@ -591,24 +852,10 @@ class UpdateIncomeExpenseView(generics.RetrieveUpdateAPIView):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            # Use perform_update to ensure ActivityLogMixin logging works
+            self.perform_update(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class GetParticularsView(generics.ListAPIView):
-#     serializer_class = Budget_Plan_DetailSerializer
-
-#     def get_queryset(self):
-#         current_year = timezone.now().year
-#         # Get the current year's budget plan
-#         current_plan = Budget_Plan.objects.filter(plan_year=str(current_year)).first()
-        
-#         if current_plan:
-#             # Return all details for the current year's plan
-#             return Budget_Plan_Detail.objects.filter(plan=current_plan)
-#         return Budget_Plan_Detail.objects.none()
-    
 
 class GetParticularsView(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -680,14 +927,6 @@ class Expense_LogView(generics.ListCreateAPIView):
         return queryset.order_by('-el_datetime')  # Add ordering
 
 # ------------------------- INCOME --------------------------------------
-
- 
-
-# class Income_TrackingView(generics.ListCreateAPIView):
-#     serializer_class = Income_TrackingSerializers
-#     queryset = Income_Tracking.objects.all().select_related('incp_id')
-
-
 class Income_TrackingView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = Income_TrackingSerializers
@@ -1217,15 +1456,16 @@ class PurposeAndRatesByPurposeView(generics.RetrieveAPIView):
 class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = InvoiceSerializers
+    pagination_class = StandardResultsPagination  # Add pagination
     
     def get_queryset(self):
         queryset = Invoice.objects.select_related(
-            'bpr_id__rp_id__per',  # For business permit requests
-            'nrc_id',              # For non-resident certificate requests
-            'cr_id__rp_id__per',   # For resident certificates
-            'spay_id__sr_id__comp_id'  # For service charge payments
+            'bpr_id__rp_id__per',
+            'nrc_id',
+            'cr_id__rp_id__per',
+            'pay_id__comp_id'
         ).prefetch_related(
-            'spay_id__sr_id__comp_id__complainant'  # For complainants in service charges
+            'pay_id__comp_id__complainant'
         ).all()
         
         # Get filter parameters from request
@@ -1238,25 +1478,22 @@ class InvoiceView(ActivityLogMixin, generics.ListCreateAPIView):
                 Q(inv_serial_num__icontains=search_query) |
                 Q(inv_nat_of_collection__icontains=search_query) |
                 Q(inv_discount_reason__icontains=search_query) |
-                # Search in business permit related fields
                 Q(bpr_id__rp_id__per__per_lname__icontains=search_query) |
                 Q(bpr_id__rp_id__per__per_fname__icontains=search_query) |
                 Q(bpr_id__rp_id__per__per_mname__icontains=search_query) |
-                # Search in resident certificate related fields
                 Q(cr_id__rp_id__per__per_lname__icontains=search_query) |
                 Q(cr_id__rp_id__per__per_fname__icontains=search_query) |
                 Q(cr_id__rp_id__per__per_mname__icontains=search_query) |
-                # Search in non-resident certificate fields
-                Q(nrc_id__nrc_requester__icontains=search_query) |
-                # Search in service charge complainant names
-                Q(spay_id__sr_id__comp_id__complainant__cpnt_name__icontains=search_query)
-            ).distinct()  # Add distinct to avoid duplicates
+                Q(nrc_id__nrc_lname__icontains=search_query) |
+                Q(nrc_id__nrc_fname__icontains=search_query) |                
+                Q(pay_id__comp_id__complainant__cpnt_name__icontains=search_query)
+            ).distinct()
         
         # Apply nature of collection filter
         if nature_filter and nature_filter != "all":
             queryset = queryset.filter(inv_nat_of_collection=nature_filter)
         
-        return queryset
+        return queryset.order_by('-inv_date') 
 
 
 # Clearance Request Views
@@ -1332,6 +1569,57 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
             instance.cr_req_payment_status = serializer.validated_data['payment_status']
             instance.save()
             
+            # Log payment status change activity
+            try:
+                from apps.act_log.utils import create_activity_log
+                from apps.administration.models import Staff
+                
+                # Get staff member - try multiple sources
+                staff = None
+                staff_id = getattr(instance, 'staff_id', None) or request.data.get('staff_id')
+                
+                if staff_id:
+                    # Format staff_id properly (pad with leading zeros if needed)
+                    if len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Fallback: try to get staff from related records
+                if not staff and hasattr(instance, 'ra_id') and instance.ra_id:
+                    staff_id = getattr(instance.ra_id, 'staff_id', None)
+                    if staff_id and len(str(staff_id)) < 11:
+                        staff_id = str(staff_id).zfill(11)
+                    staff = Staff.objects.filter(staff_id=staff_id).first()
+                
+                # Final fallback: use any available staff
+                if not staff:
+                    staff = Staff.objects.first()
+                
+                if staff:
+                    # Get resident name for better description
+                    resident_name = "Unknown"
+                    if instance.rp_id and instance.rp_id.per:
+                        per = instance.rp_id.per
+                        resident_name = f"{per.per_fname} {per.per_lname}"
+                    
+                    # Get purpose
+                    purpose = instance.pr_id.pr_purpose if instance.pr_id else 'N/A'
+                    
+                    # Create activity log for payment status change
+                    create_activity_log(
+                        act_type="Payment Status Updated",
+                        act_description=f"Payment status for certificate {instance.cr_id} changed from '{old_payment_status}' to '{instance.cr_req_payment_status}' for {resident_name} ({purpose})",
+                        staff=staff,
+                        record_id=instance.cr_id
+                    )
+                    logger.info(f"Activity logged for payment status change: {instance.cr_id}")
+                else:
+                    logger.warning(f"No staff found for payment status change logging: {instance.cr_id}")
+                    
+            except Exception as log_error:
+                logger.error(f"Failed to log payment status change activity: {str(log_error)}")
+                # Don't fail the request if logging fails
+            
             # Check if payment status changed to "Paid" and create automatic income entry
             new_payment_status = instance.cr_req_payment_status
             if old_payment_status != "Paid" and new_payment_status == "Paid":
@@ -1392,12 +1680,17 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
                             import time
                             next_num = int(time.time())
                         
+                        # Get the purpose name from the related pr_id if available
+                        purpose_name = instance.req_type or ""
+                        if hasattr(instance, 'pr_id') and instance.pr_id:
+                            purpose_name = instance.pr_id.pr_purpose
+                        
                         Invoice.objects.create(
                             inv_num=next_num,
                             cr_id=instance,
                             inv_serial_num=f"INV-{instance.cr_id}",  # You can improve this serial logic
                             inv_amount=0,  # Set correct amount if available
-                            inv_nat_of_collection=instance.req_type or "",
+                            inv_nat_of_collection=purpose_name,
                             inv_status="Paid",  # Set status to Paid since payment is complete
                         )
                         
@@ -1407,7 +1700,7 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
                             from apps.administration.models import Staff
                             
                             # Get staff member from the clearance request
-                            staff_id = getattr(instance.ra_id, 'staff_id', '00003250722') if instance.ra_id else '00003250722'
+                            staff_id = getattr(instance.ra_id, 'staff_id', None) if instance.ra_id else None
                             # Format staff_id properly (pad with leading zeros if needed)
                             if len(str(staff_id)) < 11:
                                 staff_id = str(staff_id).zfill(11)
@@ -1419,8 +1712,7 @@ class UpdatePaymentStatusView(ActivityLogMixin, generics.UpdateAPIView):
                                     act_type="Auto-Invoice Created",
                                     act_description=f"Auto-generated invoice INV-{instance.cr_id} created for {instance.req_type} payment",
                                     staff=staff,
-                                    record_id=f"INV-{instance.cr_id}",
-                                    feat_name="Payment Processing"
+                                    record_id=f"INV-{instance.cr_id}"
                                 )
                                 logger.info(f"Activity logged for auto-invoice creation: INV-{instance.cr_id}")
                             else:

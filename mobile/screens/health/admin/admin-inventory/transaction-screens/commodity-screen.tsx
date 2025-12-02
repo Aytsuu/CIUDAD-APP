@@ -1,8 +1,7 @@
 // src/screens/CommodityListScreen.tsx
 import React from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, FlatList, TouchableOpacity, ScrollView } from "react-native";
 import type { CommodityRecords, ApiItemWithStaff } from "../types"; // Adjust path if needed
-import { SearchInput } from "@/components/ui/search-input";
 // import { Skeleton } from "@/components/ui/skeleton";
 import { useCommodityTransactions } from "../restful-api/transaction/fetchqueries";
 import { formatDate } from "@/helpers/dateHelpers";
@@ -114,6 +113,7 @@ export default function CommodityListScreen() {
   );
 
   return (
+    <ScrollView>
     <View className="flex-1 p-4 bg-gray-50">
       <View className="mb-4">
         {/* <SearchInput
@@ -196,5 +196,6 @@ export default function CommodityListScreen() {
         </View>
       </View>
     </View>
+  </ScrollView>
   );
 }

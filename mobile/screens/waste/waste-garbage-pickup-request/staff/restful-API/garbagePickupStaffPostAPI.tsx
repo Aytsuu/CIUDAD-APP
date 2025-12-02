@@ -7,13 +7,8 @@ const getLocalISOString = () => {
         return localISO;
     };
 
-export const addDecision = async (garb_id: string, decisionInfo: {reason: string}) => {
+export const addDecision = async (garb_id: string, decisionInfo: {reason: string, staff_id: string}) => {
     try{
-        console.log({
-            dec_rejection_reason: decisionInfo.reason,
-            dec_date: new Date().toISOString(),
-            garb_id: garb_id
-        })
 
         await api.put(`/waste/update-garbage-pickup-request/${garb_id}/`, {
             garb_req_status: "rejected"
@@ -23,26 +18,19 @@ export const addDecision = async (garb_id: string, decisionInfo: {reason: string
             dec_reason: decisionInfo.reason,
             dec_date: getLocalISOString(), 
             garb_id: garb_id,
+            staff_id: decisionInfo.staff_id
         });
 
         return res.data.dec_id
 
     } catch (err){
-        console.error(err)
+        // console.error(err)
+        throw err
     }
 }
 
-export const addPickupAssignmentandCollectors = async (garb_id: string, assignmentInfo: {date: string; driver: string; time: string; truck: string; collectors: string[]}) => {
+export const addPickupAssignmentandCollectors = async (garb_id: string, assignmentInfo: {date: string; driver: string; time: string; truck: string; collectors: string[], staff_id: string}) => {
     try {
-        console.log({
-            pick_time: assignmentInfo.time,
-            pick_date: assignmentInfo.date,
-            truck_id: assignmentInfo.truck,
-            wstp_id: assignmentInfo.driver,
-            garb_id: garb_id,
-            collectors: assignmentInfo.collectors
-        });
-
         // 1. Update garbage pickup request status
         await api.put(`/waste/update-garbage-pickup-request/${garb_id}/`, {
             garb_req_status: "accepted"
@@ -54,7 +42,7 @@ export const addPickupAssignmentandCollectors = async (garb_id: string, assignme
             pick_date: assignmentInfo.date,
             truck_id: assignmentInfo.truck,
             wstp_id: assignmentInfo.driver,
-            garb_id: garb_id
+            garb_id: garb_id,
         });
 
         const pick_id = res.data.pick_id;
@@ -71,12 +59,13 @@ export const addPickupAssignmentandCollectors = async (garb_id: string, assignme
         const res2 = await api.post('/waste/pickup-request-decision/', {
             dec_date: getLocalISOString(), 
             garb_id: garb_id,
+            staff_id: assignmentInfo.staff_id
         });
 
         return res.data.pick_id; 
 
     } catch(err) {
-        console.error(err);
+        // console.error(err);
         throw err;  
     }
 }

@@ -1,19 +1,19 @@
 "use client"
 
 
-import { useState, useCallback } from "react" 
+import { useState, useCallback, useEffect } from "react" 
 import type { UseFormReturn } from "react-hook-form"
 import type { z } from "zod"
 
 import { Button } from "@/components/ui/button/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
-import { FormControl, FormField, FormItem, FormLabel, Form } from "@/components/ui/form/form" // Ensure Form is imported
+import { FormControl, FormField, FormItem, FormLabel, Form } from "@/components/ui/form/form" 
 import { Label } from "@/components/ui/label"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card" // Added Card imports
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { MedicineDisplay } from "@/components/ui/medicine-display"
 import type { PrenatalFormSchema } from "@/form-schema/maternal/prenatal-schema"
@@ -24,25 +24,136 @@ import { ScrollText } from "lucide-react"
 import { ANCVisitsGuide } from "../../maternal-components/guide-for-8anc"
 import { useAuth } from "@/context/AuthContext"
 
+/**
+ * Medicine Selection Type
+ * Used for tracking selected medicines in prenatal form
+ */
+// interface MedicineSelection {
+//   minv_id: string              // Medicine inventory ID
+//   medrec_qty: number           // Quantity to dispense
+//   reason?: string              // Optional reason; defaults to "Micronutrient supplementation"
+// }
+
+// /**
+//  * Constants for medicine handling
+//  */
+// const MEDICINE_CONSTANTS = {
+//   REASON_DEFAULT: "Micronutrient supplementation",
+//   UNIT_PCS: "pcs",
+//   UNIT_BOXES: "boxes",
+// } as const
+
+/**
+ * Helper function: Transform medicine selections for API submission
+ * Ensures reason field has default value
+ */
+// const transformMedicineData = (medicines: any[]): MedicineSelection[] => {
+//   return medicines.map(med => ({
+//     minv_id: med.minv_id,
+//     medrec_qty: med.medrec_qty,
+//     reason: med.reason || MEDICINE_CONSTANTS.REASON_DEFAULT
+//   }))
+// }
+
+/**
+ * Helper function: Validate medicine stock availability
+ * Handles both transformed (id) and raw (minv_id) field names
+ */
+// const validateMedicineStock = (
+//   selectedMeds: any[],
+//   medicineOptions?: any[]
+// ): { isValid: boolean; errors: string[] } => {
+//   const errors: string[] = []
+
+//   if (!medicineOptions) {
+//     return { isValid: false, errors: ["Medicine options not loaded"] }
+//   }
+
+//   for (const med of selectedMeds) {
+//     // Convert both to strings for comparison to handle type mismatches
+//     // Try matching both 'id' (transformed) and 'minv_id' (raw) fields
+//     const medicineItem = medicineOptions.find(m => 
+//       String(m.minv_id) === String(med.minv_id) || 
+//       String(m.id) === String(med.minv_id)
+//     )
+    
+//     // if (!medicineItem) {
+//     //   console.warn(`Medicine not found. Selected: ${med.minv_id}`)
+//     //   console.warn(`Available medicine fields:`, medicineOptions[0] ? Object.keys(medicineOptions[0]) : 'No medicines')
+//     //   console.warn(`Available IDs (minv_id):`, medicineOptions.map(m => m.minv_id))
+//     //   console.warn(`Available IDs (id):`, medicineOptions.map(m => m.id))
+//     //   errors.push(`Medicine ID ${med.minv_id} not found in inventory`)
+//     //   continue
+//     // }
+
+//     // Use 'avail' field if present (transformed), otherwise use 'minv_qty_avail' (raw)
+//     const availableQty = Number(medicineItem.avail ?? medicineItem.minv_qty_avail) || 0
+//     const requestedQty = Number(med.medrec_qty) || 0
+
+//     if (availableQty < requestedQty) {
+//       // Try different name fields
+//       const medicineName = medicineItem.name || medicineItem.med_id?.med_name || medicineItem.medicine_name || `Medicine ${med.minv_id}`
+//       errors.push(
+//         `Insufficient stock for ${medicineName}. ` +
+//         `Available: ${availableQty}, Requested: ${requestedQty}`
+//       )
+//     }
+//   }
+
+//   return { isValid: errors.length === 0, errors }
+// }
 
 // main  component
-export default function PrenatalFormThirdPg({
-  form,
-  onSubmit,
-  back,
-}: {
+export default function PrenatalFormThirdPg({ form, onSubmit, back, selectedMedicines, setSelectedMedicines }: {
   form: UseFormReturn<z.infer<typeof PrenatalFormSchema>>
   onSubmit: () => void
   back: () => void
+  selectedMedicines: { minv_id: string; medrec_qty: number; reason: string }[]
+  setSelectedMedicines: React.Dispatch<React.SetStateAction<{ minv_id: string; medrec_qty: number; reason: string }[]>>
 }) {
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+
+  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock({ is_temp: true, includeZeroAvail: true })
+  const { data: followUpVisitsData, isLoading: isFUVLoading, error: followUpVisitsError } = usePrenatalPatientFollowUpVisits(form.getValues("pat_id") || "")
+  const { user } = useAuth()
+  const staff = `${user?.personal?.per_fname || ""} ${user?.personal?.per_lname || ""} (${user?.staff?.pos || ""})`
+  const staffId = user?.staff?.staff_id || ""
+
+  useEffect(() => {
+    if (staff && staffId) {
+      form.setValue("assessedBy.name", staff)
+      form.setValue("assessedBy.id", staffId)
+    }
+  }, [staff, staffId, form])
+
   const handleNext = async () => {
+    // Validate form fields first
     if (Object.keys(form.formState.errors).length === 0) {
-      console.log("Form is valid, proceeding to next page")
+      // Validate selected medicines stock if any are selected
+      if (selectedMedicines.length > 0) {
+        // const stockValidation = validateMedicineStock(
+        //   selectedMedicines,
+        //   medicineStocksOptions?.medicines
+        // )
+
+        // if (!stockValidation.isValid) {
+        //   console.error("Medicine stock validation failed:", stockValidation.errors)
+        //   // Show error toast or alert to user
+        //   // alert("Medicine Stock Issue:\n" + stockValidation.errors.join("\n"))
+        //   return
+        // }
+        
+        // console.log("Medicine stock validation passed")
+        // Transform medicine data before submission
+        // const transformedMedicines = transformMedicineData(selectedMedicines)
+        // console.log("Transformed medicines:", transformedMedicines)
+      }
+
       onSubmit() 
     } else {
-      console.log("Form validation failed for RHF fields.")
-      console.log("Validation errors:", form.formState.errors) 
+      // console.log("Validation errors:", form.formState.errors) 
       
       const firstErrorElement = document.querySelector('[data-error="true"]')
       if (firstErrorElement) {
@@ -51,18 +162,44 @@ export default function PrenatalFormThirdPg({
     }
   }
 
-  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 5
+  function calculateAOG(lmp: string): {weeks: number, days: number} {
+    const lmpDate = new Date(lmp)
+    const today = new Date()
 
-  const { data: medicineStocksOptions, isLoading: isMedicineLoading } = fetchMedicinesWithStock()
-  const { data: followUpVisitsData, isLoading: isFUVLoading, error: followUpVisitsError } = usePrenatalPatientFollowUpVisits(form.getValues("pat_id") || "")
-  const { user } = useAuth()
-  const staff = `${user?.personal?.per_fname || ""} ${user?.personal?.per_lname || ""} (${user?.staff?.pos || ""})`
-  const staffId = user?.staff?.staff_id || ""
+    // clearing time portion
+    lmpDate.setHours(0, 0, 0, 0)
+    today.setHours(0, 0, 0, 0)
 
-  form.setValue("assessedBy.name", staff)
-  form.setValue("assessedBy.id", staffId)
+    // difference in milliseconds
+    const diffInMs = today.getTime() - lmpDate.getTime()
+    if (diffInMs < 0) return {weeks: 0, days: 0}
+
+    // convert to days
+    const totalDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    const weeks = Math.floor(totalDays / 7);
+    const days = totalDays % 7;
+
+    return {weeks, days}
+  }
+
+  const lmp = form.watch("presentPregnancy.pf_lmp")
+
+  // compute age of gestation (weeks, days) from LMP; default to 0 when not available
+  const aog = (() => {
+    try {
+      if (!lmp) return { weeks: 0, days: 0 }
+      const res = calculateAOG(lmp)
+      form.setValue("followUpSchedule.aogWeeks", res.weeks)
+      form.setValue("followUpSchedule.aogDays", res.days)
+      return {
+        weeks: Number.isFinite(res.weeks) ? res.weeks : 0,
+        days: Number.isFinite(res.days) ? res.days : 0,
+      }
+    } catch {
+      return { weeks: 0, days: 0 }
+    }
+  })()
 
   const getDayName = (dateString: string) => {
     const date = new Date(dateString)
@@ -70,6 +207,15 @@ export default function PrenatalFormThirdPg({
   }
 
   const followupDate = form.watch("followUpSchedule.followUpDate")
+
+  // compute today's date in YYYY-MM-DD for use as min on date inputs
+  const todayIso = (() => {
+    const d = new Date()
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  })()
 
   const followupDayName = followupDate ? `is on ${getDayName(followupDate)}` : ""
 
@@ -171,16 +317,13 @@ export default function PrenatalFormThirdPg({
     }
   }
 
+  useEffect(() => {
+    const isCesarean = form.getValues("previousPregnancy.typeOfDelivery") === "Cesarean Section";
 
-  // Set initial values for micronutrientSupp from form if they exist
-  // useEffect(() => {
-  //   const ironFolicStarted = form.getValues("micronutrientSupp.ironFolicStarted")
-  //   const ironFolicCompleted = form.getValues("micronutrientSupp.ironFolicCompleted")
-  //   const deworming = form.getValues("micronutrientSupp.deworming")
-
-  //   // You might need to map these to your `selectedMedicines` structure
-  //   // For now, I'll just ensure the form fields are correctly watched/set
-  // }, [form])
+    if (isCesarean) {
+      form.setValue("riskCodes.hasOneOrMoreOfTheFF.prevCaesarian", true);
+    }
+  }, [form]);
 
   return (
     <>
@@ -198,6 +341,19 @@ export default function PrenatalFormThirdPg({
                   
                   <h3 className="text-md font-semibold mt-2 p-5">SCHEDULE FOR FOLLOW-UP VISIT</h3>
                   <div className="px-8">
+                    {/* age of gestation */}
+                    <div className="border shadow-md rounded-md p-2 mb-4">
+                      <div className="grid grid-cols-2">
+                        <Label className="text-sm font-medium mb-1">Current age of gestation (AOG)</Label>
+                        <div className="flex-1">
+                            <div className="grid grid-cols-2">
+                              <span className="text-[12px] text-black/50 font-poppins font-semibold">Weeks: <span className="font-bold text-black text-[16px] ml-1">{aog.weeks}</span></span>
+                              <span className="text-[12px] text-black/50 font-poppins font-semibold">Days: <span className="font-bold text-black text-[16px] ml-1">{aog.days}</span></span>
+                            </div> 
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Follow-up Date Picker */}
                     <div className="mb-4">
                       <FormDateTimeInput
@@ -205,6 +361,7 @@ export default function PrenatalFormThirdPg({
                         name="followUpSchedule.followUpDate"
                         label='Follow-up Date'
                         type="date"
+                        min={todayIso}
                       />
                     </div>
                     {followupDate && (
@@ -268,122 +425,6 @@ export default function PrenatalFormThirdPg({
               </div>
             </div>
 
-            {/* guide for 4anc visits */}
-            {/* <div className="grid grid-cols- gap-4 mb-5">
-              <Card className="border rounded-lg shadow-md flex flex-col w-full">
-                <CardHeader>
-                  <div className="flex justify-between items-center p-5">
-                    <CardTitle className="text-md font-semibold">GUIDE FOR 8 ANC VISITS</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="px-4">
-                    <div className="grid grid-cols-3 px-4 mb-5 gap-3 ">
-                      {/* 1st Trimester */}
-                      {/* <Card className="border rounded-md px-3 py-5">
-                        <CardContent>
-                          <Label className="col-span-2">1 - 3 Months of AOG</Label>
-                          <Label className="text-black text-opacity-50 italic ml-1">(atleast 1 visit)</Label>
-                          <div className="border px-5 py-3 rounded-md mt-2">
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.firstTri"
-                                label="1st visit"
-                                type="date"
-                              />
-                            </div> */}
-                            {/* <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.firstTriTwo"
-                                label="2nd visit"
-                                type="date"
-                              />
-                            </div> */}
-                          {/* </div>
-                        </CardContent>
-                      </Card> */}
-                      {/* 2nd Trimester */}
-                      {/* <Card className="border rounded-md py-5 px-3">
-                        <CardContent>
-                          <Label className="col-span-2">4 - 6 Months of AOG</Label>
-                          <Label className="text-black text-opacity-50 italic ml-1">(atleast 2 visits)</Label>
-                          <div className="border px-5 py-3 rounded-md mt-2">
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.secondTri"
-                                label="1st visit"
-                                type="date"
-                              />
-                            </div>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.secondTriTwo"
-                                label="2nd visit"
-                                type="date"
-                              />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card> */}
-                      {/* 3rd Trimester */}
-                      {/* <Card className="grid border px-3 py-5 rounded-md">
-                        <CardContent>
-                          <Label className="col-span-2">7 - 9 Months of AOG</Label>
-                          <Label className="text-black text-opacity-50 italic ml-1">(atleast 5 visits)</Label>
-                          <div className="border px-5 py-3 rounded-md mt-2">
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriOne"
-                                label="1st visit"
-                                type="date"
-                              />
-                            </div>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriTwo"
-                                label="2nd visit"
-                                type="date"
-                              />
-                            </div>
-                            <div className="mb-2">
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriThree"
-                                label="3rd visit"
-                                type="date"
-                              />
-                            </div>
-                            <div>
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriFour"
-                                label="4th visit"
-                                type="date"
-                              />
-                            </div>
-                            <div>
-                              <FormDateTimeInput
-                                control={form.control}
-                                name="ancVisits.thirdTriFour"
-                                label="4th visit"
-                                type="date"
-                              />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div> */}
-            
             <div>
               {/* Checklist */}
                 <Card className="border rounded-lg shadow-md flex flex-col w-full mb-5">
@@ -481,31 +522,21 @@ export default function PrenatalFormThirdPg({
                     <div className="p-4 flex justify-center items-center space-y-4">
                       <p className="text-center text-red-600">Loading medicines...</p>
                     </div>
-                  ) : (
+                  ) : medicineStocksOptions && medicineStocksOptions.medicines ? (
                     <MedicineDisplay
-                      medicines={medicineStocksOptions?.medicines ?? []}
+                      medicines={medicineStocksOptions.medicines}
                       initialSelectedMedicines={selectedMedicines}
                       onSelectedMedicinesChange={handleSelectedMedicinesChange}
                       itemsPerPage={itemsPerPage}
                       currentPage={currentPage}
                       onPageChange={handlePageChange}
                     />
+                  ) : (
+                    <div className="p-4 flex justify-center items-center">
+                      <p className="text-center text-red-600">No medicines available</p>
+                    </div>
                   )}
                   
-                  <div className="flex px-3 mt-4">
-                    <div className="border rounded-lg p-3 w-full">
-                      <Label className="font-semibold">Given Medicines</Label>
-                      <div className="flex justify-center items-center p-3">
-                        {/* {selectedMedicines.map((medicine) => (
-                          <div key={medicine.id} className="flex justify-between">
-                            <span>{medicine.name}</span>
-                            <span>{medicine.dosage}</span>
-                          </div>
-                        ))} */}
-                        <Label className="text-black/70">No history of given medicines yet.</Label>
-                      </div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>

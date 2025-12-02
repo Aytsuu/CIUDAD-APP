@@ -7,6 +7,7 @@ from ..serializers.ncd_serializers import (
     NonCommunicableDiseaseCreateSerializer,
     NonCommunicableDiseaseUpdateSerializer
 )
+from apps.patientrecords.utils import create_patient_and_record_for_health_profiling
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,20 @@ class NCDCreateView(generics.CreateAPIView):
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
                 ncd_record = serializer.save()
+                
+                # Automatically create Patient, PatientRecord, and MedicalHistory for health profiling
+                if ncd_record.rp:
+                    # Use the comorbidities as the illness name for medical history
+                    illness_name = ncd_record.ncd_comorbidities or 'Non-Communicable Disease'
+                    patient, patient_record, medical_history = create_patient_and_record_for_health_profiling(
+                        ncd_record.rp.rp_id, 
+                        record_type='NCD', 
+                        illness_name=illness_name
+                    )
+                    if patient and patient_record:
+                        logger.info(f"Patient, PatientRecord, and MedicalHistory created/found for NCD record {ncd_record.ncd_id}: Patient {patient.pat_id}, Record {patient_record.patrec_id}, History {medical_history.medhist_id if medical_history else 'None'}")
+                    else:
+                        logger.warning(f"Failed to create/find Patient and PatientRecord for NCD record {ncd_record.ncd_id}")
                 
                 # Return the created record with full details
                 response_serializer = NonCommunicableDiseaseSerializer(ncd_record)

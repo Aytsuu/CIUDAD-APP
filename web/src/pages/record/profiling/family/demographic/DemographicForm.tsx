@@ -43,7 +43,7 @@ export default function DemographicForm({
     <div className="flex flex-col min-h-0 h-auto p-4 md:p-10 rounded-lg overflow-auto">
       <div className="pb-4">
         <h2 className="text-lg font-semibold">Demographic Information</h2>
-        <p className="text-xs text-black/50">Fill out all necessary fields</p>
+        <p className="text-sm text-black/50">Fill out all necessary fields</p>
       </div>
       <Form {...form}>
         <form

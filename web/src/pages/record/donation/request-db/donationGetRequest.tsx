@@ -56,3 +56,13 @@ export const getPersonalList = async () => {
     return [];
   }
 };
+
+export const getStaffList = async () => {
+  try {
+    const res = await api.get('donation/dist/staff/');
+    const data = res.data?.data ?? res.data ?? [];
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    return [];
+  }
+};

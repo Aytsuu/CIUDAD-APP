@@ -55,7 +55,8 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
                 file: file.file
               }
             }).catch(error => {
-              console.error("Error creating file entry:", error);
+              // console.error("Error creating file entry:", error);
+              throw new Error("Error creating file entry: " + error.message);
               return null;
             })
           )
@@ -75,13 +76,12 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       });
 
       //5. Add new expense log
-      if(values.returnAmount > 0){
-        await expense_log(iet_num, {
-          returnAmount: values.returnAmount,
-          el_proposed_budget: values.iet_amount,
-          el_actual_expense: values.iet_actual_amount
-        });
-      }
+      await expense_log(iet_num, {
+        returnAmount: values.returnAmount,
+        el_proposed_budget: values.iet_amount,
+        el_actual_expense: values.iet_actual_amount
+      });
+
       
       return iet_num;
     },  
@@ -98,9 +98,8 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-      console.error("Error submitting expense or income:", err);
       showErrorToast(
-        "Failed to submit income or expense. Please check the input data and try again."
+        `Failed to submit expense: ${err.message}`
       );
     }
   });
@@ -143,9 +142,9 @@ export const useCreateIncome = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-      console.error("Error submitting income:", err);
+      // console.error("Error submitting income:", err);
       showErrorToast(
-        "Failed to submit income. Please check the input data and try again."
+        `Failed to submit income: ${err.message}`
       );
     }
   });

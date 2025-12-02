@@ -3,26 +3,29 @@ import { api } from "@/api/api";
 
 // =========================================== STAFF ========================================================
 
-export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
+export const updateWasteReport = async (rep_id: string, wasteReportInfo: Record<string, any>) => {
 
     try{
 
         const currentTimestamp = new Date().toISOString();
 
-        console.log("REPORT DATA REQ: ",{
-            rep_status: wasteReportInfo.rep_status,
-            rep_date_resolved: currentTimestamp,
-        })
+        // console.log("REPORT DATA REQ: ",{
+        //     rep_status: wasteReportInfo.rep_status,
+        //     rep_date_resolved: currentTimestamp,
+        //     staff_id: wasteReportInfo.staff_id
+        // })
 
         const res = await api.put(`waste/update-waste-report/${rep_id}/`,{
             rep_status: wasteReportInfo.rep_status,
             rep_date_resolved: currentTimestamp,
+            staff_id: wasteReportInfo.staff_id
         })
 
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw err;
     }
 }
 
@@ -30,7 +33,7 @@ export const updateWasteReport = async (rep_id: number, wasteReportInfo: Record<
 
 
 export const uploadResolvedImage = async (data: {
-  rep_id: number;
+  rep_id: string;
   file_data: {
     name: string;
     type: string;
@@ -51,7 +54,7 @@ export const uploadResolvedImage = async (data: {
     const res = await api.post('waste/waste-rep-rslv-file/', payload);
     return res.data;
   } catch (err) {
-    console.error(`Failed to create file ${data.file_data.name}:`, err);
+    // console.error(`Failed to create file ${data.file_data.name}:`, err);
     throw err;
   }
 }
@@ -60,15 +63,15 @@ export const uploadResolvedImage = async (data: {
 // ==================================================== RESIDENT =============================================
 
 // Resident Cancel Report
-export const updateWasteResReport = async (rep_id: number, wasteReportInfo: Record<string, any>) => {
+export const updateWasteResReport = async (rep_id: string, wasteReportInfo: Record<string, any>) => {
 
     try{
         const currentTimestamp = new Date().toISOString();
 
-        console.log("REPORT DATA REQ: ",{
-            rep_status: wasteReportInfo.rep_status,
-            rep_cancel_reason: wasteReportInfo.rep_cancel_reason
-        })
+        // console.log("REPORT DATA REQ: ",{
+        //     rep_status: wasteReportInfo.rep_status,
+        //     rep_cancel_reason: wasteReportInfo.rep_cancel_reason
+        // })
 
         const res = await api.put(`waste/update-waste-report/${rep_id}/`,{
             rep_status: wasteReportInfo.rep_status,
@@ -79,6 +82,7 @@ export const updateWasteResReport = async (rep_id: number, wasteReportInfo: Reco
         return res.data;
     }
     catch (err){
-        console.error(err);
+        // console.error(err);
+        throw err;        
     }
 }

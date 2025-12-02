@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBudgetPlanActive, getBudgetPlanInactive } from "../restful-API/budgetplanGetAPI";
-import { getBudgetDetails, getBudgetPlanHistory, getBudgetPlanSuppDocs, getBudgetPlanFromPreviousYear, getBudgetPlanDetailFromPreviousYear } from "../restful-API/budgetplanGetAPI";
+import { getBudgetDetails, getBudgetPlanHistory, getBudgetPlanSuppDocs, getBudgetPlanFromPreviousYear, getBudgetPlanDetailFromPreviousYear, getExpenseParticulars, getBudgetYear } from "../restful-API/budgetplanGetAPI";
 import { BudgetPlanDetail } from "../budgetPlanInterfaces"; 
 import { BudgetPlan } from "../budgetPlanInterfaces";
 
@@ -50,6 +50,46 @@ export const useGetBudgetPlanDetailFromPrev = () => {
         enabled: false 
     });
 }
+
+export type GADBudget = {
+  gbudy_num: number;
+  gbudy_budget: number;
+  gbudy_year: number;
+  gbudy_expenses: number
+  gbudy_is_archive: boolean;
+}
+
+export const useGetGADBudgetYear = (year:number) => {
+    return useQuery<GADBudget>({
+        queryKey: ['gadBudget', year],
+        queryFn:() => getBudgetYear(year),
+        staleTime: 1000 * 60 * 30,
+        enabled: false 
+    });
+}
+
+export interface BudgetItem {
+    id: string;
+    name: string;
+    proposedBudget: number;
+}
+
+export const useGetExpenseParticulars = (year?: number) => {
+    return useQuery<BudgetItem[]>({
+        queryKey: ['budgetItems', year],
+        queryFn: async () => {
+            const response = await getExpenseParticulars(year);
+            const items = Array.isArray(response) ? response : response?.data;
+            
+            return items.map((item: any) => ({
+                id: item.exp_id?.toString() || '',
+                name: item.exp_budget_item || 'Unnamed',
+                proposedBudget: Number(item.exp_proposed_budget) || 0
+            }));
+        },
+        staleTime: 1000 * 60 * 30,
+    });
+};
 
 export type BudgetPlanHistory = {
   bph_id: string;

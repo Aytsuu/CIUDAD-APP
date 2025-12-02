@@ -137,7 +137,7 @@ export const useSendOTP = () => {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
-        const res = await api.post("account/phone-verification", data)
+        const res = await api.post("account/phone-verification/", data)
         return res.data
       } catch (err: any) {
         if (axios.isAxiosError(err) && err.response) {
@@ -150,6 +150,19 @@ export const useSendOTP = () => {
             });
           }
         }
+      }
+    }
+  })
+}
+
+export const useVerifyAccountReg = () => {
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.post("authentication/signup/otp-verification/", data);
+        return res.data;
+      } catch (err) { 
+        throw err;
       }
     }
   })

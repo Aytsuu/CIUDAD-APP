@@ -4,9 +4,9 @@ import {
   postdonationreq,
   putdonationreq,
   getdonationreq,
-  getPersonalList,
+  getPersonalList, getStaffList
 } from "./donation-requests";
-import { DonationInput, Donation, Personal, Donations } from "../donation-types";
+import { DonationInput, Donation, Personal, Donations, Staff } from "../donation-types";
 
 export const useAddDonation = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
@@ -48,7 +48,7 @@ export const useGetPersonalList = () => {
     queryFn: () =>
       getPersonalList().catch((error) => {
         toast.error(error.message || "Failed to fetch personal list");
-        console.error("Error fetching personal list:", error);
+        // console.error("Error fetching personal list:", error);
         throw error;
       }),
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -98,5 +98,13 @@ export const useUpdateDonation = (onSuccess?: () => void) => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["donations"] });
     },
+  });
+};
+
+export const useGetStaffList = () => {
+  return useQuery<Staff[], Error>({
+    queryKey: ["staffList"],
+    queryFn: () => getStaffList(),
+    staleTime: 1000 * 60 * 5,
   });
 };

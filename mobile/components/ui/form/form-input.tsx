@@ -1,7 +1,6 @@
 import { View, Text } from 'react-native';
 import { Input } from '../input';
 import { Controller, Control } from 'react-hook-form';
-import { capitalize } from '@/helpers/capitalize';
 
 interface FormInputProps {
   control: Control<any>;
@@ -14,7 +13,7 @@ interface FormInputProps {
   submitBehavior?: 'submit' | 'newline' | 'blurAndSubmit';
   editable?: boolean;
   maxInput?: number;
-  upper?: boolean
+  upper?: boolean;
 }
 
 export const FormInput = ({
@@ -35,15 +34,12 @@ export const FormInput = ({
       control={control}
       name={name}
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
-        // Handle maxInput logic
-        const handleChange = (text: string) => {
-          if (maxInput !== undefined && text.length > maxInput) {
-            return;
-          }
-          
-          const processedText = upper ? text.toUpperCase() : text;
-          onChange(processedText);
+        const handleChange = (text: string) => {       
+          onChange(text);
         };
+
+        // No transformation needed here since it's done in handleChange
+        const displayValue = value != null ? String(value) : '';
 
         return (
           <View className="mb-4">
@@ -56,24 +52,25 @@ export const FormInput = ({
                 text-black
                 native:text-sm
                 native:font-normal
-                rounded-xl
+                rounded-xl    
                 ${error ? 'border-red-500' : 'border-gray-300'}
               `}
               placeholder={placeholder}
               placeholderTextColor="#888"
-              value={value != null ? String(value) : ''}
-              onChangeText={handleChange} // Use the custom handler
+              value={displayValue}
+              onChangeText={handleChange}
               onBlur={onBlur}
               secureTextEntry={secureTextEntry}
               keyboardType={keyboardType}
               returnKeyType={returnKeyType}
               submitBehavior={submitBehavior}
               editable={editable}
-              maxLength={maxInput} // Pass to native input
+              maxLength={maxInput}
+              
             />
             {maxInput && (
               <Text className="text-xs text-gray-500 mt-1 text-right">
-                {value?.length || 0}/{maxInput}
+                {displayValue.length || 0}/{maxInput}
               </Text>
             )}
             {error && (

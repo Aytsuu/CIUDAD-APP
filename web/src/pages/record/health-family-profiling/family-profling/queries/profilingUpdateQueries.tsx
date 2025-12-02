@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateFamilyHealth, updateFamilyRoleHealth, updateHouseholdHealth, updateProfileHealth, updateWaterSupply, updateSanitaryFacility, updateSolidWaste, updateSurveyIdentification } from "../restful-api/profilingPutAPI";
+import { updateFamilyHealth, updateFamilyRoleHealth, updateHouseholdHealth, updateProfileHealth, updateWaterSupply, updateSanitaryFacility, updateSolidWaste, updateSurveyIdentification, updateHealthRelatedDetails, updateMotherHealthInfo, updateDependentsUnderFive, createDependentsUnderFive } from "../restful-api/profilingPutAPI";
 import { toast } from "sonner";
 import { CircleCheck } from "lucide-react";
 
@@ -159,6 +159,82 @@ export const useUpdateSurveyIdentification = () => {
       toast("Survey identification updated", { 
         icon: <CircleCheck size={24} className="fill-green-500 stroke-white" /> 
       });
+    }
+  });
+};
+
+// ================ HEALTH RELATED DETAILS ================
+export const useUpdateHealthRelatedDetails = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ rp_id, data }: { 
+      rp_id: string; 
+      data: {
+        per_add_bloodType?: string;
+        per_add_philhealth_id?: string;
+        per_add_covid_vax_status?: string;
+      } 
+    }) => updateHealthRelatedDetails(rp_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['familyHealthProfiling'] });
+      queryClient.refetchQueries({ queryKey: ['familyHealthProfiling'] });
+    }
+  });
+};
+
+// ================ MOTHER HEALTH INFO ================
+export const useUpdateMotherHealthInfo = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ mhi_id, data }: { 
+      mhi_id: number; 
+      data: {
+        mhi_healthRisk_class?: string;
+        mhi_immun_status?: string;
+        mhi_famPlan_method?: string;
+        mhi_famPlan_source?: string;
+        mhi_lmp_date?: string;
+      } 
+    }) => updateMotherHealthInfo(mhi_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['familyHealthProfiling'] });
+      queryClient.refetchQueries({ queryKey: ['familyHealthProfiling'] });
+    }
+  });
+};
+
+// ================ DEPENDENTS UNDER FIVE ================
+export const useCreateDependentsUnderFive = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      duf_fic?: string;
+      duf_nutritional_status?: string;
+      duf_exclusive_bf?: string;
+      fc: number;
+      rp: number;
+    }) => createDependentsUnderFive(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['familyHealthProfiling'] });
+      queryClient.refetchQueries({ queryKey: ['familyHealthProfiling'] });
+    }
+  });
+};
+
+export const useUpdateDependentsUnderFive = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ duf_id, data }: { 
+      duf_id: number; 
+      data: {
+        duf_fic?: string;
+        duf_nutritional_status?: string;
+        duf_exclusive_bf?: string;
+      } 
+    }) => updateDependentsUnderFive(duf_id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['familyHealthProfiling'] });
+      queryClient.refetchQueries({ queryKey: ['familyHealthProfiling'] });
     }
   });
 };

@@ -2,7 +2,14 @@ from .models import *
 from django.db.models import Q
 from apps.healthProfiling.models import FamilyComposition, PersonalAddress
 from apps.patientrecords.models import Transient
+from datetime import date, timedelta
+from django.db import IntegrityError
+from utils.create_notification import NotificationQueries
+from apps.administration.models import Staff
+from django.utils import timezone
+import logging
 
+logger = logging.getLogger(__name__)
 
 def get_medcon_record_count(pat_id):
     return MedicalConsultation_Record.objects.filter(patrec_id__pat_id=pat_id, medrec_status='completed').count()
@@ -42,6 +49,7 @@ def get_patient_parents_info(pat_obj):
     
     return parents
 
+
 def get_patient_address_and_sitio(pat_obj):
     """Get address and sitio information for a patient - reusable function"""
     address = "N/A"
@@ -69,6 +77,7 @@ def get_patient_address_and_sitio(pat_obj):
         print(f"Error fetching address for patient {pat_obj.pat_id}: {str(e)}")
     
     return address, sitio
+
 
 def apply_patient_search_filter(queryset, search_query):
     """Reusable search filter for patients with multiple term support"""
@@ -132,3 +141,165 @@ def apply_patient_type_filter(queryset, patient_type):
             type_query |= Q(pat_type__iexact=term)
     
     return queryset.filter(type_query) if type_query else queryset
+
+
+
+def create_future_date_slots(days_in_advance=60):
+    today = date.today() 
+    slots_created = 0
+    
+    for i in range(days_in_advance):
+        target_date = today + timedelta(days=i)
+        
+        try:
+            # Only create if it doesn't exist (get_or_create)
+            _, created = DateSlots.objects.get_or_create(
+                date=target_date,
+                defaults={'am_max_slots': 10, 'pm_max_slots': 10}
+            )
+            if created:
+                slots_created += 1
+        except IntegrityError:
+            pass 
+        except Exception as e:
+            pass
+        
+        
+
+
+def _get_resident_name_and_rp_id(rp):
+    name = "Resident"
+    rp_id = None
+    if rp and rp.per:
+        name = f"{rp.per.per_fname or ''} {rp.per.per_lname or ''}".strip()
+        rp_id = str(rp.rp_id)
+    return name, rp_id
+
+
+def _medical_staff_rp_ids():
+    staff = Staff.objects.filter(
+        staff_type="HEALTH STAFF",
+        pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS', 'MIDWIFE']
+    ).select_related('rp')
+    return [str(s.rp.rp_id) for s in staff if s.rp and s.rp.rp_id]
+
+def send_appointment_status_notifications(appointment, status: str):
+    notifier = NotificationQueries()
+    resident_rp = appointment.rp
+    resident_name, resident_rp_id = _get_resident_name_and_rp_id(resident_rp)
+
+    scheduled = appointment.scheduled_date.strftime("%B %d, %Y")
+    meridiem = appointment.meridiem
+    complaint = appointment.chief_complaint or "Medical Consultation"
+    reason = appointment.archive_reason or ""
+    app_id = str(appointment.id)
+    staff_recipients = _medical_staff_rp_ids()
+
+    # ----------- RESIDENT ----------
+    if resident_rp_id:
+        if status == "missed":
+            title = "Missed Appointment"
+            message = (
+                f"You missed your appointment on {scheduled} ({meridiem}).\n"
+                f"Chief Complaint: {complaint}\n"
+                "Please reschedule if needed."
+            )
+            notif_type = "MISSED"
+            # web_route = "/services/medical-consultation/appointments/missed"
+            
+        elif status == "rejected":
+            title = "Appointment Request Rejected"
+            message = (
+                f"Your appointment request has been rejected\n"
+                f"Reason: {reason}\n"
+            )
+            notif_type = "REJECTED"
+            # web_route = "/services/medical-consultation/appointments/rejected"
+        
+        elif status == "confirmed":
+            title = "Appointment Request Approved"
+            message = (
+                f"Your appointment request for {scheduled} has been confirmed\nSee you."
+            )
+            notif_type = "CONFIRMED"
+            # web_route = "/services/medical-consultation/appointments/confirmed"
+            
+        elif status == "referred":
+            title = "Appointment Request Referred"
+            message = (
+                f"Your appointment request has been referred\n"
+                f"Reason: {reason}\n"
+            )
+            notif_type = "REFERRED"
+            # web_route = "/services/medical-consultation/appointments/referred"
+            
+        else:
+            title = "Appointment Cancelled"
+            message = (
+                f"Your appointment on {scheduled} ({meridiem}) was cancelled.\n"
+                f"Reason: {reason}\n"
+                f"Chief Complaint: {complaint}"
+            )
+            notif_type = "CANCELLED"
+            
+
+        notifier.create_notification(
+            title=title,
+            message=message,
+            recipients=[resident_rp_id],
+            notif_type=notif_type,
+            web_route="",
+            web_params={},
+            mobile_route="/(health)/medconsultation/my-medappointments",
+            mobile_params={},
+        )
+
+    # ----------- STAFF ----------
+    if staff_recipients:
+        if status == "missed":
+            title = "Patient Missed Appointment"
+            message = (
+                f"{resident_name} missed their appointment.\n"
+                f"Date: {scheduled} ({meridiem})\n"
+                f"Complaint: {complaint}\n"
+                # f"ID: {app_id}"
+            )
+            notif_type = "MISSED"
+            web_route = "/services/medical-consultation/appointments/missed"
+        elif status == "confirmed":
+            title = "New Upcoming Appointment"
+            message = (
+                f"{resident_name} has an upcoming appointment on {scheduled} ({meridiem}).\n"
+                f"Chief complaint: {complaint}\n"
+                # f"ID: {app_id}"
+            )
+            notif_type = "APPOINTMENT_CONFIRMED_ADMIN"
+            web_route = "/referred-patients/upcoming-consultations"
+        elif status == "cancelled":
+            title = "Appointment Cancelled"
+            message = (
+                f"{resident_name} cancelled their appointment.\n"
+                f"Date: {scheduled} ({meridiem})\n"
+                f"Reason: {appointment.archive_reason or '–'}\n"
+                f"Complaint: {complaint}\n"
+                # f"ID: {app_id}"
+            )
+            notif_type = "CANCELLED"
+            web_route = "/services/medical-consultation/appointments/cancelled"
+        else:
+            title = ""
+            message = ""
+            notif_type = ""
+            web_route = ""
+
+        if title and notif_type:
+            notifier.create_notification(
+                title=title,
+                message=message,
+                recipients=staff_recipients,
+                notif_type=notif_type,
+                web_route=web_route,
+                web_params={},
+                mobile_route="/(admin)/appointments",
+                mobile_params={"focus_tab": "appointments"},
+            )

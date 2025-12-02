@@ -1,18 +1,12 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
-import { ConfirmationModal } from "@/components/ui/confirmationModal"
 import { FormInput } from "@/components/ui/form/form-input"
 import { useRegistrationFormContext } from "@/contexts/RegistrationFormContext"
-import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { X } from "@/lib/icons/X"
-import PageLayout from "@/screens/_PageLayout"
-import { useRouter } from "expo-router"
-import { ScrollView, Text, TouchableOpacity, View } from "react-native"
-import PersonalInformation from "../PersonalInformation"
-import ScanID from "../ScanID"
+import { Text, View } from "react-native"
 import { FormSelect } from "@/components/ui/form/form-select"
 import { FormDateInput } from "@/components/ui/form/form-date-input"
 import { useToastContext } from "@/components/ui/toast"
+import { SubmitButton } from "@/components/ui/button/submit-button"
 
 const sexOptions: { label: string; value: string }[] = [
   { label: "Male", value: "male" },
@@ -76,9 +70,10 @@ export default function BusinessRespondent({ params } : {
       </View>
 
       <View className="pt-4 pb-8 bg-white border-t border-gray-100">
-        <Button onPress={handleContinue} className="bg-primaryBlue native:h-[56px] w-full rounded-xl shadow-lg">
-          <Text className="text-white font-PoppinsSemiBold text-[16px]">Continue</Text>
-        </Button>
+        <SubmitButton
+          handleSubmit={handleContinue}
+          buttonLabel="Save and Continue"
+        />
 
         <Text className="text-center text-xs text-gray-500 font-PoppinsRegular mt-3">
           All information will be kept secure and confidential

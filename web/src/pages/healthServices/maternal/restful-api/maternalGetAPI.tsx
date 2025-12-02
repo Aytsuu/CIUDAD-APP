@@ -2,14 +2,7 @@
 
 import { api2 } from "@/api/api"
 
-// interfaces
-export interface MaternalPatientFilters {
-  page?: number;
-	page_size?: number;
-	status?: string;
-	search?: string;
-}
-
+// for maternal 
 export const getPatients = async () => {
   try {
       const res = await api2.get("patientrecords/patient/view/create/")
@@ -19,24 +12,13 @@ export const getPatients = async () => {
   }
 }
 
-// maternal-records
-export const getMaternalRecords = async (filters: MaternalPatientFilters = {}) => {
+export const getLatestMaternalFollowUpVisit = async (patientId: string) => {
   try {
-    const params = new URLSearchParams();
-
-    if(filters.page) params.append('page', filters.page.toString());
-    if(filters.page_size) params.append('page_size', filters.page_size.toString());
-    if(filters.status && filters.status !== 'All') params.append('status', filters.status);
-    if(filters.search) params.append('search', filters.search);
-
-    const queryString = params.toString();
-    const url = queryString ? `maternal/maternal-patients/?${queryString}` : "maternal/maternal-patients/"
-
-    const res = await api2.get(url);
-    return res.data || {count: 0, next: null, previous: null, results: []};
+    const res = await api2.get(`maternal/maternal-patients/latest-followupvisit/${patientId}/`)
+    return res.data;
   } catch (error) {
-    console.error("Error fetching maternal records: ", error);
-    return error || {count: 0, next: null, previous: null, results: []};
+    console.log("Error fetching latest maternal follow-up visit: ", error);
+    throw error;
   }
 }
 
@@ -103,26 +85,6 @@ export const getPatientPostpartumCount = async (patientId: string): Promise<numb
     }
 
     return 0
-  }
-}
-
-// pregnancy details
-export const getPregnancyDetails = async (filters: MaternalPatientFilters & { patientId: string }) => {
-  try {
-    const params = new URLSearchParams();
-    if(filters.page) params.append('page', filters.page.toString());
-    if(filters.page_size) params.append('page_size', filters.page_size.toString());
-    if(filters.status && filters.status !== 'All') params.append('status', filters.status);
-    if(filters.search) params.append('search', filters.search);
-    const queryString = params.toString();
-    const url = queryString
-      ? `maternal/pregnancy/${filters.patientId}/details/?${queryString}`
-      : `maternal/pregnancy/${filters.patientId}/details/`;
-    const res = await api2.get(url);
-    return res.data || {count: 0, next: null, previous: null, results: []};
-  } catch (error) {
-    console.error("Error fetching pregnancy details: ", error);
-    return error || {count: 0, next: null, previous: null, results: []};
   }
 }
 
@@ -239,26 +201,7 @@ export const getPatientTTStatus = async (patientId: string) => {
   }
 }
 
-// calculated missed visits
-export const getCalculatedMissedVisits = async (pregnancyId: string, aogWks?: number, aogDays?: number) => {
-  try {
-    const params = new URLSearchParams()
-    
-    if(aogWks !== undefined) params.append('aog_weeks', aogWks.toString())
-    if(aogDays !== undefined) params.append('aog_days', aogDays.toString())
-
-    const queryString = params.toString()
-    const url = `maternal/prenatal/missed-visits/${pregnancyId}/${queryString ? `?${queryString}` : ''}`
-
-    const res = await api2.get(url)
-    return res.data || {}
-  } catch (error) {
-    console.error("Error fetching calcualted missed visits: ", error)
-    throw error;
-  }
-}
-
-
+// illness list for prenatal form
 export const getIllnessList = async () => {
   try {
     const res = await api2.get("maternal/prenatal/illnesses/")
@@ -269,6 +212,44 @@ export const getIllnessList = async () => {
   }
 }
 
+// prenatal complete table comparison
+export const getPrenatalRecordComparison = async (pregnancyId: string) => {
+  try {
+    const res = await api2.get(`maternal/prenatal/records/?pregnancy_id=${pregnancyId}`)
+    return res.data || [];
+  } catch (error) {
+    console.error("Error fetching prenatal record comparison: ", error);
+    throw error;
+  }
+}
+
+// prenatal (based on pregnancy) lab result
+export const getPrenatalLabResult = async (pregnancyId: string) => {
+  try {
+    const res = await api2.get(`maternal/lab-results/${pregnancyId}/`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal lab result: ", error);
+    throw error;
+  }
+}
+
+// prenatal forms list with embedded prenatal care entries
+export const getPrenatalFormsWithCare = async (params: { page?: number; pageSize?: number; patientId?: string; pregnancyId?: string }) => {
+  try {
+    const { page, pageSize, patientId, pregnancyId } = params || {}
+    const queryParams: any = {}
+    if (page) queryParams.page = page
+    if (pageSize) queryParams.page_size = pageSize
+    if (patientId) queryParams.pat_id = patientId
+    if (pregnancyId) queryParams.pregnancy_id = pregnancyId
+    const res = await api2.get('maternal/prenatal/forms/', { params: queryParams })
+    return res.data || {}
+  } catch (error) {
+    console.error('Error fetching prenatal forms with care: ', error)
+    throw error
+  }
+}
 
 
 {/* *********** postpartum *********** */}
@@ -310,6 +291,81 @@ export const getPostpartumAssessements = async (patientId: string) => {
     return res.data || []
   } catch (error) {
     console.error("Error fetching postpartum assessments: ", error);
+    throw error;
+  }
+}
+
+
+{/* *********** prenatal appointment request *********** */}
+export const getPrenatalAppointmentRequests = async () => {
+  try {
+    const res = await api2.get("maternal/prenatal/appointment/requests/all/")
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal appointment requests: ", error);
+    throw error;
+  }
+}
+
+
+{/* *********** charts or reports *********** */}
+export const getMaternalCharts = async (month: string) => {
+  try {
+    const res = await api2.get(`maternal/maternal-patients/charts/${month}/`)
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching maternal charts: ", error);
+    throw error;
+  }
+}
+
+
+{/* *********** dashboard sidebar *********** */}
+export const getPrenatalAppointmentsPending = async () => {
+  try {
+    const res = await api2.get('maternal/prenatal/appointment/requests/pendings/')
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching prenatal appointments pending: ", error);
+    throw error;
+  }
+}
+
+// combined follow-ups (prenatal + postpartum)
+export const getCombinedFollowUps = async (
+  patientId: string,
+  filters?: {
+    status?: string;
+    type?: 'prenatal' | 'postpartum';
+    from_date?: string;
+    to_date?: string;
+    limit?: number;
+  }
+) => {
+  try {
+    const queryParams: any = {}
+    if (filters?.status) queryParams.status = filters.status
+    if (filters?.type) queryParams.type = filters.type
+    if (filters?.from_date) queryParams.from_date = filters.from_date
+    if (filters?.to_date) queryParams.to_date = filters.to_date
+    if (filters?.limit) queryParams.limit = filters.limit
+    
+    const res = await api2.get(`maternal/patient/${patientId}/followups/combined/`, { params: queryParams })
+    return res.data || {}
+  } catch (error) {
+    console.error('Error fetching combined follow-ups: ', error)
+    throw error
+  }
+}
+
+
+{/* *********** staffs *********** */}
+export const getMaternalStaff = async () => {
+  try {
+    const res = await api2.get("maternal/staff/")
+    return res.data || []
+  } catch (error) {
+    console.error("Error fetching maternal staff: ", error);
     throw error;
   }
 }

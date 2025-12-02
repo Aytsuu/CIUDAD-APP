@@ -1,12 +1,14 @@
 import { z } from "zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import WasteColSchedSchema from "@/form-schema/waste/waste-collection";
 import { wasteColData } from "../request/waste-col-post-request";
 import { addAssCollector } from "../request/waste-col-post-request";
 import { createCollectionReminders } from "../request/waste-col-post-request";
 
-
+type ExtendedWasteColSchema = z.infer<typeof WasteColSchedSchema> & {
+  staff: string;
+};
 
 
 export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => {
@@ -14,15 +16,15 @@ export const useCreateWasteSchedule = (onSuccess?: (wc_num: number) => void) => 
   const { toast } = useToastContext();
 
   return useMutation({
-    mutationFn: (values: z.infer<typeof WasteColSchedSchema>) =>
+    mutationFn: (values: ExtendedWasteColSchema) =>
       wasteColData(values),
     onSuccess: (wc_num) => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
       toast.success("Waste collection scheduled successfully");
       if (onSuccess) onSuccess(wc_num);
     },
-    onError: (err) => {
-      console.error("Error creating schedule:", err);
+    onError: (_err) => {
+      // console.error("Error creating schedule:", err);
       toast.error("Failed to create schedule.");
     }
   });
@@ -45,8 +47,8 @@ export const useAssignCollectors = () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
       toast.success("Collectors assigned successfully");
     },
-    onError: (err) => {
-      console.error("Error assigning collectors:", err);
+    onError: (_err) => {
+      // console.error("Error assigning collectors:", err);
       toast.error("Failed to assign collectors.");
     }
   });
@@ -73,8 +75,8 @@ export const useCreateCollectionReminders = (onSuccess?: () => void) => {
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error creating collection reminders:", err);
+    onError: (_err) => {
+      // console.error("Error creating collection reminders:", err);
       toast.error("Failed to create collection reminders. Please try again.");
     }
   });

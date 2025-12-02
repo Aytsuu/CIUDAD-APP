@@ -26,8 +26,16 @@ export const useActionAppointment = () => {
       queryClient.invalidateQueries({ queryKey: ["pendingmedicalapp"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["medical-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["reportscount"] });
+      queryClient.invalidateQueries({ queryKey: ["pendingmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["confirmedmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["completedmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["rejectedmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["cancelledmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["missedmedicalapp"] });
+      queryClient.invalidateQueries({ queryKey: ["referredmedicalapp"] });
 
-      showSuccessToast("Appointment rejected successfully");
+      showSuccessToast("Successful");
     },
 
     onError: (error: Error) => {

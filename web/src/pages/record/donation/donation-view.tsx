@@ -14,12 +14,16 @@ import { useUpdateDonation } from "./queries/donationUpdateQueries";
 import {
   useGetPersonalList,
   useGetDonationById,
+  useGetStaffList,
 } from "./queries/donationFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combobox-input";
 import { ClerkDonateViewProps } from "./donation-types";
 import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/context/AuthContext"; 
 
 function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
+  const { user } = useAuth();
+  const isSecretary = ["admin", "secretary"].includes(user?.staff?.pos?.toLowerCase());
   const [isEditing, setIsEditing] = useState(false);
   const [isMonetary, setIsMonetary] = useState<boolean>(false);
   const {
@@ -32,19 +36,21 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
     isLoading: isPersonalLoading,
     isFetching: isPersonalFetching,
   } = useGetPersonalList();
+  const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
   const { mutate: updateDonation, isPending } = useUpdateDonation();
 
   const form = useForm<z.infer<typeof ClerkDonateViewSchema>>({
     resolver: zodResolver(ClerkDonateViewSchema),
     defaultValues: {
       don_donor: "",
-      per_id: null,
       don_item_name: "",
       don_qty: "",
       don_description: "",
       don_category: "",
       don_date: new Date().toISOString().split("T")[0],
       don_status: "Stashed",
+      don_dist_head: null,
+      don_dist_date: new Date().toISOString().split("T")[0],
     },
   });
 
@@ -53,7 +59,6 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
     if (donation) {
       form.reset({
         don_donor: donation.don_donor || "",
-        per_id: donation.per_id || null,
         don_item_name: donation.don_item_name || "",
         don_qty: donation.don_qty || "",
         don_description: donation.don_description || "",
@@ -61,6 +66,8 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
         don_date: donation.don_date || new Date().toISOString().split("T")[0],
         don_status:
           (donation.don_status as "Stashed" | "Allotted") || "Stashed",
+        don_dist_head: donation.don_dist_head || null,
+        don_dist_date: donation.don_dist_date || null,
       });
     }
   }, [donation, form]);
@@ -144,6 +151,15 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             readOnly={!isEditing}
           />
 
+          {/* Donation Date */}
+          <FormDateTimeInput
+            control={form.control}
+            name="don_date"
+            type="date"
+            label="Donation Date"
+            readOnly={!isEditing}
+          />
+          
           {/* Donor Name */}
           <FormField
             control={form.control}
@@ -236,59 +252,83 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             readOnly={!isEditing}
           />
 
-          {/* Donation Date */}
+          <FormField
+            control={form.control}
+            name="don_dist_head"
+            render={({ field }) => (
+              <ComboboxInput
+                value={field.value || ""}
+                options={staffList}
+                isLoading={isStaffLoading}
+                label="Distribution Head"
+                placeholder="Select distribution head..."
+                emptyText="No staff found."
+                onSelect={(value, _item) => {
+                  field.onChange(value);
+                }}
+                displayKey="full_name"
+                valueKey="staff_id"
+                additionalDataKey="position_title"
+                readOnly={!isEditing}
+              />
+            )}
+          />
+          <div className="mb-5">
           <FormDateTimeInput
             control={form.control}
-            name="don_date"
+            name="don_dist_date"
             type="date"
-            label="Donation Date"
+            label="Distributed Date"
             readOnly={!isEditing}
           />
+        </div>
 
-          {/* Edit/Save Button */}
-          <div className="mt-8 flex justify-end gap-3">
-            {isEditing ? (
-              <>
+          {/* Edit/Save Button - Only show if user is secretary */}
+          {isSecretary && (
+            <div className="flex justify-end gap-3 mb-2">
+              {isEditing ? (
+                <>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      form.reset();
+                      setIsEditing(false);
+                    }}
+                    variant="outline"
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </Button>
+                  <ConfirmationModal
+                    trigger={
+                      <Button type="button" className="" disabled={isPending}>
+                        {isPending ? (
+                          <>
+                            <Spinner size="sm" className="mr-2" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save Changes"
+                        )}
+                      </Button>
+                    }
+                    title="Confirm Save"
+                    description="Are you sure you want to save the changes?"
+                    actionLabel="Confirm"
+                    onClick={handleConfirmSave}
+                  />
+                </>
+              ) : (
                 <Button
                   type="button"
-                  onClick={() => {
-                    form.reset();
-                    setIsEditing(false);
-                  }}
-                  variant="outline"
-                  disabled={isPending}
+                  onClick={() => setIsEditing(true)}
+                  className=""
                 >
-                  Cancel
+                  Edit
                 </Button>
-                <ConfirmationModal
-                  trigger={
-                    <Button type="button" className="" disabled={isPending}>
-                      {isPending ? (
-                        <>
-                          <Spinner size="sm" className="mr-2" />
-                          Saving...
-                        </>
-                      ) : (
-                        "Save Changes"
-                      )}
-                    </Button>
-                  }
-                  title="Confirm Save"
-                  description="Are you sure you want to save the changes?"
-                  actionLabel="Confirm"
-                  onClick={handleConfirmSave}
-                />
-              </>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => setIsEditing(true)}
-                className=""
-              >
-                Edit
-              </Button>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </form>
       </Form>
     </div>

@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { putdonationreq } from "../request-db/donationPutRequest";
 import { Donations } from "../donation-types";
 
@@ -11,46 +10,29 @@ export const useUpdateDonation = () => {
     mutationFn: ({ don_num, donationInfo }: { don_num: string; donationInfo: Partial<Donations> }) => 
       putdonationreq(don_num, donationInfo),
     onSuccess: (updatedData, variables) => {
-      // Optimistically update the cache
       queryClient.setQueryData(["donations"], (old: Donations[] = []) => 
         old.map(donation => 
           donation.don_num === variables.don_num ? { ...donation, ...updatedData } : donation
         )
       );
-      
-      // Invalidate the query to trigger refetch
       queryClient.invalidateQueries({ queryKey: ["donations"] });
 
-      toast.success("Donation updated successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast("Donation updated successfully");
     },
-    onError: (error: Error) => {
-      toast.error("Failed to update donation", {
-        description: error.message,
-        duration: 2000
-      });
+    onError: (_error: Error) => {
+      showErrorToast("Failed to update donation");
     },
     onMutate: async (variables) => {
-      // Cancel any outgoing refetches to avoid overwriting
       await queryClient.cancelQueries({ queryKey: ['donations'] });
-
-      // Snapshot the previous value
       const previousDonations = queryClient.getQueryData(['donations']);
-
-      // Optimistically update to the new value
       queryClient.setQueryData(['donations'], (old: Donations[] = []) => 
         old.map(donation => 
           donation.don_num === variables.don_num ? { ...donation, ...variables.donationInfo } : donation
         )
       );
-
-      // Return a context with the previous value
       return { previousDonations };
     },
     onSettled: () => {
-      // Always refetch after error or success
       queryClient.invalidateQueries({ queryKey: ['donations'] });
     }
   });

@@ -29,8 +29,8 @@ const complainantSchema = z.object({
 
 const accusedSchema = z.object({
   rp_id: z.string().nullable().optional(),
-  acsd_name: z.string().min(1, "Name/alias is required"), 
-  acsd_age: z.string() // Changed from age
+  acsd_name: z.string().min(1, "Full Name is required"), 
+  acsd_age: z.string()
     .min(1, "Age is required")
     .refine((val) => {
       const age = parseInt(val);
@@ -54,13 +54,8 @@ const incidentSchema = z.object({
 });
 
 export const complaintFormSchema = z.object({
-  complainant: z.array(complainantSchema)
-    .min(1, "At least one complainant is required")
-    .max(5, "Maximum 5 complainants allowed"),
-
-  accused: z.array(accusedSchema)
-    .min(1, "At least one accused person is required")
-    .max(5, "Maximum 5 accused persons allowed"),
+  complainant: z.array(complainantSchema).min(1, "At least one complainant is required"),
+  accused: z.array(accusedSchema) .min(1, "At least one accused person is required"),
   incident: incidentSchema,
   files: z.array(z.object({})).default([]),
 }); 

@@ -134,7 +134,7 @@ class Disbursement_FileSerializers(serializers.ModelSerializer):
         
         for file_data in files:
             if not file_data.get('file') or not isinstance(file_data['file'], str) or not file_data['file'].startswith('data:'):
-                print(f"Skipping invalid file data for: {file_data.get('name')}")
+                # print(f"Skipping invalid file data for: {file_data.get('name')}")
                 continue
 
             # Validate required fields for each file
@@ -159,32 +159,32 @@ class Disbursement_FileSerializers(serializers.ModelSerializer):
                 try:
                     disbursement_image.disf_url = upload_to_storage(file_data, 'disbursement-bucket')
                     successful_uploads += 1
-                    print(f"Successfully uploaded: {file_data['name']}")
+                    # print(f"Successfully uploaded: {file_data['name']}")
                 except UnboundLocalError as e:
                     # This is the specific error from the broken upload function
-                    print(f"Upload function error for {file_data['name']}: {str(e)}")
+                    # print(f"Upload function error for {file_data['name']}: {str(e)}")
                     # Use a placeholder URL instead of failing completely
                     disbursement_image.disf_url = f"https://placeholder.com/{file_data['name']}"
                     failed_uploads += 1
                 except Exception as e:
                     # Handle any other upload errors
-                    print(f"Upload failed for {file_data['name']}: {str(e)}")
+                    # print(f"Upload failed for {file_data['name']}: {str(e)}")
                     disbursement_image.disf_url = f"https://placeholder.com/{file_data['name']}"
                     failed_uploads += 1
                 
                 disbursement_images.append(disbursement_image)
                 
             except Exception as e:
-                print(f"Error processing file {file_data.get('name')}: {str(e)}")
+                # print(f"Error processing file {file_data.get('name')}: {str(e)}")
                 failed_uploads += 1
                 continue  # Skip this file but continue with others
 
         if disbursement_images:
             try:
                 Disbursement_File.objects.bulk_create(disbursement_images)
-                print(f"Successfully saved {successful_uploads} files, {failed_uploads} failed")
+                # print(f"Successfully saved {successful_uploads} files, {failed_uploads} failed")
             except Exception as bulk_error:
-                print(f"Bulk create failed: {str(bulk_error)}")
+                # print(f"Bulk create failed: {str(bulk_error)}")
                 raise bulk_error
         
         return disbursement_images
@@ -432,12 +432,12 @@ class InvoiceSerializers(serializers.ModelSerializer):
         model = Invoice
         fields = ['inv_num', 'inv_serial_num', 'inv_date', 'inv_amount', 
                  'inv_nat_of_collection', 'nrc_id', 'bpr_id', 'cr_id', 
-                  'spay_id','inv_payor', 'inv_change', 'inv_discount_reason']
+                  'pay_id','inv_payor', 'inv_change', 'inv_discount_reason']
         extra_kwargs = {
             'nrc_id': {'allow_null': True, 'required': False},
             'bpr_id': {'allow_null': True, 'required': False},
             'cr_id': {'allow_null': True, 'required': False},
-            'spay_id': {'allow_null': True, 'required': False},
+            'pay_id': {'allow_null': True, 'required': False},
         }
     
     def get_inv_payor(self, obj):
@@ -461,9 +461,9 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 
 
         # If the invoice is linked to a complaint
-        if obj.spay_id is not None:
+        if obj.pay_id is not None:
             try:
-                complaint = obj.spay_id.sr_id.comp_id
+                complaint = obj.pay_id.comp_id
                 complainants = complaint.complainant.all()
                 
                 if complainants.exists():
@@ -479,9 +479,12 @@ class InvoiceSerializers(serializers.ModelSerializer):
         # If the invoice is linked to a non-resident certificate
         elif obj.nrc_id is not None:
             try:
-                return obj.nrc_id.nrc_requester
-            except AttributeError:
-                return "Unknown Non-Resident"
+                return f"{obj.nrc_id.nrc_lname}, {obj.nrc_id.nrc_fname}"
+            except Exception:
+                try:
+                    return f"{obj.nrc_id.nrc_lname}, {obj.nrc_id.nrc_fname}"
+                except Exception:
+                    return "Unknown Non-Resident"
 
         #  If neither cr_id nor nrc_id exists
         return "Unknown"
@@ -489,22 +492,27 @@ class InvoiceSerializers(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # Coerce empty strings from the client into None so DRF doesn't try bad lookups
-        for key in ['bpr_id', 'nrc_id', 'cr_id', 'spay_id']:
+        for key in ['bpr_id', 'nrc_id', 'cr_id']:
             if key in attrs and (attrs[key] == '' or attrs[key] == 0):
                 attrs[key] = None
+        
+        # Don't convert pay_id to None when it's 0, as 0 is a valid ID
+        if 'pay_id' in attrs and attrs['pay_id'] == '':
+            attrs['pay_id'] = None
 
         link_keys = [
             attrs.get('bpr_id'),
             attrs.get('nrc_id'),
             attrs.get('cr_id'),
-            attrs.get('spay_id'),
+            attrs.get('pay_id'),
         ]
         
-        provided = sum(1 for v in link_keys if v)
+        # Count non-None values (including 0 as valid)
+        provided = sum(1 for v in link_keys if v is not None)
         if provided == 0:
-            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, cr_id, or spay_id")
+            raise serializers.ValidationError("You must provide one of bpr_id, nrc_id, cr_id, or pay_id")
         if provided > 1:
-            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, cr_id, or spay_id")
+            raise serializers.ValidationError("Provide only one of bpr_id, nrc_id, cr_id, or pay_id")
         return attrs
 
     def create(self, validated_data):
@@ -519,6 +527,11 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 
                 change_amount = paid_amount - required_amount
                 invoice.inv_change = change_amount if change_amount > 0 else 0
+                
+                # Update inv_nat_of_collection with the actual purpose name
+                if invoice.bpr_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.bpr_id.pr_id.pr_purpose
+                
                 invoice.save()
                 
                 # Update payment status
@@ -534,7 +547,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     from apps.act_log.utils import create_activity_log
                     from apps.administration.models import Staff
                     
-                    staff_id = getattr(business_permit.staff_id, 'staff_id', '00003250722') if business_permit.staff_id else '00003250722'
+                    staff_id = getattr(business_permit.staff_id, 'staff_id', None) if business_permit.staff_id else None
                     # Format staff_id properly (pad with leading zeros if needed)
                     if len(str(staff_id)) < 11:
                         staff_id = str(staff_id).zfill(11)
@@ -545,8 +558,7 @@ class InvoiceSerializers(serializers.ModelSerializer):
                             act_type="Receipt Created",
                             act_description=f"Receipt {invoice.inv_serial_num} created for business permit {business_permit.bpr_id}. Payment status updated to Paid.",
                             staff=staff,
-                            record_id=invoice.inv_serial_num,
-                            feat_name="Receipt Management"
+                            record_id=invoice.inv_serial_num
                         )
                 except Exception as e:
                     print(f"Failed to log activity: {e}")
@@ -558,6 +570,11 @@ class InvoiceSerializers(serializers.ModelSerializer):
 
                 change_amount = paid_amount - required_amount
                 invoice.inv_change = change_amount if change_amount > 0 else 0
+                
+                # Update inv_nat_of_collection with the actual purpose name
+                if invoice.cr_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.cr_id.pr_id.pr_purpose
+                
                 invoice.inv_status = "Paid"
                 invoice.save()
 
@@ -575,6 +592,10 @@ class InvoiceSerializers(serializers.ModelSerializer):
             # Check if it's a non-resident certificate request
             elif invoice.nrc_id:
                 # Add similar logic for non-resident certificates if needed
+                # Update inv_nat_of_collection with the actual purpose name if available
+                if hasattr(invoice.nrc_id, 'pr_id') and invoice.nrc_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.nrc_id.pr_id.pr_purpose
+                
                 invoice.inv_status = "Paid"
                 invoice.save()
                 
@@ -590,20 +611,29 @@ class InvoiceSerializers(serializers.ModelSerializer):
                 non_resident_cert.save()
             
             # Check if it's a service charge payment request
-            elif invoice.spay_id:
-                print(f"[InvoiceSerializer] Processing service charge payment for spay_id: {invoice.spay_id}")
+            elif invoice.pay_id:
+                print(f"[InvoiceSerializer] Processing service charge payment for pay_id: {invoice.pay_id}")
+                
+                # Update inv_nat_of_collection with service charge purpose if available
+                if hasattr(invoice.pay_id, 'pr_id') and invoice.pay_id.pr_id:
+                    invoice.inv_nat_of_collection = invoice.pay_id.pr_id.pr_purpose
+                elif hasattr(invoice.pay_id, 'comp_id'):
+                    # For service charges, use a default purpose name
+                    invoice.inv_nat_of_collection = "Service Charge"
                 
                 # Update invoice status to Paid
                 invoice.inv_status = "Paid"
                 invoice.save()
                 
                 # Update service charge payment request status
-                service_charge_payment = invoice.spay_id
-                service_charge_payment.spay_status = "Paid"
-                service_charge_payment.spay_date_paid = invoice.inv_date
+                service_charge_payment = invoice.pay_id
+                service_charge_payment.pay_status = "Paid"
+                # DO NOT set pay_req_status to "Completed" here
+                # pay_req_status should remain "Pending" until the service charge is issued/printed
+                service_charge_payment.pay_date_paid = invoice.inv_date
                 service_charge_payment.save()
                 
-                print(f"[InvoiceSerializer] Updated service charge payment status to Paid for spay_id: {service_charge_payment.spay_id}")
+                print(f"[InvoiceSerializer] Updated service charge payment status to Paid for pay_id: {service_charge_payment.pay_id}")
                 
                 # Do not change sr_req_status here; leave case status management to clerk/council flows
                 
@@ -612,8 +642,8 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     from apps.act_log.utils import create_activity_log
                     from apps.administration.models import Staff
                     
-                    # Use a default staff ID if none is available
-                    staff_id = '00003250722'  # Default staff ID
+                    # Get staff ID from the service charge payment if available
+                    staff_id = getattr(service_charge_payment, 'staff_id', None)
                     # Format staff_id properly (pad with leading zeros if needed)
                     if len(str(staff_id)) < 11:
                         staff_id = str(staff_id).zfill(11)
@@ -622,10 +652,9 @@ class InvoiceSerializers(serializers.ModelSerializer):
                     if staff:
                         create_activity_log(
                             act_type="Receipt Created",
-                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_payment.spay_id}. Payment status updated to Paid.",
+                            act_description=f"Receipt {invoice.inv_serial_num} created for service charge {service_charge_payment.pay_id}. Payment status updated to Paid.",
                             staff=staff,
-                            record_id=invoice.inv_serial_num,
-                            feat_name="Receipt Management"
+                            record_id=invoice.inv_serial_num
                         )
                 except Exception as e:
                     print(f"Failed to log activity: {e}")

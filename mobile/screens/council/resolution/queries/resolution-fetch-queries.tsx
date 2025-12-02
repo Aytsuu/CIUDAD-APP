@@ -20,10 +20,17 @@ export interface ResolutionData{
     gpr_id: number;
 }
 
-export const useResolution = (searchQuery?: string, areaFilter?: string, yearFilter?: string) => {
-    return useQuery<ResolutionData[]>({
-        queryKey: ["resData", searchQuery, areaFilter, yearFilter], 
-        queryFn: () => getResolution(searchQuery, areaFilter, yearFilter),
+export const useResolution = (
+    page: number = 1,
+    pageSize: number = 10,
+    searchQuery?: string, 
+    areaFilter?: string, 
+    yearFilter?: string,
+    isArchive?: boolean
+) => {
+    return useQuery<{ results: ResolutionData[]; count: number }>({
+        queryKey: ["resData", page, pageSize, searchQuery, areaFilter, yearFilter, isArchive], 
+        queryFn: () => getResolution(page, pageSize, searchQuery, areaFilter, yearFilter, isArchive),
         staleTime: 1000 * 60 * 30,
     });
 };
@@ -47,7 +54,7 @@ export const useApprovedProposals = () => {
 
       return items.map((item: any) => ({
         id: item.gpr_id?.toString() || "",
-        name: item.project_title || "Untitled Proposal",
+        name: item.dev_project || "Untitled Proposal",
       }));
     },
     staleTime: 1000 * 60 * 30,

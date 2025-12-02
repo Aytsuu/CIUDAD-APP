@@ -2,15 +2,15 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, FileInput, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2 } from "lucide-react";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
-import { MedicineRecords } from "../tables/columns/MedicineCol";
 import { Medcolumns } from "../tables/columns/MedicineCol";
 import { useMedicines } from "../queries/medicine/MedicineFetchQueries";
 import { useDeleteMedicine } from "../queries/medicine/MedicineDeleteQueries";
 import MedicineModal from "../Modal/MedicineModal";
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function MedicineList() {
   const [searchInput, setSearchInput] = useState("");
@@ -21,7 +21,7 @@ export default function MedicineList() {
   const [medToDelete, setMedToDelete] = useState<string | null>(null);
   const [showMedicineModal, setShowMedicineModal] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
-  const [selectedMedicine, setSelectedMedicine] = useState<MedicineRecords | null>(null);
+  const [selectedMedicine, setSelectedMedicine] = useState<any | null>(null);
 
   // Debounce search input
   useEffect(() => {
@@ -39,14 +39,13 @@ export default function MedicineList() {
 
   // Debug: Log API response
   useEffect(() => {
-    console.log("Medicine Data Response:", medicineData);
-    console.log("API Error:", error);
+    
   }, [medicineData, error]);
 
   const deleteMutation = useDeleteMedicine();
 
-  const formatMedicineData = useCallback((): MedicineRecords[] => {
-    console.log("Formatting medicine data:", medicineData);
+  const formatMedicineData = useCallback((): any[] => {
+    
 
     // Handle different response formats
     let medicineResults = [];
@@ -64,14 +63,42 @@ export default function MedicineList() {
 
     return medicineResults.map((medicine: any) => ({
       id: medicine.med_id,
-      medicineName: medicine.med_name,
+      med_name: medicine.med_name,
       cat_id: medicine.cat,
+      med_dsg: medicine.med_dsg,
+      med_dsg_unit: medicine.med_dsg_unit,
+      med_form: medicine.med_form,
       cat_name: medicine.catlist || "N/A",
       med_type: medicine.med_type || "N/A"
     }));
   }, [medicineData]);
 
   const displayData = useMemo(() => formatMedicineData(), [formatMedicineData]);
+
+  // Export functionality
+  const prepareExportData = () => {
+    return displayData.map((medicine) => ({
+      "Medicine ID": medicine.id,
+      "Medicine Name": medicine.medicineName,
+      Category: medicine.cat_name,
+      "Medicine Type": medicine.med_type
+    }));
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `medicine_list_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `medicine_list_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `medicine_list_${new Date().toISOString().slice(0, 10)}`, "Medicine List");
+  };
 
   const handleDelete = () => {
     if (medToDelete === null) return;
@@ -137,7 +164,7 @@ export default function MedicineList() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-md">
+      <div>
         <div className="flex justify-between p-3">
           <div className="flex items-center gap-2">
             <p className="text-xs sm:text-sm">Show</p>
@@ -147,24 +174,16 @@ export default function MedicineList() {
               value={pageSize}
               onChange={(e) => {
                 const value = +e.target.value;
-                handlePageSizeChange(value >= 1 ? value : 1);
+                handlePageSizeChange(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
               }}
               min="1"
+              max="50"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
-          <DropdownLayout
-            trigger={
-              <Button variant="outline" className="h-[2rem]">
-                <FileInput /> Export
-              </Button>
-            }
-            options={[
-              { id: "", name: "Export as CSV" },
-              { id: "", name: "Export as Excel" },
-              { id: "", name: "Export as PDF" }
-            ]}
-          />
+          <div>
+            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
+          </div>
         </div>
 
         <div className="bg-white w-full overflow-x-auto">

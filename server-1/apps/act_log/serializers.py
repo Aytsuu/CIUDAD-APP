@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from .models import ActivityLog
+from apps.account.models import Account
 
 class ActivityLogSerializer(serializers.ModelSerializer):
     staff_name = serializers.SerializerMethodField()
+    staff_profile_image = serializers.SerializerMethodField()
     
     class Meta:
         model = ActivityLog
@@ -18,4 +20,11 @@ class ActivityLogSerializer(serializers.ModelSerializer):
             if personal.per_suffix:
                 name_parts.append(personal.per_suffix)
             return ', '.join(name_parts)
-        return f"Staff #{obj.staff.staff_id if obj.staff else 'Unknown'}" 
+        return f"Staff #{obj.staff.staff_id if obj.staff else 'Unknown'}"
+    
+    def get_staff_profile_image(self, obj):
+        """Get the profile image of the staff member"""
+        if obj.staff and obj.staff.rp:
+            account = Account.objects.filter(rp=obj.staff.rp).first()
+            return account.profile_image if account and account.profile_image else None
+        return None 

@@ -4,6 +4,8 @@ from .views import *
 urlpatterns = [
     # Waste Event URLs
     path("waste-event/", WasteEventView.as_view(), name="waste-event-list"),
+    path("waste-event/<int:we_num>/", WasteEventDetailView.as_view(), name="waste-event-detail"),
+    path("waste-event/<int:we_num>/restore/", WasteEventRestoreView.as_view(), name="waste-event-restore"),
 
     # Waste Collection Staff URLs
     path("waste-collection-staff/", WasteCollectionStaffView.as_view(), name="waste-collection-staff-list"),
@@ -60,6 +62,8 @@ urlpatterns = [
     path('garbage-pickup-request-analytics/', GarbagePickupRequestAnalyticsView.as_view(), name='agarbage-pickup-request-analytics'),
     path('garbage-pickup-file/', GarbagePickupFileView.as_view(), name='garbage-pickup-file'),
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
+    path('garbage-pickup-view-pending/<str:garb_id>/', GarbagePickupRequestPendingDetailView.as_view(), name='garbage-pickup-view-pending'), #retrieve pending request details
+    path('garbage-pickup-view-rejected/<str:garb_id>/', GarbagePickupRequestRejectedDetailView.as_view(), name='garbage-pickup-view-rejected'), #retrieve rejected request details
     path('garbage-pickup-request-rejected/', GarbagePickupRequestRejectedView.as_view(), name='garbage-pickup-request-rejected'), #retrieve rejected requests
     path('garbage-pickup-request-accepted/', GarbagePickupRequestAcceptedView.as_view(), name='garbage-pickup-request-accepted'), #retrieve accepted requests
     path('garbage-pickup-request-completed/', GarbagePickupRequestCompletedView.as_view(), name='garbage-pickup-request-completed'), #retrieve completed requests
@@ -72,13 +76,14 @@ urlpatterns = [
     path('pickup-assignment/', PickupAssignmentView.as_view(), name='pickup-assignment'),
     path('assignment-collector/', AssignmentCollectorView.as_view(), name='assignment-collector'),
     path('pickup-confirmation/', PickupConfirmationView.as_view(), name='pickup-confirmation'),
-
+ 
     # Resident
     path('garbage-pickup-pending/<str:rp_id>/', GarbagePickupRequestPendingByRPView.as_view(), name = 'garbage-pickup-pending-resident'),
     path('garbage-pickup-rejected/<str:rp_id>/', GarbagePickupRequestRejectedByRPView.as_view(), name="garbage-pickup-rejected"),
     path('garbage-pickup-accepted/<str:rp_id>/', GarbagePickupRequestAcceptedByRPView.as_view(), name="garbage-pickup-accepted"),
     path('garbage-pickup-completed/<str:rp_id>/', GarbagePickupRequestCompletedByRPView.as_view(), name="garbage-pickup-completed"),
     path('garbage-pickup-cancelled/<str:rp_id>/', GarbagePickupRequestCancelledByRPView.as_view(), name="garbage-pickup-cancelled"),
+    path('garbage-pickup-cancelled-detail/<str:garb_id>/', GarbagePickupRequestCancelledDetailView.as_view(), name="garbage-pickup-cancelled-detail"),
     path('garbage-pickup-accepted-detail/<str:garb_id>/', GarbagePickupRequestAcceptedDetailView.as_view(), name='garbage-pickup-accepted-detail'),
     path('update-pickup-confirmation/<str:garb_id>/', UpdatePickupConfirmationView.as_view(), name='update-pickup-confirmation'),
 

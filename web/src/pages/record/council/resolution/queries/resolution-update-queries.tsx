@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 import { z } from "zod";
 import {api} from "@/api/api";
 import { useUpdateResolution } from "../request/resolution-put-request";
@@ -41,13 +41,8 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
       return values.res_num;
     },
     onSuccess: () => {
-      toast.loading("Updating resolution...", { id: "updateRes" });
 
-      toast.success('Resolution updated successfully', {
-        id: "updateRes",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000
-      });
+      showSuccessToast('Resolution updated successfully')      
       
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['resData'] });
@@ -55,8 +50,7 @@ export const usingUpdateResolution = (onSuccess?: () => void) => {
       if (onSuccess) onSuccess();
     },
     onError: (err) => {
-      console.error("Error updating resolution:", err);
-      toast.error("Failed to update resolution");
+      showErrorToast(`Failed to update resolution: ${err.message}`);        
     }
   });
 };
@@ -93,7 +87,7 @@ const handleResolutionFileUpdates = async (res_num: string, mediaFiles: any[]) =
       })
     ));
   } catch (err) {
-    console.error("Error updating resolution files:", err);
+    // console.error("Error updating resolution files:", err);
     throw err;
   }
 };

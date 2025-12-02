@@ -1,109 +1,110 @@
-import React, { useState, useMemo, useCallback, useRef } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "react-native";
 import { router } from "expo-router";
-import { Search, ChevronLeft, AlertCircle, User, Calendar, FileText, Users, MapPinHouse, RefreshCw } from "lucide-react-native";
+import { Search, ChevronLeft, AlertCircle, User, FileText, Users, MapPinHouse, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import PageLayout from "@/screens/_PageLayout";
 import { AgeCalculation } from "@/helpers/ageCalculator";
 
 import { useMaternalRecords, useMaternalCount } from "./queries/maternalFETCH";
+import { StatusBadge } from "../components/status-badge";
+import { TabBar, TabType } from "../components/tab-bar";
 
 interface maternalRecords {
-   pat_id: string;
-   age: number;
-   personal_info: {
-      per_fname: string;
-      per_lname: string;
-      per_mname: string;
-      per_sex: string;
-      per_dob?: string;
-      ageTime: string;
-   };
-   address?: {
-      add_street?: string;
-      add_barangay?: string;
-      add_city?: string;
-      add_province?: string;
-      add_external_sitio?: string;
-      add_sitio?: string;
-   };
-   pat_type: "Transient" | "Resident";
-   patrec_type?: string;
-   completed_pregnancy_count?: number;
+  pat_id: string;
+  age: number;
+  personal_info: {
+    per_fname: string;
+    per_lname: string;
+    per_mname: string;
+    per_sex: string;
+    per_dob?: string;
+    ageTime: string;
+  };
+  address?: {
+    add_street?: string;
+    add_barangay?: string;
+    add_city?: string;
+    add_province?: string;
+    add_external_sitio?: string;
+    add_sitio?: string;
+  };
+  pat_type: "Transient" | "Resident";
+  patrec_type?: string;
+  completed_pregnancy_count?: number;
 }
 
-type TabType = "all" | "resident" | "transient";
+// type TabType = "all" | "resident" | "transient";
 
-// Memoized StatusBadge Component
-const StatusBadge = React.memo<{ type: string }>(({ type }) => {
-  const typeConfig = useMemo(() => {
-    switch (type.toLowerCase()) {
-      case 'resident':
-        return {
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
-        };
-      case 'transient':
-        return {
-          color: 'text-amber-700',
-          bgColor: 'bg-amber-100',
-          borderColor: 'border-amber-200',
-        };
-      default:
-        return {
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
-          borderColor: 'border-gray-200',
-        };
-    }
-  }, [type]);
+// const StatusBadge = React.memo<{ type: string }>(({ type }) => {
+//   const typeConfig = useMemo(() => {
+//     switch (type.toLowerCase()) {
+//       case 'resident':
+//         return {
+//           color: 'text-green-700',
+//           bgColor: 'bg-green-100',
+//           borderColor: 'border-green-200',
+//         };
+//       case 'transient':
+//         return {
+//           color: 'text-amber-700',
+//           bgColor: 'bg-amber-100',
+//           borderColor: 'border-amber-200',
+//         };
+//       default:
+//         return {
+//           color: 'text-gray-700',
+//           bgColor: 'bg-gray-100',
+//           borderColor: 'border-gray-200',
+//         };
+//     }
+//   }, [type]);
 
-  return (
-    <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-      <Text className={`text-xs font-semibold ${typeConfig.color}`}>
-        {type}
-      </Text>
-    </View>
-  );
-});
+//   return (
+//     <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
+//       <Text className={`text-xs font-semibold ${typeConfig.color}`}>
+//         {type}
+//       </Text>
+//     </View>
+//   );
+// });
 
-const TabBar = React.memo<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}>(({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity
-      onPress={() => setActiveTab('all')}
-      className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
-        All ({counts.all})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('resident')}
-      className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Residents ({counts.resident})
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      onPress={() => setActiveTab('transient')}
-      className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
-    >
-      <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
-        Transients ({counts.transient})
-      </Text>
-    </TouchableOpacity>
-  </View>
-));
+// const TabBar = React.memo<{
+//   activeTab: TabType;
+//   setActiveTab: (tab: TabType) => void;
+// }>(({ activeTab, setActiveTab}) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('all')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'all' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'all' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         All
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('resident')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'resident' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'resident' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         Residents
+//       </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity
+//       onPress={() => setActiveTab('transient')}
+//       className={`flex-1 items-center py-3 ${activeTab === 'transient' ? 'border-b-2 border-blue-600' : ''}`}
+//     >
+//       <Text className={`text-sm font-medium ${activeTab === 'transient' ? 'text-blue-600' : 'text-gray-600'}`}>
+//         Transients
+//       </Text>
+//     </TouchableOpacity>
+//   </View>
+// ));
 
 // Optimized MaternalRecordCard with memoization and computed values
 const MaternalRecordCard = React.memo<{
@@ -111,16 +112,16 @@ const MaternalRecordCard = React.memo<{
   onPress: () => void;
 }>(({ record, onPress }) => {
   // Pre-compute expensive operations
-  const fullName = useMemo(() => 
-    `${record.personal_info?.per_fname} ${record.personal_info?.per_lname}`, 
+  const fullName = useMemo(() =>
+    `${record.personal_info?.per_fname} ${record.personal_info?.per_lname}`,
     [record.personal_info?.per_fname, record.personal_info?.per_lname]
   );
-  
-  const calculatedAge = useMemo(() => 
-    AgeCalculation(record?.personal_info?.per_dob ?? ""), 
+
+  const calculatedAge = useMemo(() =>
+    AgeCalculation(record?.personal_info?.per_dob ?? ""),
     [record.personal_info?.per_dob]
   );
-  
+
   const fullAddress = useMemo(() => {
     if (!record.address) return null;
     const addressParts = [
@@ -191,19 +192,19 @@ const EmptyState = React.memo<{
 }>(({ searchQuery, activeTab }) => (
   <View className="px-4">
     <Card className="bg-white border-slate-200">
-       <CardContent className="items-center justify-center py-12">
-          <FileText size={48} color="#94a3b8" />
-          <Text className="text-lg font-medium text-slate-900 mt-4">
+      <CardContent className="items-center justify-center py-12">
+        <FileText size={48} color="#94a3b8" />
+        <Text className="text-lg font-medium text-slate-900 mt-4">
           No records found
-          </Text>
-          <Text className="text-gray-600 text-center mt-2">
-            {searchQuery
-              ? `No ${activeTab} records match your search.`
-              : `No ${activeTab} records found.`}
-          </Text>
-       </CardContent>
+        </Text>
+        <Text className="text-gray-600 text-center mt-2">
+          {searchQuery
+            ? `No ${activeTab} records match your search.`
+            : `No ${activeTab} records found.`}
+        </Text>
+      </CardContent>
     </Card>
- </View>
+  </View>
 ));
 
 // Memoized Pagination Component
@@ -226,9 +227,8 @@ const PaginationFooter = React.memo<{
               className={page === 1 ? "bg-slate-200" : "bg-blue-600"}
             >
               <Text
-                className={`font-medium ${
-                  page === 1 ? "text-slate-400" : "text-white"
-                }`}
+                className={`font-medium ${page === 1 ? "text-slate-400" : "text-white"
+                  }`}
               >
                 Previous
               </Text>
@@ -245,9 +245,8 @@ const PaginationFooter = React.memo<{
               className={page === totalPages ? "bg-slate-200" : "bg-blue-600"}
             >
               <Text
-                className={`font-medium ${
-                  page === totalPages ? "text-slate-400" : "text-white"
-                }`}
+                className={`font-medium ${page === totalPages ? "text-slate-400" : "text-white"
+                  }`}
               >
                 Next
               </Text>
@@ -260,37 +259,18 @@ const PaginationFooter = React.memo<{
 });
 
 export default function OverallMaternalRecordsScreen() {
-  const [searchInput, setSearchInput] = useState(""); 
-  const [searchQuery, setSearchQuery] = useState(""); 
+  const [searchInput, setSearchInput] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [page, setPage] = useState(1);
-  const pageSize = 20; // Increased page size for better performance
-
-  // Use ref for search debouncing to prevent unnecessary re-renders
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const debouncedSearchTerm = useDebounce(searchInput, 300);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
 
   // Optimized search debouncing with useCallback
   const handleSearchChange = useCallback((text: string) => {
     setSearchInput(text);
-    
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    searchTimeoutRef.current = setTimeout(() => {
-      setSearchQuery(text);
-      setPage(1);
-    }, 300); // Slightly increased debounce time
-  }, []);
-
-  // Cleanup timeout on unmount
-  React.useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
+    setPage(1);
   }, []);
 
   const getStatusForAPI = useCallback((tab: TabType) => {
@@ -298,16 +278,15 @@ export default function OverallMaternalRecordsScreen() {
     return tab.charAt(0).toUpperCase() + tab.slice(1);
   }, []);
 
-  const queryParams = useMemo(() => ({
-    page,
-    page_size: pageSize,
-    search: searchQuery || undefined,
-    status: getStatusForAPI(activeTab),
-  }), [page, pageSize, searchQuery, activeTab, getStatusForAPI]);
 
-  const { data: maternalData, isLoading, isError, refetch, isFetching } = useMaternalRecords(queryParams);
+  const { data: maternalData, isLoading, isError, refetch } = useMaternalRecords(
+    page,
+    pageSize,
+    debouncedSearchTerm || '',
+    getStatusForAPI(activeTab) || ''
+  );
   const { data: maternalCount } = useMaternalCount();
-  
+
   const maternalRecordss = maternalData?.results || [];
   const totalMCount = maternalData?.count || 0;
   const totalMPages = Math.ceil(totalMCount / pageSize);
@@ -363,7 +342,7 @@ export default function OverallMaternalRecordsScreen() {
   const keyExtractor = useCallback((item: maternalRecords) => `mat-${item.pat_id}`, []);
 
   // Show loading only on initial load, not when searching or paginating
-  const showInitialLoading = isLoading && !maternalRecordss.length && !searchQuery;
+  const showInitialLoading = isLoading && !maternalRecordss.length && !debouncedSearchTerm;
 
   if (showInitialLoading) {
     return <LoadingState />;
@@ -416,11 +395,11 @@ export default function OverallMaternalRecordsScreen() {
       <View className="flex-1 bg-gray-50">
         {/* Search Bar */}
         <View className="bg-white px-4 py-3 border-b border-gray-200">
-          <View className="flex-row items-center p-3 border border-gray-200 bg-gray-50 rounded-xl">
+          <View className="flex-row items-center border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-800 text-base"
-              placeholder="Search records..."
+              placeholder="Search..."
               placeholderTextColor="#9CA3AF"
               value={searchInput}
               onChangeText={handleSearchChange}
@@ -431,32 +410,40 @@ export default function OverallMaternalRecordsScreen() {
           </View>
         </View>
 
-        {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={handleTabChange} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={handleTabChange} />
 
+        {/* Results Info */}
+        <View className="px-4 flex-row items-center justify-between py-3 bg-white border-b border-gray-200">
+          <Text className="text-sm text-gray-600">
+            Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalMCount)} of {totalMCount} records
+          </Text>
+          <Text className="text-sm font-medium text-gray-800">
+            Page {currentPage} of {totalMPages}
+          </Text>
+        </View>
         {/* Records List */}
         {maternalRecordss.length === 0 ? (
-          <EmptyState searchQuery={searchQuery} activeTab={activeTab} />
+          <EmptyState searchQuery={debouncedSearchTerm} activeTab={activeTab} />
         ) : (
           <FlatList
             data={maternalRecordss}
             keyExtractor={keyExtractor}
             renderItem={renderItem}
             refreshControl={
-              <RefreshControl 
-                refreshing={refreshing} 
-                onRefresh={onRefresh} 
-                colors={['#3B82F6']} 
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#3B82F6']}
               />
             }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ padding: 16 }}
-            
+
             initialNumToRender={10}
             maxToRenderPerBatch={10}
             windowSize={10}
             removeClippedSubviews={true}
-            
+
             ListFooterComponent={
               <PaginationFooter
                 page={page}

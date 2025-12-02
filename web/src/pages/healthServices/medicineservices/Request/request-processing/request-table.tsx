@@ -3,15 +3,17 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, FileInput, Loader2 } from "lucide-react";
+import { Search, FileInput } from "lucide-react";
 import { Link } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown/dropdown-menu";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useState, useEffect } from "react";
 import { medicineRequestColumns } from "./columns";
 import { useProcessingMedrequest } from "../queries/fetch";
+import TableLoading from "@/components/ui/table-loading";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
-export default function PendingCnfirmation() {
+export default function PickupTable() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -60,6 +62,9 @@ export default function PendingCnfirmation() {
 
   return (
     <div>
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <EnhancedCardLayout title="To Pick-up Medicine Requests" description="" icon={<FileInput size={24} />} value={totalCount} valueDescription="Total To Pick-up Requests" cardClassName="mb-6" />
+                  </div>
       <div className="w-full flex flex-col sm:flex-row gap-2 mb-5">
         <div className="w-full flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
@@ -128,13 +133,10 @@ export default function PendingCnfirmation() {
 
         <div className="bg-white w-full overflow-x-auto">
           {isLoading ? (
-            <div className="w-full h-[100px] flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading pending requests...</span>
-            </div>
+           <TableLoading />
           ) : medicineRequests.length === 0 ? (
             <div className="w-full h-[100px] flex items-center justify-center text-gray-500">
-              <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No pending medicine requests found"}</span>
+              <span className="ml-2">{debouncedSearch || dateFilter !== "all" ? "No requests found matching your criteria" : "No confirmed medicine requests found"}</span>
             </div>
           ) : (
             <DataTable columns={medicineRequestColumns} data={medicineRequests} />

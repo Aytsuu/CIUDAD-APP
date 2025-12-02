@@ -11,7 +11,7 @@ import { FormInput } from "@/components/ui/form/form-input";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import { Label } from "@/components/ui/label";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import { fetchVaccinesWithStock } from "../queries/fetch";
+import { useFetchVaccinesWithStock } from "../queries/fetch";
 import { format } from "date-fns";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useSubmitVaccinationRecord } from "../queries/AddVacrecord";
@@ -29,8 +29,8 @@ import { FollowUpsCard } from "@/components/ui/ch-vac-followup";
 import { VaccinationStatusCards } from "@/components/ui/vaccination-status";
 import { VaccinationStatusCardsSkeleton } from "../../skeleton/vaccinationstatus-skeleton";
 import { showErrorToast } from "@/components/ui/toast";
-import { fetchStaffWithPositions } from "../../reports/firstaid-report/queries/fetch";
-import { SignatureFieldRef,SignatureField } from "../../reports/firstaid-report/signature";
+import { fetchMidwife } from "../../reports/firstaid-report/queries/fetch";
+import { SignatureFieldRef, SignatureField } from "../../reports/firstaid-report/signature";
 
 export default function VaccinationRecordForm() {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ export default function VaccinationRecordForm() {
   const [selectedPatientData, setSelectedPatientData] = useState<any | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [, setNextVisitDate] = useState<string | null>(null);
+  const [,setNextVisitDate] = useState<string | null>(null);
   const [nextVisitDescription, setNextVisitDescription] = useState<string | null>(null);
   const [selectedVaccineType, setSelectedVaccineType] = useState<string | null>(null);
   const [vaccineHistory, setVaccineHistory] = useState<VaccinationRecord[]>([]);
@@ -53,7 +53,8 @@ export default function VaccinationRecordForm() {
   const patientToUse = shouldShowPatientSearch ? selectedPatientData : patientDataFromLocation;
   const signatureRef = useRef<SignatureFieldRef>(null);
   const [signature, setSignature] = useState<string | null>(null);
-  const { data: staffOptions, isLoading: staffLoading } = fetchStaffWithPositions();
+  const { data: midwifeOptions, isLoading: isMidwifeLoading } = fetchMidwife();
+
   const [selectedStaffId, setSelectedStaffId] = useState("");
 
   // Data fetching hooks
@@ -61,7 +62,7 @@ export default function VaccinationRecordForm() {
   const { data: vaccinations = [] } = usePatientVaccinationDetails(patientToUse?.pat_id);
   const { data: unvaccinatedVaccines = [] } = useUnvaccinatedVaccines(patientToUse?.pat_id, patientToUse?.personal_info?.per_dob);
   const { data: followupVaccines = [], isLoading: isFollowVacLoading } = useFollowupVaccines(patientToUse?.pat_id);
-  const { data: vaccinesData, isLoading: isVacstckLoading } = fetchVaccinesWithStock(patientToUse?.personal_info?.per_dob);
+  const { data: vaccinesData, isLoading: isVacstckLoading } = useFetchVaccinesWithStock(patientToUse?.personal_info?.per_dob);
   const { data: latestVitals = { created_at: null } } = useLatestVitals(patientToUse?.pat_id);
   const isLoading = unvaccinatedVaccines && isFollowVacLoading;
 
@@ -82,7 +83,8 @@ export default function VaccinationRecordForm() {
       bpsystolic: latestVitals?.bp_systolic || "",
       bpdiastolic: latestVitals?.bp_diastolic || "",
       staff_id: staff_id ? staff_id.toString() : "",
-      selectedStaffId: ""
+      selectedStaffId: "",
+      vital_RR: ""
     }
   });
 
@@ -96,6 +98,7 @@ export default function VaccinationRecordForm() {
       form.setValue("o2", latestVitals.oxygen_saturation || "");
       form.setValue("bpsystolic", latestVitals.bp_systolic || "");
       form.setValue("bpdiastolic", latestVitals.bp_diastolic || "");
+      form.setValue("vital_RR", latestVitals.respiratory_rate || "");
     }
   }, [latestVitals, form]);
 
@@ -267,6 +270,11 @@ export default function VaccinationRecordForm() {
           }
         : undefined;
 
+        if(!selectedStaffId){
+          showErrorToast("Please select a staff member to forward the record.");
+          setSubmitting(false);
+          return;
+        }
       await submitStep2.mutateAsync({
         data,
         signature: signature || "",
@@ -411,13 +419,16 @@ export default function VaccinationRecordForm() {
                     <Label className="block mb-2">Forward To</Label>
                     <div className="relative">
                       <Combobox
-                        options={staffOptions?.formatted || []}
+                        options={midwifeOptions?.formatted || []}
                         value={selectedStaffId}
                         onChange={(value) => {
-                          setSelectedStaffId(value || "");
-                          setValue("selectedStaffId", value || ""); // Also set the form value
+                          // Set the full id value for the combobox to display
+                          setSelectedStaffId(value ?? "");
+                          // Extract just the staff_id for your form
+                          const staffId = value?.split("-")[0] || "";
+                          setValue("selectedStaffId", staffId);
                         }}
-                        placeholder={staffLoading ? "Loading staff..." : "Select staff member"}
+                        placeholder={isMidwifeLoading ? "Loading staff..." : "Select staff member"}
                         emptyMessage="No available staff members"
                         triggerClassName="w-full"
                       />

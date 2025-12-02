@@ -380,7 +380,7 @@ function AttendancePage() {
 
   // Create filter options
   const filterOptions = [
-    { id: "all", name: "All Years" },
+    { id: "all", name: "All" },
     ...availableYears.map((year) => ({
       id: year.toString(),
       name: year.toString(),
@@ -431,12 +431,13 @@ function AttendancePage() {
           </div>
 
           <SelectLayout
-            className="bg-white w-full md:w-auto"
+            className="bg-white w-full md:w-auto gap-2"
             label=""
             placeholder="Filter"
             options={filterOptions}
             value={filter}
             onChange={handleFilterChange}
+            valueLabel="Filter"
           />
         </div>
       </div>

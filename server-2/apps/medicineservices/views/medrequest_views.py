@@ -6,6 +6,129 @@ from ..serializers import *
 from pagination import *
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q, Count, Sum, Prefetch
+from rest_framework.exceptions import ValidationError
+from utils.create_notification import NotificationQueries 
+from apps.administration.models import Staff, Position 
+import logging                                    
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
+
+def send_cancellation_notification_to_staff(medicine_request_item, reason):
+    try:
+        notifier = NotificationQueries()
+        
+        # Get the main request from the item
+        medicine_request = medicine_request_item.medreq_id
+        
+        # --- Get Resident's Name ---
+        resident_name = "Resident"
+        if medicine_request.rp_id and medicine_request.rp_id.per:
+            resident_name = f"{medicine_request.rp_id.per.per_fname} {medicine_request.rp_id.per.per_lname}"
+        elif medicine_request.patrec and medicine_request.patrec.pat_id and medicine_request.patrec.pat_id.rp_id and medicine_request.patrec.pat_id.rp_id.per:
+            per = medicine_request.patrec.pat_id.rp_id.per
+            resident_name = f"{per.per_fname} {per.per_lname}"
+        
+        # Get Medicine Name
+        medicine_name = medicine_request_item.med.med_name
+            
+        # --- Get Staff Recipients (Admin & BHW) ---
+        staff_to_notify = Staff.objects.filter(
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS','MIDWIFE']
+        ).select_related('rp')
+        
+        staff_recipients = [str(staff.rp.rp_id) for staff in staff_to_notify if staff.rp and staff.rp.rp_id]
+        logger.info(f"Staff recipients for cancelled medicine request: {staff_recipients}")
+
+        if staff_recipients:
+            title = 'Medicine Request Cancelled'
+            message = f'{resident_name} has cancelled their request for {medicine_name}. Reason: {reason}'
+            
+            success = notifier.create_notification(
+                title=title,
+                message=message,
+                recipients=staff_recipients,
+                notif_type="MEDICINE_STAFF_CANCELLED", # Custom type
+                web_route="/services/medicine/requests/cancelled", # Or your admin-facing route
+                web_params={},
+                mobile_route="", 
+                mobile_params={},
+            )
+            
+            if success:
+                logger.info(f"Cancellation notification sent to staff for item {medicine_request_item.medreqitem_id}")
+            else:
+                logger.error(f"Failed to send cancellation notification to staff for item {medicine_request_item.medreqitem_id}")
+            
+            return success
+        
+        else:
+            logger.warning("No staff recipients found for medicine cancellation notification.")
+            return False
+
+    except Exception as e:
+        logger.error(f"Error sending medicine cancellation notification to staff: {str(e)}")
+        return False
+    
+    
+def send_new_medicine_request_notification_to_staff(medicine_request):
+    """
+    Notifies staff (Admin, BHW) about a new pending medicine request.
+    Returns True if the notification was sent, False otherwise.
+    """
+    try:
+        notifier = NotificationQueries()
+        
+        # --- Get Resident's Name ---
+        resident_name = "Resident"
+        if medicine_request.rp_id and medicine_request.rp_id.per:
+            # Direct resident request
+            resident_name = f"{medicine_request.rp_id.per.per_fname} {medicine_request.rp_id.per.per_lname}"
+        elif medicine_request.patrec and medicine_request.patrec.pat_id and medicine_request.patrec.pat_id.rp_id and medicine_request.patrec.pat_id.rp_id.per:
+            # Get from Patient Record -> Patient -> Resident Profile
+            per = medicine_request.patrec.pat_id.rp_id.per
+            resident_name = f"{per.per_fname} {per.per_lname}"
+        
+        # --- Get Staff Recipients (Admin & BHW) ---
+        staff_to_notify = Staff.objects.filter(
+            staff_type="HEALTH STAFF",
+            pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS']
+        ).select_related('rp')
+        
+        staff_recipients = [str(staff.rp.rp_id) for staff in staff_to_notify if staff.rp and staff.rp.rp_id]
+        logger.info(f"Staff recipients for new medicine request: {staff_recipients}")
+
+        if staff_recipients:
+            title = 'New Medicine Request'
+            message = f'{resident_name} has submitted a new medicine request. Please review.'
+            
+            success = notifier.create_notification(
+                title=title,
+                message=message,
+                recipients=staff_recipients,
+                notif_type="MEDICINE_STAFF_PENDING", 
+                web_route="/services/medicine/requests/pending",
+                web_params={},
+                mobile_route="", 
+                mobile_params={},
+            )
+            
+            if success:
+                logger.info(f"New medicine request notification sent to staff for request {medicine_request.medreq_id}")
+            else:
+                logger.error(f"Failed to send new medicine request notification to staff for request {medicine_request.medreq_id}")
+            
+            return success  
+        
+        else:
+            logger.warning("No staff recipients found for medicine request notification.")
+            return False 
+
+    except Exception as e:
+        logger.error(f"Error sending new medicine request notification to staff: {str(e)}")
+        return False
+        
 class UserMedicineRequestsView(generics.ListAPIView):
     serializer_class = MedicineRequestSerializer
     pagination_class = StandardResultsPagination
@@ -18,47 +141,31 @@ class UserMedicineRequestsView(generics.ListAPIView):
             return MedicineRequest.objects.none()
 
         queryset = MedicineRequest.objects.select_related(
-            'pat_id', 'rp_id'
+            'patrec', 'rp_id'
         ).prefetch_related(
             Prefetch('items', queryset=MedicineRequestItem.objects.select_related(
-                'minv_id', 'minv_id__med_id', 'med'
-            ).all())  # Include all items
+                'med'
+            ).prefetch_related('allocations__minv'))
         ).order_by('-requested_at')
 
         if pat_id:
-            queryset = queryset.filter(pat_id=pat_id)
+            # FIX: Filter by pat_id string value
+            queryset = queryset.filter(patrec__pat_id__pat_id=pat_id)
         elif rp_id:
-            queryset = queryset.filter(rp_id=rp_id)
+            # FIX: Filter by rp_id string value
+            queryset = queryset.filter(rp_id__rp_id=rp_id)
 
         return queryset
+
     
 
 class CheckPendingMedicineRequestView(APIView):
     def get(self, request, rp_id, med_id):
         try:
-            # Try to get the resident profile
-            try:
-                resident = ResidentProfile.objects.get(rp_id=rp_id)
-            except ResidentProfile.DoesNotExist:
-                return Response({'has_pending_request': False}, status=status.HTTP_200_OK)
-
-            # Try to get linked patient, if any
-            patient = None
-            try:
-                patient = Patient.objects.get(rp_id=resident)
-            except Patient.DoesNotExist:
-                pass
-
-            # Define user condition Q
-            user_q = Q(medreq_id__rp_id=rp_id) | (Q(medreq_id__pat_id=patient.pat_id) if patient else Q())
-
-            # Define medicine condition Q
-            medicine_q = Q(med__med_id=med_id) | Q(minv_id__med_id__med_id=med_id)
-
-            # Query MedicineRequestItem for pending items
+            # Check for pending medicine requests for this resident and medicine
             pending_items = MedicineRequestItem.objects.filter(
-                user_q,
-                medicine_q,
+                medreq_id__rp_id__rp_id=rp_id, 
+                med_id=med_id,
                 status='pending',
                 is_archived=False
             ).exists()
@@ -67,6 +174,7 @@ class CheckPendingMedicineRequestView(APIView):
 
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class IndividualMedicineRecordView(generics.ListCreateAPIView):
@@ -83,33 +191,61 @@ class UserAllMedicineRequestItemsView(generics.ListAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
-        # Handle rp_id (residents) or pat_id (patients)
         rp_id = self.request.query_params.get('rp_id')
         pat_id = self.request.query_params.get('pat_id')
         
         if not rp_id and not pat_id:
             raise ValidationError({"error": "Either rp_id or pat_id is required"})
         
-        queryset = MedicineRequestItem.objects
-        
+        # Start with base queryset
+        queryset = MedicineRequestItem.objects.all()
+
+        # Apply basic filters first without complex joins
         if rp_id:
-            queryset = queryset.filter(medreq_id__rp_id=rp_id)
+            # Use the related_name from MedicineRequest model
+            queryset = queryset.filter(
+                medreq_id__rp_id__rp_id=rp_id
+            )
         elif pat_id:
-            queryset = queryset.filter(medreq_id__pat_id=pat_id)
-        
-        # Optional: Filter by include_archived param (default: True for "all")
+            queryset = queryset.filter(
+                medreq_id__patrec__pat_id__pat_id=pat_id
+            )
+
+        # Apply other filters
         include_archived = self.request.query_params.get('include_archived', 'true').lower() == 'true'
         if not include_archived:
-            queryset = queryset.filter(is_archived=False)   
-        
-        # Optimize with selects/prefetches
-        return queryset.select_related(
-            'minv_id', 'minv_id__med_id', 'medreq_id'
-        ).prefetch_related(
-            # 'medicine_files'
-        ).order_by('-created_at').distinct()
+            queryset = queryset.filter(is_archived=False)
 
-    
+        status_filter = self.request.query_params.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(med__med_name__icontains=search) |
+                Q(medreq_id__medreq_id__icontains=search) |
+                Q(reason__icontains=search)
+            )
+
+        # Now we can safely use select_related/prefetch_related
+        return queryset.select_related(
+            'medreq_id',
+            'med',
+            'action_by',
+            'completed_by',
+            'medreq_id__patrec',
+            'medreq_id__patrec__pat_id',
+            'medreq_id__rp_id',
+            'medreq_id__trans_id',
+        ).prefetch_related(
+            Prefetch(
+                'allocations',
+                queryset=MedicineAllocation.objects.select_related('minv__med_id')
+            ),
+            'medreq_id__medicine_files'  # Add this for medicine files
+        ).order_by('-created_at')
+
 
 class MedicineRequestItemCancel(APIView):
     def patch(self, request, medreqitem_id):
@@ -121,7 +257,15 @@ class MedicineRequestItemCancel(APIView):
             item.status = 'cancelled'
             item.is_archived = True
             item.archive_reason = archive_reason
+            item.cancelled_rejected_reffered_at = timezone.now()
             item.save()
+            
+            try:
+                send_cancellation_notification_to_staff(item, archive_reason)
+            except Exception as e:
+                logger.error(f"Failed to send staff cancellation notification for item {item.medreqitem_id}: {str(e)}")
+                
+            
             return Response({"success": True, "message": "Item cancelled successfully"}, status=status.HTTP_200_OK)
         except MedicineRequestItem.DoesNotExist:
             return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -143,33 +287,47 @@ class MedicineRequestItemsByRequestView(generics.ListAPIView):
         return MedicineRequestItem.objects.filter(
             medreq_id=medreq_id
         ).select_related(
-            'minv_id', 'medreq_id', 'med', 'medreq_id__rp_id', 'medreq_id__pat_id',
-            'medreq_id__rp_id__per',  # Add resident profile personal info
-            'medreq_id__pat_id__per',  # Add patient personal info
+            'medreq_id', 'med', 'medreq_id__rp_id', 'medreq_id__patrec',
+            'medreq_id__patrec__pat_id'  # Add this to access patient
         ).prefetch_related(
-            'minv_id__med_id',
-            'medreq_id__rp_id__per__ppersonal_addresses__add',  # Prefetch addresses
-            'medreq_id__pat_id__per__ppersonal_addresses__add',  # Prefetch patient addresses
+            'allocations__minv',
+            'allocations__minv__med_id',
         ).order_by('-medreq_id__requested_at')
-        
+
 class SubmitMedicineRequestView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     
     @transaction.atomic
     def post(self, request):
         try:
+            print(f"🔍 DEBUG: Request data keys: {list(request.data.keys())}")
+            print(f"🔍 DEBUG: Request FILES keys: {list(request.FILES.keys())}")
+            
             data = request.data
-            # Handle medicines as array or single string
             medicines_data = data.get('medicines', '[]')
+            
+            print(f"✅ DEBUG: Created {len(medicines_data)} MedicineRequestItems and MedicineAllocations")
+            print(f"🔍 DEBUG: medicines_data type: {type(medicines_data)}, value: {medicines_data}")
+            
             if isinstance(medicines_data, list):
-                print("Warning: medicines received as array, taking first element")
-                medicines_data = medicines_data[0]
-            medicines = json.loads(medicines_data)
+                print("⚠️ WARNING: medicines received as array, taking first element")
+                medicines_data = medicines_data[0] if medicines_data else '[]'
+            
+            try:
+                medicines = json.loads(medicines_data)
+            except json.JSONDecodeError as e:
+                print(f"❌ ERROR: Failed to parse medicines JSON: {e}")
+                return Response({"error": "Invalid medicines data format"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            print(f"🔍 DEBUG: Parsed medicines: {medicines}")
+            
             files = request.FILES.getlist('files', [])
+            print(f"🔍 DEBUG: Number of files: {len(files)}")
             
             if not medicines:
                 return Response({"error": "At least one medicine is required"}, status=status.HTTP_400_BAD_REQUEST)
             
+            # Check if prescription is required
             requires_prescription = any(med.get('med_type', '') == 'Prescription' for med in medicines)
             if requires_prescription and not files:
                 return Response({"error": "Prescription document is required for prescription medicines"}, 
@@ -177,92 +335,133 @@ class SubmitMedicineRequestView(APIView):
             
             pat_id = data.get('pat_id')
             if isinstance(pat_id, list):
-                print("Warning: pat_id received as array, taking first element")
-                pat_id = pat_id[0]
-            rp_id = data.get('rp_id')
+                pat_id = pat_id[0] if pat_id else None
+            rp_id = data.get('rp_id') 
             if isinstance(rp_id, list):
-                print("Warning: rp_id received as array, taking first element")
-                rp_id = rp_id[0]
+                rp_id = rp_id[0] if rp_id else None
                 
-            print(f"Received pat_id: {pat_id}, rp_id: {rp_id}")
+            print(f"🔍 DEBUG: Received pat_id: {pat_id}, rp_id: {rp_id}")
                 
             if not pat_id and not rp_id:
                 return Response({"error": "Either patient ID or resident ID must be provided"}, 
                               status=status.HTTP_400_BAD_REQUEST)
             
-            if pat_id and rp_id:
-            # Both provided: Prioritize pat_id (user is a patient linked to resident)
-                print("Prioritizing pat_id over rp_id")
-                rp_id = None  # Ignore rp_id
-            elif not pat_id and not rp_id:
-                return Response({"error": "Either patient ID (pat_id) or resident ID (rp_id) must be provided"},
-                            status=status.HTTP_400_BAD_REQUEST)
-            elif pat_id:
-                print("Using pat_id only")
-            else:
-                print("Using rp_id only")
-            
+            # Validate and get instances
             pat_instance = None
+            trans_instance = None
             
+            # FIX: Get patient instance from rp_id if pat_id is not provided
             if pat_id:
                 try:
                     pat_instance = Patient.objects.get(pat_id=pat_id)
-                    print(f"Validated pat_id: {pat_id} -> Patient {pat_instance}")
+                    print(f"✅ DEBUG: Validated pat_id: {pat_id}")
+                    trans_instance = getattr(pat_instance, 'trans_id', None)
                 except Patient.DoesNotExist:
                     return Response({"error": f"Patient with ID {pat_id} not found"}, status=status.HTTP_404_NOT_FOUND)
-
-            rp_instance = None
-            if rp_id:
+            elif rp_id:
+                # FIX: Get patient instance from resident profile
                 try:
                     rp_instance = ResidentProfile.objects.get(rp_id=rp_id)
-                    print(f"Validated rp_id: {rp_id} -> Resident {rp_instance}")
+                    print(f"✅ DEBUG: Validated rp_id: {rp_id}")
+                    
+                    # Get patient associated with this resident profile
+                    try:
+                        pat_instance = Patient.objects.get(rp_id=rp_instance)
+                        print(f"✅ DEBUG: Found patient for resident: {pat_instance.pat_id}")
+                    except Patient.DoesNotExist:
+                        print(f"⚠️ DEBUG: No patient found for resident {rp_id}. Creating new Patient record...")
+                        # Auto-create the Patient entry for this Resident
+                        pat_instance = Patient.objects.create(
+                            rp_id=rp_instance,
+                            pat_type='Resident',
+                            pat_status='Active' 
+                        )
+                        print(f"✅ DEBUG: Created new Patient ID: {pat_instance.pat_id}")
+                        
                 except ResidentProfile.DoesNotExist:
                     return Response({"error": f"Resident with ID {rp_id} not found"}, status=status.HTTP_404_NOT_FOUND)
-                
-            medicine_request = MedicineRequest.objects.create(
-                pat_id=pat_instance,
-                rp_id=rp_instance,
-                mode='app'
+            
+            # FIX: Create PatientRecord with the patient instance
+            if not pat_instance:
+                return Response({"error": "Could not determine patient for this request"}, 
+                              status=status.HTTP_400_BAD_REQUEST)
+            
+            patient_record = PatientRecord.objects.create(
+                pat_id=pat_instance,  # This must be a Patient instance, not ID
+                patrec_type="Medicine Record",
             )
+            print(f"✅ DEBUG: Created PatientRecord: {patient_record.patrec_id} for patient: {pat_instance.pat_id}")
             
-            request_items = []
+            # Create MedicineRequest
+            medicine_request = MedicineRequest.objects.create(
+                rp_id=pat_instance.rp_id if pat_instance.pat_type == 'Resident' else None,
+                trans_id=pat_instance.trans_id if pat_instance.pat_type == 'Transient' else None,
+                mode='app',
+                requested_at=timezone.now(),
+                signature=data.get('signature', ''),
+                patrec=patient_record
+            )
+            print(f"✅ DEBUG: Created MedicineRequest: {medicine_request.medreq_id}")
+            
+            # Create MedicineRequestItem and MedicineAllocation for each medicine
             for med in medicines:
-                if 'minv_id' not in med:
-                    return Response({"error": f"minv_id is required for each medicine"}, 
+                minv_id = med.get('minv_id')
+                if not minv_id:
+                    return Response({"error": "minv_id is required for each medicine"}, 
                                   status=status.HTTP_400_BAD_REQUEST)
+                
                 try:
-                    minv_id = int(med['minv_id'])
-                    medicine_inv = MedicineInventory.objects.get(minv_id=minv_id)
-                    # print(f"Processing minv_id: {minv_id}, med_id: {medicine_inv.med_id.pk}")
-                    request_item = MedicineRequestItem(
-                        medreq_id=medicine_request,
-                        minv_id=None,
-                        med=medicine_inv.med_id,  # Assign Medicinelist object
-                        medreqitem_qty=med['quantity'],
-                        reason=med.get('reason', ''),
-                        status='pending'
-                    )
-                    request_items.append(request_item)
-                except ValueError:
-                    return Response({"error": f"Invalid minv_id: {med['minv_id']} must be a number"}, 
-                                  status=status.HTTP_400_BAD_REQUEST)
+                    medicine_inventory = MedicineInventory.objects.get(minv_id=int(minv_id))
                 except MedicineInventory.DoesNotExist:
-                    return Response({"error": f"Medicine with minv_id {med['minv_id']} not found"}, 
+                    return Response({"error": f"Medicine inventory with ID {minv_id} not found"}, 
                                   status=status.HTTP_404_NOT_FOUND)
+                
+                # Create MedicineRequestItem
+                medicine_item = MedicineRequestItem.objects.create(
+                    medreq_id=medicine_request,
+                    med=medicine_inventory.med_id,
+                    reason=med.get('reason', ''),
+                    status='pending'
+                )
+                
+                # Create MedicineAllocation
+                allocated_qty = med.get('quantity', 1)  # Default to 1 if not provided
+                if allocated_qty > 0:
+                    MedicineAllocation.objects.create(
+                        medreqitem=medicine_item,
+                        minv=medicine_inventory,
+                        allocated_qty=allocated_qty
+                    )
+                    
+                    # Update temporary deduction
+                    medicine_inventory.temporary_deduction += allocated_qty
+                    medicine_inventory.save()
             
-            # # Debug: Log request items
-            # for item in request_items:
-            #     print(f"Creating MedicineRequestItem: medreq_id={item.medreq_id.medreq_id}, minv_id={item.minv_id.minv_id}, med_id={item.med.pk}")
+            print(f"✅ DEBUG: Created {len(medicines)} MedicineRequestItems and MedicineAllocations")
             
-            MedicineRequestItem.objects.bulk_create(request_items)
-            print(f"Created request at: {medicine_request.requested_at}")
+            # Handle file uploads
+            # uploaded_files = []
+            # if files:
+            #     try:
+            #         for file in files:
+            #             medicine_file = Medicine_File.objects.create(
+            #                 medf_name=file.name,
+            #                 medf_type=file.content_type,
+            #                 medf_path=f"uploads/{file.name}",
+            #                 medf_url=f"/media/uploads/{file.name}",
+            #                 medreq=medicine_request
+            #             )
+            #             uploaded_files.append(medicine_file.medf_id)
+            #         print(f"✅ DEBUG: Successfully uploaded {len(uploaded_files)} files")
+            #     except Exception as e:
+            #         print(f"❌ ERROR: File upload failed: {str(e)}")
+            #         # Don't raise exception here, just log it
+            
             uploaded_files = []
             if files:
                 try:
-                    # Convert Django file objects to the format expected by the serializer
                     file_data_list = []
                     for file in files:
-                        # Read file content and convert to base64 data URL format
                         file_content = file.read()
                         import base64
                         base64_content = base64.b64encode(file_content).decode('utf-8')
@@ -274,20 +473,29 @@ class SubmitMedicineRequestView(APIView):
                             'file': data_url
                         })
                     
-                    # Use the Medicine_FileSerializer to upload files to Supabase
+                    # Upload files
                     serializer = Medicine_FileSerializer(context={'request': request})
                     uploaded_files = serializer._upload_files(
                         file_data_list, 
-                        medreq_instance=medicine_request  # Associate with the medicine request, not the item
+                        medreq_instance=medicine_request
                     )
                     
-                    print(f"Successfully uploaded {len(uploaded_files)} files to Supabase")
+                    print(f"✅ DEBUG: Successfully uploaded {len(uploaded_files)} files")
                     
                 except Exception as e:
-                    print(f"Error uploading files to Supabase: {str(e)}")
-                    # If file upload fails, we might want to roll back the transaction
-                    raise Exception(f"File upload failed: {str(e)}")
-            
+                    print(f"❌ ERROR: File upload failed: {str(e)}")
+                    # Don't raise exception here, just log it
+                    
+            notif_sent = False # Default to false
+            try:
+                notif_sent = send_new_medicine_request_notification_to_staff(medicine_request)
+                
+                # 2. This is your new debug log
+                print(f"✅ DEBUG: Staff notification send attempt result: {notif_sent}")
+                
+            except Exception as e:
+                print(f"❌ ERROR: Failed to send staff notification: {str(e)}")
+                
             return Response({
                 "success": True,
                 "medreq_id": medicine_request.medreq_id,
@@ -295,10 +503,8 @@ class SubmitMedicineRequestView(APIView):
                 "files_uploaded": len(uploaded_files)
             }, status=status.HTTP_201_CREATED)
             
-        except (Patient.DoesNotExist, ResidentProfile.DoesNotExist) as e:
-            return Response({"error": "Patient or resident not found"}, 
-                          status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            print(f"Internal server error: {str(e)}")
+            import traceback
+            print(f"❌ ERROR: Full traceback: {traceback.format_exc()}")
             return Response({"error": f"Internal server error: {str(e)}"}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)

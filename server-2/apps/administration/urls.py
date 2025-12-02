@@ -18,7 +18,8 @@ urlpatterns = [
     path('position/bulk/create/', PositionBulkCreateView.as_view(), name="position-bulk-create"),
     path('position/delete/<int:pos_id>/', PositionDeleteView.as_view(), name='position-delete'),
     path('position/update/<int:pos_id>/', PositionUpdateView.as_view(), name='position-update'),
-    
+    path('position/update/group/', PositionGroupUpdateView.as_view(), name="position-group-update"),
+
     # Feature Urls 
     path('feature/', FeatureView.as_view(), name='features-list'),
     path('feature/assign/<int:feat>/', FeatureDataView.as_view(), name='feature-data'),
@@ -30,7 +31,9 @@ urlpatterns = [
     path('assignment/delete/<int:feat>/<int:pos>/', AssignmentDeleteView.as_view(), name='delete-assignment'),
     
     path('healthstaff/', HealthStaffListView.as_view(), name='administration-healthsatff-list'),
-    path('doctorlist/', DoctorStaffListView.as_view(), name='doctor-list'),
+    path('doctorlist/', DoctorStaffListView.as_view(), name='doctor-list'),    path('doctorlist/', DoctorStaffListView.as_view(), name='doctor-list'),
+    path('midwife/', MidwifeStaffListView.as_view(), name='midwife-list'),
+
     
  
 ]

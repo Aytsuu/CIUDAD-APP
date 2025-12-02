@@ -11,8 +11,9 @@ class DevelopmentPlan(models.Model):
     dev_activity = models.JSONField(default=list, null=True, blank=True, db_column='dev_activity')
     dev_res_person = models.JSONField(default=list, db_column='dev_res_person')
     dev_indicator = models.JSONField(default=list, db_column='dev_indicator')
-    dev_gad_items = models.JSONField(default=list, db_column='dev_budget_items')
+    dev_budget_items = models.JSONField(default=list, db_column='dev_budget_items')
     dev_mandated = models.BooleanField(default=False, db_column='dev_mandated')
+    dev_archived = models.BooleanField(default=False, db_column='dev_archived')
    
     staff = models.ForeignKey(
         'administration.Staff',
@@ -87,8 +88,8 @@ class GAD_Budget_Tracker(models.Model):
     @property
     def budget_items(self):
         """Get budget items from the related development plan"""
-        if self.dev and self.dev.dev_gad_items:
-            return self.dev.dev_gad_items
+        if self.dev and self.dev.dev_budget_items:
+            return self.dev.dev_budget_items
         return []
 
 class GAD_Budget_File(models.Model):
@@ -212,8 +213,8 @@ class ProjectProposal(models.Model):
     @property
     def budget_items(self):
         """Get budget items from the related development plan"""
-        if self.dev and self.dev.dev_gad_items:
-            return self.dev.dev_gad_items
+        if self.dev and self.dev.dev_budget_items:
+            return self.dev.dev_budget_items
         return []
     
     @property

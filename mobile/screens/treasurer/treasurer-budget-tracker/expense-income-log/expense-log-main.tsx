@@ -5,26 +5,20 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  Modal,
-  Image,
-  ScrollView,
   ActivityIndicator
 } from 'react-native';
 import {
   Search,
-  ChevronLeft,
-  FileInput,
-  CircleAlert,
-  ArrowUpDown,
-  X
+  ChevronLeft
 } from 'lucide-react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
-import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import PageLayout from '@/screens/_PageLayout';
 import { useExpenseLog, type ExpenseLog } from '../queries/income-expense-FetchQueries';
 import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
 
 const monthOptions = [
   { id: "All", name: "All" },
@@ -42,12 +36,11 @@ const monthOptions = [
   { id: "12", name: "December" }
 ];
 
-const ExpenseLogMain = () => {
+const ExpenseLogMain = () => {  
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.LogYear as string;
 
-  console.log("LOGYEAR: ", year)
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('All');
@@ -65,12 +58,20 @@ const ExpenseLogMain = () => {
     value: month.id
   }));
 
-  // Fetch data with search and filter parameters
-  const { data: fetchedData = [], isLoading } = useExpenseLog(
+  // Updated to handle paginated response
+  const { 
+    data: responseData = { results: [], count: 0 }, 
+    isLoading 
+  } = useExpenseLog(
+    1, // page
+    1000, // pageSize - large number to get all data
     year ? parseInt(year) : new Date().getFullYear(),
     debouncedSearchQuery,
     selectedMonth
   );
+
+  // Extract the actual data array
+  const fetchedData = responseData.results || [];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -106,6 +107,15 @@ const ExpenseLogMain = () => {
     router.back();
   };
 
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );  
+
+
   const renderItem = ({ item }: { item: any }) => {
     const amount = Number(item.el_proposed_budget);
     const actualAmount = Number(item.el_actual_expense);
@@ -135,7 +145,7 @@ const ExpenseLogMain = () => {
             <Text>₱{actualAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
           </View>
           <View className="flex-row justify-between pb-2">
-            <Text className="text-gray-600">Return Amount:</Text>
+            <Text className="text-gray-600">Return/Excess Amount:</Text>
             <Text className={`font-semibold ${textColor}`}>
               ₱{returnAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </Text>
@@ -158,7 +168,7 @@ const ExpenseLogMain = () => {
         }
         headerTitle={
             <View>
-            <Text className="font-semibold text-lg text-[#2a3a61]">Expense Log</Text>
+            <Text className="text-[13px]">Expense Log</Text>
             </View>
         }
         rightAction={
@@ -166,7 +176,7 @@ const ExpenseLogMain = () => {
         }    
         wrapScroll={false}
     >
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-6">
         {/* Search and Filters */}
         <View className="mb-4">
           <View className="flex-row items-center gap-2 mb-3">
@@ -174,7 +184,7 @@ const ExpenseLogMain = () => {
               <Search className="absolute left-3 top-3 text-gray-500" size={17} />
               <TextInput
                 placeholder="Search..."
-                className="pl-5 w-full h-[45px] bg-white text-base rounded-lg p-2 border border-gray-300"
+                className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
                 value={searchQuery}
                 onChangeText={handleSearchChange}
               />
@@ -195,10 +205,11 @@ const ExpenseLogMain = () => {
 
         {/* Data List */}
         {isLoading ? (
-          <View className="h-64 justify-center items-center">
-            <ActivityIndicator size="large" color="#2a3a61" />
-            <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
-          </View>
+          // <View className="h-64 justify-center items-center">
+          //   <ActivityIndicator size="large" color="#2a3a61" />
+          //   <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
+          // </View>
+          renderLoadingState()           
         ) : filteredData.length > 0 ? (
           <FlatList
             data={filteredData}

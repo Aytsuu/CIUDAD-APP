@@ -32,12 +32,12 @@ export const useArchiveWasteCol = () => {
         duration: 6000
       });
     },
-    onError: (err) => {
+    onError: (_err) => {
       toast.error("Failed to archived schedule", {
         id: "deleteToast",
         duration: 6000
       });
-      console.error("Failed to archived schedule:", err);
+      // console.error("Failed to archived schedule:", err);
     }
   });
 };
@@ -69,12 +69,12 @@ export const useRestoreWasteCol = () => {
         duration: 6000
       });
     },
-    onError: (err) => {
+    onError: (_err) => {
       toast.error("Failed to restore schedule", {
         id: "deleteToast",
         duration: 6000
       });
-      console.error("Failed to restore schedule:", err);
+      // console.error("Failed to restore schedule:", err);
     }
   });
 };
@@ -107,12 +107,12 @@ export const useDeleteWasteCol = () => {
         duration: 6000
       });
     },
-    onError: (err) => {
+    onError: (_err) => {
       toast.error("Failed to delete schedule", {
         id: "deleteToast",
         duration: 6000
       });
-      console.error("Failed to delete schedule:", err);
+      // console.error("Failed to delete schedule:", err);
     }
   });
 };

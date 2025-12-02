@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/redux/redux";
 import { clearError, clearOtpState } from "@/redux/auth-redux/authSlice";
-import { useLoginMutation, useSignupMutation, useSendEmailOTPMutation, useVerifyEmailOTPMutation, useLogoutMutation } from "@/redux/auth-redux/useAuthMutation";
+import { useLoginMutation, useSignupMutation, useSendEmailOTPMutation, useLogoutMutation } from "@/redux/auth-redux/useAuthMutation";
 import { LoginCredentials, SignupCredentials } from "@/redux/auth-redux/auth-types";
 
 export const useAuth = () => {
@@ -12,7 +12,6 @@ export const useAuth = () => {
   const loginMutation = useLoginMutation();
   const signupMutation = useSignupMutation();
   const sendOTPMutation = useSendEmailOTPMutation();
-  const verifyOTPMutation = useVerifyEmailOTPMutation();
   const logoutMutation = useLogoutMutation();
 
   // Actions
@@ -50,18 +49,6 @@ const login = useCallback(
     [sendOTPMutation]
   );
 
-  const verifyEmailOTP = useCallback(
-    async (otp: string, email: string) => {
-      try {
-        const result = await verifyOTPMutation.mutateAsync({ otp, email });
-        return result;
-      } catch {
-        return null;
-      }
-    },
-    [verifyOTPMutation]
-  );
-
   const logout = useCallback(async () => {
     logoutMutation.mutate();
   }, [logoutMutation]);
@@ -79,7 +66,7 @@ const login = useCallback(
     user,
     isAuthenticated,
     isLoading: isLoading || loginMutation.isPending || signupMutation.isPending || 
-              sendOTPMutation.isPending || verifyOTPMutation.isPending || logoutMutation.isPending,
+              sendOTPMutation.isPending  || logoutMutation.isPending,
     error,
     otpSent,
     email,
@@ -88,7 +75,6 @@ const login = useCallback(
     login,
     signUp,
     sendEmailOTP,
-    verifyEmailOTP,
     logout,
     clearAuthError,
     clearOtpData,
@@ -97,7 +83,6 @@ const login = useCallback(
     loginLoading: loginMutation.isPending,
     signupLoading: signupMutation.isPending, 
     otpLoading: sendOTPMutation.isPending,
-    verifyOtpLoading: verifyOTPMutation.isPending,
     logoutLoading: logoutMutation.isPending,
   };
 };

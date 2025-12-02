@@ -14,8 +14,8 @@ from .views.all_record_views import *
 from .views.voter_views import *
 
 urlpatterns = [
-    # All record (combined record of resident and business respondents)
-    path("all/", AllRecordTableView.as_view(), name="all-record"),
+    # All record
+    # path("all/", AllRecordTableView.as_view(), name="all-record"),
     path("complete/registration/", CompleteRegistrationView.as_view(), name="complete-registration"),
 
     #Voter Urls
@@ -24,6 +24,7 @@ urlpatterns = [
     # Sitio Urls
     path("sitio/list/", SitioListView.as_view(), name="sitio-list"),
     path("sitio/create/", SitioCreateView.as_view(), name="sitio-create"),
+    path("sitio/bulk-update/", SitioUpdateView.as_view(), name="sitio-update"),
     path("sitio/<str:sitio_id>/delete/", SitioDeleteView.as_view(), name="sitio-delete"),
 
     # Address Urls
@@ -35,7 +36,7 @@ urlpatterns = [
     path("personal/update/<int:pk>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
     path("personal/history/", PersonalHistoryView.as_view(), name="personal-history"),
-    path("personal/modification-list/", PersonalModificationRequestsView.as_view(), name="personal-modification-request-list"),
+    # path("personal/modification-list/", PersonalModificationRequestsView.as_view(), name="personal-modification-request-list"),
 
     # Family Urls
     path("family/update/<str:fam_id>/", FamilyUpdateView.as_view(), name="update-family-details"),
@@ -47,10 +48,10 @@ urlpatterns = [
     path("family/id/<str:rp>/", FamilyIDView.as_view(), name="retrieve-family-id"),
     path("family/composition/delete/<str:fam>/<str:rp>/", FamilyMemberDeleteView.as_view(), name="member-deletion"),
     path("family/role/update/<str:fam>/<str:rp>/", FamilyRoleUpdateView.as_view(), name="family-composition-update"),
-    path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
     path("family/verify/account-create/", VerifyFamily.as_view(), name="join-existing-family"),
     path("family/data/resident-specific/", FamilyDataResidentSpecificView.as_view(), name="family-data-resident-specific"),
+    path("family/registration-request/approve/", FamilyRegistrationRequestView.as_view(), name="family-registration-request"),
 
     # Househould Urls
     path("household/list/", HouseholdListView.as_view(), name="household-list"),
@@ -81,7 +82,7 @@ urlpatterns = [
     path("business/pending/list/table/", PendingBusinessTableView.as_view(), name="business-pending-list"),
     path("business/respondent/list/table/", BusinessRespondentTableView.as_view(), name="business-respondent-list"),
     path("business/create/", BusinessCreateView.as_view(), name="business-create"),
-    path("business/respondent/create/", BRCreateUpdateView.as_view(), name="create-business-respondent"),
+    path("business/respondent/create/", BRCreateView.as_view(), name="create-business-respondent"),
     path("business/<str:bus_id>/info/", BusinessInfoView.as_view(), name="business-data"),
     path("business/respondent/<str:br_id>/info/", BusinessRespondentInfoView.as_view(), name="business-respondent-data"),
     path("business/<str:bus_id>/update/", BusinessUpdateView.as_view(), name="business-update"),

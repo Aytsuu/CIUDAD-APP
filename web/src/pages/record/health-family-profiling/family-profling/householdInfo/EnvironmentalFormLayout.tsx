@@ -20,7 +20,7 @@ export default function EnvironmentalFormLayout({
   
   // Debug logging for household ID
   React.useEffect(() => {
-    console.log('EnvironmentalFormLayout - Received Household ID:', householdId);
+    // console.log('EnvironmentalFormLayout - Received Household ID:', householdId);
   }, [householdId]);
   return (
     <div className="w-full max-w-full mx-auto">
@@ -46,3 +46,4 @@ export default function EnvironmentalFormLayout({
     </div>
   );
 }
+

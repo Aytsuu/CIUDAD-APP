@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { useNavigate, useLocation } from "react-router-dom";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useUpdateAnnualDevPlan, type BudgetItem as BudgetItemType } from "./queries/annualDevPlanFetchQueries";
 import { ComboboxInput } from "@/components/ui/form/form-combo-box-search";
 import { getStaffList, getAnnualDevPlanYears, getAnnualDevPlansByYear, getAnnualDevPlanById } from "./restful-api/annualGetAPI";
@@ -32,14 +32,19 @@ const getClientOptions = () => (
 
 export default function AnnualDevelopmentPlanEdit() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const staffId = user?.staff?.staff_id as string | undefined;
   
+  // Check if we came from the view page
+  const fromView = (location.state as any)?.fromView || false;
+  const viewYear = (location.state as any)?.year || null;
+  
   const form = useForm<GADAnnualDevPlanCreateInput>({
     resolver: zodResolver(GADAnnualDevPlanCreateSchema),
     defaultValues: {
-      dev_date: "",
+      dev_date: "", // Default to today's date
       dev_client: "",
       dev_issue: "",
       dev_project: "",
@@ -51,11 +56,11 @@ export default function AnnualDevelopmentPlanEdit() {
       staff: staffId || "",
     }
   });
-  const [budgetItems, setBudgetItems] = useState<{gdb_name: string, gdb_pax: string, gdb_amount: string}[]>([]);
+  const [budgetItems, setBudgetItems] = useState<{name: string, quantity: string, price: string}[]>([]);
   const [currentBudgetItem, setCurrentBudgetItem] = useState({
-    gdb_name: "",
-    gdb_pax: "",
-    gdb_amount: "",
+    name: "",
+    quantity: "",
+    price: "",
   });
 
   const [staffOptions, setStaffOptions] = useState<{ staff_id: string; full_name: string; position: string }[]>([]);
@@ -89,7 +94,7 @@ export default function AnnualDevelopmentPlanEdit() {
         const data = await getStaffList();
         setStaffOptions(data || []);
       } catch (e) {
-        console.error("Failed to fetch staff list", e);
+        // Failed to fetch staff list
       } finally {
         setStaffLoading(false);
       }
@@ -117,8 +122,12 @@ export default function AnnualDevelopmentPlanEdit() {
   const fetchPlansForYear = async (year: string) => {
     try {
       setPlansLoading(true);
-      const list = await getAnnualDevPlansByYear(year);
-      const normalized = (Array.isArray(list) ? list : []).map((p: any) => ({ dev_id: p.dev_id, dev_project: p.dev_project }));
+      const response = await getAnnualDevPlansByYear(year, undefined, undefined, undefined, false); // Exclude archived for edit
+      // Handle both array and paginated response formats
+      const plansData = Array.isArray(response) ? response : response?.results || [];
+      // Filter out archived plans just to be sure
+      const nonArchivedPlans = plansData.filter((p: any) => !p.dev_archived);
+      const normalized = nonArchivedPlans.map((p: any) => ({ dev_id: p.dev_id, dev_project: p.dev_project }));
       setPlansForYear(normalized);
     } catch (e) {
       setPlansForYear([]);
@@ -134,21 +143,21 @@ export default function AnnualDevelopmentPlanEdit() {
   };
 
   const addBudgetItem = () => {
-    if (currentBudgetItem.gdb_name && currentBudgetItem.gdb_pax && currentBudgetItem.gdb_amount) {
+    if (currentBudgetItem.name && currentBudgetItem.quantity && currentBudgetItem.price) {
       setBudgetItems(prev => [...prev, currentBudgetItem]);
-      // Calculate total budget: sum of (pax * price) for all items
+      // Calculate total budget: sum of (quantity * price) for all items
       const totalBudget = budgetItems.reduce((sum, item) => {
-        const pax = parseFloat(item.gdb_pax) || 0;
-        const amount = parseFloat(item.gdb_amount) || 0;
-        return sum + (pax * amount);
-      }, 0) + (parseFloat(currentBudgetItem.gdb_pax) || 0) * (parseFloat(currentBudgetItem.gdb_amount) || 0);
+        const quantity = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.price) || 0;
+        return sum + (quantity * price);
+      }, 0) + (parseFloat(currentBudgetItem.quantity) || 0) * (parseFloat(currentBudgetItem.price) || 0);
       form.setValue("dev_gad_budget", totalBudget.toString());
-      setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_amount: "" });
+      setCurrentBudgetItem({ name: "", quantity: "", price: "" });
     }
   };
 
   const clearBudgetItem = () => {
-    setCurrentBudgetItem({ gdb_name: "", gdb_pax: "", gdb_amount: "" });
+    setCurrentBudgetItem({ name: "", quantity: "", price: "" });
   };
 
   const removeBudgetItem = (index: number) => {
@@ -156,9 +165,9 @@ export default function AnnualDevelopmentPlanEdit() {
       const newItems = prev.filter((_, i) => i !== index);
       // Recalculate total budget after removal
       const totalBudget = newItems.reduce((sum, item) => {
-        const pax = parseFloat(item.gdb_pax) || 0;
-        const amount = parseFloat(item.gdb_amount) || 0;
-        return sum + (pax * amount);
+        const quantity = parseFloat(item.quantity) || 0;
+        const price = parseFloat(item.price) || 0;
+        return sum + (quantity * price);
       }, 0);
       form.setValue("dev_gad_budget", totalBudget.toString());
       return newItems;
@@ -225,7 +234,7 @@ export default function AnnualDevelopmentPlanEdit() {
     try {
       const { dev_gad_budget, ...formData } = data;
       if (!selectedPlanId) {
-        toast.error("Please select a plan to update.");
+        showErrorToast("Please select a plan to update.");
         return;
       }
       await updateMutation.mutateAsync({ 
@@ -233,11 +242,17 @@ export default function AnnualDevelopmentPlanEdit() {
         formData: (staffId ? { ...formData, staff: staffId } : formData) as any,
         budgetItems: budgetItems as BudgetItemType[],
       });
-      toast.success("Annual development plan updated successfully!");
-      navigate(-1);
+      showSuccessToast("Annual development plan updated successfully!");
+      
+      // Navigate to view page with the year
+      const year = selectedYear ? parseInt(selectedYear) : (data.dev_date ? new Date(data.dev_date).getFullYear() : null);
+      if (year) {
+        navigate("/gad-annual-development-plan", { state: { openedYear: year } });
+      } else {
+        navigate("/gad-annual-development-plan");
+      }
     } catch (error) {
-      console.error("Error updating annual development plan:", error);
-      toast.error("Failed to update annual development plan");
+      showErrorToast("Failed to update annual development plan");
     } finally {
       setIsLoading(false);
     }
@@ -251,7 +266,14 @@ export default function AnnualDevelopmentPlanEdit() {
             variant="ghost" 
             size="icon" 
             className="rounded-full hover:bg-gray-100" 
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              // If we came from view page, navigate back to view with the year
+              if (fromView && viewYear) {
+                navigate("/gad-annual-development-plan", { state: { openedYear: viewYear } });
+              } else {
+                navigate(-1);
+              }
+            }}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -394,11 +416,11 @@ export default function AnnualDevelopmentPlanEdit() {
                       const s = String(v ?? '0').replace(/[\,\s]/g, '').replace(/[^0-9.+\-]/g, '');
                       return s === '' || s === '.' || s === '-' ? '0' : s;
                     };
-                    const normalized: Array<{ gdb_name: string; gdb_pax: string; gdb_amount: string }> = (Array.isArray(src) ? src : [])
+                    const normalized: Array<{ name: string; quantity: string; price: string }> = (Array.isArray(src) ? src : [])
                       .map((it: any) => ({
-                        gdb_name: String(it.name ?? it.gdb_name ?? ''),
-                        gdb_pax: String(it.pax ?? it.gdb_pax ?? it.quantity ?? '0'),
-                        gdb_amount: sanitizePrice(it.amount ?? it.gdb_amount ?? it.price ?? '0'),
+                        name: String(it.name ?? it.gdb_name ?? ''),
+                        quantity: String(it.quantity ?? it.pax ?? it.gdb_pax ?? '0'),
+                        price: sanitizePrice(it.price ?? it.amount ?? it.gdb_amount ?? '0'),
                       }));
                     setBudgetItems(normalized);
                   } catch {
@@ -424,7 +446,7 @@ export default function AnnualDevelopmentPlanEdit() {
                     
                   }
                 } catch (err) {
-                  toast.error('Failed to load plan');
+                  showErrorToast('Failed to load plan');
                 }
               }}
               className="border rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-60"
@@ -713,8 +735,8 @@ export default function AnnualDevelopmentPlanEdit() {
                   <label className="text-sm font-medium text-gray-700 mb-2 block">Item Name</label>
                   <input
                     type="text"
-                    name="gdb_name"
-                    value={currentBudgetItem.gdb_name}
+                    name="name"
+                    value={currentBudgetItem.name}
                     onChange={handleBudgetItemChange}
                     placeholder="e.g., AM Snacks, Materials, etc."
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
@@ -722,11 +744,11 @@ export default function AnnualDevelopmentPlanEdit() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">Quantity/Pax</label>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Quantity</label>
                     <input
                       type="number"
-                      name="gdb_pax"
-                      value={currentBudgetItem.gdb_pax}
+                      name="quantity"
+                      value={currentBudgetItem.quantity}
                       onChange={handleBudgetItemChange}
                       placeholder="e.g., 50"
                       min="0"
@@ -738,8 +760,8 @@ export default function AnnualDevelopmentPlanEdit() {
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Price (₱)</label>
                     <input
                       type="number"
-                      name="gdb_amount"
-                      value={currentBudgetItem.gdb_amount}
+                      name="price"
+                      value={currentBudgetItem.price}
                       onChange={handleBudgetItemChange}
                       placeholder="0.00"
                       min="0"
@@ -789,13 +811,13 @@ export default function AnnualDevelopmentPlanEdit() {
                 ) : (
                   <div className="space-y-3">
                     {budgetItems.map((item, index) => {
-                      const pax = parseFloat(item.gdb_pax) || 0;
-                      const amount = parseFloat(item.gdb_amount) || 0;
-                      const total = pax * amount;
+                      const quantity = parseFloat(item.quantity) || 0;
+                      const price = parseFloat(item.price) || 0;
+                      const total = quantity * price;
                       return (
                         <div key={index} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-medium text-gray-800">{item.gdb_name}</h4>
+                            <h4 className="font-medium text-gray-800">{item.name}</h4>
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-semibold text-green-600">₱{total.toFixed(2)}</span>
                               <button
@@ -809,7 +831,7 @@ export default function AnnualDevelopmentPlanEdit() {
                               </button>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600">Quantity: {item.gdb_pax} | Price: ₱{amount.toFixed(2)}</p>
+                          <p className="text-sm text-gray-600">Quantity: {item.quantity} | Price: ₱{price.toFixed(2)}</p>
                         </div>
                       );
                     })}
@@ -818,9 +840,9 @@ export default function AnnualDevelopmentPlanEdit() {
                         <span className="text-lg font-semibold text-gray-800">Total Budget:</span>
                         <span className="text-2xl font-bold text-green-600">
                           ₱{budgetItems.reduce((sum, item) => {
-                            const pax = parseFloat(item.gdb_pax) || 0;
-                            const amount = parseFloat(item.gdb_amount) || 0;
-                            return sum + (pax * amount);
+                            const quantity = parseFloat(item.quantity) || 0;
+                            const price = parseFloat(item.price) || 0;
+                            return sum + (quantity * price);
                           }, 0).toFixed(2)}
                         </span>
                       </div>
@@ -836,7 +858,14 @@ export default function AnnualDevelopmentPlanEdit() {
         <div className="flex justify-end gap-4 pt-6">
           <Button 
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              // If we came from view page, navigate back to view with the year
+              if (fromView && viewYear) {
+                navigate("/gad-annual-development-plan", { state: { openedYear: viewYear } });
+              } else {
+                navigate(-1);
+              }
+            }}
             className="px-8 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
           >
             Cancel

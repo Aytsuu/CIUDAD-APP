@@ -10,7 +10,6 @@ import {
   Pill 
 } from 'lucide-react-native';
 import { formatDate } from '@/helpers/dateHelpers';
-import { record } from 'zod';
 
 interface ChildHealthHistoryRecord {
   id: string;

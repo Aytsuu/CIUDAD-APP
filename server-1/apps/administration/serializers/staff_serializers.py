@@ -1,11 +1,12 @@
 from rest_framework import serializers
+from django.db import transaction
 from ..models import *
 from ..serializers.position_serializers import PositionBaseSerializer
 from ..serializers.assignment_serializers import AssignmentMinimalSerializer
+from ..double_queries import PostQueries
 from apps.profiling.models import ResidentProfile, FamilyComposition
 from apps.account.models import Account
-from ..double_queries import PostQueries
-from django.db import transaction
+from apps.notification.utils import create_notification
 
 class StaffBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -88,31 +89,21 @@ class StaffCreateSerializer(serializers.ModelSerializer):
         except ValueError:
             error_detail = response.text
         raise serializers.ValidationError({"error": error_detail})
+      
+      recipients = [register.staff_id]
+
+      create_notification(
+        title="Staff Assignment",
+        message=(
+            f"You've been assigned to the position {register.pos.pos_title}"
+        ),
+        recipients=recipients,
+        notif_type="",
+        web_route="",
+        web_params={},
+        # mobile_route="",
+        # mobile_params={},
+      )
+
       return register
-
     return None
-  
-class StaffLandingPageSerializer(serializers.ModelSerializer):
-  name = serializers.SerializerMethodField()
-  position = serializers.CharField(source='pos.pos_title')
-  assignments = AssignmentMinimalSerializer(many=True, read_only=True)
-  photo_url = serializers.SerializerMethodField()
-
-  class Meta:
-    model = Staff
-    fields = ['photo_url', 'name', 'position', 'assignments']
-
-  # def get_name(self, obj):
-  #   info = obj.rp.per
-  #   return f'{info.per_lname.upper()}, {info.per_fname.upper()}' \
-  #           f' {info.per_mname.upper() if info.per_mname else ''}'
-
-  def get_name(self, obj):
-    info = obj.rp.per
-    return f"{info.per_lname.upper()}, {info.per_fname.upper()} {info.per_mname.upper() if info.per_mname else ''}"
-
-
-  def get_photo_url(self, obj):
-    rp = obj.rp
-    account = Account.objects.filter(rp=rp).first()
-    return account.profile_image if account and account.profile_image else None

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronLeft, Loader2 } from 'lucide-react-native';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { ChevronLeft } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,17 +10,19 @@ import { FormTextArea } from '@/components/ui/form/form-text-area';
 import { FormDateAndTimeInput } from '@/components/ui/form/form-date-time-input';
 import { SelectLayoutWithAdd } from '@/components/ui/select-searchadd-layout';
 import { useIncomeParticular } from './queries/income-expense-FetchQueries';
-import { useCreateIncome } from './queries/income-expense-AddQueries';
 import { useUpdateIncome } from './queries/income-expense-UpdateQueries';
 import { useAddParticular } from './request/particular-PostRequest';
 import { useDeleteParticular } from './request/particular-DeleteRequest';
 import IncomeFormSchema from '@/form-schema/treasurer/treasurer-income-schema';
 import { useIncomeExpenseMainCard, type IncomeExpenseCard } from './queries/income-expense-FetchQueries';
-import _ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from "@/screens/_PageLayout";
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 
 function IncomeEditForm() {
+  const { user } = useAuth(); 
   const router = useRouter();
   const params = useLocalSearchParams();
   const [isEditing, setIsEditing] = useState(false);
@@ -50,9 +52,7 @@ function IncomeEditForm() {
     },
   });
 
-//   const { mutate: createIncome, isPending } = useCreateIncome(() => {
-//     router.back();
-//   });
+
 
   const { mutate: updateEntry, isPending } = useUpdateIncome(Number(inc_num), () => {
     setIsEditing(false);
@@ -60,12 +60,10 @@ function IncomeEditForm() {
 
 
   const { data: IncomeParticularItems = [] } = useIncomeParticular();
-  const { data: fetchedData = [] } = useIncomeExpenseMainCard();
+  const { data: fetchedData = { results: [], count: 0 } } = useIncomeExpenseMainCard();
 
-  const matchedYearData = fetchedData.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+  const matchedYearData = fetchedData.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totInc = matchedYearData?.ie_main_inc ?? 0;
-
-  console.log("TOTAL INCOME: ", totInc)
 
   const IncomeParticulars = IncomeParticularItems
     .filter(item => item.id && item.name)
@@ -81,9 +79,9 @@ function IncomeEditForm() {
     const yearIncome = Number(year);
      let totalIncome = 0.0
 
-        let totIncome = Number(totInc);
-        let prev_amount = Number(inc_amount);
-        let current_amount = Number(values.inc_amount);
+        const totIncome = Number(totInc);
+        const prev_amount = Number(inc_amount);
+        const current_amount = Number(values.inc_amount);
 
         if (inputYear !== yearIncome) {
             form.setError('inc_datetime', {
@@ -108,34 +106,25 @@ function IncomeEditForm() {
             ...values,
             totalIncome,
             year: Number(year),
+            staff_id: user?.staff?.staff_id              
         }
         
         updateEntry(allValues);
-
-        setIsEditing(false);
   };
 
   return (
-    <_ScreenLayout
-      headerBetweenAction={<Text className="text-[13px]">Edit Income Entry</Text>}
-      headerAlign="left"
-      showExitButton={false}
-      showBackButton={true}
-      customLeftAction={
+    <PageLayout
+      headerTitle={<Text className="text-[13px]">Edit Income Entry</Text>}
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={24} color="black" />
         </TouchableOpacity>
       }
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loading={isPending}
-      loadingMessage="Updating income entry..."
       footer={
         <View className="w-full">
           {!isEditing ? (
             <TouchableOpacity
-              className="bg-primaryBlue py-3 rounded-md w-full items-center"
+              className="bg-primaryBlue py-4 rounded-xl w-full items-center"
               onPress={() => setIsEditing(true)}
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
@@ -143,11 +132,12 @@ function IncomeEditForm() {
           ) : (
             <View className="flex-row gap-2">
               <TouchableOpacity
-                className="flex-1 bg-white border border-primaryBlue py-3 rounded-md items-center"
+                className="flex-1 bg-white border border-primaryBlue py-4 rounded-xl items-center"
                 onPress={() => {
                   setIsEditing(false);
                   form.reset();
                 }}
+                disabled={isPending}
               >
                 <Text className="text-primaryBlue text-base font-semibold">Cancel</Text>
               </TouchableOpacity>
@@ -155,12 +145,12 @@ function IncomeEditForm() {
               <ConfirmationModal
                 trigger={
                   <TouchableOpacity
-                    className="flex-1 bg-primaryBlue py-3 rounded-md items-center flex-row justify-center"
+                    className="flex-1 bg-primaryBlue py-4 rounded-xl items-center flex-row justify-center"
                     disabled={isPending}
                   >
                     {isPending ? (
                       <>
-                        <Loader2 size={20} color="white" className="animate-spin mr-2" />
+                        <ActivityIndicator size="small" color="white" className="mr-2" />
                         <Text className="text-white text-base font-semibold">Saving...</Text>
                       </>
                     ) : (
@@ -177,9 +167,8 @@ function IncomeEditForm() {
           )}
         </View>
       }
-      stickyFooter={true}
     >
-      <View className="w-full px-4 pt-5">
+      <View className="w-full px-6 pt-5">
         {/* Date Input */}
         <View className="relative">
           <FormDateAndTimeInput
@@ -270,7 +259,7 @@ function IncomeEditForm() {
         </View>
       </View>
       {ConfirmationDialogs()}
-    </_ScreenLayout>
+    </PageLayout>
   );
 }
 

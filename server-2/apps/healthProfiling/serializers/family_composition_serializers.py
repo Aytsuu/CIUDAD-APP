@@ -20,7 +20,7 @@ class FamilyCompositionExtendedSerializer(serializers.ModelSerializer):
 
   class Meta: 
     model = FamilyComposition
-    fields = ['rp_id', 'fc_role', 'name', 'sex', 'dob', 'status']
+    fields = ['fc_id', 'rp_id', 'fc_role', 'name', 'sex', 'dob', 'status']
   
   def get_name(self, obj):
     info = obj.rp.per

@@ -5,8 +5,6 @@ import { router } from "expo-router"
 import { Building } from "@/lib/icons/Building"
 import { Plus } from "@/lib/icons/Plus"
 import { ChevronLeft } from "@/lib/icons/ChevronLeft"
-import { Button } from "@/components/ui/button"
-import { FileText } from "@/lib/icons/FileText"
 import { useModificationRequests, useOwnedBusinesses } from "./queries/businessGetQueries"
 import { useAuth } from "@/contexts/AuthContext"
 import { Search } from "@/lib/icons/Search"
@@ -153,7 +151,7 @@ export default () => {
   }
 
   // =================== MAIN RENDER ===================
-  if(!user?.rp) {
+  if(!user?.rp && !user?.br) {
     return (isReady && <NoAccessScreen
         title="Resident Access Required"
         description="The business feature is only available to registered residents and business respondents."

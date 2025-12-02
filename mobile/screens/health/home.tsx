@@ -2,13 +2,14 @@ import React from "react";
 import { View, Image, ScrollView, StatusBar, TouchableOpacity, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
-import { router, Href } from "expo-router"; // Import Href
-import { Archive,Baby,Calendar,Dog,Heart,Pill,Stethoscope,UserCircle,Users,ShieldPlus,BookHeart,ChevronRight,ChevronLeft,NotebookPen,UserRoundPlus,Venus,BriefcaseMedical,SyringeIcon} from "lucide-react-native";
+import { router, Href } from "expo-router";
+import { Archive, Baby, Calendar, Dog, Heart, Pill, UserCircle, Users, ShieldPlus, BookHeart, ChevronRight, ChevronLeft, UserRoundPlus, Venus, BriefcaseMedical, SyringeIcon, NotebookPen } from "lucide-react-native";
 import TodayScheduleWidget from "./admin/admin-scheduler/schedule-today";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import NotificationBadge from "./my-schedules/notifbadge";
+import PageLayout from "../_PageLayout";
 import { usePendingAppointments } from "./my-schedules/pendingAppointment";
+import { Badge } from "@/components/ui/badge"
 
 const { width } = Dimensions.get("window");
 
@@ -38,10 +39,11 @@ interface Module {
 }
 
 const Homepage = () => {
-  const { user, hasCheckedAuth } = useAuth(); 
-
+  const { user, hasCheckedAuth } = useAuth();
+  const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
+  
   // Determine user role
-  const isAdmin = !!user?.staff;
+  const isAdmin = user?.staff?.staff_type.toLowerCase() === "health staff";
   const isResident = !!user?.rp;
 
   // Wait for auth check to complete
@@ -53,24 +55,19 @@ const Homepage = () => {
     );
   }
 
-  // const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments()
-
   const modules: Module[] = [
+    { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
     { name: "Child Health Records", route: "admin/childhealth/overall" as Href, icon: Baby },
     { name: "Family Planning", route: "admin/familyplanning/overall" as Href, icon: Heart },
-    { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },
+    { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
+    { name: "Health Profiling", route: "admin/health-profiling" as Href, icon: UserRoundPlus },
+    { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
     { name: "Maternal Records", route: "admin/maternal/overall" as Href, icon: Venus },
-    { name: "Medical Consultation", route: "(health)/medicine-request/my-requests" as Href, icon: Stethoscope },
-    { name: "Profiling", route: "admin/medicinerequest/medicinerequest" as Href, icon: UserRoundPlus },
+    { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
+    { name: "Medicine Records", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
     { name: "Patient Records", route: "admin/patientsrecord/patientrecords" as Href, icon: Users },
     { name: "Schedules", route: "admin/schedules/all-appointment" as Href, icon: Calendar },
-    { name: "Inventory", route: "admin/inventory/medicine" as Href, icon: Archive },
-    { name: "BHW Daily Field", route: "" as Href, icon: NotebookPen },
-    { name: "First Aid", route: "admin/first-aid/overall" as Href, icon: BriefcaseMedical },
     { name: "Vaccination", route: "admin/vaccination/overall" as Href, icon: SyringeIcon },
-    { name: "Medical Consultation", route: "admin/medconsultation/overall" as Href, icon: BriefcaseMedical },
-
-    { name: "Medicine", route: "admin/medicinerecords/overall" as Href, icon: BriefcaseMedical },
   ];
 
   const quickActions: QuickAction[] = [
@@ -99,10 +96,6 @@ const Homepage = () => {
     },
   ];
 
-  const handleViewWeeklySchedule = () => {
-    router.push("/admin/scheduler/schedule-weekly" as Href);
-  };
-
   // Safe router push function
   const safeRouterPush = (route: Href) => {
     if (route) {
@@ -111,18 +104,27 @@ const Homepage = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <StatusBar barStyle="light-content" backgroundColor="#1e40af" />
-      <Button
-        onPress={() => router.back()}
-        className="grid rounded-none bg-blue-800 pl-5 align-left items-start"
-      >
-        <ChevronLeft size={24} color="white" />
-      </Button>
-
+    <PageLayout
+      leftAction={
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)")}
+          className="w-10 h-10 items-center justify-center"
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <ChevronLeft size={24} className="text-white" />
+        </TouchableOpacity>
+      }
+      headerTitle={
+        <Text className=""></Text>
+      }
+      rightAction={<View className="w-10 h-10" />}
+      backgroundColor="bg-blue-800"
+      wrapScroll={false}
+    >
       <View className="flex-row items-center justify-between bg-blue-800 px-5 pr-0">
         <View className="flex-1 pr-4 ml-2">
-          <Text className="text-white text-3xl font-PoppinsSemiBold">Welcome</Text>
+          <Text className="text-white text-5xl font-PoppinsSemiBold">Welcome</Text>
           <Text className="text-white text-base mt-1">How can we help you today?</Text>
         </View>
         <Image
@@ -132,9 +134,9 @@ const Homepage = () => {
         />
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 bg-white" showsVerticalScrollIndicator={false}>
         {/* Today's Schedule Widget (Admin Only) */}
-        {isResident && (  <View className="px-6 mt-5 mb-3"> <TodayScheduleWidget /> </View> )}
+        {isResident && (<View className="px-6 mt-5 mb-3"> <TodayScheduleWidget /> </View>)}
 
         {/* Featured Services */}
         <View className="mt-3">
@@ -203,12 +205,18 @@ const Homepage = () => {
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-gray-800 text-xl font-PoppinsSemiBold">Book appointment</Text>
             <TouchableOpacity
-              className="bg-blue-700 p-1 rounded-xl relative"
+              className="bg-blue-700 px-4 py-2 rounded-xl relative"
               onPress={() => router.push("/my-schedules/my-schedules" as Href)}
             >
-              <Text className="text-white text-sm p-2 font-PoppinsSemiBold">My appointments</Text>
-              {/* Notification Badge */}
-              {/* <NotificationBadge count={pendingCount} showBadge={!isLoadingPending && pendingCount > 0} /> */}
+              <Text className="text-white text-sm font-PoppinsSemiBold">My schedules</Text>
+              {/* Pending Count Badge - FIXED: using pendingCount instead of counts.pending */}
+              {!isLoadingPending && pendingCount > 0 && (
+                <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center">
+                  <Text className="text-white text-xs font-bold">
+                    {pendingCount > 9 ? '9+' : pendingCount}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -217,7 +225,7 @@ const Homepage = () => {
               <View className="bg-white rounded-2xl shadow-lg overflow-hidden">
                 <View className="h-32 relative">
                   <Image
-                    source={require("@/assets/images/Health/Home/Maternal.jpg")}
+                    source={require("@/assets/images/Health/Home/Maternal1.jpg")}
                     className="w-full h-full"
                     resizeMode="cover"
                   />
@@ -275,9 +283,9 @@ const Homepage = () => {
               })}
             </View>
           </View>
-        )} 
+        )}
       </ScrollView>
-    </SafeAreaView>
+    </PageLayout>
   );
 };
 

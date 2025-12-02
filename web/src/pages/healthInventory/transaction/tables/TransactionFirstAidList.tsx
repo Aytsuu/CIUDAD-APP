@@ -6,6 +6,8 @@ import { Search, Loader2 } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { FirstAidColumns } from "./columns/FirstAidCol"
 import { useFirstAidTransactions } from "../queries/fetch"
+import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
+import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function FirstAidTransactionTable() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -37,11 +39,99 @@ export default function FirstAidTransactionTable() {
   }
 
   // Handle page size change
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = +e.target.value
-    setPageSize(value >= 1 ? value : 1)
-    setCurrentPage(1)
-  }
+    const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = +e.target.value;
+      setPageSize(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
+      setCurrentPage(1);
+    }
+
+  // Prepare export data for first aid transactions
+  const prepareExportData = () => {
+    return transactionData.map((item: any) => {
+      const expired = item.isExpired;
+      const isLow = item.isLowStock;
+      const isOutOfStock = item.isOutOfStock;
+      const isNear = item.isNearExpiry;
+      const unit = item.finv_qty_unit || "";
+      const pcs = item.qty?.finv_pcs || 1;
+
+      // Format Total Qty
+      let totalQtyDisplay = "";
+      if (unit.toLowerCase() === "boxes" && pcs > 1) {
+        totalQtyDisplay = `${item.qty_number} boxes (${item.qty_number * pcs} pcs)`;
+      } else {
+        totalQtyDisplay = `${item.qty_number} ${unit}`;
+      }
+      if (expired) totalQtyDisplay += " (Expired)";
+
+      // Format Available Stock
+      let availableStockDisplay = "";
+      if (unit.toLowerCase() === "boxes" && pcs > 1) {
+        const availablePcs = item.availableStock;
+        const fullBoxes = Math.floor(availablePcs / pcs);
+        const remainingPcs = availablePcs % pcs;
+        const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
+        availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? 'es' : ''} (${availablePcs} total pcs)`;
+      } else {
+        availableStockDisplay = `${item.availableStock} ${unit}`;
+      }
+      if (expired) {
+        availableStockDisplay += " (Expired)";
+      } else {
+        if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
+        if (isLow) availableStockDisplay += " (Low Stock)";
+      }
+
+      // Status
+      let status = "Normal";
+      if (expired) status = "Expired";
+      else if (isOutOfStock) status = "Out of Stock";
+      else if (isLow) status = "Low Stock";
+      else if (isNear) status = "Near Expiry";
+
+      // Details
+      const firstAidName = item.item?.fa_name || "Unknown First Aid";
+      const firstAidDetails = `${firstAidName}${expired ? " (Expired)" : ""}`;
+
+      // Expiry Date
+      let expiryDateDisplay = item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : "N/A";
+      if (expired) expiryDateDisplay += " (Expired)";
+      else if (isNear) expiryDateDisplay += " (Near Expiry)";
+
+      return {
+        Date: item.created_at
+          ? new Date(item.created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric"
+            })
+          : "N/A",
+        ID: item.inv_id || "N/A",
+        "First Aid Details": firstAidDetails,
+        Category: item.category || "N/A",
+        "Total Qty": totalQtyDisplay,
+        "Available Stock": availableStockDisplay,
+        "Qty Used": item.administered || 0,
+        "Expiry Date": expiryDateDisplay,
+        Status: status
+      };
+    });
+  };
+
+  const handleExportCSV = () => {
+    const dataToExport = prepareExportData();
+    exportToCSV(dataToExport, `firstaid_transactions_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = prepareExportData();
+    exportToExcel(dataToExport, `firstaid_transactions_${new Date().toISOString().slice(0, 10)}`);
+  };
+
+  const handleExportPDF = () => {
+    const dataToExport = prepareExportData();
+    exportToPDF2(dataToExport, `firstaid_transactions_${new Date().toISOString().slice(0, 10)}`, "First Aid Transactions Report");
+  };
 
   if (error) {
     return (
@@ -80,9 +170,13 @@ export default function FirstAidTransactionTable() {
               value={pageSize}
               onChange={handlePageSizeChange}
               min="1"
+                max="50"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
+            <div>
+              <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
+            </div>
         </div>
 
         <div className="bg-white w-full overflow-x-auto">

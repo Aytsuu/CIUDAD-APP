@@ -22,12 +22,10 @@ export const useUpdateGarbReqStatusResident = (onSuccess?: () => void, isViewDet
       toast.success('Request marked as completed')
       
       onSuccess?.();
-      if(isViewDetail) {
-        router.back()
-      } 
+        router.push('/(my-request)/garbage-pickup/garbage-pickup-tracker')
     },
     onError: (err) => {
-      console.error("Error updating request status:", err);
+      // console.error("Error updating request status:", err);
       toast.error("Failed to update request status")
     }
   });

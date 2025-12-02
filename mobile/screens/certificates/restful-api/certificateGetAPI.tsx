@@ -26,17 +26,43 @@ export interface Certificate {
         inv_nat_of_collection: string;
     };
 }
-// Fetch certificates
-export const getCertificates = async (): Promise<Certificate[]> => {
+// Fetch certificates with search and pagination - matching web version
+export const getCertificates = async (
+    search?: string, 
+    page?: number, 
+    pageSize?: number, 
+    status?: string, 
+    paymentStatus?: string,
+    purpose?: string
+): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
     try {
-        console.log('Making request to /clerk/certificate/');
-        const res = await api.get('/clerk/certificate/');
-        console.log('API Response:', res.data);
-        return res.data;
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (page) params.append('page', page.toString());
+        if (pageSize) params.append('page_size', pageSize.toString());
+        if (status) params.append('status', status);
+        if (paymentStatus) params.append('payment_status', paymentStatus);
+        if (purpose) params.append('purpose', purpose);
+        
+        const queryString = params.toString();
+        // Use certificate-all endpoint to get both resident and non-resident certificates (matching web)
+        const url = `/clerk/certificate-all/${queryString ? '?' + queryString : ''}`;
+        
+        const res = await api.get(url);
+        
+        // Handle both paginated and non-paginated responses
+        if (res.data.results) {
+            return res.data;
+        } else {
+            return {
+                results: res.data,
+                count: res.data.length,
+                next: null,
+                previous: null
+            };
+        }
     } catch (err) {
         const error = err as AxiosError;
-        console.error('Error fetching certificates:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -47,14 +73,10 @@ export const getCertificateById = async (crId: string): Promise<Certificate> => 
         // Validate input
         const validatedData = CertificateByIdSchema.parse({ cr_id: crId });
         
-        console.log(`Making request to /clerk/certificate/${validatedData.cr_id}/`);
         const res = await api.get(`/clerk/certificate/${validatedData.cr_id}/`);
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as AxiosError;
-        console.error('Error fetching certificate by ID:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -65,14 +87,10 @@ export const searchCertificates = async (query: string): Promise<Certificate[]> 
         // Validate input
         const validatedData = SearchCertificateSchema.parse({ query });
         
-        console.log(`Making search request to /clerk/certificate/?search=${validatedData.query}`);
         const res = await api.get(`/clerk/certificate/?search=${encodeURIComponent(validatedData.query)}`);
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as AxiosError;
-        console.error('Error searching certificates:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 };
@@ -80,14 +98,10 @@ export const searchCertificates = async (query: string): Promise<Certificate[]> 
 // Get personal clearances
 export const getPersonalClearances = async (): Promise<any[]> => {
     try {
-        console.log('Making request to /clerk/personal-clearances/');
         const res = await api.get('/clerk/personal-clearances/');
-        console.log('API Response:', res.data);
         return res.data;
     } catch (err) {
         const error = err as AxiosError;
-        console.error('Error fetching personal clearances:', error);
-        console.error('Error details:', error.response?.data || 'No error details available');
         throw error;
     }
 }; 

@@ -202,6 +202,9 @@ class WasteTruck(models.Model):
     )
     truck_last_maint = models.DateField(default=date.today)
     truck_is_archive = models.BooleanField(default=False) 
+    # truck_track_device = models.CharField(null=True, blank=True)
+    # truck_track_device_lat = models.FloatField(null=True, blank=True)
+    # truck_track_device_lng = models.FloatField(null=True, blank=True)
     
     staff = models.ForeignKey(
         'administration.Staff',
@@ -217,7 +220,7 @@ class WasteTruck(models.Model):
 
 class WasteCollectionSched(models.Model):
     wc_num = models.BigAutoField(primary_key=True)
-    wc_date = models.DateField(null=True)
+    wc_day = models.CharField(max_length=200, default="None")    
     wc_time = models.TimeField(null=True)
     wc_add_info = models.CharField(max_length=200, null=True)
     wc_is_archive = models.BooleanField(default=False)
@@ -421,7 +424,7 @@ class Pickup_Confirmation(models.Model):
         Garbage_Pickup_Request,
         on_delete=models.CASCADE,
         db_column='garb_id',
-        related_name='pickup_confirmations'
+        related_name='pickup_confirmation'
     )
 
     class Meta:

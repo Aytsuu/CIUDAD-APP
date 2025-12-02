@@ -11,47 +11,72 @@ import { uppercaseAll } from "@/helpers/caseHelper";
 import { LoadingState } from "@/components/ui/loading-state";
 import { FeedbackScreen } from "@/components/ui/feedback-screen";
 import { useGetPersonalModificationReq } from "../queries/accountGetQueries";
+import { useAddPersonalModification } from "../queries/accountPostQueries";
 
 export default function UpdateInformation() {
   // ===================== STATE INITIALIZATION =====================
   const params = useLocalSearchParams();
-  const data = React.useMemo(() => JSON.parse(params?.data as string), [params])
-  const { per_addresses, ...per } = data; 
+  const data = React.useMemo(
+    () => JSON.parse(params?.data as string),
+    [params]
+  );
+  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const { per_addresses, ...per } = data;
   const { toast } = useToastContext();
   const { getValues, setValue } = useRegistrationFormContext();
-  const { data: personalModReq, isLoading } = useGetPersonalModificationReq(data?.per_id);
+  const { data: personalModReq, isLoading } = useGetPersonalModificationReq(
+    data?.per_id
+  );
+  const { mutateAsync: addPersonalModification } = useAddPersonalModification();
 
   // ===================== SIDE EFFECTS =====================
   React.useEffect(() => {
-    if(data) {
+    if (data) {
       Object.entries(per).map(([key, val]) => {
-        setValue(`personalInfoSchema.${key}` as any, val)
-      })
+        setValue(`personalInfoSchema.${key}` as any, val);
+      });
     }
-  }, [per]) 
+  }, [per]);
 
   React.useEffect(() => {
-    if(per_addresses?.length > 0) {
-      setValue('personalInfoSchema.per_addresses.list', per_addresses)
+    if (per_addresses?.length > 0) {
+      setValue("personalInfoSchema.per_addresses.list", per_addresses);
     }
-  }, [per_addresses])
+  }, [per_addresses]);
 
   // ===================== HANDLERS =====================
-  const submit = () => {
-    const personal = uppercaseAll(getValues("personalInfoSchema"))
-    const {per_addresses: new_per_addresses, ...new_per} = personal;
-    if(isEqual(per, new_per) && isEqual(per_addresses, new_per_addresses.list)) {
-      toast.info("No changes were made")
+  const submit = async () => {
+    const personal = uppercaseAll(getValues("personalInfoSchema"));
+    const { per_addresses: new_per_addresses, ...new_per } = personal;
+    if (
+      isEqual(per, new_per) &&
+      isEqual(per_addresses, new_per_addresses.list)
+    ) {
+      toast.info("No changes were made");
       router.back();
       return;
     }
 
-    router.push("/(account)/settings/personal/scan");
-  }
+    setIsSubmitting(true);
+    try {
+      await addPersonalModification({
+        personal: {
+          ...personal,
+          per_addresses: new_per_addresses.list,
+        },
+      });
+      toast.success("Your request has been delivered.");
+      router.back();
+    } catch (err) {
+      toast.error("Failed to submit request. Please try");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // ===================== RENDER =====================
-  if(isLoading) {
-    return <LoadingState />
+  if (isLoading) {
+    return <LoadingState />;
   }
 
   return (
@@ -65,22 +90,22 @@ export default function UpdateInformation() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Update Information</Text>}
+      headerTitle={
+        <Text className="text-gray-900 text-[13px]">Update Information</Text>
+      }
       rightAction={<View className="w-10 h-10" />}
     >
       {personalModReq ? (
-        <FeedbackScreen 
-          status="waiting"
-        />  
+        <FeedbackScreen status="waiting" />
       ) : (
         <PersonalInformation
           params={{
             name: "personalInfoSchema",
             buttonLabel: "Save and Continue",
-            submit: submit
+            submit: submit,
           }}
         />
       )}
     </PageLayout>
-  )
+  );
 }

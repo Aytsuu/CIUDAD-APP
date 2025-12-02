@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from apps.patientrecords.models import Patient, PatientRecord, Spouse, VitalSigns, FollowUpVisit, BodyMeasurement, Obstetrical_History, MedicalHistory
-from apps.medicineservices.models import MedicineRecord
+from apps.medicineservices.models import MedicineRequest
 from apps.vaccination.models import VaccinationRecord
 import uuid
 from apps.administration.models import Staff
@@ -19,24 +19,73 @@ year = str(today.year)
 class PrenatalAppointmentRequest(models.Model):
     par_id = models.BigAutoField(primary_key=True)
     requested_at = models.DateTimeField(auto_now_add=True)
-    approved_at = models.DateTimeField(null=True, blank=True)
-    cancelled_at = models.DateTimeField(null=True, blank=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    rejected_at = models.DateTimeField(null=True, blank=True)
+    requested_date = models.DateField(null=True, blank=True)  
+    approved_at = models.DateField(null=True, blank=True)
+    cancelled_at = models.DateField(null=True, blank=True)
+    completed_at = models.DateField(null=True, blank=True)
+    rejected_at = models.DateField(null=True, blank=True)
+    missed_at = models.DateField(null=True, blank=True)
     reason = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[
         ('pending', 'Pending'),
         ('approved', 'Approved'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
-        ('completed', 'Completed'),
         ('rejected', 'Rejected'),
+        ('missed', 'Missed'),
     ], default='pending')
     rp_id = models.ForeignKey(ResidentProfile, on_delete=models.CASCADE, db_column='rp_id', related_name='pa_request')
     pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, db_column='pat_id', related_name='pa_request', null=True)
     
     class Meta:
         db_table = 'prenatal_appointment_request'
+        indexes = [
+            models.Index(fields=['status', 'requested_date']),
+            models.Index(fields=['pat_id', 'status']),
+        ]
+    
+    def approve(self, staff=None):
+        """Approve the appointment"""
+        self.status = 'approved'
+        self.approved_at = timezone.now().date()
+        self.save()
+    
+    def cancel(self, reason=None, staff=None):
+        """Cancel the appointment"""
+        self.status = 'cancelled'
+        self.cancelled_at = timezone.now().date()
+        if reason:
+            self.reason = reason
+        self.save()
+    
+    def complete(self, staff=None):
+        """Mark appointment as completed"""
+        self.status = 'completed'
+        self.completed_at = timezone.now().date()
+        self.save()
+    
+    def reject(self, reason=None, staff=None):
+        """Reject the appointment"""
+        self.status = 'rejected'
+        self.rejected_at = timezone.now().date()
+        if reason:
+            self.reason = reason
+        self.save()
+    
+    def mark_as_missed(self, staff=None):
+        """Mark appointment as missed - no reason required"""
+        self.status = 'missed'
+        self.missed_at = timezone.now().date()
+        self.save()
+    
+    def is_overdue(self):
+        """Check if appointment date has passed and status is still approved"""
+        if self.requested_date and self.status == 'approved':
+            return self.requested_date < timezone.now().date()
+        return False
+    
+    def __str__(self):
+        return f"Appointment {self.par_id} - {self.status} - {self.requested_date}"
 
 class Pregnancy(models.Model):
     pregnancy_id = models.CharField(primary_key=True, max_length=20, unique=True)
@@ -50,6 +99,7 @@ class Pregnancy(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     prenatal_end_date = models.DateField(null=True, blank=True)
     postpartum_end_date = models.DateField(null=True, blank=True)
+    pregnancyloss_reason = models.TextField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.pregnancy_id:
@@ -82,23 +132,31 @@ class Pregnancy(models.Model):
 
 class Prenatal_Form(models.Model):
     pf_id = models.CharField(primary_key=True, max_length=20, editable=False, unique=True)
-    pf_lmp = models.DateField(null=True, blank=True)
     pf_edc = models.DateField(null=True, blank=True)
     pf_occupation = models.CharField(max_length=100, null=True, blank=True)
     previous_complications = models.TextField(null=True, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(null=True, blank=True)
+    forwarded_status = models.CharField(null=True, blank=True)
 
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='prenatal_form', db_column='pregnancy_id', null=True)
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='patrec_id', null=True) 
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='prenatal_form', db_column='spouse_id', null=True)
     bm_id  = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='prenatal_form', db_column='bm_id', null=True)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='prenatal_form', db_column='followv_id', null=True)
-    medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='medrec_id', null=True)
+    medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='prenatal_form', db_column='medreq_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vital_id', null=False)
+    vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='prenatal_form', db_column='vacrec_id', null=True)
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='prenatal_form', db_column='staff_id', null=True)
+    assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='assigned_prenatal_forms', db_column='assigned_to', null=True)
 
     def save(self, *args, **kwargs):
+        # Strip whitespace from status and forwarded_status fields
+        if self.status:
+            self.status = self.status.strip()
+        if self.forwarded_status:
+            self.forwarded_status = self.forwarded_status.strip()
+            
         if not self.pf_id:
             with transaction.atomic():
                 # Get current date
@@ -129,6 +187,7 @@ class Previous_Hospitalization(models.Model):
     prev_hospitalization = models.CharField(max_length=250, default='', blank=True)
     prev_hospitalization_year = models.PositiveIntegerField(null=True, blank=True)
     pf_id =models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='pf_previous_hospitalization', db_column='pf_id', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'pf_previous_hospitalization'
@@ -154,9 +213,9 @@ class TT_Status(models.Model):
     tts_status = models.CharField(max_length=10, default='', blank=True)
     tts_date_given = models.DateField(null=True, blank=True)
     tts_tdap = models.BooleanField(null=True, blank=True)
-    vacrec_id = models.ForeignKey(VaccinationRecord, on_delete=models.CASCADE, related_name='tt_status', db_column='vacrec_id', null=True)
-    pf_id = models.ForeignKey(Prenatal_Form, on_delete=models.CASCADE, related_name='tt_status', db_column='pf_id', null=True)
-
+    pat_id = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='tt_status', db_column='pat_id', null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
     class Meta:
         db_table = 'tt_status'
 
@@ -291,22 +350,23 @@ class PrenatalCare(models.Model):
 class PostpartumRecord(models.Model):
     ppr_id = models.CharField(primary_key=True, max_length=20, unique=True, editable=False)
     ppr_lochial_discharges = models.CharField(max_length=100)
-    ppr_vit_a_date_given = models.DateField(null=True, blank=True)
     ppr_num_of_pads = models.PositiveIntegerField()
-    ppr_mebendazole_date_given = models.DateField(null=True, blank=True)
     ppr_date_of_bf = models.DateField()
     ppr_time_of_bf = models.TimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(null=True, blank=True)
+    forwarded_status = models.CharField(null=True, blank=True)
+    assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='assigned_postpartum_records', db_column='assigned_to', null=True)
 
     patrec_id = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='postpartum_record', null=False, db_column='patrec_id')
     spouse_id = models.ForeignKey(Spouse, on_delete=models.CASCADE, related_name='postpartum_record', db_column='spouse_id', null=True)
     vital_id = models.ForeignKey(VitalSigns, on_delete=models.CASCADE, related_name='postpartum_record', db_column='vital_id', null=False)
     followv_id = models.ForeignKey(FollowUpVisit, on_delete=models.CASCADE, related_name='postpartum_record', db_column='followv_id', null=True)
     pregnancy_id = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='postpartum_record', db_column='pregnancy_id', null=True, blank=True)
-    medrec_id = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='postpartum_record', db_column='medrec_id', null=True)
-    # staff_id = models.ForeignKey('healthProfiling.Staff', on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
+    medreq_id = models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='postpartum_record', db_column='medreq_id', null=True)
+    staff_id = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='postpartum_record', db_column='staff_id')
+    tts_id = models.ForeignKey(TT_Status, on_delete=models.CASCADE, related_name='postpartum_record', db_column='tts_id', null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.ppr_id:

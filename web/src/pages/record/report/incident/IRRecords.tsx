@@ -1,9 +1,8 @@
 import { DataTable } from "@/components/ui/table/data-table"
-import { Search, FileDown, Archive, FileText } from "lucide-react"
+import { Search, Archive, FileText } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { IRColumns } from "../ReportColumns"
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout"
 import { Button } from "@/components/ui/button/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -15,12 +14,14 @@ import { useGetIncidentReport } from "../queries/reportFetch"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useNavigate } from "react-router"
 import { Spinner } from "@/components/ui/spinner"
+import { SelectLayout } from "@/components/ui/select/select-layout"
 
 export default function IRRecords() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [severity, setSeverity] = React.useState<string>("all");
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
@@ -30,7 +31,9 @@ export default function IRRecords() {
     currentPage,
     debouncedPageSize,
     debouncedSearchQuery,
-    false
+    false,
+    false,
+    severity
   );
 
   const IRList = IncidentReport?.results || [];
@@ -59,19 +62,24 @@ export default function IRRecords() {
               </div> 
 
               <div className="flex items-center gap-2">
-                <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="gap-2">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
+                <SelectLayout 
+                  value={severity}
+                  className="gap-4"
+                  onChange={(value) => {
+                    setCurrentPage(1)
+                    setSeverity(value)
+                  }}
+                  placeholder="Severity"
                   options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
+                    {id: "all", name: "All"},
+                    {id: "low", name: "Low"},
+                    {id: "medium", name: "Medium"},
+                    {id: "high", name: "High"}
                   ]}
+                  withReset={false}
+                  valueLabel="Severity"
                 />
+
                 <TooltipLayout 
                   trigger={
                     <Button variant={"outline"}
@@ -89,7 +97,7 @@ export default function IRRecords() {
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-sm font-medium text-gray-700">Show</span>
                   <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>

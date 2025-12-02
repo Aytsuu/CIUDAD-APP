@@ -109,6 +109,7 @@ function AcceptPickupRequest({garb_id, pref_date, pref_time, onSuccess}: {
                         name="date"
                         type="date"
                         label="Date"
+                        min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
                     />
 
                     <FormDateTimeInput

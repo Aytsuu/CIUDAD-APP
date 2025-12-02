@@ -3,10 +3,9 @@
 
 import React, { useState, useMemo, useRef } from "react";
 import { View, TouchableOpacity, ScrollView, RefreshControl, FlatList, Dimensions } from "react-native";
-import { ChevronLeft, Calendar, User, Heart, Scale, Thermometer, Activity, ChevronRight, ChevronLeft as LeftIcon } from "lucide-react-native";
+import { ChevronLeft, Calendar, Heart, Scale, Thermometer, Activity, ChevronRight, ChevronLeft as LeftIcon } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router, useLocalSearchParams } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useConsultationHistory } from "../../queries/fetch";
@@ -56,7 +55,7 @@ const ConsultationDetailCard = ({ record, isCurrent = false }: { record: any; is
     });
   };
 
-  const bhwName = `${record.staff_details?.rp?.per?.per_fname || "N/A"} ${record.staff_details?.rp?.per?.per_lname || "N/A"}`;
+  const bhwName = `${record.staff_details?.fname || "N/A"} ${record.staff_details?.lname || "N/A"}`;
 
   return (
     <View style={{ width: screenWidth - 32 }} className={`bg-white rounded-xl border-2 p-4 shadow-sm ${isCurrent ? "border-blue-500 bg-blue-50" : "border-gray-200"}`}>

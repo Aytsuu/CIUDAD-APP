@@ -2,12 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button/button";
 import { Printer, Search, Loader2 } from "lucide-react";
-import { exportToCSV, exportToExcel, exportToPDF } from "../firstaid-report/export-report";
-import { ExportDropdown } from "../firstaid-report/export-dropdown";
+import { exportToCSV, exportToExcel, exportToPDF } from "../export/export-report";
+import { ExportDropdown } from "../export/export-dropdown";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select/select";
-import { useLoading } from "@/context/LoadingContext";
 import { toast } from "sonner";
 import { useMonthlyOPTRecords } from "./queries/fetch";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
@@ -24,7 +23,6 @@ export default function OPTTrackingDetails() {
   const location = useLocation();
   const state = location.state as { month: string; monthName: string };
   const { month, monthName } = state || {};
-  const { showLoading, hideLoading } = useLoading();
   const [sitioSearch, setSitioSearch] = useState("");
   const [nutritionalStatus, setNutritionalStatus] = useState("");
   const [pageSize, setPageSize] = useState(10);
@@ -54,10 +52,7 @@ export default function OPTTrackingDetails() {
   const totalEntries = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalEntries / pageSize);
 
-  useEffect(() => {
-    if (isLoading) showLoading();
-    else hideLoading();
-  }, [isLoading, showLoading, hideLoading]);
+  
 
   useEffect(() => {
     if (error) {
@@ -97,7 +92,7 @@ export default function OPTTrackingDetails() {
 
   const handleExportExcel = () => exportToExcel(prepareExportData(), `opt_records_${monthName.replace(" ", "_")}`);
 
-  const handleExportPDF = () => exportToPDF(`opt_records_${monthName.replace(" ", "_")}`);
+  const handleExportPDF = () => exportToPDF("landscape");
 
   const handlePrint = () => {
     const printContent = document.getElementById("printable-area");
@@ -367,8 +362,8 @@ export default function OPTTrackingDetails() {
                       <tr key={index}>
                         <td className="border p-1">{item.household_no}</td>
                         <td className="border p-1">{item.parents?.mother || item.parents?.father || "N/A"}</td>
-                        <td className="border p-1 "></td>
-                        <td className="border p-1 "></td>
+                        <td className="border p-1 ">{item.family_planning_method || ""}</td>
+                        <td className="border p-1 ">{item.family_planning_method ? "" : "None"}</td>
                         <td className="border p-1">{item.child_name || "N/A"}</td>
                         <td className="border p-1 ">{item.sex}</td>
                         <td className="border p-1 text-center">{formatDate(item.date_of_birth)}</td>

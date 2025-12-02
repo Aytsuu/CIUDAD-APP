@@ -1,27 +1,27 @@
 
-// import React, { useState, useMemo, useEffect, useContext } from "react";
-// import { View, Text, ScrollView, TouchableOpacity } from "react-native";
-// import { useRouter, useLocalSearchParams } from "expo-router";
-// import { ChevronLeft,Activity,Heart,AlertCircle,Clock,Stethoscope,} from "lucide-react-native";
-// import { Card, CardContent, CardHeader } from "@/components/ui/card";
-// import { Button } from "@/components/ui/button";
-// import { FollowUpsCard } from "@/components/healthcomponents/ch-vax-followup";
-// import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
-// import { VaccinationStatusCards } from "@/components/healthcomponents/vaccination-status";
-// // import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/vaccinationstatus-skeleton";
+import React, { useState, useMemo, useEffect, useContext } from "react";
+import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { ChevronLeft,Activity,Heart,AlertCircle,Clock,Stethoscope,} from "lucide-react-native";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { FollowUpsCard } from "@/components/healthcomponents/ch-vax-followup";
+import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";
+import { VaccinationStatusCards } from "@/components/healthcomponents/vaccination-status";
+// import { VaccinationStatusCardsSkeleton } from "@/components/healthcomponents/vaccinationstatus-skeleton";
 
-// // Hooks and types
-// import { ChrRecords } from "./types";
-// import { useFollowupChildHealthandVaccines, usePatientVaccinationDetails, useUnvaccinatedVaccines } from "../../../vaccination/queries/fetch";
-// // import { LoadingContext } from "@/contexts/LoadingContext";
-// // import { getChildHealthColumns } from "./columns/indiv_col";
-// import { useChildHealthHistory } from "../queries/fetchQueries";
+// Hooks and types
+import { ChrRecords } from "./types";
+import { useFollowupChildHealthandVaccines, usePatientVaccinationDetails, useUnvaccinatedVaccines } from "../../../vaccination/queries/fetch";
+// import { LoadingContext } from "@/contexts/LoadingContext";
+// import { getChildHealthColumns } from "./columns/indiv_col";
+import { useChildHealthHistory } from "../queries/fetchQueries";
 
-// export default function InvChildHealthRecords() {
-//   const router = useRouter();
-//   const params = useLocalSearchParams();
-//   console.log('InvChildHealthRecords: Received params via useLocalSearchParams:', params);
-//   console.log('InvChildHealthRecords: Expected route prop:', arguments[0]?.route);
+export default function InvChildHealthRecords() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  console.log('InvChildHealthRecords: Received params via useLocalSearchParams:', params);
+  console.log('InvChildHealthRecords: Expected route prop:', arguments[0]?.route);
 
 //   let ChildHealthRecord = null;
 //   try {

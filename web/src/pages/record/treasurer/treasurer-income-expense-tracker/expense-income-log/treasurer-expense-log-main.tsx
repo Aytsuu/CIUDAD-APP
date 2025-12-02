@@ -189,6 +189,7 @@ function ExpenseLogMain() {
                                 className="bg-white w-full" 
                                 placeholder="Month"
                                 value={selectedMonth} 
+                                valueLabel="Month"
                                 options={monthOptions}
                                 onChange={handleMonthChange}
                             />

@@ -3,12 +3,13 @@ from .models import *
 from datetime import date
 from apps.inventory.serializers.vaccine_serializers import *
 from apps.patientrecords.models import Patient,PatientRecord
-from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
+from apps.patientrecords.serializers.patients_serializers import *
 from apps.patientrecords.serializers.vitalsigns_serializers import VitalSignsSerializer
 from apps.patientrecords.serializers.followvisits_serializers import FollowUpVisitSerializer
+from apps.administration.serializers.staff_serializers import StaffTableSerializer
 # serializers. py
 
-
+ 
 
 
 class BaseVaccinationRecordSerializer(serializers.ModelSerializer):
@@ -23,6 +24,8 @@ class VaccinationHistorySerializerBase(serializers.ModelSerializer):
     follow_up_visit = FollowUpVisitSerializer(source='followv', read_only=True)
     vacrec_details = BaseVaccinationRecordSerializer(source='vacrec', read_only=True)
     vac_details = VacccinationListSerializer(source='vac', read_only=True)
+    assessed_by = StaffTableSerializer(source='staff', read_only=True)
+    administered_by =StaffTableSerializer(source='assigned_to', read_only=True)
 
     class Meta:
         model = VaccinationHistory
@@ -43,11 +46,10 @@ class VaccinationHistorySerializer(serializers.ModelSerializer):
         
     def get_patient(self, obj):
         try:
-            return PatientSerializer(obj.vacrec.patrec_id.pat_id).data
+            return PatientMiniMalSerializer(obj.vacrec.patrec_id.pat_id).data
         except Exception:
             return None
         
-    
 
 class VaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_histories = VaccinationHistorySerializer(many=True, read_only=True)
@@ -67,7 +69,8 @@ class VaccinationRecordSerializerBase(serializers.ModelSerializer):
 # ALL  VACCINATION RECORD 
 class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
     vaccination_count = serializers.SerializerMethodField()
-    patient_details = PatientSerializer(source='*', read_only=True)
+    patient_details = PatientMiniMalSerializer(source='*', read_only=True)
+    latest_vaccination_date = serializers.SerializerMethodField()
     
     class Meta:
         model = Patient
@@ -80,3 +83,14 @@ class PatientVaccinationRecordSerializer(serializers.ModelSerializer):
         ).count()
         print(f"Completed vaccination history count for patient {obj.pat_id}: {count}")
         return count
+    
+    def get_latest_vaccination_date(self, obj):
+        # Get the most recent vaccination date for this patient
+        latest_vaccination = VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=obj.pat_id,
+            vachist_status__in=['completed', 'partially vaccinated']
+        ).order_by('-date_administered').first()
+        
+        if latest_vaccination and latest_vaccination.date_administered:
+            return latest_vaccination.date_administered
+        return None

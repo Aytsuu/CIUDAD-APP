@@ -21,22 +21,55 @@ export interface IssuedCertificate {
     };
 }
 
-// Fetch issued certificates
-export const getIssuedCertificates = async (): Promise<IssuedCertificate[]> => {
+// Fetch issued certificates with search and pagination - matching web version
+export const getIssuedCertificates = async (
+    search?: string,
+    page?: number,
+    pageSize?: number,
+    purpose?: string,
+    dateFrom?: string,
+    dateTo?: string
+): Promise<{results: IssuedCertificate[], count: number, next: string | null, previous: string | null}> => {
     try {
-        console.log('Making request to /clerk/issued-certificates/');
-        const res = await api.get('/clerk/issued-certificates/');
+        const params = new URLSearchParams();
+        if (search) params.append('search', search);
+        if (page) params.append('page', page.toString());
+        if (pageSize) params.append('page_size', pageSize.toString());
+        if (purpose) params.append('purpose', purpose);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        
+        const queryString = params.toString();
+        const url = `/clerk/issued-certificates/${queryString ? '?' + queryString : ''}`;
+        
+        console.log('Making request to:', url);
+        const res = await api.get(url);
         console.log('API Response:', res.data);
-        return res.data || []; // Return empty array if no data
+        
+        // Handle both paginated and non-paginated responses
+        if (res.data.results) {
+            return res.data;
+        } else {
+            return {
+                results: res.data || [],
+                count: res.data?.length || 0,
+                next: null,
+                previous: null
+            };
+        }
     } catch (err) {
         const error = err as AxiosError;
         console.error('Error fetching issued certificates:', error);
         if (error.response?.status === 500) {
-            // If server error (likely no data yet), return empty array
             console.log('No issued certificates found, returning empty array');
-            return [];
+            return {
+                results: [],
+                count: 0,
+                next: null,
+                previous: null
+            };
         }
-        throw error; // Re-throw other errors
+        throw error;
     }
 };
 

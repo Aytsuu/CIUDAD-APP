@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { useForm, Controller, Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { z } from "zod";
@@ -57,7 +57,6 @@ export default function AnnouncementCreate() {
     try {
       return JSON.parse(params.data as string);
     } catch (error) {
-      console.error("Error parsing business data:", error);
       return null;
     }
   }, [params.data]);
@@ -160,7 +159,6 @@ export default function AnnouncementCreate() {
         staff,
         ...announcementData
       } = values;
-      console.log(announcementData);
 
       const files = selectedImages.map((file) => ({
         name: file.name,
@@ -423,8 +421,7 @@ export default function AnnouncementCreate() {
               <MediaPicker
                 selectedImages={selectedImages}
                 setSelectedImages={setSelectedImages}
-                multiple={true}
-                maxImages={2}
+                limit={2}
               />
             </View>
 
@@ -482,7 +479,7 @@ export default function AnnouncementCreate() {
                 buttonLabel={
                   data ? "Update Announcement" : "Create Announcement"
                 }
-                submittingLabel={data ? "Saving..." : "Submitting..."}
+                submittingLabel={data ? "Saving..." : "Creating..."}
                 isSubmitting={isSubmitting}
                 handleSubmit={data ? update : create}
               />

@@ -1,0 +1,151 @@
+"use client";
+import { useState } from "react";
+import { DataTable } from "@/components/ui/table/data-table";
+import { Button } from "@/components/ui/button/button";
+import { Input } from "@/components/ui/input";
+import { AlertCircle, Loader2, Package, History } from "lucide-react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { completedDetailsIColumns } from "./columns";
+import { useMedicineRequestStatusesDetails } from "../queries/fetch";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { PatientInfoCard } from "@/components/ui/patientInfoCard";
+
+export default function CompletedRequestDetail() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Get the request data from state params
+  const patientData = location.state?.params?.patientData;
+  const medreq_id = location.state?.params?.medreq_id as any;
+
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Fetch completed request details
+  const { data: apiResponse, isLoading, error: completedRequestError } = useMedicineRequestStatusesDetails(medreq_id, currentPage, pageSize, "completed");
+
+  // Extract data from paginated response
+  const medicineData = apiResponse?.results || [];
+  const totalCount = apiResponse?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  console.log("Completed Request Data:", patientData);
+
+  if (completedRequestError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="h-5 w-5" />
+              Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Error loading medicine request items</p>
+            <Button onClick={() => navigate(-1)} className="mt-4">
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <LayoutWithBack title="Completed Medicine Request" description="View details of completed medicine request">
+      <div className="">
+        {/* Patient Information Card */}
+        <div className="mb-5">
+          <PatientInfoCard patient={patientData} />
+        </div>
+
+        {/* Completed Items Table */}
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+            <div>
+              <CardTitle>
+                Completed Medicine Items <span className="bg-green-500 text-white rounded-full text-sm px-2">{totalCount}</span>
+              </CardTitle>
+              <CardDescription>All completed medicine request items with allocation details</CardDescription>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/services/medicine/records/individual-records"
+                state={{
+                  params: {
+                    patientData: {
+                      pat_id: patientData?.pat_id,
+                    },
+                  },
+                }}
+              >
+                <Button size="sm">
+                  <History className="h-4 w-4 mr-2" />
+                  View History
+                </Button>
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Table Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="pageSize" className="text-sm">
+                  Show
+                </Label>
+                <Input
+                  id="pageSize"
+                  type="number"
+                  className="w-20 h-8"
+                  value={pageSize}
+                  onChange={(e) => {
+                    const value = Math.max(1, Math.min(+e.target.value, 100));
+                    setPageSize(value);
+                    setCurrentPage(1);
+                  }}
+                  min="1"
+                  max="100"
+                />
+                <Label className="text-sm">entries</Label>
+              </div>
+            </div>
+
+            {/* Table Content */}
+            <div className="border rounded-lg overflow-hidden">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+                  <span className="ml-2 text-gray-600">Loading...</span>
+                </div>
+              ) : completedRequestError ? (
+                <div className="flex items-center justify-center py-12 text-red-600">
+                  <AlertCircle className="h-8 w-8 mr-2" />
+                  <span>Error loading items. Please try again.</span>
+                </div>
+              ) : medicineData.length === 0 ? (
+                <div className="flex items-center justify-center py-12 text-gray-500">
+                  <Package className="h-8 w-8 mr-2" />
+                  <span>No completed items found</span>
+                </div>
+              ) : (
+                <>
+                  <DataTable columns={completedDetailsIColumns} data={medicineData} />
+                  <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t bg-gray-50">
+                    <p className="text-sm text-gray-600">
+                      Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} items
+                    </p>
+                    <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </LayoutWithBack>
+  );
+}

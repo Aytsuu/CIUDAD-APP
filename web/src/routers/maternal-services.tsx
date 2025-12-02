@@ -1,5 +1,6 @@
-import MaternalAllRecords from "@/pages/healthServices/maternal/maternal-all-records";
-import MaternalIndivRecords from "@/pages/healthServices/maternal/maternal-indiv-records";
+import MaternalMain from "@/pages/healthServices/maternal/maternal-tabs/maternal-main";
+import MaternalAllRecords from "@/pages/healthServices/maternal/maternal-tabs/maternal-all-records";
+import MaternalIndivRecords from "@/pages/healthServices/maternal/maternal-tabs/maternal-indiv-records";
 import PrenatalForm from "@/pages/healthServices/maternal/prenatal/prenatal-forms/prenatal-form-main";
 import PrenatalViewingOne from "@/pages/healthServices/maternal/prenatal/prenatal-history/form-history/prenatal-viewing-one";
 import PrenatalIndivHistory from "@/pages/healthServices/maternal/prenatal/prenatal-history/prenatal-indiv-history";
@@ -8,7 +9,12 @@ import PostpartumViewing from "@/pages/healthServices/maternal/postpartum/postpa
 import PostpartumCareHistory from "@/pages/healthServices/maternal/postpartum/postpartum-history/postpartum-care-history";
 import PostpartumIndivHistory from "@/pages/healthServices/maternal/postpartum/postpartum-history/postpartum-indiv-history";
 
+
 export const maternal_router = [
+    {
+        path: "/services/maternal",
+        element: <MaternalMain />,
+    },
     {
         path: "/services/maternalrecords",
         element: <MaternalAllRecords />,
@@ -44,5 +50,5 @@ export const maternal_router = [
     {
         path: "/services/maternal/postpartum/view",
         element: <PostpartumViewing />,
-    }
+    },
 ]

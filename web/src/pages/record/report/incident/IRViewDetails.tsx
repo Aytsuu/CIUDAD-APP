@@ -5,11 +5,11 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Textarea } from "@/components/ui/textarea";
 import {
   MapPin,
-  MessageSquareWarning,
   Clock4,
   CalendarDays,
   ImageOff,
   User,
+  FileText,
 } from "lucide-react";
 import React from "react";
 import { useLocation, useNavigate } from "react-router";
@@ -223,7 +223,7 @@ export default function IRViewDetails() {
               </p>
             </div>
             <div className="flex flex-col items-center sm:flex-row gap-6 w-full sm:w-auto">
-              <p className="text-sm text-gray-700">Submitted on {getDateTimeFormat(IRInfo?.ir_created_at)}</p>
+              <p className="text-sm text-gray-700">Received on {getDateTimeFormat(IRInfo?.ir_created_at)}</p>
               <Button
                 onClick={() => {
                   navigate("/report/acknowledgement/form", {
@@ -235,7 +235,7 @@ export default function IRViewDetails() {
                   });
                 }}
               >
-                <MessageSquareWarning className="w-4 h-4" />
+                <FileText className="w-4 h-4" />
                 Create Acknowledgement Report
               </Button>
             </div>

@@ -19,8 +19,6 @@ const editAnnualGrossSales = async (ags_id: string, grossSales: {
         ags_is_archive: false,
         };
 
-        console.log("Creating new record:", newRecord);
-
         const res = await api.post('treasurer/annual-gross-sales-active/', newRecord);
 
         return res.data.ags_id;
@@ -47,8 +45,6 @@ const editPurposeAndRate = async (pr_id: string, purposeAndRate: {
           pr_date: new Date().toISOString(),
           pr_is_archive: false,
         };
-
-        console.log("Creating new record:", newRecord);
 
         const res = await api.post('treasurer/purpose-and-rate/', newRecord);
 

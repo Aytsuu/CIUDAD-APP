@@ -2,14 +2,13 @@ import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   FlatList,
   Pressable,
   Modal,
   ScrollView,
   Image,
-  ActivityIndicator,
+  RefreshControl,
   Linking,
   Alert
 } from 'react-native';
@@ -19,16 +18,21 @@ import { Archive, ArchiveRestore, Trash, CircleAlert, ChevronLeft, ChevronRight,
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { Button } from '@/components/ui/button';
+import { SearchInput } from '@/components/ui/search-input';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useResolution } from './queries/resolution-fetch-queries';
 import { useDeleteResolution } from './queries/resolution-delete-queries';
 import { useArchiveOrRestoreResolution } from './queries/resolution-delete-queries';
 import PageLayout from '@/screens/_PageLayout';
-import { useDebounce } from '@/hooks/use-debounce'; // You'll need to create this hook
+import { useDebounce } from '@/hooks/use-debounce';
+import { LoadingState } from "@/components/ui/loading-state";
+
+
 
 function ResolutionPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("active");
+  const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
@@ -36,16 +40,28 @@ function ResolutionPage() {
   const [selectedImages, setSelectedImages] = useState<{rsd_url: string, rsd_name: string}[]>([]);
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false); 
 
   // Use debounce for search to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  // Fetch data with backend filtering
-  const { data: resolutionData = [], isLoading, isError, refetch } = useResolution(
+  // Updated to handle paginated response with archive filtering
+  const { 
+    data: resolutionData = { results: [], count: 0 }, 
+    isLoading, 
+    isError, 
+    refetch 
+  } = useResolution(
+    1, // page
+    1000, // pageSize - large number to get all data
     debouncedSearchQuery, 
     filter, 
-    yearFilter
+    yearFilter,
+    activeTab === "archive" // Send archive status to backend
   );
+
+  // Extract the actual data array from paginated response
+  const fetchedData = resolutionData.results || [];
 
   const { mutate: deleteRes, isPending: isDeletePending } = useDeleteResolution();
   const { mutate: archiveRestore, isPending: isArchivePending } = useArchiveOrRestoreResolution();
@@ -62,7 +78,7 @@ function ResolutionPage() {
   const yearOptions = useMemo(() => {
     const years = new Set<number>();
     
-    resolutionData.forEach(record => {
+    fetchedData.forEach(record => {
       if (record.res_date_approved) {
         try {
           const date = new Date(record.res_date_approved);
@@ -84,14 +100,10 @@ function ResolutionPage() {
     });
 
     return options;
-  }, [resolutionData]);
+  }, [fetchedData]);
 
-  // Only filter by active/archive tab (other filtering is done in backend)
-  const filteredData = useMemo(() => {
-    return resolutionData.filter(row => 
-      activeTab === "active" ? !row.res_is_archive : row.res_is_archive
-    );
-  }, [resolutionData, activeTab]);
+  // No frontend filtering needed - backend already filtered based on activeTab
+  const filteredData = fetchedData;
 
   const handleDelete = (res_num: number) => deleteRes(String(res_num));
   const handleArchive = (res_num: number) => archiveRestore({ res_num: String(res_num), res_is_archive: true });
@@ -144,13 +156,26 @@ function ResolutionPage() {
     });    
   }
 
-  const handleRefresh = () => {
-    refetch();
+
+  //Refresh the page
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
+
+
+  // Loading state component
+  const renderLoadingState = () => (
+    <View className="h-64 justify-center items-center">
+      <LoadingState/>
+    </View>
+  );
+
 
   const renderItem = ({ item }: { item: any }) => (
     <Pressable onPress={() => handleEdit(item)} className="mb-4">
-      <Card className="border border-gray-200">
+      <Card className="border border-gray-200 bg-white">
         <CardHeader className="flex-row justify-between items-center">
           <CardTitle className="text-lg text-[#2a3a61]">Resolution No. {item.res_num}</CardTitle>
           {activeTab === 'active' ? (
@@ -269,27 +294,43 @@ function ResolutionPage() {
         </TouchableOpacity>
       }
       headerTitle={
-          <Text className="font-semibold text-lg text-[#2a3a61]">Resolution Record</Text>
+          <Text className="text-gray-900 text-[13px]">Resolution Record</Text>
       }
       rightAction={
-        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+        <TouchableOpacity 
+          onPress={() => setShowSearch(!showSearch)} 
+          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+        >
+          <Search size={22} className="text-gray-700" />
+        </TouchableOpacity>
       }
+      wrapScroll={false}
     >
-      <View className="flex-1 px-4">
-        {/* Search and Filters */}
+      {showSearch && (
+        <SearchInput 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSubmit={() => {}} 
+        />
+      )}      
+
+      <View className="flex-1 px-6">
+
+        {/*Filters */}
         <View className="mb-4">
-          <View className="flex-row items-center gap-2 pb-3">
-            <View className="relative flex-1">
-              <Search className="absolute left-3 top-3 text-gray-500" size={17} />
-              <TextInput
-                placeholder="Search..."
-                className="pl-5 w-full h-[45px] bg-white text-base rounded-xl p-2 border border-gray-300"
-                value={searchQuery}
-                onChangeText={handleSearchChange}
+          <View className="flex-row justify-between items-center gap-2 pb-5">
+            <View className="flex-1">
+              <SelectLayout
+                options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
+                className="h-8"
+                selectedValue={yearFilter}
+                onSelect={(option) => handleYearFilterChange(option.value)}
+                placeholder="Year Filter"
+                isInModal={false}
               />
             </View>
 
-            <View className="w-[120px] pb-5">
+            <View className="flex-1">
               <SelectLayout
                 options={filterOptions.map(f => ({ label: f.name, value: f.id }))}
                 className="h-8"
@@ -300,18 +341,6 @@ function ResolutionPage() {
               />
             </View>
           </View>
-
-          {/* Year Filter */}
-          <View className="pb-5">
-            <SelectLayout
-              options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
-              className="h-8"
-              selectedValue={yearFilter}
-              onSelect={(option) => handleYearFilterChange(option.value)}
-              placeholder="Year Filter"
-              isInModal={false}
-            />
-          </View>            
 
           <Button 
             onPress={() => router.push('/(council)/resolution/res-create')} 
@@ -344,14 +373,7 @@ function ResolutionPage() {
 
           <TabsContent value="active">
             {isLoading || isArchivePending || isDeletePending ? (
-              <View className="h-64 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  {isArchivePending ? "Updating resolution records..." : 
-                  isDeletePending ? "Deleting resolution record..." : 
-                  "Loading resolutions..."}
-                </Text>
-              </View>
+              renderLoadingState()          
             ) : (
               <FlatList
                 data={filteredData}
@@ -359,6 +381,14 @@ function ResolutionPage() {
                 keyExtractor={item => item.res_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#00a8f0']}
+                    tintColor="#00a8f0"
+                  />
+                }                                  
                 ListEmptyComponent={
                   <Text className="text-center text-gray-500 py-4">
                     No active resolutions found
@@ -370,14 +400,7 @@ function ResolutionPage() {
 
           <TabsContent value="archive">
             {isLoading || isArchivePending || isDeletePending ? (
-              <View className="h-64 justify-center items-center">
-                <ActivityIndicator size="large" color="#2a3a61" />
-                <Text className="text-sm text-gray-500 mt-2">
-                  {isArchivePending ? "Updating resolution records..." : 
-                  isDeletePending ? "Deleting resolution record..." : 
-                  "Loading resolutions..."}
-                </Text>
-              </View>
+              renderLoadingState()          
             ) : (
               <FlatList
                 data={filteredData}
@@ -385,6 +408,14 @@ function ResolutionPage() {
                 keyExtractor={item => item.res_num.toString()}
                 contentContainerStyle={{ paddingBottom: 500 }}
                 showsVerticalScrollIndicator={false}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#00a8f0']}
+                    tintColor="#00a8f0"
+                  />
+                }                 
                 ListEmptyComponent={
                   <Text className="text-center text-gray-500 py-4">
                     No archived resolutions found

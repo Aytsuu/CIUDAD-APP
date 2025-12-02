@@ -1,13 +1,9 @@
 
-
-import { useState } from "react";
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button/button';
+import { Loader2 } from "lucide-react";
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form/form';
+import { Form } from '@/components/ui/form/form';
 import { FormComboCheckbox } from '@/components/ui/form/form-combo-checkbox';
 import { FormDateTimeInput } from '@/components/ui/form/form-date-time-input';
 import { FormTextArea } from "@/components/ui/form/form-text-area";
@@ -40,15 +36,6 @@ interface UpdateWasteColProps {
     onSuccess?: () => void; 
 }
 
-const announcementOptions = [
-    { id: "all", label: "All" },
-    { id: "allbrgystaff", label: "All Barangay Staff" },
-    { id: "residents", label: "Residents" },
-    { id: "wmstaff", label: "Waste Management Staff" },
-    { id: "drivers", label: "Drivers" },
-    { id: "collectors", label: "Collectors" },
-    { id: "watchmen", label: "Watchmen" },
-];
 
 
 const dayOptions = [
@@ -71,14 +58,17 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
     const { data: drivers = [], isLoading: isLoadingDrivers } = useGetWasteDrivers();
     const { data: trucks = [], isLoading: isLoadingTrucks } = useGetWasteTrucks();
     const { data: sitios = [], isLoading: isLoadingSitios } = useGetWasteSitio();
-    const { data: wasteCollectionData = [], isLoading: isLoadingWasteData } = useGetWasteCollectionSchedFull();
+    const { data: wasteCollectionData = { results: [], count: 0 } } = useGetWasteCollectionSchedFull();
 
-    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios || isLoadingWasteData;
+    const isLoading = isLoadingCollectors || isLoadingDrivers || isLoadingTrucks || isLoadingSitios;
 
+
+    // Extract the actual data array
+    const wasteSchedules = wasteCollectionData.results || [];    
 
     //UPDATE QUERY MUTATIONS
-    const { mutate: updateSchedule } = useUpdateWasteSchedule();
-    const { mutate: updateCollectors } = useUpdateCollectors();
+    const { mutate: updateSchedule, isPending: isPendingSchedule } = useUpdateWasteSchedule();
+    const { mutate: updateCollectors, isPending } = useUpdateCollectors();
 
 
     const collectorOptions = collectors.map(collector => ({
@@ -114,14 +104,12 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
             selectedCollectors: collector_ids.map(String),
             driver: String(driver_id),
             collectionTruck: String(truck_id),
-            selectedAnnouncements: [],
         },
     });
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const onSubmit = async (values: z.infer<typeof WasteColSchedSchema>) => {
-        setIsSubmitting(true);
+
         try {
             const [hour, minute] = values.time.split(":");
             const formattedTime = `${hour}:${minute}:00`;
@@ -129,18 +117,19 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
             //checks for sitio with the same day
             const selectedSitioName = sitioOptions.find(sitio => sitio.id === values.selectedSitios)?.name;    
             
-            const hasSameSitioSameDay = wasteCollectionData.some(schedule => 
+
+            const hasSameSitioSameDay = wasteSchedules.some(schedule => 
                 schedule.wc_day === values.day &&
                 schedule.sitio_name === selectedSitioName &&
-                schedule.wc_num !== Number(wc_num)          
-            );
+                schedule.wc_num !== Number(wc_num)   
+            );            
 
             //checks for overlapping day and time
-            const hasDuplicateSchedule = wasteCollectionData.some(schedule => 
+            const hasDuplicateSchedule = wasteSchedules.some(schedule => 
                 schedule.wc_day === values.day && 
                 schedule.wc_time === formattedTime &&
-                schedule.wc_num !== Number(wc_num) 
-            );     
+                schedule.wc_num !== Number(wc_num)   
+            );  
             
             //return if there is overlapping schedule
             if (hasDuplicateSchedule) {
@@ -204,9 +193,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
             });
         } catch (error) {
             console.error("Update failed:", error);
-        } finally {
-            setIsSubmitting(false);
-        }
+        } 
     };
 
 
@@ -244,7 +231,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                     <FormComboCheckbox
                         control={form.control}
                         name="selectedCollectors"
-                        label="Collectors"
+                        label="Loader(s)"
                         options={collectorOptions}
                     />
 
@@ -253,7 +240,7 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                     <FormSelect
                         control={form.control}
                         name="driver"
-                        label="Driver"
+                        label="Driver Loader"
                         options={driverOptions}
                     />
 
@@ -296,55 +283,27 @@ function UpdateWasteColSched({wc_num, wc_day, wc_time, wc_add_info, sitio_id, tr
                 </div>
 
 
-
-                {/* Announcement Audience Selection */}
-                <FormField
-                    control={form.control}
-                    name="selectedAnnouncements"
-                    render={({ field }) => (
-                        <FormItem className="mt-4">
-                            <Label>Do you want to post this schedule to the mobile app’s ANNOUNCEMENT page? If yes, select intended audience:</Label>
-                            <Accordion type="multiple" className="w-full">
-                                <AccordionItem value="announcements">
-                                    <AccordionTrigger>Select Audience</AccordionTrigger>
-                                    <AccordionContent className='flex flex-col gap-3'>
-                                        {announcementOptions.map((option) => (
-                                            <div key={option.id} className="flex items-center gap-2">
-                                                <Checkbox
-                                                    id={option.id}
-                                                    checked={field.value?.includes(option.id) || false}
-                                                    onCheckedChange={(checked) => {
-                                                        const newSelected = checked
-                                                        ? [...(field.value || []), option.id]
-                                                        : (field.value || []).filter((id) => id !== option.id);
-                                                        field.onChange(newSelected);
-                                                    }}
-                                                />
-                                                <Label htmlFor={option.id}>{option.label}</Label>
-                                            </div>
-                                        ))}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
                 {/* Submit Button */}
                 <div className="flex items-center justify-end mt-6">
                     <ConfirmationModal
                         trigger={
                             <Button 
                                 type="button"
-                                disabled={isSubmitting}
+                                disabled={isPendingSchedule || isPending}
                             >
-                                {isSubmitting ? "Updating..." : "Update"}
+                                {isPendingSchedule || isPending ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Updating...
+                                    </>
+                                ) : (
+                                    "Update"
+                                )}
                             </Button>
                         }
                         title="Confirm Update"
                         description="Are you sure you want to update this waste collection schedule?"
-                        actionLabel={isSubmitting ? "Updating..." : "Confirm"}
+                        actionLabel={isPendingSchedule || isPending ? "Updating..." : "Confirm"}
                         onClick={() => form.handleSubmit(onSubmit)()}
                     />
                 </div>

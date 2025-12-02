@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, ScrollView, Dimensions, TouchableOpacity, Image } from 'react-native';
 import { FamilyPlanningRecordDetail } from './familyplanningtypes'; // Import your type definition
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -97,10 +98,11 @@ const RecordComparisonScreen: React.FC = () => {
 
   return (
     <View className="flex-1 p-4 bg-gray-50">
-      <TouchableOpacity className="self-start mb-4 px-3 py-2 rounded-lg bg-gray-200" onPress={() => router.back()}>
-        <Text className="text-gray-800 text-base font-bold">← Back to History</Text>
+      <View className="mt-8">
+      <TouchableOpacity className=" px-3 py-2 rounded-lg" onPress={() => router.back()}>
+        <ChevronLeft className="text-gray-800 text-base font-bold">  Back</ChevronLeft>
       </TouchableOpacity>
-
+</View>
       <Text className="text-2xl font-bold text-gray-800 mb-1">Family Planning Record Comparison</Text>
       <Text className="text-lg text-gray-600 mb-5">Comparing two selected records</Text>
 
@@ -144,7 +146,7 @@ const RecordComparisonScreen: React.FC = () => {
         <Section title="FP Record Details">
           <FieldRow label="Type of Client" value1={record1.typeOfClient} value2={record2.typeOfClient} />
           <FieldRow label="Subtype of Client" value1={record1.subTypeOfClient} value2={record2.subTypeOfClient} />
-          <FieldRow label="Reason for FP" value1={record1.reasonForFP} value2={record2.reasonForFP} />
+          <FieldRow label="Reason for FP" value1={record1.fp_type?.fpt_reason} value2={record2.fp_type?.fpt_reason} />
           <FieldRow label="Other Reason for FP" value1={record1.otherReasonForFP} value2={record2.otherReasonForFP} />
           <FieldRow label="Method Currently Used" value1={record1.methodCurrentlyUsed} value2={record2.methodCurrentlyUsed} />
           <FieldRow label="Other Method" value1={record1.otherMethod} value2={record2.otherMethod} />

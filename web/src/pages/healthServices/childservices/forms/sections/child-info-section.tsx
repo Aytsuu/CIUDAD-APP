@@ -17,27 +17,9 @@ export const ChildInfoSection = ({ control, isAddNewMode, selectedPatient, isTra
   <div className="space-y-4">
     <h2 className="font-bold text-lg text-darkBlue2 mt-10">Child's Information</h2>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <FormInput
-        control={control}
-        name="childFname"
-        label="First Name"
-        type="text"
-        readOnly={isAddNewMode || !!selectedPatient}
-      />
-      <FormInput
-        control={control}
-        name="childLname"
-        label="Last Name"
-        type="text"
-        readOnly={isAddNewMode || !!selectedPatient}
-      />
-      <FormInput
-        control={control}
-        name="childMname"
-        label="Middle Name"
-        type="text"
-        readOnly={isAddNewMode || !!selectedPatient}
-      />
+      <FormInput control={control} name="childFname" label="First Name" type="text" readOnly={isAddNewMode || !!selectedPatient} />
+      <FormInput control={control} name="childLname" label="Last Name" type="text" readOnly={isAddNewMode || !!selectedPatient} />
+      <FormInput control={control} name="childMname" label="Middle Name" type="text" readOnly={isAddNewMode || !!selectedPatient} />
       <FormField
         control={control}
         name="childSex"
@@ -59,29 +41,9 @@ export const ChildInfoSection = ({ control, isAddNewMode, selectedPatient, isTra
           </FormItem>
         )}
       />
-      <FormDateTimeInput
-        control={control}
-        name="childDob"
-        label="Date of Birth"
-        type="date"
-        readOnly={isAddNewMode || (!isTransient && !!selectedPatient)}
-      />
-      <FormInput
-        control={control}
-        name="childAge"
-        label="Age"
-        type="text"
-        readOnly
-      />
-      <FormInput
-        control={control}
-        name="birth_order"
-        label="Birth Order"
-        type="number"
-        min={1}
-        max={20}
-        readOnly={isAddNewMode}
-      />
+      <FormDateTimeInput control={control} name="childDob" label="Date of Birth" type="date" readOnly={isAddNewMode || (!isTransient && !!selectedPatient)} />
+      <FormInput control={control} name="childAge" label="Age" type="text" readOnly />
+      <FormInput control={control} name="birth_order" label="Birth Order" type="number" min={1} max={20} readOnly={isAddNewMode} />
       <div className="sm:col-span-2 lg:col-span-3">
         <FormField
           control={control}
@@ -90,29 +52,13 @@ export const ChildInfoSection = ({ control, isAddNewMode, selectedPatient, isTra
             <FormItem className="space-y-3">
               <FormLabel>Place of Delivery</FormLabel>
               <FormControl>
-                <RadioGroup
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  className="flex flex-col space-y-1"
-                  disabled={isAddNewMode}
-                >
-                  {[
-                    "Hospital Gov't/Private",
-                    "Home",
-                    "Private Clinic",
-                    "HC",
-                    "Lying in"
-                  ].map((option) => (
-                    <FormItem
-                      key={option}
-                      className="flex items-center space-x-3 space-y-0"
-                    >
+                <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-1" disabled={isAddNewMode}>
+                  {["Hospital Gov't/Private", "Home", "Private Clinic", "HC", "Lying in"].map((option) => (
+                    <FormItem key={option} className="flex items-center space-x-3 space-y-0">
                       <FormControl>
                         <RadioGroupItem value={option} />
                       </FormControl>
-                      <FormLabel className="font-normal">
-                        {option}
-                      </FormLabel>
+                      <FormLabel className="font-normal">{option}</FormLabel>
                     </FormItem>
                   ))}
                 </RadioGroup>

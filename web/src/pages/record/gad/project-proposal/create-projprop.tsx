@@ -58,15 +58,14 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   const addSupportDocMutation = useAddSupportDocument();
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [selectedDevProject, setSelectedDevProject] = useState<any>(null);
-
-  const { data: budgetData, isLoading } = useGADBudgets();
-  const { data: yearBudgets } = useGetGADYearBudgets();
   const currentYear = new Date().getFullYear().toString();
-  const currentYearBudget = yearBudgets?.find(
-    (budget) => budget.gbudy_year === currentYear
+  const { data: budgetData, isLoading } =  useGADBudgets(currentYear);
+  const { data: yearBudgets } = useGetGADYearBudgets();
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const currentYearBudget = yearBudgetsArray.find(
+    (budget: any) => budget.gbudy_year === currentYear
   )?.gbudy_budget;
   
-
   const latestExpenseWithBalance = budgetData?.results
     ?.filter((entry) => !entry.gbud_is_archive && entry.gbud_remaining_bal != null)
     ?.sort(
@@ -405,21 +404,15 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
   };
 
   const onSubmit = async (data: ProjectProposalFormValues) => {
-    console.log("Form submitted with data:", data);
-    console.log("Media files:", mediaFiles);
-    console.log("Supporting docs:", supportingDocs);
-    console.log("Media files length:", mediaFiles.length);
-    console.log("Supporting docs length:", supportingDocs.length);
+    // if (mediaFiles.length > 0) {
+    //   console.log("First media file:", mediaFiles[0]);
+    //   console.log("Media file has file property:", !!mediaFiles[0].file);
+    // }
     
-    if (mediaFiles.length > 0) {
-      console.log("First media file:", mediaFiles[0]);
-      console.log("Media file has file property:", !!mediaFiles[0].file);
-    }
-    
-    if (supportingDocs.length > 0) {
-      console.log("First supporting doc:", supportingDocs[0]);
-      console.log("Supporting doc has file property:", !!supportingDocs[0].file);
-    }
+    // if (supportingDocs.length > 0) {
+    //   console.log("First supporting doc:", supportingDocs[0]);
+    //   console.log("Supporting doc has file property:", !!supportingDocs[0].file);
+    // }
 
     const formattedParticipants = data.participants
       .filter(p => p.category.trim() !== "")
@@ -480,11 +473,10 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           throw new Error('No proposal ID returned from server');
         }
         
-        const supportDocResult = await addSupportDocMutation.mutateAsync({
+        await addSupportDocMutation.mutateAsync({
           gpr_id: gprId,
           files: newFiles,
         });
-        console.log("Support documents uploaded:", supportDocResult);
       }
 
       form.reset();

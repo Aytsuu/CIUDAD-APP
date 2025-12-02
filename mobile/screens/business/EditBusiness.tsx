@@ -1,7 +1,5 @@
 import { useBusinessFormContext } from "@/contexts/BusinessFormContext";
-import { useGetSitio } from "../_global_queries/Retrieve";
 import React from "react";
-import { formatSitio } from "@/helpers/formatSitio";
 import { MediaItem } from "@/components/ui/media-picker";
 import { LoadingModal } from "@/components/ui/loading-modal";
 import { useToastContext } from "@/components/ui/toast";

@@ -6,13 +6,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FormInput } from '@/components/ui/form/form-input';
 import { FormDateInput } from '@/components/ui/form/form-date-input';
 import { FormSelect } from '@/components/ui/form/form-select';
-import ScreenLayout from '@/screens/_ScreenLayout';
+import PageLayout from '@/screens/_PageLayout';
 import TruckFormSchema from '@/form-schema/waste-truck-schema';
 import { ChevronLeft } from 'lucide-react-native';
 import { TruckFormValues } from './waste-personnel-types';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { useGetTruckById, useUpdateTruck } from './waste-personnel-truck-queries';
 import { Button } from '@/components/ui/button'; 
+import { LoadingState } from "@/components/ui/loading-state";
+import { LoadingModal } from '@/components/ui/loading-modal';
 
 export default function WasteTruckEdit() {
   const router = useRouter();
@@ -72,69 +74,70 @@ export default function WasteTruckEdit() {
     } 
   };
 
+  // Check if truck is archived
+  const isArchived = truck?.truck_is_archive === true;
+
   // Handle loading state
   if (isTruckLoading) {
     return (
-      <ScreenLayout
-        customLeftAction={
-        <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={30} color="black" />
-        </TouchableOpacity>
-      }
-      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Loading..."
-     ><Text>Loading...</Text></ScreenLayout>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()}>
+            <ChevronLeft size={30} color="black" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+        rightAction={<View />}
+      >
+        <View className="flex-1 justify-center items-center">
+          <LoadingState/>
+        </View>
+      </PageLayout>
     );
   }
 
   // Handle error or no truck found
   if (error || !truck) {
     return (
-      <ScreenLayout
-        customLeftAction={
+      <PageLayout
+        leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Loading..."
-     ><Text>No Truck Data</Text></ScreenLayout>
+      headerTitle={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+     ><Text>No Truck Data</Text>
+     rightAction={<View />}
+     </PageLayout>
     );
   }
 
   return (
-    <ScreenLayout
-      customLeftAction={
+    <PageLayout
+      leftAction={
         <TouchableOpacity onPress={() => router.back()}>
           <ChevronLeft size={30} color="black" />
         </TouchableOpacity>
       }
-      headerBetweenAction={<Text className="text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
-      showExitButton={false}
-      headerAlign="left"
-      scrollable={true}
-      keyboardAvoiding={true}
-      contentPadding="medium"
-      loadingMessage="Updating truck..."
+      headerTitle={<Text className="text-gray-900 text-[13px]">{isEditing ? "Edit Truck Info" : "View Truck Info"}</Text>}
+      rightAction={<View />}
       footer={
         <View className="px-4 pb-4">
-          {!isEditing ? (
+          {/* Hide Edit button if truck is archived */}
+          {!isEditing && !isArchived ? (
             <Button
               onPress={() => setIsEditing(true)}
               className="bg-primaryBlue py-3 rounded-lg"
             >
               <Text className="text-white text-base font-semibold">Edit</Text>
             </Button>
+          ) : !isEditing && isArchived ? (
+            // Show message if truck is archived (optional)
+            <View className="bg-gray-200 py-3 rounded-lg">
+              <Text className="text-gray-600 text-base font-semibold text-center">
+                Disposed trucks cannot be edited
+              </Text>
+            </View>
           ) : (
             <View className="flex-row gap-2">
               <Button
@@ -153,7 +156,7 @@ export default function WasteTruckEdit() {
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
-                      <ActivityIndicator size="small" color="white" />
+                       <LoadingModal visible={isSubmitting} />
                     ) : (
                       <Text className="text-white text-base font-semibold">Save</Text>
                     )}
@@ -175,9 +178,17 @@ export default function WasteTruckEdit() {
           )}
         </View>
       }
-      stickyFooter={true}
     >
-      <View className="flex-1 px-4">
+      <View className="flex-1 px-6">
+        {/* Show archived badge if truck is archived */}
+        {isArchived && (
+          <View className="bg-gray-200 px-3 py-2 rounded-lg mb-4">
+            <Text className="text-gray-600 text-sm font-semibold text-center">
+              This truck is marked as disposed
+            </Text>
+          </View>
+        )}
+        
         <View className="space-y-4">
         <View className="relative ">
           <FormInput
@@ -185,7 +196,7 @@ export default function WasteTruckEdit() {
             name="truck_plate_num"
             label="Plate Number"
             placeholder="Enter plate number"
-            editable={isEditing}
+            editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
 
@@ -195,7 +206,7 @@ export default function WasteTruckEdit() {
             name="truck_model"
             label="Model"
             placeholder="Enter truck model"
-            editable={isEditing}
+            editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
 
@@ -206,7 +217,7 @@ export default function WasteTruckEdit() {
             label="Capacity (tons)"
             placeholder="Enter capacity in tons"
             keyboardType="numeric"
-            editable={isEditing}
+            editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
 
@@ -219,7 +230,7 @@ export default function WasteTruckEdit() {
               { label: 'Operational', value: 'Operational' },
               { label: 'Maintenance', value: 'Maintenance' },
             ]}
-            disabled={!isEditing}
+            disabled={!isEditing || isArchived} // Disable if archived
           />
         </View>
 
@@ -228,11 +239,11 @@ export default function WasteTruckEdit() {
             control={control}
             name="truck_last_maint"
             label="Last Maintenance"
-            editable={isEditing}
+            editable={isEditing && !isArchived} // Disable if archived
           />
         </View>
       </View>
       </View>
-    </ScreenLayout>
+    </PageLayout>
   );
 }

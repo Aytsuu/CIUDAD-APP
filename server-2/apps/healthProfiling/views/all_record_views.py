@@ -7,7 +7,15 @@ from django.db.models import Q
 from django.db import transaction
 from pagination import StandardResultsPagination
 from apps.healthProfiling.serializers.all_record_serializers import *
-from apps.healthProfiling.models import ResidentProfile
+from apps.healthProfiling.models import  (ResidentProfile, 
+    Address, 
+    Sitio, 
+    Personal, 
+    PersonalAddress, 
+    PersonalAddressHistory,
+    Household, 
+    Family,
+    )
 from apps.healthProfiling.serializers.all_record_serializers import *
 from apps.administration.models import Staff
 from ..models import FamilyComposition
@@ -16,55 +24,55 @@ from ..utils import *
 # from utils.supabase_client import upload_to_storage
 
 
-class AllRecordTableView(generics.GenericAPIView):
-  serializer_class = AllRecordTableSerializer
-  pagination_class = StandardResultsPagination
+# class AllRecordTableView(generics.GenericAPIView):
+#   serializer_class = AllRecordTableSerializer
+#   pagination_class = StandardResultsPagination
 
-  def get(self, request, *args, **kwargs):
-    search = request.query_params.get('search', '').strip()
+#   def get(self, request, *args, **kwargs):
+#     search = request.query_params.get('search', '').strip()
 
-    residents = [
-      {
-        'id': res.rp_id,
-        'lname': res.per.per_lname,
-        'fname': res.per.per_fname,
-        'mname': res.per.per_mname,
-        'suffix': res.per.per_suffix,
-        'sex': res.per.per_sex,
-        'date_registered': res.rp_date_registered,
-        'family_no': (fam_comp.fam.fam_id if (fam_comp := FamilyComposition.objects.filter(rp=res.rp_id).first()) else None),
-        'type': 'Resident',
-      }
-      for res in ResidentProfile.objects.select_related('per').filter(
-          Q(per__per_fname__icontains=search) |
-          Q(per__per_lname__icontains=search) |
-          Q(per__per_mname__icontains=search) |
-          Q(per__per_suffix__icontains=search)
-      )
-    ]
-    # respondents = [
-    #   {
-    #     'id': res.br_id,
-    #     'lname': res.per.per_lname, 
-    #     'fname': res.per.per_fname,
-    #     'mname': res.per.per_mname,
-    #     'suffix': res.per.per_suffix,
-    #     'sex': res.per.per_sex,
-    #     'date_registered': res.br_date_registered,
-    #     'type': 'Business',
-    #   }
-    #   for res in BusinessRespondent.objects.select_related('per').filter(
-    #       Q(per__per_fname__icontains=search) |
-    #       Q(per__per_lname__icontains=search) |
-    #       Q(per__per_mname__icontains=search) |
-    #       Q(per__per_suffix__icontains=search)
-    #   )
-    # ]
+#     residents = [
+#       {
+#         'id': res.rp_id,
+#         'lname': res.per.per_lname,
+#         'fname': res.per.per_fname,
+#         'mname': res.per.per_mname,
+#         'suffix': res.per.per_suffix,
+#         'sex': res.per.per_sex,
+#         'date_registered': res.rp_date_registered,
+#         'family_no': (fam_comp.fam.fam_id if (fam_comp := FamilyComposition.objects.filter(rp=res.rp_id).first()) else None),
+#         'type': 'Resident',
+#       }
+#       for res in ResidentProfile.objects.select_related('per').filter(
+#           Q(per__per_fname__icontains=search) |
+#           Q(per__per_lname__icontains=search) |
+#           Q(per__per_mname__icontains=search) |
+#           Q(per__per_suffix__icontains=search)
+#       )
+#     ]
+#     # respondents = [
+#     #   {
+#     #     'id': res.br_id,
+#     #     'lname': res.per.per_lname, 
+#     #     'fname': res.per.per_fname,
+#     #     'mname': res.per.per_mname,
+#     #     'suffix': res.per.per_suffix,
+#     #     'sex': res.per.per_sex,
+#     #     'date_registered': res.br_date_registered,
+#     #     'type': 'Business',
+#     #   }
+#     #   for res in BusinessRespondent.objects.select_related('per').filter(
+#     #       Q(per__per_fname__icontains=search) |
+#     #       Q(per__per_lname__icontains=search) |
+#     #       Q(per__per_mname__icontains=search) |
+#     #       Q(per__per_suffix__icontains=search)
+#     #   )
+#     # ]
     
-    unified_data = residents
-    page = self.paginate_queryset(unified_data)
-    serializer = self.get_serializer(page, many=True)
-    return self.get_paginated_response(serializer.data)
+#     unified_data = residents
+#     page = self.paginate_queryset(unified_data)
+#     serializer = self.get_serializer(page, many=True)
+#     return self.get_paginated_response(serializer.data)
 
 class CompleteRegistrationView(APIView):
   permission_classes = [AllowAny]

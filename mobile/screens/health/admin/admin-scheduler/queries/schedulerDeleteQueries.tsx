@@ -1,7 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CircleCheck, CircleX } from "lucide-react";
 import { deleteService, deleteDay } from "../restful-api/schedulerDeleteAPI";
-import { Ban, Check } from "lucide-react-native";
 import { useToastContext } from "@/components/ui/toast"
 
 export const useDeleteService = () => {

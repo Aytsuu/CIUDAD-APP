@@ -1,6 +1,6 @@
 import { format, parseISO, isSameMonth, isSameDay, addMonths } from 'date-fns';
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Dimensions, ActivityIndicator} from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Dimensions} from 'react-native';
 import { Plus, Edit3, Trash} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';

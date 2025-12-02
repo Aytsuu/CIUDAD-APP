@@ -56,3 +56,36 @@ export const useUpdateStaff = () => {
   })
 }
 
+export const useUpdateSitio = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      const res = await api.patch('profiling/sitio/bulk-update/', data)
+      return res.data;
+    },
+    onSuccess: (data) => { 
+      queryClient.setQueryData(["sitioList"], (old: any[] = []) => [
+        ...old,
+        data
+      ]);
+      queryClient.invalidateQueries({ queryKey: ['sitioList']});
+    }
+  })
+}
+
+export const useUpdatePositionGroup = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try {
+        const res = await api.patch('administration/position/update/group/', data);
+        return res.data
+      } catch (err) {
+        throw err;
+      }
+    },
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ['positions']})
+    },
+  })
+}

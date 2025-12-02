@@ -18,7 +18,9 @@ sys.path.append(os.path.join(BASE_DIR, 'apps'))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# ========================
+# SECURITY CONFIGURATION
+# ========================
 SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
 # # SECURITY WARNING: don't run with debug turned on in production!
@@ -73,14 +75,19 @@ INSTALLED_APPS = [
     'apps.familyplanning',
     'apps.animalbites',
     'apps.patientrecords',
-    # 'apps.notification',
+    'backend.firebase.notifications',
     'apps.medicalConsultation',
     'apps.medicineservices',
     'apps.firstaid',
     'apps.childhealthservices',
     'apps.servicescheduler',
     'apps.reports',
+    "simple_history",
+
 ]
+SCHEDULER_AUTOSTART = True
+
+SCHEDULER_AUTOSTART = True
 
 # REST_FRAMEWORK = {
 #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
@@ -199,7 +206,8 @@ CORS_ALLOWED_ORIGINS = [
 ALLOWED_HOSTS = [
     'ciudad-app-server-2.onrender.com',
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    'host.docker.internal'
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -268,11 +276,9 @@ LOGGING = {
 
 
 
-
-
-# # ---------------------------------------------------
-# # DEVELOPMENT SERVER
-# # ------------------------------------------------
+# ---------------------------------------------------
+# DEVELOPMENT SERVER
+# ---------------------------------------------------
 
 
 # from pathlib import Path
@@ -291,29 +297,31 @@ LOGGING = {
 # # Quick-start development settings - unsuitable for production
 # # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# # SECURITY WARNING: keep the secret key used in production secret!
+# # ========================
+# # SECURITY CONFIGURATION
+# # ========================
 # SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-fallback-key-for-dev-only')
 
-# # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = True
+# # # SECURITY WARNING: don't run with debug turned on in production!
+# # DEBUG = False
+# DEBUG=True
 
 # # ========================
 # # SUPABASE CONFIGURATION
 # # ========================
 # SUPABASE_CONFIG = {
-#     'URL': config('SUPABASE_URL'),
-#     'ANON_KEY': config('SUPABASE_ANON_KEY'),
-#     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY'),
-#     'JWT_SECRET': config('SUPABASE_JWT_SECRET'),
-#     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID'),
-#     'JWT_ALGORITHM': 'HS256',
-#     'JWT_AUDIENCE': 'authenticated',
+#     'SUPABASE_URL': config('SUPABASE_URL', default='http://localhost:54321'),
+#     'SUPABASE_ANON_KEY': config('SUPABASE_ANON_KEY', default='anon-dev-key'),
+#     'SERVICE_ROLE_KEY': config('SUPABASE_SERVICE_ROLE_KEY', default='service-role-dev-key'),
+#     'JWT_SECRET': config('SUPABASE_JWT_SECRET', default='dev-jwt-secret'),
+#     'SUPABASE_PROJECT_ID': config('SUPABASE_PROJECT_ID', default='local-dev-project'),
 # }
+# SUPABASE_URL = config('SUPABASE_URL', default='http://localhost:54321')
+# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+# SUPABASE_KEY = config('SUPABASE_ANON_KEY', default='anon-dev-key')
+# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default='dev-jwt-secret')
 
-# # Individual SUPABASE settings for compatibility with utils/supabase_client.py
-# SUPABASE_URL = config('SUPABASE_URL')
-# SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY')
-# SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET')
+# # Application definition
 
 # # ========================
 # # FIREBASE CONFIGURATION
@@ -353,9 +361,17 @@ LOGGING = {
 #     'apps.childhealthservices',
 #     'apps.servicescheduler',
 #     'apps.reports',
+#     "simple_history",
+
 # ]
+# SCHEDULER_AUTOSTART = True
 
+# SCHEDULER_AUTOSTART = True
 
+# # REST_FRAMEWORK = {
+# #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+# #     'PAGE_SIZE': 10,  # default page size
+# # }
 
 # MIDDLEWARE = [
 #     'corsheaders.middleware.CorsMiddleware', 
@@ -393,9 +409,17 @@ LOGGING = {
 
 # # Database
 # # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
+# # ========================
+# # DATABASE CONFIGURATION
+# # ========================
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
+#         'OPTIONS': {
+#             'connect_timeout': 5,
+#             'sslmode': 'require',
+#         },
 #         'NAME': config('DB_NAME', default='my_default_db'),
 #         'USER': config('DB_USER', default='my_default_user'),
 #         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
@@ -403,6 +427,7 @@ LOGGING = {
 #         'PORT': config('DB_PORT', default='5432'),
 #     }
 # }
+
 
 # # Password validation
 # # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -457,9 +482,14 @@ LOGGING = {
 #     "http://127.0.0.1:5173",  # Add this for Vite sometimes
 # ]
 
-# ALLOWED_HOSTS = ['*'] 
-# CORS_ALLOW_ALL_ORIGINS = True # disable in production
-# CORS_ALLOW_CREDENTIALS = True # false in production
+# ALLOWED_HOSTS = [
+#     'ciudad-app-server-2.onrender.com',
+#     'localhost',
+#     '127.0.0.1'
+# ]
+
+# CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_CREDENTIALS = True
 
 # CORS_ALLOW_HEADERS = [
 #     'accept',
@@ -487,6 +517,7 @@ LOGGING = {
 # ]
 
 # CORS_PREFLIGHT_MAX_AGE = 86400
+
 
 # # ========================
 # # SECURITY HEADERS
@@ -519,3 +550,4 @@ LOGGING = {
 #         'level': 'INFO',
 #     },
 # }
+

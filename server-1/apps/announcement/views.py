@@ -42,17 +42,18 @@ class AnnouncementListView(generics.ListAPIView):
             queryset = Announcement.objects.filter(staff=Staff.objects.filter(staff_id=staff).first())
         
         if filter:
-            print(f"Handling {filter} filter...")
             if filter == 'event':
                 queryset = queryset.filter(ann_type__icontains='event')
             elif filter == 'general':
                 queryset = queryset.filter(~Q(ann_type__icontains='event'))
 
         if recipient:
-            if recipient == 'staff only':
+            if recipient == 'staff':
                 queryset = queryset.filter(announcement_recipients__ar_category__iexact='staff').distinct()
-            elif recipient == 'resident only':
+            elif recipient == 'resident':
                 queryset = queryset.filter(Q(announcement_recipients__ar_category__iexact='resident') | Q(ann_type__iexact='public'))
+            elif recipient == 'public':
+                queryset = queryset.filter(Q(ann_type__iexact='public'))
 
         if search:
             print("Handling search...")

@@ -24,7 +24,7 @@ const WastePersonnelDashboard = () => {
   const categoryDisplayNames: Record<PersonnelCategory, string> = {
     "DRIVER LOADER": "Driver Loader",
     LOADER: "Waste Loader",
-    Trucks: "Collection Vehicles",
+    Trucks: "Trucks",
   };
   // Separate queries for counts (no search, no pagination)
   const { data: driverLoaderCount } = useGetAllPersonnel(
@@ -282,7 +282,7 @@ const operationalTrucksCount = operationalTrucksData?.count || 0;
             <TabsList className="grid grid-cols-3">
               <TabsTrigger value="DRIVER LOADER">Driver Loaders</TabsTrigger>
               <TabsTrigger value="LOADER">Loaders</TabsTrigger>
-              <TabsTrigger value="Trucks">Vehicles</TabsTrigger>
+              <TabsTrigger value="Trucks">Trucks</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>

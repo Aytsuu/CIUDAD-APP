@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { Modal, View, Text, TouchableOpacity, ScrollView } from "react-native" // Replaced Dialog components with Modal, View, Text, TouchableOpacity
-import { Edit } from "lucide-react-native" // Changed to lucide-react-native
+// Changed to lucide-react-native
 import { WeeklySchedule } from "./schedule-types"
 import ServiceScheduleForm from "./schedule-form"
 

@@ -5,7 +5,7 @@ from apps.inventory.serializers.inventory_serlializers import InventorySerialize
 from apps.administration.serializers.staff_serializers import StaffFullSerializer
 
 class FirstAidListSerializers(serializers.ModelSerializer):
-    catlist = serializers.CharField(source='cat.cat_name', read_only=True)  # Read-only field for category name
+    # catlist = serializers.CharField(source='cat.cat_name', read_only=True)  # Read-only field for category name
     
     class Meta:
         

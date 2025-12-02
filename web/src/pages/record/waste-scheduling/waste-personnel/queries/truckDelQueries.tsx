@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { delWasteTruck, restoreWasteTruck } from "../request/truckDelReq";
 import { WasteTruck } from "../waste-personnel-types";
 
@@ -28,20 +27,14 @@ export const useDeleteWasteTruck = () => {
 
       return { previousTrucks };
     },
-    onError: (error: Error, _truck_id , context) => {
+    onError: (_error: Error, _truck_id , context) => {
       if (context?.previousTrucks) {
         queryClient.setQueryData(['wasteTrucks'], context.previousTrucks);
       }
-      toast.error("Failed to process waste truck", { 
-        description: error.message, 
-        duration: 2000 
-      });
+      showErrorToast("Failed to process waste truck");
     },
     onSuccess: (_, { permanent }) => {
-      toast.success(`Truck ${permanent ? "deleted" : "marked as disposed"} successfully`, {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast(`Truck ${permanent ? "deleted" : "marked as disposed"} successfully`);
       queryClient.invalidateQueries({ queryKey: ["wasteTrucks"] });
     },
     onSettled: () => {
@@ -67,20 +60,14 @@ export const useRestoreWasteTruck = () => {
 
       return { previousTrucks };
     },
-    onError: (error: Error, _truck_id, context) => {
+    onError: (_error: Error, _truck_id, context) => {
       if (context?.previousTrucks) {
         queryClient.setQueryData(['wasteTrucks'], context.previousTrucks);
       }
-      toast.error("Failed to restore waste truck", { 
-        description: error.message, 
-        duration: 2000 
-      });
+      showErrorToast("Failed to restore waste truck");
     },
     onSuccess: (_, _truck_id) => {
-      toast.success("Waste truck restored successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast("Waste truck restored successfully");
       queryClient.invalidateQueries({ queryKey: ["wasteTrucks"] });
     },
     onSettled: () => {

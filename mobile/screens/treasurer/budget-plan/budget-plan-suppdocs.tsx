@@ -1,4 +1,4 @@
-import { SafeAreaView, View, ActivityIndicator, Text, Pressable, Image, Modal, TouchableOpacity, ScrollView, Linking, Alert } from "react-native";
+import { SafeAreaView, View, Text, Pressable, Image, Modal, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import { useGetBudgetPlanSuppDoc, type BudgetPlanSuppDoc } from "./queries/budgetPlanFetchQueries";
 import { ChevronLeft, ChevronRight, X, Paperclip, Plus, Trash2 } from "lucide-react-native";
 import { useState } from "react";
@@ -8,15 +8,23 @@ import { formatTimestamp } from "@/helpers/timestampformatter";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { useDeleteBudgetPlanFile } from "./queries/budgetPlanDeleteQueries";
 import { LoadingState } from "@/components/ui/loading-state";
-import EmptyState from "@/components/ui/emptyState";
+import { ImageIcon } from "lucide-react-native";
 
 export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: string, isArchive: boolean }) {
     const router = useRouter();
-    const { data: suppDocs = [], isLoading } = useGetBudgetPlanSuppDoc(plan_id);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const { data: suppDocs = [], isLoading, refetch } = useGetBudgetPlanSuppDoc(plan_id);
     const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
     const [selectedImages, setSelectedImages] = useState<{bpf_url: string, bpf_name: string, bpf_description: string | null}[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const {mutate: deleteFile} = useDeleteBudgetPlanFile();
+
+    // Refresh function
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        await refetch();
+        setIsRefreshing(false);
+    };
 
     const handleViewImages = (images: BudgetPlanSuppDoc[], index = 0) => {
         const formattedImages = images.filter(img => /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(img.bpf_name)).map(img => ({
@@ -42,9 +50,9 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
         deleteFile(bpf_id)
     };
 
-    if (isLoading) {
+    if (isLoading && !isRefreshing) {
         return (
-            <View className="flex-1 justify-center items-center bg-gray-50 pt-10">
+            <View className="flex-1 justify-center items-center bg-white pt-10">
                 <LoadingState />
             </View>
         );
@@ -75,50 +83,92 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
             {/* Scrollable content */}
             <View className="flex-1">
                 {imageDocs.length === 0 ? (
-                    <View className="flex-1 justify-center items-center">
-                        <EmptyState emptyMessage="No supporting images available yet."/>
-                    </View>
+                    <ScrollView 
+                        className="flex-1"
+                        contentContainerStyle={{ flexGrow: 1 }}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#00a8f0']}
+                                tintColor="#00a8f0"
+                            />
+                        }
+                    >
+                        <View className="flex-1 justify-center items-center py-16 px-6">
+                            <View className="bg-white rounded-xl p-8 items-center border border-gray-200 shadow-sm">
+                                <ImageIcon size={48} className="text-gray-300 mb-4" />
+                                <Text className="text-gray-500 text-center text-md font-medium mb-2">
+                                    No Supporting Images
+                                </Text>
+                                <Text className="text-gray-400 text-center text-sm">
+                                    No supporting images have been added to this budget plan yet.
+                                </Text>
+                            </View>
+                        </View>
+                    </ScrollView>
                 ) : (
-                    <ScrollView className="flex-1 p-6" showsVerticalScrollIndicator={false}>
+                    <ScrollView 
+                        className="flex-1 p-6" 
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={isRefreshing}
+                                onRefresh={handleRefresh}
+                                colors={['#00a8f0']}
+                                tintColor="#00a8f0"
+                            />
+                        }
+                        contentContainerStyle={{ flexGrow: 1 }}
+                    >
                         <View className="pb-3">
                             {/* Image Gallery */}
                             <View className="mb-6">
                                 <View className="flex-row flex-wrap justify-between">
                                     {imageDocs.map((doc, index) => (
-                                        <View key={doc.bpf_id} className="w-[48%] mb-3">
+                                        <View key={doc.bpf_id} className="w-[48%] mb-4">
                                             <Pressable 
                                                 onPress={() => handleViewImages(imageDocs, index)}
                                                 className="relative bg-white border border-gray-200 rounded-lg overflow-hidden"
                                             >
-                                                <Image 
-                                                    source={{ uri: doc.bpf_url }}
-                                                    className="w-full h-32"
-                                                    resizeMode="cover"
-                                                />
-                                                <View className="p-2">
-                                                    <Text className="text-gray-900 font-medium text-xs font-sans" numberOfLines={1}>
+                                                {/* Consistent Image Height */}
+                                                <View className="w-full h-40 bg-gray-100">
+                                                    <Image 
+                                                        source={{ uri: doc.bpf_url }}
+                                                        className="w-full h-full"
+                                                        resizeMode="cover"
+                                                    />
+                                                </View>
+                                                
+                                                {/* Card Content with Consistent Height */}
+                                                <View className="p-3 min-h-[100px]">
+                                                    <Text className="text-gray-900 font-medium text-xs font-sans mb-1" numberOfLines={1}>
                                                         {doc.bpf_name}
                                                     </Text>
-                                                    <Text className="text-gray-500 text-xs mt-1 font-sans">
+                                                    <Text className="text-gray-500 text-xs mb-2 font-sans">
                                                         {formatTimestamp(doc.bpf_upload_date)}
                                                     </Text>
-                                                    <Text className="text-gray-600 text-xs mt-1 font-sans" numberOfLines={2}>
+                                                    <Text className="text-gray-600 text-xs font-sans" numberOfLines={2}>
                                                         {doc.bpf_description || 'No description available'}
                                                     </Text>
                                                 </View>
-                                                <ConfirmationModal
-                                                    trigger={
-                                                        <TouchableOpacity
-                                                            className="absolute top-2 right-2 bg-gray-900/80 rounded-full p-1"
-                                                        >
-                                                            <Trash2 size={16} color="#FFFFFF" />
-                                                        </TouchableOpacity>
-                                                    }
-                                                    title="Confirm Delete"
-                                                    description={`Are you sure you want to delete ${doc.bpf_name}?`}
-                                                    actionLabel="Confirm"
-                                                    onPress={() => handleDeleteDocument(doc.bpf_id)}
-                                                />
+                                                
+                                                {/* Delete Button */}
+                                                {!isArchive && (
+                                                    <ConfirmationModal
+                                                        trigger={
+                                                            <TouchableOpacity
+                                                                className="absolute top-2 right-2 bg-gray-900/80 rounded-full p-1"
+                                                            >
+                                                                <Trash2 size={16} color="#FFFFFF" />
+                                                            </TouchableOpacity>
+                                                        }
+                                                        title="Confirm Delete"
+                                                        description={`Are you sure you want to delete ${doc.bpf_name}?`}
+                                                        actionLabel="Confirm"
+                                                        onPress={() => handleDeleteDocument(doc.bpf_id)}
+                                                    />
+                                                )}
                                             </Pressable>
                                         </View>
                                     ))}
@@ -137,25 +187,28 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
             >
                 <View className="flex-1 bg-gray-900">
                     {/* Header with close button, file name, and description */}
-                    <View className="absolute top-0 left-0 right-0 z-10 bg-gray-900/80 p-4">
-                        <View className="flex-row justify-between items-center">
+                    <View className="absolute top-0 left-0 right-0 z-10 bg-gray-900/90 p-4 pt-14">
+                        <View className="flex-row justify-between items-start">
                             <View className="flex-1 pr-8">
-                                <Text className="text-white text-base font-medium font-sans" numberOfLines={1}>
+                                <Text className="text-white text-lg font-semibold font-sans mb-2" numberOfLines={1}>
                                     {selectedImages[currentIndex]?.bpf_name || 'Document'}
                                 </Text>
-                                <Text className="text-gray-300 text-xs mt-1 font-sans" numberOfLines={2}>
+                                <Text className="text-gray-200 text-sm font-sans" numberOfLines={3}>
                                     {selectedImages[currentIndex]?.bpf_description || 'No description available'}
                                 </Text>
                             </View>
-                            <TouchableOpacity onPress={() => setViewImagesModalVisible(false)}>
-                                <X size={24} color="#FFFFFF" />
+                            <TouchableOpacity 
+                                onPress={() => setViewImagesModalVisible(false)}
+                                className="bg-gray-800/80 rounded-full p-2"
+                            >
+                                <X size={20} color="#FFFFFF" />
                             </TouchableOpacity>
                         </View>
                     </View>
 
                     {/* Main Image */}
                     <Pressable 
-                        className="flex-1 justify-center items-center"
+                        className="flex-1 justify-center items-center mt-20 mb-16"
                         onPress={() => setViewImagesModalVisible(false)}
                     >
                         <Image
@@ -167,17 +220,22 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
 
                     {/* Pagination indicators */}
                     {selectedImages.length > 1 && (
-                        <View className="absolute bottom-4 left-0 right-0 items-center">
-                            <View className="flex-row bg-gray-900/80 rounded-full px-3 py-1">
-                                {selectedImages.map((_, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        onPress={() => setCurrentIndex(index)}
-                                        className="p-1"
-                                    >
-                                        <View className={`w-2 h-2 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-gray-400'}`} />
-                                    </TouchableOpacity>
-                                ))}
+                        <View className="absolute bottom-20 left-0 right-0 items-center">
+                            <View className="flex-row bg-gray-900/80 rounded-full px-4 py-2">
+                                <Text className="text-white text-sm font-medium font-sans mr-3">
+                                    {currentIndex + 1} of {selectedImages.length}
+                                </Text>
+                                <View className="flex-row items-center">
+                                    {selectedImages.map((_, index) => (
+                                        <TouchableOpacity
+                                            key={index}
+                                            onPress={() => setCurrentIndex(index)}
+                                            className="p-1"
+                                        >
+                                            <View className={`w-2 h-2 rounded-full mx-1 ${index === currentIndex ? 'bg-white' : 'bg-gray-400'}`} />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
                             </View>
                         </View>
                     )}
@@ -187,18 +245,18 @@ export default function BudgetPlanSuppDocs({ plan_id, isArchive }: { plan_id: st
                         <>
                             {currentIndex > 0 && (
                                 <TouchableOpacity
-                                    className="absolute left-4 top-1/2 -mt-6 bg-gray-900/80 rounded-full p-2"
+                                    className="absolute left-4 top-1/2 -mt-6 bg-gray-900/80 rounded-full p-3"
                                     onPress={() => setCurrentIndex(prev => prev - 1)}
                                 >
-                                    <ChevronLeft size={20} color="#FFFFFF" />
+                                    <ChevronLeft size={24} color="#FFFFFF" />
                                 </TouchableOpacity>
                             )}
                             {currentIndex < selectedImages.length - 1 && (
                                 <TouchableOpacity
-                                    className="absolute right-4 top-1/2 -mt-6 bg-gray-900/80 rounded-full p-2"
+                                    className="absolute right-4 top-1/2 -mt-6 bg-gray-900/80 rounded-full p-3"
                                     onPress={() => setCurrentIndex(prev => prev + 1)}
                                 >
-                                    <ChevronRight size={20} color="#FFFFFF" />
+                                    <ChevronRight size={24} color="#FFFFFF" />
                                 </TouchableOpacity>
                             )}
                         </>

@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   image: {
-    width: 250,
+    width: 300,
     height: 220,
     backgroundColor: "#e5e7eb",
   },

@@ -9,38 +9,57 @@ import { useUpdateMedicine } from "../queries/medicine/MedicinePutQueries";
 import { FormInput } from "@/components/ui/form/form-input";
 import { SelectLayoutWithAdd } from "@/components/ui/select/select-searchadd-layout";
 import { useCategoriesMedicine } from "@/pages/healthInventory/inventoryStocks/REQUEST/Category/Medcategory";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button/button";
 import { Label } from "@/components/ui/label";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
 import { useMedicinesList } from "../queries/medicine/MedicineFetchQueries";
-import { MedicineData, formOptions } from "./types";
+import { formOptions, formMedOptions, dosageUnitOptions } from "./types";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-import { isDuplicateMedicine } from "./duplicateChecker";
+import {useAuth} from "@/context/AuthContext";
+
+
+export const isDuplicateMedicine = (medicines: any[], newMedicine: string, medDsg: number, medDsgUnit: string, medForm: string) => {
+    return medicines.some((med) => {
+      const isNameDuplicate = med?.med_name?.trim()?.toLowerCase() === newMedicine?.trim()?.toLowerCase();
+      const isDosageDuplicate = Number(med?.med_dsg) === Number(medDsg);
+      const isDosageUnitDuplicate = med?.med_dsg_unit?.trim()?.toLowerCase() === medDsgUnit?.trim()?.toLowerCase();
+      const isFormDuplicate = med?.med_form?.trim()?.toLowerCase() === medForm?.trim()?.toLowerCase();
+  
+      return isNameDuplicate && isDosageDuplicate && isDosageUnitDuplicate && isFormDuplicate;
+    });
+  };
 
 interface MedicineModalProps {
   mode?: "add" | "edit";
-  initialData?: MedicineData;
+  initialData?: any;
   onClose: () => void;
 }
 
 export default function MedicineModal({ mode = "add", initialData, onClose }: MedicineModalProps) {
+
+    const { user } = useAuth();
+  const staff = user?.staff?.staff_id;
   const [medicineName, setMedicineName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
   const { categories, handleDeleteConfirmation, categoryHandleAdd, ConfirmationDialogs } = useCategoriesMedicine();
   const { mutateAsync: addMedicineMutation } = useAddMedicine();
   const { mutateAsync: updateMedicineMutation } = useUpdateMedicine();
   const { data: medicines } = useMedicinesList();
-  const [isFormValid, setIsFormValid] = useState(false);
 
   const form = useForm<MedicineType>({
     resolver: zodResolver(MedicineListSchema),
     defaultValues: {
-      medicineName: initialData?.medicineName || "",
+      medicineName: initialData?.med_name || "",
       cat_id: String(initialData?.cat_id) || "",
-      med_type: initialData?.med_type || ""
-    }
+      med_type: initialData?.med_type || "",
+      med_dsg: initialData?.med_dsg || undefined,
+      med_dsg_unit: initialData?.med_dsg_unit || "",
+      med_form: initialData?.med_form || "",
+      staff: staff || ""
+    },
+    mode: "onChange",
   });
 
   useEffect(() => {
@@ -60,31 +79,68 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
     }
   }, [categories, mode, initialData, form]);
 
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      const isValid = form.formState.isValid;
-      setIsFormValid(isValid);
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
+  // Check if form has changes in edit mode
+  const hasFormChanges = () => {
+    if (mode !== "edit" || !initialData) return true;
+    
+    const currentValues = form.getValues();
+    
+    return (
+      currentValues.medicineName !== initialData.med_name ||
+      String(currentValues.cat_id) !== String(initialData.cat_id) ||
+      currentValues.med_type !== initialData.med_type ||
+      Number(currentValues.med_dsg) !== Number(initialData.med_dsg) ||
+      currentValues.med_dsg_unit !== initialData.med_dsg_unit ||
+      currentValues.med_form !== initialData.med_form
+    );
+  };
 
   const handleConfirmAction = async () => {
+    // In edit mode, don't proceed if no changes were made
+    if (mode === "edit" && !hasFormChanges()) {
+      return;
+    }
+
+    // Trigger validation before showing confirmation
+    const isValid = await form.trigger();
+    
+    if (!isValid) {
+      setShowValidation(true);
+      return;
+    }
+
     setIsSubmitting(true);
     const formData = form.getValues();
     formData.cat_id = String(formData.cat_id);
 
     try {
-      if (mode === "add" || (mode === "edit" && formData.medicineName !== initialData?.medicineName)) {
+      if (mode === "add" || (mode === "edit" && formData.medicineName !== initialData?.med_name)) {
         const existingMedicines = medicines || [];
 
         if (!Array.isArray(existingMedicines)) {
           throw new Error("Invalid API response - expected an array");
         }
 
-        if (isDuplicateMedicine(existingMedicines, formData.medicineName)) {
+        console.log("Checking for duplicates with:", {
+          existingMedicines,
+          newMedicine: formData.medicineName,
+          medDsg: formData.med_dsg,
+          medDsgUnit: formData.med_dsg_unit,
+          medForm: formData.med_form,
+        });
+
+        if (
+          isDuplicateMedicine(
+            existingMedicines,
+            formData.medicineName,
+            formData.med_dsg,
+            formData.med_dsg_unit,
+            formData.med_form
+          )
+        ) {
           form.setError("medicineName", {
             type: "manual",
-            message: "Medicine name already exists"
+            message: "Medicine with the same name, dosage, unit, and form already exists",
           });
           setIsSubmitting(false);
           return;
@@ -109,15 +165,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
   };
 
   const onSubmit = (data: MedicineType) => {
-    if (!data.cat_id) {
-      toast.error("Please select a category");
-      form.setError("cat_id", {
-        type: "manual",
-        message: "Category is required"
-      });
-      return;
-    }
-
+    // This will be called when the form is submitted (before confirmation modal)
     setMedicineName(data.medicineName);
   };
 
@@ -140,9 +188,15 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
     return null;
   }
 
-  const formValues = form.watch();
   const isEditMode = mode === "edit";
-  const hasFormChanges = isEditMode && initialData ? formValues.medicineName !== initialData.medicineName || String(formValues.cat_id) !== String(initialData.cat_id) || formValues.med_type !== initialData.med_type : true;
+  const hasChanges = hasFormChanges();
+  const isFormValid = form.formState.isValid;
+
+  // Determine if button should be disabled
+  const isButtonDisabled = 
+    isSubmitting || 
+    (isEditMode && !hasChanges) || 
+    !isFormValid;
 
   return (
     <div>
@@ -152,9 +206,19 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
             <Label className="flex justify-center text-lg font-bold text-darkBlue2 text-center ">{mode === "edit" ? "Edit Medicine" : "Add Medicine List"}</Label>
             <hr className="mb-2" />
 
-            <FormInput control={form.control} name="medicineName" label="Medicine Name" placeholder="Enter medicine name" />
+            <FormInput 
+              control={form.control} 
+              name="medicineName" 
+              label="Medicine Name" 
+              placeholder="Enter medicine name" 
+            />
 
-            <FormSelect control={form.control} name="med_type" label="Medicine Type" options={formOptions} />
+            <FormSelect
+              control={form.control}
+              name="med_type"
+              label="Medicine Type"
+              options={formOptions}
+            />
 
             <FormField
               control={form.control}
@@ -173,7 +237,7 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
                           ? categories.map((cat) => ({
                               ...cat,
                               id: String(cat.id),
-                              name: cat.name
+                              name: cat.name,
                             }))
                           : [] // Empty array when no data
                       }
@@ -194,10 +258,31 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
                       }}
                     />
                   </FormControl>
-                  <FormMessage />
+                  {showValidation && <FormMessage />}
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <FormInput 
+                control={form.control} 
+                name="med_dsg" 
+                label="Dosage" 
+                placeholder="Dsg" 
+                type="number" 
+              />
+              <FormSelect 
+                control={form.control} 
+                name="med_dsg_unit" 
+                label="Dosage Unit" 
+                options={dosageUnitOptions} 
+              />
+              <FormSelect 
+                control={form.control} 
+                name="med_form" 
+                label="Form" 
+                options={formMedOptions} 
+              />
+            </div>
           </div>
 
           <div className="w-full flex flex-col sm:flex-row justify-end mt-6 sm:mt-8 gap-2">
@@ -206,7 +291,10 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
             </Button>
             <ConfirmationModal
               trigger={
-                <Button type="submit" disabled={isSubmitting || (isEditMode && !hasFormChanges) || !isFormValid}>
+                <Button 
+                  type="submit" 
+                  disabled={isButtonDisabled}
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -30,9 +30,10 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 import { Spinner } from "@/components/ui/spinner";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 export default function ARRecords() {
-  // ----------------- STATE INITIALIZATION --------------------
+  // =================== STATE INITIALIZATION ===================
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
@@ -45,13 +46,15 @@ export default function ARRecords() {
     React.useState<boolean>(false);
   const [isCreatable, setIsCreatable] = React.useState<boolean>(true);
   const [reset, setReset] = React.useState<boolean>(false);
+  const [status, setStatus] = React.useState<string>("all");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
   const { data: arReports, isLoading: isLoadingArReports } =
     useGetAcknowledgementReport(
       currentPage,
       debouncedPageSize,
-      debouncedSearchQuery
+      debouncedSearchQuery,
+      status
     );
   const { data: weeklyAR, isLoading: isLoadingWeeklyAR } = useGetWeeklyAR();
   const { mutateAsync: addWAR } = useAddWAR();
@@ -85,7 +88,7 @@ export default function ARRecords() {
     [weeklyAR]
   );
 
-  // ----------------- SIDE EFFECTS --------------------
+  // =================== SIDE EFFECTS ===================
   React.useEffect(() => {
     if (isLoadingArReports) showLoading();
     else hideLoading();
@@ -103,6 +106,7 @@ export default function ARRecords() {
     }
   }, [warThisMonth]);
 
+  // =================== HANDLERS ===================
   const onSelectedRowsChange = React.useCallback((rows: any[]) => {
     setSelectedRows(rows);
   }, []);
@@ -148,12 +152,12 @@ export default function ARRecords() {
     }
   };
 
+  // =================== RENDER ===================
   return (
     <MainLayoutComponent
-      title="Acknowledgement Report"
+      title="Action Report"
       description="Manage and view all acknowledgement reports in your system"
     >
-      Selection Mode Banner
       {isCreatingWeeklyAR && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -177,7 +181,6 @@ export default function ARRecords() {
           </Badge>
         </div>
       )}
-
       <div className="flex w-full h-full gap-4">
         {/* Data Table Section */}
         <Card className="w-full">
@@ -191,6 +194,24 @@ export default function ARRecords() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <SelectLayout
+                    withReset={false}
+                    value={status}
+                    valueLabel="Status"
+                    className="gap-4 focus:ring-0"
+                    onChange={(value) => {
+                      setStatus(value);
+                      setCurrentPage(1);
+                    }}
+                    placeholder=""
+                    options={[
+                      { id: "all", name: "All" },
+                      { id: "signed", name: "Signed" },
+                      { id: "unsigned", name: "Unsigned" },
+                    ]}
                   />
                 </div>
               </div>
@@ -251,7 +272,7 @@ export default function ARRecords() {
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-sm font-medium text-gray-700">Show</span>
                 <Select

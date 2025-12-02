@@ -1,11 +1,11 @@
 import { api } from "@/api/api";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
 import { addAssCollector } from "../request/wasteColPostRequest";
 import { updateWasteColData } from "../request/wasteColPutRequest";
 import WasteColSchedSchema from "@/form-schema/waste-col-form-schema";
+import { showErrorToast } from "@/components/ui/toast";
+import { showSuccessToast } from "@/components/ui/toast";
 
 
 type ExtendedWasteColSchema = z.infer<typeof WasteColSchedSchema> & {
@@ -22,15 +22,11 @@ export const useUpdateWasteSchedule = () => {
       updateWasteColData(wc_num, values),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
-      toast.success("Schedule updated successfully", {
-        id: "updateWaste",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 4000
-      });
+      showSuccessToast("Schedule updated successfully");
     },
-    onError: (err) => {
-      console.error("Error updating schedule:", err);
-      toast.error("Failed to update schedule.");
+    onError: (_err) => {
+      // console.error("Error updating schedule:", err);
+      showErrorToast("Failed to update schedule.");
     }
   });
 };
@@ -67,7 +63,6 @@ export const useUpdateCollectors = () => {
           // First find the wasc_id for this collector
             const response = await api.get(`waste/waste-ass-collectors/list/?wc_num=${wc_num}&wstp=${collectorId}`);
         //   const response = await api.get(`waste/waste-ass-collectors/?wc_num=${wc_num}&wstp=${collectorId}`);
-            console.log("KUHA WASC_ID: ", response)
             if (response.data.length > 0) {
                 await api.delete(`waste/waste-ass-collectors/${response.data[0].wasc_id}/`);
             }
@@ -76,15 +71,12 @@ export const useUpdateCollectors = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['wasteCollectionSchedFull'] });
-      toast.success("Schedule updated successfully", {
-        id: "updateWaste",
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 3000
-      });
+
+      showSuccessToast("Schedule updated successfully");
     },
-    onError: (err) => {
-      console.error("Error updating collectors:", err);
-      toast.error("Failed to update collectors.");
+    onError: (_err) => {
+      // console.error("Error updating collectors:", err);
+      showErrorToast("Failed to update collectors.");
     }
   });
 };

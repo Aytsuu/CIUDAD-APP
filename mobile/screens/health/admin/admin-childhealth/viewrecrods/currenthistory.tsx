@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Printer } from 'lucide-react-native';
 import { format, isValid } from 'date-fns';
 import { ChildHealthHistoryRecord } from './types';
 import { calculateAge } from '@/helpers/ageCalculator';

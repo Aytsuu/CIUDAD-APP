@@ -1,8 +1,9 @@
-// all-medical-records-columns.tsx
 import { ColumnDef } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { ArrowUpDown } from "lucide-react";
 import ViewButton from "@/components/ui/view-button";
+import { toTitleCase } from "@/helpers/ToTitleCase";
+import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordMain";
 
 export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
   const navigate = useNavigate();
@@ -11,24 +12,28 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "pat_id",
       header: "Patient ID",
-      cell: ({ row }) => <div className="flex justify-center ">{row.original.pat_id}</div>
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <div className="bg-lightBlue text-darkBlue1 px-2 sm:px-3 py-1 rounded-md text-center font-semibold text-xs sm:text-sm">
+            {row.original.pat_id || ""}
+          </div>
+        </div>
+      )
     },
     {
       accessorKey: "patient",
-      header: ({ column }: { column: any }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient <ArrowUpDown size={15} />
+      header: ({ column }) => (
+        <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <span className="text-center">Patient</span> <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
         const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-darkGray">
-                {row.original.sex}, {row.original.age}
-              </div>
+          <div className="text-center py-2 px-4">
+            <div className="font-medium break-words">{toTitleCase(fullName)}</div>
+            <div className="text-sm text-darkGray">
+              {toTitleCase(row.original.sex || "")}, {row.original.age}
             </div>
           </div>
         );
@@ -37,15 +42,13 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "address",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Address <ArrowUpDown size={15} />
+        <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <span className="text-center">Address</span> <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-start min-w-[200px] px-2">
-          <div className="w-full whitespace-pre-wrap break-words">
-            {row.original.address ? row.original.address : "No address provided"}
-          </div>
+        <div className="text-center py-2 px-4 whitespace-pre-wrap break-words">
+          {toTitleCase(row.original.address || "No address provided")}
         </div>
       )
     },
@@ -54,16 +57,18 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
       header: "Sitio",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.sitio || "N/A"}</div>
+          <div className="text-center w-full">{toTitleCase(row.original.sitio || "N/A")}</div>
         </div>
       )
     },
     {
-      accessorKey: "type",
+      accessorKey: "pat_type",
       header: "Type",
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.pat_type}</div>
+          <div className={getPatType(row.original.pat_type)}>
+            {toTitleCase(row.original.pat_type)}
+          </div>
         </div>
       )
     },
@@ -77,36 +82,57 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
       )
     },
     {
+      accessorKey: "latest_consultation_date",
+      header: "Latest Consultation Date",
+      cell: ({ row }) => (
+        <div className="flex justify-center min-w-[150px] px-2">
+          <div className="text-center w-full">
+            {row.original.latest_consultation_date
+              ? new Date(row.original.latest_consultation_date).toLocaleDateString("en-US", {
+                  year: "2-digit",
+                  month: "short",
+                  day: "2-digit",
+                })
+              : "N/A"}
+          </div>
+        </div>
+      )
+    },
+    {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => {
         const patientData = {
-          pat_id: row.original.pat_id,
-          pat_type: row.original.pat_type,
-          age: row.original.age,
+          pat_id: row.original.pat_id || "",
+          pat_type: row.original.pat_type || "",
+          age: row.original.age || "",
           addressFull: row.original.address || "No address provided",
           address: {
-            add_street: row.original.street,
-            add_barangay: row.original.barangay,
-            add_city: row.original.city,
-            add_province: row.original.province,
-            add_sitio: row.original.sitio
+            add_street: row.original.street || "",
+            add_barangay: row.original.barangay || "",
+            add_city: row.original.city || "",
+            add_province: row.original.province || "",
+            add_sitio: row.original.sitio || ""
           },
-          households: [{ hh_id: row.original.householdno }],
+          households: [{ hh_id: row.original.householdno || "" }],
           personal_info: {
-            per_fname: row.original.fname,
-            per_mname: row.original.mname,
-            per_lname: row.original.lname,
-            per_dob: row.original.dob,
-            per_sex: row.original.sex,
-            per_contact: row.original.contact
+            per_fname: row.original.fname || "",
+            per_mname: row.original.mname || "",
+            per_lname: row.original.lname || "",
+            per_dob: row.original.dob || "",
+            per_sex: row.original.sex || "",
+            per_contact: row.original.contact || "",
+            per_status: row.original.per_status || ""
+          },
+          additional_info: {
+            philhealth_id: row.original.philhealth_id || ""
           }
         };
 
         return (
           <ViewButton
             onClick={() => {
-              navigate("/services/medical-consultation/records", {
+              navigate("/services/medical-consultation/records/individual-records", {
                 state: {
                   params: {
                     patientData
@@ -120,41 +146,3 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
     }
   ];
 };
-
-export const exportColumns = [
-  {
-    key: "index",
-    header: "#",
-    format: (value: number) => value + 1 // Adjusting index for export
-  },
-  {
-    key: "patient",
-    header: "Patient",
-    format: (row: any) => `${row.lname}, ${row.fname} ${row.mname}`.trim()
-  },
-  {
-    key: "sex_age",
-    header: "Sex/Age",
-    format: (row: any) => `${row.sex}, ${row.age}`
-  },
-  {
-    key: "address",
-    header: "Address",
-    format: (row: any) => row.address || "No address provided"
-  },
-  {
-    key: "sitio",
-    header: "Sitio",
-    format: (row: any) => row.sitio || "N/A"
-  },
-  {
-    key: "pat_type",
-    header: "Type",
-    format: (row: any) => row.pat_type
-  },
-  {
-    key: "medicalrec_count",
-    header: "No of Records",
-    format: (row: any) => row.medicalrec_count
-  }
-];

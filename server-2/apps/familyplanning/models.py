@@ -11,6 +11,7 @@ class FP_Record(models.Model):
     client_id = models.CharField(max_length=50, null=True, blank=True)
     # nhts = models.BooleanField(default=False)
     fourps = models.BooleanField(default=False)
+    num_of_children = models.PositiveIntegerField(default=0, null=True, blank=True)
     plan_more_children = models.BooleanField(default=False)
     avg_monthly_income = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -28,8 +29,7 @@ class FP_Record(models.Model):
 
     def __str__(self):
         return f"FP Record {self.fprecord_id} for Patient {self.pat.pat_id}"
-
-   
+    
 class FP_type(models.Model):
     fpt_id = models.AutoField(primary_key=True)
     fpt_client_type = models.CharField(max_length=50)
@@ -73,7 +73,7 @@ class FP_RiskVaw(models.Model):
     vaw_unpleasant_rs = models.BooleanField(default=False)
     vaw_partner_disapproval = models.BooleanField(default=False)
     vaw_domestic_violence = models.BooleanField(default=False)
-    vaw_referred_to = models.CharField(max_length=40,blank=True)
+    vaw_referred_to = models.CharField(max_length=40,blank=True,null=True)
     
     fprecord = models.ForeignKey(FP_Record, on_delete=models.CASCADE, related_name='fp_risk_vaws')
     
@@ -183,7 +183,7 @@ class FP_Obstetrical_History(models.Model):
     fpob_id = models.AutoField(primary_key=True)
     fpob_last_delivery = models.DateField(null=True, blank=True)
     fpob_type_last_delivery = models.CharField(max_length=30, null=True, blank=True)
-    fpob_last_period = models.DateField(null=True, blank=True)
+    # fpob_last_period = models.DateField(null=True, blank=True)
     fpob_previous_period = models.DateField(null=True, blank=True)
     fpob_mens_flow = models.CharField(max_length=50)
     fpob_dysme = models.BooleanField(default=False)

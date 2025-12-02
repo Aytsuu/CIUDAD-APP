@@ -1,7 +1,6 @@
 from django.db import models
 from datetime import date
 from abstract_classes import AbstractModels
-from abstract_classes import AbstractModels
 
 class ReportType(AbstractModels):
     rt_id = models.BigAutoField(primary_key=True)
@@ -11,21 +10,31 @@ class ReportType(AbstractModels):
     class Meta:
       db_table = 'report_type'
 
-class IncidentReport(models.Model):
+class IncidentReport(AbstractModels):
   ir_id = models.BigAutoField(primary_key=True)
   ir_add_details = models.TextField()
-  ir_time = models.TimeField()
-  ir_date = models.DateField()
-  ir_area = models.TextField()
-  ir_involved = models.IntegerField()
+  ir_time = models.TimeField(null=True)
+  ir_date = models.DateField(null=True)
+  ir_area = models.TextField(null=True)
+  ir_involved = models.IntegerField(default=0)
+  ir_severity = models.CharField(null=True)
+  ir_is_tracker = models.BooleanField(default=False)
+  ir_track_rep_id = models.CharField(null=True)
+  ir_track_lat = models.FloatField(null=True)
+  ir_track_lng = models.FloatField(null=True)
+  ir_track_user_lat = models.FloatField(null=True)
+  ir_track_user_lng = models.FloatField(null=True)
+  ir_track_user_contact = models.CharField(max_length=20, null=True)
+  ir_track_user_name = models.CharField(max_length=100, null=True)
   ir_created_at = models.DateTimeField(auto_now_add=True)
   ir_is_archive = models.BooleanField(default=False)
-  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE)
-  rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE)
+  rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
+  rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, null=True)
+
   class Meta:
     db_table = 'incident_report'
 
-class AcknowledgementReport(models.Model):
+class AcknowledgementReport(AbstractModels):
   ar_id = models.BigAutoField(primary_key=True)
   ar_title = models.CharField(max_length=500)
   ar_date_started = models.DateField()
@@ -50,12 +59,13 @@ class ARFile(models.Model):
   arf_type = models.CharField(max_length=50)
   arf_path = models.CharField(max_length=500)
   arf_url = models.URLField()
-  ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE)
+  arf_is_supp = models.BooleanField(default=False)
+  ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE, related_name="ar_files")
 
   class Meta:
     db_table = 'ar_file'
 
-class WeeklyAccomplishmentReport(models.Model):
+class WeeklyAccomplishmentReport(AbstractModels):
   war_id = models.BigAutoField(primary_key=True)
   war_created_at = models.DateField(default=date.today)
   war_created_for = models.DateField(default=date.today)
@@ -91,15 +101,16 @@ class IncidentReportFile(models.Model):
   irf_type = models.CharField(max_length=50)
   irf_path = models.CharField(max_length=100)
   irf_url = models.URLField()
-  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE)
+  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, related_name='report_files')
 
   class Meta:
     db_table = 'incident_report_file'
 
-class ReportTemplate(models.Model):
+class ReportTemplate(AbstractModels):
   rte_id = models.BigAutoField(primary_key=True)
   rte_logoLeft = models.URLField(null=True)
   rte_logoRight = models.URLField(null=True)
+  rte_logoTop = models.URLField(null=True)
   rte_headerText = models.TextField(null=True)
   rte_type = models.CharField(max_length=50, null=True)
   rte_prepared_by = models.CharField(max_length=100, null=True)

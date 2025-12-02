@@ -6,7 +6,6 @@ import { View, TouchableOpacity, TextInput, RefreshControl, FlatList } from "rea
 import { Search, ChevronLeft, AlertCircle, Pill, RefreshCw } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { router } from "expo-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useDebounce } from "@/hooks/use-debounce";
 import PageLayout from "@/screens/_PageLayout";
@@ -14,6 +13,7 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { useMedicineRecords } from "./queries/fetch";
 import { Overallrecordcard } from "../components/overall-cards";
 import { PaginationControls } from "../components/pagination-layout";
+import { TabType, TabBar } from "../components/tab-bar";
 
 // Types
 interface MedicineRecord {
@@ -32,53 +32,64 @@ interface MedicineRecord {
   province: string;
   pat_type: string;
   address: string;
-  medicine_count: number;
+  count: number;
   patient_details?: {
+    pat_id: string;
     personal_info: {
       per_fname: string;
       per_lname: string;
-      per_mname: string;
-      per_sex: string;
+      per_mname: string | null;
+      per_suffix: string | null;
       per_dob: string;
+      per_sex: string;
+      per_status: string;
+      per_edAttainment: string | null;
+      per_religion: string | null;
+      per_contact: string;
     };
     address: {
       add_street: string;
-      add_sitio: string;
       add_barangay: string;
       add_city: string;
       add_province: string;
+      add_sitio: string;
+      full_address: string;
     };
     pat_type: string;
-    households?: Array<{ hh_id: string }>;
+    pat_status: string;
+    rp_id: string | null;
+    trans_id: string | null;
   };
+  medicine_count: number;
+  latest_medicine_date: string | null;
 }
 
-interface ApiResponse {
-  results?: MedicineRecord[];
-  count?: number;
-  next?: string;
-  previous?: string;
-}
+// interface ApiResponse {
+//   results?: MedicineRecord[];
+//   count?: number;
+//   next?: string;
+//   previous?: string;
+// }
 
-type TabType = "all" | "resident" | "transient";
+// type TabType = "all" | "resident" | "transient";
 
-const TabBar: React.FC<{
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
-  counts: { all: number; resident: number; transient: number };
-}> = ({ activeTab, setActiveTab, counts }) => (
-  <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-    <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All ({counts.all})</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents ({counts.resident})</Text>
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
-      <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients ({counts.transient})</Text>
-    </TouchableOpacity>
-  </View>
-);
+// const TabBar: React.FC<{
+//   activeTab: TabType;
+//   setActiveTab: (tab: TabType) => void;
+//   // counts: { all: number; resident: number; transient: number };
+// }> = ({ activeTab, setActiveTab}) => (
+//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
+//     <TouchableOpacity onPress={() => setActiveTab("all")} className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>All</Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity onPress={() => setActiveTab("resident")} className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>Residents </Text>
+//     </TouchableOpacity>
+//     <TouchableOpacity onPress={() => setActiveTab("transient")} className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}>
+//       <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>Transients</Text>
+//     </TouchableOpacity>
+//   </View>
+// );
 
 export default function AllMedicineRecords() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,8 +98,7 @@ export default function AllMedicineRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
-  const queryClient = useQueryClient();
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1500);
 
   // Build query parameters
   const queryParams = useMemo(
@@ -120,25 +130,32 @@ export default function AllMedicineRecords() {
       const info = details.personal_info || {};
       const address = details.address || {};
 
-      const addressString = [address.add_street, address.add_barangay, address.add_city, address.add_province].filter((part) => part && part.trim().length > 0).join(", ") || "";
+      // Use full_address if available, otherwise construct it
+      const addressString = address.full_address || 
+        [address.add_street, address.add_barangay, address.add_city, address.add_province]
+          .filter((part) => part && part.trim().length > 0)
+          .join(", ") || "";
 
       return {
-        pat_id: record.pat_id,
+        pat_id: record.pat_id || "",
         fname: info.per_fname || "",
         lname: info.per_lname || "",
         mname: info.per_mname || "",
         sex: info.per_sex || "",
-        age: calculateAge(info.per_dob).toString(),
+        age: info.per_dob ? calculateAge(info.per_dob).toString() : "",
         dob: info.per_dob || "",
-        householdno: details.households?.[0]?.hh_id || "",
+        householdno: details.rp_id || details.trans_id || "",
         street: address.add_street || "",
         sitio: address.add_sitio || "",
         barangay: address.add_barangay || "",
         city: address.add_city || "",
         province: address.add_province || "",
-        pat_type: details.pat_type || "",
+        pat_type: record.pat_type || details.pat_type || "",
         address: addressString,
-        count: record.medicine_count || 0
+        count: record.medicine_count || 0,
+        patient_details: details,
+        medicine_count: record.medicine_count || 0,
+        latest_medicine_date: record.latest_medicine_date || null
       };
     });
   }, [apiResponse?.results]);
@@ -148,18 +165,18 @@ export default function AllMedicineRecords() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // Calculate counts for summary cards and tabs
-  const counts = useMemo(() => {
-    if (!formattedData) return { all: 0, resident: 0, transient: 0 };
+  // const counts = useMemo(() => {
+  //   if (!formattedData) return { all: 0, resident: 0, transient: 0 };
 
-    const residentCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "resident").length;
-    const transientCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "transient").length;
+  //   const residentCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "resident").length;
+  //   const transientCount = formattedData.filter((r) => r.pat_type.toLowerCase() === "transient").length;
 
-    return {
-      all: totalCount,
-      resident: residentCount,
-      transient: transientCount
-    };
-  }, [formattedData, totalCount]);
+  //   return {
+  //     all: totalCount,
+  //     resident: residentCount,
+  //     transient: transientCount
+  //   };
+  // }, [formattedData, totalCount]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -230,12 +247,12 @@ export default function AllMedicineRecords() {
     >
       <View className="flex-1">
         {/* Search Bar */}
-        <View className="bg-white px-4 py-3 border-b border-gray-200">
+        <View className="bg-white px-4 py-3 p-2 border-b border-gray-200">
           <View className="flex-row items-center px-2 border border-gray-200 bg-gray-50 rounded-xl">
             <Search size={20} color="#6B7280" />
             <TextInput 
               className="flex-1 ml-3 text-gray-800 text-base" 
-              placeholder="Search by name, medicine, or address..." 
+              placeholder="Search..." 
               placeholderTextColor="#9CA3AF" 
               value={searchQuery} 
               onChangeText={setSearchQuery} 
@@ -244,7 +261,7 @@ export default function AllMedicineRecords() {
         </View>
 
         {/* Tab Bar */}
-        <TabBar activeTab={activeTab} setActiveTab={setActiveTab} counts={counts} />
+        <TabBar activeTab={activeTab} setActiveTab={setActiveTab}  />
 
         {/* Results Header */}
         <View className="px-4 flex-row items-center justify-between mt-4">

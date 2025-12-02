@@ -16,7 +16,7 @@ import { Pill } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
-
+import { unitOptions } from "./options";
 export default function AddImzSupplyStock() {
   const { user } = useAuth();
   const staff = user?.staff?.staff_id || "";
@@ -28,7 +28,7 @@ export default function AddImzSupplyStock() {
       batch_number: "",
       imzStck_qty: 0,
       imzStck_pcs: 0,
-      imzStck_unit: "boxes",
+      imzStck_unit: "pcs",
       expiry_date: "",
       inv_type: "Antigen",
       staff: staff
@@ -92,7 +92,7 @@ export default function AddImzSupplyStock() {
           <form onSubmit={(e) => e.preventDefault()} className="bg-white p-5 w-full max-w-[600px] rounded-sm space-y-5">
             <Label className="flex justify-center text-xl text-darkBlue2 text-center py-3 sm:py-5">
               <Pill className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-              Add Immunization Supply Stocks
+              Add Stocks
             </Label>
             <div className="space-y-6 p-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -111,10 +111,7 @@ export default function AddImzSupplyStock() {
                   control={form.control}
                   name="imzStck_unit"
                   label="Unit"
-                  options={[
-                    { id: "boxes", name: "Boxes" },
-                    { id: "pcs", name: "Pieces" }
-                  ]}
+                  options={unitOptions}
                 />
               </div>
               {currentUnit === "boxes" && (

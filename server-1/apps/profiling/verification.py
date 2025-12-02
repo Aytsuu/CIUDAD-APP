@@ -6,47 +6,40 @@ import io
 import re
 import logging  
 import torch
-import base64
-from django.core.files.base import ContentFile
-from django.conf import settings
-from utils.supabase_client import supabase
 from dateutil.parser import parse
 from datetime import datetime
-from facenet_pytorch import MTCNN, InceptionResnetV1
 from django.core.cache import cache
+from .tasks import get_face_recognition_models
 
 logger = logging.getLogger(__name__)
 
 class KYCVerificationProcessor:
     def __init__(self):
-        self.mtcnn = MTCNN(
-            keep_all=True,
-            thresholds=[0.5, 0.6, 0.7],  # detection thresholds
-        )
-        self.resnet = InceptionResnetV1(pretrained='vggface2').eval()
+        models = get_face_recognition_models()
+        self.mtcnn = models['mtcnn']
+        self.resnet = models['resnet']
         self.threshold = 0.5
 
     def process_kyc_document_matching(self, user_data, id_image):
         try:
-            print(user_data)
-
             # Convert Django InMemoryUploadedFile to OpenCV image
-            validated_img = ContentFile(base64.b64decode(id_image))
-            id_image_cv = self._file_to_cv2(validated_img)
+            id_image_cv = self._uploaded_file_to_cv2(id_image)
 
             # Check if face is visible in the ID
-            decoded_id_img = self._decode_image(id_image)
-            id_face = self._face_embedding(decoded_id_img)
+            id_face = self._face_embedding(id_image_cv)
+            if id_face is None:
+                logger.error('No face extracted from ID')
+                return False
 
             # Extract and verify document information
             doc_info = self._extract_document_info(id_image_cv)
             if not doc_info:
-                logger.error('No text extracted from document')
+                logger.error('No text extracted from ID')
                 return False
 
             personal_info = self._extract_personal_info(doc_info)
             if not personal_info:
-                logger.error('No personal info extracted from document')
+                logger.error('No personal info extracted from ID')
                 return False
 
             info_match = self._verify_info_match(user_data, personal_info)
@@ -54,10 +47,9 @@ class KYCVerificationProcessor:
                 logger.error('Extracted Info does not match personal info')
                 return False
 
-            key = f'{user_data['lname']}{user_data['fname']}'
+            key = f"{user_data['lname']}{user_data['fname']}"
             
-            cache.set(key, id_face, timeout=300)
-            logger.info('info matched')
+            cache.set(key, id_face, timeout=1200)
             return True
 
         except Exception as e:
@@ -65,19 +57,31 @@ class KYCVerificationProcessor:
             return False
     
     def process_kyc_face_matching(self, face_img, id_img):
-        face_img_cv = self._decode_image(face_img)
-        face_img = self._face_embedding(face_img_cv)
-        if face_img is None:
-            logger.error('No face found in live photo')
+        """Process face matching with memory cleanup"""
+        try:
+            face_img = self._face_embedding(self._uploaded_file_to_cv2(face_img))
+
+            if face_img is None:
+                logger.error('No face found in live photo')
+                return False
+            face_match = self._compare_faces(face_img, id_img)
+            logger.info(face_match)
+            return face_match > self.threshold
+        
+        except Exception as e:
+            logger.error("Face matching error")
             return False
-        face_match = self._compare_faces(face_img, id_img)
-        return face_match > self.threshold
+            
+        finally:
+            if face_img is not None:
+                del face_img
+            torch.cuda.empty_cache() if torch.cuda.is_available() else None
     
-    def _file_to_cv2(self, django_file):
-        """Convert Django InMemoryUploadedFile to OpenCV image"""
-        in_memory_file = io.BytesIO(django_file.read())
-        pil_image = Image.open(in_memory_file)
-        return cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+    def _uploaded_file_to_cv2(self, uploaded_file):
+        """Convert Django UploadedFile (or ContentFile) to OpenCV image"""
+        np_array = np.frombuffer(uploaded_file.read(), np.uint8)
+        image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+        return image
 
     def _extract_document_info(self, image):
         """Extract name and DOB from ID image using OCR"""
@@ -88,19 +92,19 @@ class KYCVerificationProcessor:
             _, threshold = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             
             # Perform OCR
-            text = pytesseract.image_to_string(threshold)
-            
+            text = pytesseract.image_to_string(threshold)    
             return text
         except Exception as e:
             logger.error(f"Document extraction error: {str(e)}")
             return None
+        finally:
+            del gray, blurred, threshold
         
     def _extract_personal_info(self, text):
         """Extract name and DOB from unstructured ID text with improved patterns"""
         # Clean the text (remove special characters, normalize spaces)
         text = re.sub(r'[^\w\s,:.-]', '', text)
         text = ' '.join(text.split())  # Collapse multiple spaces
-        print(text)
         
         # Extract date of birth (flexible date parsing)
         dob = None
@@ -139,14 +143,14 @@ class KYCVerificationProcessor:
         mismatches = []
         text = re.sub(r'[^\w\s]', '', extracted_info['raw_text'])
         text = text.split()
-        print("Cleaned text:", text)  # Debug print
+        logger.info("Cleaned text:", text)  # Debug print
         
         # Name comparison (case insensitive, allow partial matches)
         first_name_match = set(user_data['fname'].split(' ')).issubset(text)
         last_name_match = set(user_data['lname'].split(' ')).issubset(text)
         middle_name_match = set(user_data['mname'].split(' ')).issubset(text) if 'mname' in user_data else True
         name_match = first_name_match and last_name_match and middle_name_match
-        print('Name matched:', name_match)
+        logger.info('Name matched:', name_match)
 
         if not name_match:
             mismatches.append(f"Name mismatch: User entered '{user_data['lname']}, {user_data['fname']}'")
@@ -155,9 +159,6 @@ class KYCVerificationProcessor:
         try:
             user_dob = datetime.strptime(user_data['dob'], '%Y-%m-%d').date()
             extracted_dob = datetime.strptime(extracted_info['dob'], '%Y-%m-%d').date()
-            print("User dob:", user_dob)
-            print("Extracted dob:", extracted_dob)
-            print("DOB matched:", user_dob == extracted_dob)
             if user_dob != extracted_dob:
                 mismatches.append(f"DOB mismatch: User entered '{user_data['dob']}', "
                                 f"document shows '{extracted_info['dob']}'")
@@ -171,19 +172,6 @@ class KYCVerificationProcessor:
             'user_input': user_data,
             'extracted_info': extracted_info
         }
-    
-    def _decode_image(self, data):
-        try:
-            # Decode base64 string with numpy and cv2
-            image = base64.b64decode(data)
-            np_image = np.frombuffer(image, dtype=np.uint8)
-            image = cv2.imdecode(np_image, cv2.IMREAD_COLOR)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-            return image
-        except Exception as e:
-            print('Error decoding image:',e)
-        return None
 
     def _face_embedding(self, image):
         try:
@@ -195,7 +183,7 @@ class KYCVerificationProcessor:
                 return embedding
             return None
         except Exception as e:
-            print('Error getting face embedding', e)
+            logger.error('Error getting face embedding', e)
             return None
     
     def _compare_faces(self, face_img, id_img):

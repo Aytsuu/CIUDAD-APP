@@ -52,9 +52,11 @@ export const fetchPatientRecords = async () => {
     throw error;
   }
 };
+
+
 export const fetchPatient5yearsbelow = async () => {
   try {
-    const response = await api2.get("patientrecords/patients/");
+    const response = await api2.get("patientrecords/children/");
     const patientData = response.data;
 
     // Filter patients aged 5 years and below (0-5 years)

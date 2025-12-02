@@ -40,6 +40,15 @@ interface VaccinationSectionProps {
   existingVaccineColumns: any[];
   vaccines: any[];
   vaccineColumns: any[];
+  immunizationSupplies?: any;
+  isSuppliesLoading?: boolean;
+  selectedSupplyDisplay?: string;
+  selectedSupplyComboValue?: string;
+  setSelectedSupplyDisplay?: (value: string) => void;
+  setSelectedSupplyComboValue?: (value: string) => void;
+  setSelectedSupplyId?: (value: string) => void;
+  setSelectedSupplyData?: (value: any) => void;
+  selectedSupplyData?: any;
 }
 
 export function VaccinationSection({
@@ -63,7 +72,15 @@ export function VaccinationSection({
   existingVaccines,
   existingVaccineColumns,
   vaccines,
-  vaccineColumns
+  vaccineColumns,
+  immunizationSupplies,
+  isSuppliesLoading,
+  
+  selectedSupplyComboValue,
+  setSelectedSupplyDisplay,
+  setSelectedSupplyComboValue,
+  setSelectedSupplyId,
+  setSelectedSupplyData,
 }: VaccinationSectionProps) {
   return (
     <div className="space-y-6 mt-6">
@@ -148,25 +165,62 @@ export function VaccinationSection({
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <div className="my-4">
-              <Label>Vaccine Name</Label>
-              <Combobox
-                options={vaccinesData?.formatted ?? []}
-                value={formWatch("vaccines.0.vaccineType") || ""}
-                onChange={(value) => {
-                  handleVaccineChange(value ?? "");
-                  setSelectedVaccineId(value ?? "");
-                }}
-                placeholder={isLoading ? "Loading vaccines..." : "Search and select a vaccine"}
-                triggerClassName="font-normal w-full"
-                emptyMessage={
-                  <div className="flex gap-2 justify-center items-center">
-                    <Label className="font-normal text-xs">{isLoading ? "Loading..." : "No available vaccines in stock."}</Label>
-                  </div>
-                }
-              />
-              {newVaccineErrors.vaccine && <p className="text-red-500 text-sm">{newVaccineErrors.vaccine}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 mt-4">
+              <div className="space-y-2">
+                <Label>Vaccine Name</Label>
+                <Combobox
+                  options={vaccinesData?.formatted ?? []}
+                  value={formWatch("vaccines.0.vaccineType") || ""}
+                  onChange={(value) => {
+                    handleVaccineChange(value ?? "");
+                    setSelectedVaccineId(value ?? "");
+                  }}
+                  placeholder={isLoading ? "Loading vaccines..." : "Search and select a vaccine"}
+                  triggerClassName="font-normal w-full"
+                  emptyMessage={
+                    <div className="flex gap-2 justify-center items-center">
+                      <Label className="font-normal text-xs">{isLoading ? "Loading..." : "No available vaccines in stock."}</Label>
+                    </div>
+                  }
+                />
+                {newVaccineErrors.vaccine && <p className="text-red-500 text-sm">{newVaccineErrors.vaccine}</p>}
+              </div>
+              {/* Immunization Supplies Selection */}
+              <div className="space-y-2 mt-2">
+                <div className="flex items-center gap-2">
+                  <Label>Select Syringe</Label>
+                  <span className="text-xs text-red-600">Note: Only select Syringe/Needle</span>
+                </div>
+                <Combobox
+                  options={immunizationSupplies?.formatted || []}
+                  value={selectedSupplyComboValue || ""}
+                  onChange={(value) => {
+                    if (value && setSelectedSupplyDisplay && setSelectedSupplyComboValue && setSelectedSupplyId && setSelectedSupplyData) {
+                      const selectedSupply = immunizationSupplies?.formatted?.find((supply: any) => supply.id === value);
+
+                      if (selectedSupply) {
+                        setSelectedSupplyComboValue(value);
+                        setSelectedSupplyDisplay(selectedSupply.rawName);
+                        setSelectedSupplyId(selectedSupply.imzStck_id);
+                        setSelectedSupplyData(selectedSupply);
+                      }
+                    } else if (!value && setSelectedSupplyDisplay && setSelectedSupplyComboValue && setSelectedSupplyId && setSelectedSupplyData) {
+                      setSelectedSupplyComboValue("");
+                      setSelectedSupplyDisplay("");
+                      setSelectedSupplyId("");
+                      setSelectedSupplyData(null);
+                    }
+                  }}
+                  placeholder={isSuppliesLoading ? "Loading supplies..." : "Select immunization supply"}
+                  emptyMessage="No immunization supplies available in stock"
+                  triggerClassName="w-full"
+                />
+                {!isSuppliesLoading && immunizationSupplies?.formatted && immunizationSupplies.formatted.length === 0 && (
+                  <p className="text-sm text-yellow-600 mt-2">No immunization supplies available in stock</p>
+                )}
+              </div>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormInput control={form.control} name="vaccines.0.dose" label="Dose Number" type="number" min={1} placeholder="enter dose number" />

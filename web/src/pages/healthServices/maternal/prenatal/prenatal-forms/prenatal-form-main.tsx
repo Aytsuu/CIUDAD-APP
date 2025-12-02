@@ -27,6 +27,7 @@ const forceCapitalize = (str: string | null | undefined): string => {
 interface TTStatusRecord {
   tts_status: string
   tts_date_given: string | null
+  vaccineType?: string  // Added to support vaccine stock information
 }
 
 export default function PrenatalForm() {
@@ -35,6 +36,7 @@ export default function PrenatalForm() {
   const [isFromIndividualRecord, setIsFromIndividualRecord] = useState(false)
   const [preselectedPatient, setPreselectedPatient] = useState<any | null>(null)
   const [activePregnancyId, setActivePregnancyId] = useState<string | null>(null)
+  const [selectedMedicines, setSelectedMedicines] = useState<{ minv_id: string; medrec_qty: number; reason: string }[]>([])
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -102,7 +104,7 @@ export default function PrenatalForm() {
       ? {
           date_of_delivery: toNullIfEmpty(data.previousPregnancy.dateOfDelivery) ?? null,
           outcome: forceCapitalize(data.previousPregnancy.outcome) || null, 
-          type_of_delivery: forceCapitalize(data.previousPregnancy.typeOfDelivery) || null,
+          type_of_delivery: data.previousPregnancy.typeOfDelivery || null,
           babys_wt: data.previousPregnancy.babysWt ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
           gender: forceCapitalize(data.previousPregnancy.gender) || null,
           ballard_score: data.previousPregnancy.ballardScore ? parseFloat(data.previousPregnancy.babysWt.toString()) : null,
@@ -123,10 +125,12 @@ export default function PrenatalForm() {
 
     if (data.prenatalVaccineInfo.ttRecordsHistory && data.prenatalVaccineInfo.ttRecordsHistory.length > 0) {
       data.prenatalVaccineInfo.ttRecordsHistory.forEach((record) => {
+        console.log("Processing TT record from history:", record)
         if (record.ttStatus && record.ttStatus.trim() !== '') {
           ttStatusesArray.push({
             tts_status: record.ttStatus.trim(),
             tts_date_given: toNullIfEmpty(record.ttDateGiven) ?? null,
+            vaccineType: record.vaccineType || undefined,  // Include vaccine stock info
           })
         }
       })
@@ -136,8 +140,11 @@ export default function PrenatalForm() {
       const currentTTRecord = {
         tts_status: data.prenatalVaccineInfo.ttStatus.trim(),
         tts_date_given: toNullIfEmpty(data.prenatalVaccineInfo.ttDateGiven) ?? null,
-        tts_tdap: data.prenatalVaccineInfo.isTDAPAdministered === true
+        tts_tdap: data.prenatalVaccineInfo.isTDAPAdministered === true,
+        vaccineType: data.prenatalVaccineInfo.vaccineType || undefined  // Include current vaccine selection
       }
+      
+      console.log("Current TT record being evaluated:", currentTTRecord)
       
       const isDuplicateOfHistory = ttStatusesArray.some(existingRecord => 
         existingRecord.tts_status === currentTTRecord.tts_status && 
@@ -154,15 +161,16 @@ export default function PrenatalForm() {
       console.log("No current TT record to add (empty or missing)")
     }
 
+    console.log("Final ttStatusesArray being sent to backend:", ttStatusesArray)
+
 
     return {
       pat_id: data.pat_id as string, 
       patrec_type: "Prenatal",
       pf_occupation: capitalize(data.motherPersonalInfo.occupation) || "",
-      pf_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       pf_edc: toNullIfEmpty(data.presentPregnancy.pf_edc) ?? null,
       previous_complications: forceCapitalize(data.medicalHistory.previousComplications) || null,
-      staff_id: data.assessedBy.id ?? "",
+      assessed_by: data.assessedBy.id ?? "",
 
       // spouse section
       spouse_data: spouseData,
@@ -175,17 +183,17 @@ export default function PrenatalForm() {
 
       // obstetrical history section
       obstetrical_history: {
-        obs_ch_born_alive: data.obstetricHistory?.noOfChBornAlive || null,
-        obs_living_ch: data.obstetricHistory?.noOfLivingCh || null,
-        obs_abortion: data.obstetricHistory?.noOfAbortion  || null,
-        obs_still_birth: data.obstetricHistory?.noOfStillBirths || null,
-        obs_lg_babies: data.obstetricHistory?.historyOfLBabies || null,
+        obs_ch_born_alive: data.obstetricHistory?.noOfChBornAlive || 0,
+        obs_living_ch: data.obstetricHistory?.noOfLivingCh || 0,
+        obs_abortion: data.obstetricHistory?.noOfAbortion  || 0,
+        obs_still_birth: data.obstetricHistory?.noOfStillBirths || 0,
+        obs_lg_babies: data.obstetricHistory?.historyOfLBabies || 0,
         obs_lg_babies_str: data.obstetricHistory?.historyOfLBabiesStr ?? false,
-        obs_gravida: data.presentPregnancy.gravida || null,
-        obs_para: data.presentPregnancy.para || null,
-        obs_fullterm: data.presentPregnancy.fullterm || null,
-        obs_preterm: data.presentPregnancy.preterm || null,
-        obs_record_from: "Prenatal", 
+        obs_gravida: data.presentPregnancy.gravida || 0,
+        obs_para: data.presentPregnancy.para || 0,
+        obs_fullterm: data.presentPregnancy.fullterm || 0,
+        obs_preterm: data.presentPregnancy.preterm || 0,
+        obs_lmp: toNullIfEmpty(data.presentPregnancy.pf_lmp) ?? null,
       },
       
       // previous illness section
@@ -277,6 +285,30 @@ export default function PrenatalForm() {
       vital_bp_diastolic: (data.prenatalCare?.[0]?.bp.diastolic != null && !isNaN(data.prenatalCare?.[0]?.bp.diastolic))
         ? data.prenatalCare[0].bp.diastolic
         : null,
+      vital_temp: data.prenatalCare?.[0]?.notes?.temp || null,
+      vital_RR: data.prenatalCare?.[0]?.notes?.resRate || null,
+      vital_pulse: data.prenatalCare?.[0]?.notes?.pulseRate || null,
+      vital_o2: data.prenatalCare?.[0]?.notes?.o2 || null,
+      
+      // Selected medicines for micronutrient supplementation
+      // Transform: ensure reason defaults to "Micronutrient supplementation" if not provided
+      selected_medicines: selectedMedicines.length > 0 
+        ? selectedMedicines.map(med => ({
+            minv_id: med.minv_id,
+            medrec_qty: med.medrec_qty,
+            reason: med.reason || "Micronutrient supplementation"
+          }))
+        : undefined,
+      
+      // Vaccination total dose for conditional vaccines
+      vacrec_totaldose: data.prenatalVaccineInfo.vacrec_totaldose 
+        ? parseInt(data.prenatalVaccineInfo.vacrec_totaldose.toString()) 
+        : undefined,
+
+      // Forward record fields
+      assigned_to: data.assigned_to ? data.assigned_to : undefined,
+      status: data.status ? data.status : undefined,
+      forwarded_status: data.forwarded_status ? data.forwarded_status : undefined,
     }
   }
 
@@ -435,7 +467,9 @@ export default function PrenatalForm() {
           <PrenatalFormThirdPg 
           form={form} 
           onSubmit={() => handlePatientSubmit(3)} 
-          back={() => prevPage()} 
+          back={() => prevPage()}
+          selectedMedicines={selectedMedicines}
+          setSelectedMedicines={setSelectedMedicines}
           />)}
         {currentPage === 4 && (
           <PrenatalFormFourthPq

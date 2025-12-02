@@ -3,7 +3,6 @@ import React, { useState, useMemo } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
-import { format, parseISO, isValid, isBefore, isSameDay } from "date-fns";
 import { calculateAgeFromDOB } from "@/helpers/ageCalculator";
 import PageLayout from "@/screens/_PageLayout";
 import { ChildHealthRecordCard } from "@/components/healthcomponents/childInfoCard";

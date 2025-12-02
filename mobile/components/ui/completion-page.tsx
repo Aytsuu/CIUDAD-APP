@@ -1,6 +1,5 @@
 import React from "react";
-import { FeedbackScreen } from "@/components/ui/feedback-screen";
-import { router, useRouter } from "expo-router";
+import { router } from "expo-router";
 import { 
   View, 
   Text, 
@@ -8,10 +7,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useToastContext } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
-import { LoadingModal } from "@/components/ui/loading-modal";
-import { capitalizeAllFields } from "@/helpers/capitalize";
 
 export default function CompletionPage({params} : {params: Record<string, any>}) {
   return (

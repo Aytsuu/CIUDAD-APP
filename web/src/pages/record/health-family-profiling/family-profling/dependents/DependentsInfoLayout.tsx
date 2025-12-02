@@ -19,7 +19,9 @@ import {
 import {
   addRespondentHealth, 
   addPerAdditionalDetailsHealth, 
-  addMotherHealthInfo 
+  addMotherHealthInfo, 
+  createDependentUnderFive,
+  getFamilyMembersHealth
 } from "../restful-api/profiingPostAPI";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoadButton } from "@/components/ui/button/load-button";
@@ -32,7 +34,8 @@ export default function DependentsInfoLayout({
   setDependentsList,
   back,
   setFamId,
-  nextStep
+  nextStep,
+  existingFamId
 }: {
   form: UseFormReturn<z.infer<typeof familyFormSchema>>;
   residents: any;
@@ -42,9 +45,10 @@ export default function DependentsInfoLayout({
   back: () => void;
   setFamId: React.Dispatch<React.SetStateAction<string>>;
   nextStep: () => void;
+  existingFamId?: string | null;
 }) {
 
-  const PARENT_ROLES = ["Mother", "Father", "Guardian"];
+  // const PARENT_ROLES = ["Mother", "Father", "Guardian"];
   const { user } = useAuth();
   
   // Main database hooks
@@ -101,7 +105,7 @@ export default function DependentsInfoLayout({
             fam: famId
           };
           
-          console.log(`Submitting respondent info:`, respondentPayload);
+          // console.log(`Submitting respondent info:`, respondentPayload);
           await addRespondent(respondentPayload);
         }
         
@@ -118,7 +122,7 @@ export default function DependentsInfoLayout({
             rp: residentId
           };
           
-          console.log(`Submitting health details for ${parent.type}:`, healthDetailsPayload);
+          // console.log(`Submitting health details for ${parent.type}:`, healthDetailsPayload);
           await addPerAdditionalDetails(healthDetailsPayload);
         }
         
@@ -127,7 +131,8 @@ export default function DependentsInfoLayout({
           parentData.motherHealthInfo.healthRiskClass ||
           parentData.motherHealthInfo.immunizationStatus ||
           parentData.motherHealthInfo.method?.length > 0 ||
-          parentData.motherHealthInfo.source
+          parentData.motherHealthInfo.source ||
+          parentData.motherHealthInfo.lmpDate
         )) {
           const motherHealthPayload = {
             mhi_healthRisk_class: parentData.motherHealthInfo.healthRiskClass || null,
@@ -135,17 +140,18 @@ export default function DependentsInfoLayout({
             mhi_famPlan_method: parentData.motherHealthInfo.method ? 
               parentData.motherHealthInfo.method.join(', ') : null,
             mhi_famPlan_source: parentData.motherHealthInfo.source || null,
+            mhi_lmp_date: parentData.motherHealthInfo.lmpDate || null,
             rp: residentId,
             fam: famId
           };
           
-          console.log('Submitting mother health info:', motherHealthPayload);
+          // console.log('Submitting mother health info:', motherHealthPayload);
           await addMotherHealthInfoMutation(motherHealthPayload);
         }
       }
     }
     
-    console.log("Parent health information and respondent data submitted successfully!");
+    // console.log("Parent health information and respondent data submitted successfully!");
   }, [addRespondent, addPerAdditionalDetails, addMotherHealthInfoMutation]);
 
   React.useEffect(() => {
@@ -238,27 +244,74 @@ export default function DependentsInfoLayout({
     }
 
     try {
-      const demographicInfo = form.getValues().demographicInfo;
-      // Create family and retrieve new fam_id
-      const newFamily = await addFamily({
-        demographicInfo: demographicInfo, 
-        staffId: user?.staff?.staff_id || ""
-      });
-      // Store fam_id for subsequent queries
-      setFamId(newFamily.fam_id);
+      // Use existing family ID if provided, otherwise create new family
+      let familyId: string;
+      let existingMembers: any[] = [];
+      
+      if (existingFamId) {
+        // Using existing family - skip family creation
+        familyId = existingFamId;
+        setFamId(familyId);
+        
+        // Get existing family members to check for duplicates
+        // console.log(`Fetching existing family compositions for family ${familyId}...`);
+        existingMembers = await getFamilyMembersHealth(familyId);
+        // console.log('Existing members:', existingMembers);
+      } else {
+        // Create new family and retrieve fam_id
+        const demographicInfo = form.getValues().demographicInfo;
+        const newFamily = await addFamily({
+          demographicInfo: demographicInfo, 
+          staffId: user?.staff?.staff_id || ""
+        });
+        familyId = newFamily.fam_id;
+        setFamId(familyId);
+      }
 
       // Create family compositions for parents first
-      const parentCompositions = selectedParents
-        .filter(parentId => parentId) // Filter out empty parent IDs
-        .map((parentId, index) => ({
-          fam: newFamily.fam_id,
-          rp: parentId,
-          fc_role: PARENT_ROLES[index], // "Mother", "Father", "Guardian"
-        }));
+      // Get actual parent IDs from form data to ensure correct role mapping
+      const formData = form.getValues();
+      const parentCompositions = [];
+      
+      // Add mother if selected
+      if (formData.motherInfo?.id) {
+        const motherId = formData.motherInfo.id.split(' ')[0];
+        parentCompositions.push({
+          fam: familyId,
+          rp: motherId,
+          fc_role: 'Mother'
+        });
+      }
+      
+      // Add father if selected
+      if (formData.fatherInfo?.id) {
+        const fatherId = formData.fatherInfo.id.split(' ')[0];
+        parentCompositions.push({
+          fam: familyId,
+          rp: fatherId,
+          fc_role: 'Father'
+        });
+      }
+      
+      // Add respondent if different from mother/father (future guardian support)
+      if (formData.respondentInfo?.id) {
+        const respondentId = formData.respondentInfo.id.split(' ')[0];
+        const motherId = formData.motherInfo?.id?.split(' ')[0];
+        const fatherId = formData.fatherInfo?.id?.split(' ')[0];
+        
+        // Only add as separate composition if respondent is not already added as mother or father
+        if (respondentId !== motherId && respondentId !== fatherId) {
+          parentCompositions.push({
+            fam: familyId,
+            rp: respondentId,
+            fc_role: 'Guardian'
+          });
+        }
+      }
 
       // Create family compositions for dependents
       const dependentCompositions = dependentsList.map(dep => ({
-        fam: newFamily.fam_id,
+        fam: familyId,
         rp: dep.id,
         fc_role: 'Dependent',
       }));
@@ -266,11 +319,96 @@ export default function DependentsInfoLayout({
       // Combine all compositions
       const allCompositions = [...parentCompositions, ...dependentCompositions];
       
-      await addFamilyComposition(allCompositions);
+      // If updating existing family, only add compositions that don't already exist
+      let compositionsToAdd = allCompositions;
+      if (existingFamId && existingMembers.length > 0) {
+        const existingRpIds = new Set(existingMembers.map((m: any) => m.rp_id));
+        compositionsToAdd = allCompositions.filter(comp => !existingRpIds.has(comp.rp));
+        
+        if (compositionsToAdd.length === 0) {
+          // console.log('No new family members to add - all members already exist');
+        } else {
+          // console.log(`Adding ${compositionsToAdd.length} new family member(s)`);
+        }
+      }
+      
+      // Only add compositions if there are new members
+      let createdComps: any = [];
+      if (compositionsToAdd.length > 0) {
+        createdComps = await addFamilyComposition(compositionsToAdd);
+      }
 
       // Submit parent health data and respondents info
-      const formData = form.getValues();
-      await submitParentHealthData(formData, newFamily.fam_id);
+      await submitParentHealthData(formData, familyId);
+
+      // Map created family compositions by rp for easy lookup of fc_id
+      const fcByRp: Record<string, any> = {};
+      if (Array.isArray(createdComps)) {
+        createdComps.forEach((comp: any) => {
+          fcByRp[comp.rp_id] = comp;
+        });
+      }
+
+      // If no fc_id present, fetch from health API which returns fc_id in serializer
+      const needFcIds = Object.values(fcByRp).some((c: any) => !c.fc_id);
+      if (!Array.isArray(createdComps) || needFcIds) {
+        const healthMembers = await getFamilyMembersHealth(familyId);
+        healthMembers.forEach((m: any) => {
+          if (m?.rp_id) fcByRp[m.rp_id] = m;
+        });
+      }
+
+      // Submit dependent-specific health data
+      for (const dep of dependentsList) {
+        const rpId = dep.id;
+        const newDep = formData.dependentsInfo.list.find((d: any) => d.id?.split(' ')[0] === rpId || d.id === rpId);
+        const age = (() => {
+          const dob = newDep?.dateOfBirth;
+          if (!dob) return null;
+          const birth = new Date(dob);
+          if (isNaN(birth.getTime())) return null;
+          const today = new Date();
+          let years = today.getFullYear() - birth.getFullYear();
+          const m = today.getMonth() - birth.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) years--;
+          return years;
+        })();
+
+        if (typeof age === 'number' && age >= 0 && age <= 5) {
+          // Create Dependents_Under_Five record - requires fc
+          const fc = fcByRp[rpId];
+          if (fc?.fc_id) {
+            const underFive = newDep?.dependentUnderFiveSchema || {};
+            await createDependentUnderFive({
+              duf_fic: underFive.fic || null,
+              duf_nutritional_status: underFive.nutritionalStatus || null,
+              duf_exclusive_bf: underFive.exclusiveBf || null,
+              fc: fc.fc_id,
+              rp: rpId,
+            });
+          }
+          // Save relationship to household head if provided
+          if (newDep?.relationshipToHead) {
+            await addPerAdditionalDetails({
+              per_add_rel_to_hh_head: newDep.relationshipToHead,
+              rp: rpId,
+            });
+          }
+        } else if (typeof age === 'number' && age >= 6) {
+          // Combine relationship and additional details in one payload
+          const pad = newDep?.perAddDetails || {};
+          const payload: Record<string, any> = { rp: rpId };
+          if (newDep?.relationshipToHead) payload.per_add_rel_to_hh_head = newDep.relationshipToHead;
+          if (pad.bloodType) payload.per_add_bloodType = pad.bloodType;
+          if (pad.philHealthId) payload.per_add_philhealth_id = pad.philHealthId;
+          if (pad.covidVaxStatus) payload.per_add_covid_vax_status = pad.covidVaxStatus;
+          const hasAny = Object.keys(payload).length > 1; // more than just rp
+          if (hasAny) await addPerAdditionalDetails(payload);
+        } else if (newDep?.relationshipToHead) {
+          // Age unknown: still store relationship if provided
+          await addPerAdditionalDetails({ per_add_rel_to_hh_head: newDep.relationshipToHead, rp: rpId });
+        }
+      }
 
       toast("Record added successfully", {
         icon: <CircleAlert size={24} className="fill-green-500 stroke-white" />,

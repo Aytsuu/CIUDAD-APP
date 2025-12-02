@@ -1,6 +1,6 @@
 import React from "react";
 import { View, TouchableOpacity } from "react-native";
-import { Syringe, Calendar, FileText, CheckCircle, Clock, XCircle } from "lucide-react-native";
+import { Syringe, Calendar, CheckCircle, Clock, XCircle } from "lucide-react-native";
 import { Text } from "@/components/ui/text";
 import { format, parseISO, isValid } from "date-fns";
 
@@ -56,9 +56,10 @@ export const VaccinationRecordCard: React.FC<VaccinationRecordCardProps> = ({ re
   const StatusIcon = statusConfig.icon;
 
   const CardContent = () => (
-    <View className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb- mx-4">
+    <View className="mb-4">
+    <View className="rounded-xl border bg-white border-gray-200 shadow-sm overflow-hidden mb- mx-4">
       {/* Header with Vaccine Name and Status */}
-      <View className="flex-row items-center justify-between p-4 border-b border-gray-100">
+      <View className="flex-row items-center justify-between p-4 border-b  border-gray-100">
         <View className="flex-row items-center flex-1">
           <View className="w-10 h-10 bg-blue-50 rounded-lg items-center justify-center mr-3">
             <Syringe size={20} color="#3B82F6" />
@@ -81,7 +82,7 @@ export const VaccinationRecordCard: React.FC<VaccinationRecordCardProps> = ({ re
       </View>
 
       {/* Details */}
-      <View className="p-4">
+      <View className="p-4 ">
         <View className="flex-row justify-between items-start mb-3">
 
             <View className="flex-1">
@@ -157,6 +158,7 @@ export const VaccinationRecordCard: React.FC<VaccinationRecordCardProps> = ({ re
           </View>
         )}
       </View>
+    </View>
     </View>
   );
 

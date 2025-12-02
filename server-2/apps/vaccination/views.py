@@ -4,9 +4,9 @@ from rest_framework.exceptions import NotFound
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from .serializers import *
-from datetime import datetime
+from datetime import datetime, date
 from django.db.models import Count, Max, Subquery, OuterRef, Q, F, Prefetch
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth,Coalesce
 from apps.patientrecords.models import Patient,PatientRecord
 from apps.patientrecords.serializers.patients_serializers import PatientSerializer,PatientRecordSerializer
 from apps.patientrecords.models import VitalSigns
@@ -19,11 +19,16 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 from django.utils.timezone import now
 from apps.patientrecords.models import *
-from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, Inventory
+from apps.inventory.models import AntigenTransaction,VaccineStock, VaccineList, Inventory, ImmunizationStock
+from django.utils import timezone
+from django.db import transaction
+import logging
+from collections import defaultdict
 from pagination import *
 from apps.healthProfiling.models import ResidentProfile, PersonalAddress
 from apps.medicalConsultation.utils import *
-
+from django.db.models import Window
+from django.db.models.functions import RowNumber
 
 class VaccineRecordView(generics.ListCreateAPIView):
     serializer_class = VaccinationRecordSerializer
@@ -43,9 +48,14 @@ class VaccinationHistoryView(generics.ListCreateAPIView):
 class PatientVaccinationRecordsView(generics.ListAPIView):
     serializer_class = PatientVaccinationRecordSerializer
     pagination_class = StandardResultsPagination
-    
     def get_queryset(self):
-        # Base queryset with annotations for vaccination count
+        # Subquery to get the latest vaccination date for each patient
+        latest_vaccination_subquery = VaccinationHistory.objects.filter(
+            vacrec__patrec_id__pat_id=OuterRef('pat_id'),
+            vachist_status__in=['completed', 'partially vaccinated']
+        ).order_by('-date_administered').values('date_administered')[:1]
+
+        # Base queryset with annotations for vaccination count and latest date
         queryset = Patient.objects.annotate(
             vaccination_count=Count(
                 'patient_records__vaccination_records__vaccination_histories',
@@ -53,7 +63,8 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
                     patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated']
                 ),
                 distinct=True
-            )
+            ),
+            latest_vaccination_date=Subquery(latest_vaccination_subquery)
         ).filter(
             Q(patient_records__patrec_type='Vaccination Record'),
             Q(patient_records__vaccination_records__vaccination_histories__vachist_status__in=['completed', 'partially vaccinated'])
@@ -61,13 +72,14 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
             'rp_id__per',         
             'trans_id',             
             'trans_id__tradd_id'   
-       
-        ).distinct().order_by('-vaccination_count')
+        ).distinct()
+
+        # Default ordering by latest vaccination date (most recent first)
+        queryset = queryset.order_by('-latest_vaccination_date', '-vaccination_count')
         
         # Track if any filter is applied
-       
         search_query = self.request.query_params.get('search', '').strip()
-        if search_query and len(search_query) >= 2:
+        if search_query:
             queryset = apply_patient_search_filter(queryset, search_query)
         
         # Patient type filter
@@ -75,21 +87,16 @@ class PatientVaccinationRecordsView(generics.ListAPIView):
         if patient_type_search and patient_type_search != 'all':
             queryset = apply_patient_type_filter(queryset, patient_type_search)
         
+        # Remove the total_count annotation to avoid window function conflicts
+        queryset = queryset.annotate(
+            index=Window(
+                expression=RowNumber(),
+                order_by=F('latest_vaccination_date').desc()
+            )
+        )
+
         return queryset
     
-    
-   
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
 # Fixed version of your TobeAdministeredVaccinationView
 class TobeAdministeredVaccinationView(generics.ListAPIView):
     serializer_class = VaccinationHistorySerializer
@@ -197,13 +204,11 @@ class GetAllResidentsNotVaccinated(APIView):
             return Response(data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-
-
 
 class UnvaccinatedVaccinesDetailsView(APIView):
     """
-    Second endpoint: Get paginated list of unvaccinated residents for a specific vaccine and age group
+    Second endpoint: Get paginated list of ALL residents for a specific vaccine and age group
+    Includes: Unvaccinated + Partially vaccinated + Fully vaccinated
     """
     pagination_class = StandardResultsPagination
     
@@ -212,6 +217,7 @@ class UnvaccinatedVaccinesDetailsView(APIView):
             # Get query parameters
             age_group_id = request.GET.get('age_group_id')
             search = request.GET.get('search', '')
+            vaccination_status_filter = request.GET.get('vaccination_status')  # New filter parameter
             
             # Get the vaccine
             try:
@@ -219,9 +225,9 @@ class UnvaccinatedVaccinesDetailsView(APIView):
             except VaccineList.DoesNotExist:
                 return Response({'error': 'Vaccine not found'}, status=status.HTTP_404_NOT_FOUND)
             
-            # Get unvaccinated residents for this vaccine
-            unvaccinated_residents = self.get_unvaccinated_residents_for_vaccine(
-                vac_id, age_group_id, search
+            # Get ALL residents for this vaccine (including fully vaccinated) with counts
+            all_residents_data, vaccination_counts = self.get_all_residents_for_vaccine_with_counts(
+                vaccine, age_group_id, search, vaccination_status_filter
             )
             
             # Apply pagination
@@ -229,7 +235,7 @@ class UnvaccinatedVaccinesDetailsView(APIView):
             page_size = int(request.GET.get('page_size', paginator.page_size))
             paginator.page_size = page_size
             
-            page_data = paginator.paginate_queryset(unvaccinated_residents, request)
+            page_data = paginator.paginate_queryset(all_residents_data, request)
             
             if page_data is not None:
                 response = paginator.get_paginated_response(page_data)
@@ -238,8 +244,11 @@ class UnvaccinatedVaccinesDetailsView(APIView):
                     'vaccine_info': {
                         'vac_id': vaccine.vac_id,
                         'vac_name': vaccine.vac_name,
-                        'vac_description': getattr(vaccine, 'vac_description', '')
+                        'vac_description': getattr(vaccine, 'vac_description', ''),
+                        'no_of_doses': vaccine.no_of_doses or 1,  # Default dose count for routine vaccines
+                        'is_conditional': self.is_conditional_vaccine(vaccine),
                     },
+                    'vaccination_counts': vaccination_counts,
                     'results': response.data['results'],
                     'count': response.data['count'],
                     'next': response.data.get('next'),
@@ -251,17 +260,65 @@ class UnvaccinatedVaccinesDetailsView(APIView):
                 'vaccine_info': {
                     'vac_id': vaccine.vac_id,
                     'vac_name': vaccine.vac_name,
-                    'vac_description': getattr(vaccine, 'vac_description', '')
+                    'vac_description': getattr(vaccine, 'vac_description', ''),
+                    'no_of_doses': vaccine.no_of_doses or 1,
+                    'is_conditional': self.is_conditional_vaccine(vaccine),
                 },
-                'results': unvaccinated_residents,
-                'count': len(unvaccinated_residents)
+                'vaccination_counts': vaccination_counts,
+                'results': all_residents_data,
+                'count': len(all_residents_data)
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
             return Response({
                 'success': False,
-                'error': f'Error fetching unvaccinated residents: {str(e)}'
+                'error': f'Error fetching residents: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def is_conditional_vaccine(self, vaccine):
+        """
+        Determine if a vaccine is conditional based on:
+        1. Vaccine name patterns (e.g., contains 'conditional', 'special', etc.)
+        2. Presence of vacrec_totaldose values in records (individual dosing)
+        """
+        # Check by name pattern
+        conditional_keywords = ['conditional', 'special', 'medical', 'high risk', 'immunocompromised', 'specific']
+        vaccine_name_lower = vaccine.vac_name.lower()
+        
+        if any(keyword in vaccine_name_lower for keyword in conditional_keywords):
+            return True
+        
+        # Check if this vaccine has individual dosing records
+        has_individual_dosing = VaccinationRecord.objects.filter(
+            vaccination_histories__vacStck_id__vac_id=vaccine.vac_id,
+            vacrec_totaldose__isnull=False
+        ).exclude(vacrec_totaldose=0).exists()
+        
+        return has_individual_dosing
+
+    def get_total_required_doses(self, vaccine, patient_id=None):
+        """
+        Get total required doses for a vaccine and patient
+        For conditional vaccines: Get from patient's vaccination record (vacrec_totaldose)
+        For routine vaccines: Always use vaccine's no_of_doses
+        """
+        is_conditional = self.is_conditional_vaccine(vaccine)
+        
+        if is_conditional and patient_id:
+            # For conditional vaccines with patient, get from patient's vaccination record
+            patient_vacrec = VaccinationRecord.objects.filter(
+                patrec_id__pat_id=patient_id,
+                vaccination_histories__vacStck_id__vac_id=vaccine.vac_id
+            ).first()
+            
+            if patient_vacrec and patient_vacrec.vacrec_totaldose and patient_vacrec.vacrec_totaldose > 0:
+                return patient_vacrec.vacrec_totaldose
+            else:
+                # If no individual record found, return 0 (no dose requirement set yet)
+                return 0
+        else:
+            # For routine vaccines OR conditional vaccines without patient record, use fixed no_of_doses
+            return vaccine.no_of_doses or 1
 
     def calculate_age_in_time_unit(self, birth_date, time_unit):
         """Calculate age in the specified time unit"""
@@ -302,9 +359,54 @@ class UnvaccinatedVaccinesDetailsView(APIView):
         # Check if age falls within the range
         return age_group.min_age <= age <= age_group.max_age
 
-    def get_unvaccinated_residents_for_vaccine(self, vac_id, age_group_id=None, search=''):
-        # Get the vaccine and its age group if specified
-        vaccine = VaccineList.objects.get(vac_id=vac_id)
+    def get_vaccination_status(self, patient_id, vaccine):
+        """
+        Get detailed vaccination status for a patient
+        Returns: {
+            'status': 'unvaccinated' | 'partially_vaccinated' | 'fully_vaccinated'
+            'completed_doses': int,
+            'total_required_doses': int,
+            'is_conditional': bool,
+            'has_dose_requirement': bool
+        }
+        """
+        # Get total required doses
+        total_required_doses = self.get_total_required_doses(vaccine, patient_id)
+        is_conditional = self.is_conditional_vaccine(vaccine)
+        
+        # For conditional vaccines, check if dose requirement is set
+        has_dose_requirement = not is_conditional or (is_conditional and total_required_doses > 0)
+        
+        # Count completed doses for this patient and vaccine
+        completed_doses = 0
+        if patient_id:
+            completed_doses = VaccinationHistory.objects.filter(
+                Q(vacStck_id__vac_id=vaccine.vac_id) | Q(vac__vac_id=vaccine.vac_id),
+                vacrec__patrec_id__pat_id=patient_id,
+                vachist_status="completed"
+            ).count()
+        
+        # Determine vaccination status
+        if completed_doses == 0:
+            status = 'unvaccinated'
+        elif has_dose_requirement and completed_doses >= total_required_doses:
+            status = 'fully_vaccinated'
+        elif has_dose_requirement and completed_doses > 0:
+            status = 'partially_vaccinated'
+        else:
+            # For conditional vaccines without dose requirement but with some doses
+            status = 'partially_vaccinated' if completed_doses > 0 else 'unvaccinated'
+        
+        return {
+            'status': status,
+            'completed_doses': completed_doses,
+            'total_required_doses': total_required_doses,
+            'is_conditional': is_conditional,
+            'has_dose_requirement': has_dose_requirement
+        }
+
+    def get_all_residents_for_vaccine_with_counts(self, vaccine, age_group_id=None, search='', vaccination_status_filter=None):
+        # Get age group if specified
         age_group = None
         
         if age_group_id and age_group_id != 'null':
@@ -316,14 +418,7 @@ class UnvaccinatedVaccinesDetailsView(APIView):
             # Use the vaccine's default age group if no specific age group is provided
             age_group = vaccine.ageGroup
         
-        # Get pat_ids of residents who already got this vaccine
-        vaccinated_ids = VaccinationHistory.objects.filter(
-            Q(vacStck_id__vac_id=vac_id) | Q(vac__vac_id=vac_id),
-            vachist_status="completed"
-        ).values_list('vacrec__patrec_id__pat_id', flat=True).distinct()
-        
         # Get all residents with related data for better performance
-        # Use the correct relationship for addresses - prefetch PersonalAddress with add and sitio
         all_residents = ResidentProfile.objects.select_related('per').prefetch_related(
             Prefetch(
                 'per__personal_addresses',
@@ -341,8 +436,16 @@ class UnvaccinatedVaccinesDetailsView(APIView):
         # Map rp_id -> patient
         patient_map = {p.rp_id.rp_id: p for p in patients if p.rp_id}
         
-        unvaccinated_residents = []
+        all_residents_data = []
         vaccine_data = VacccinationListSerializer(vaccine).data
+        
+        # Initialize counts
+        vaccination_counts = {
+            'unvaccinated': 0,
+            'partially_vaccinated': 0,
+            'fully_vaccinated': 0,
+            'total': 0
+        }
         
         for resident in all_residents:
             rp_id = resident.rp_id
@@ -354,35 +457,52 @@ class UnvaccinatedVaccinesDetailsView(APIView):
             if age_group and not self.is_resident_in_age_group(resident, age_group):
                 continue
             
-            is_unvaccinated = False
+            vaccination_status = None
             resident_data = None
             
             if patient:
-                # Has patient — check if vaccinated
-                if patient.pat_id not in vaccinated_ids:
-                    is_unvaccinated = True
-                    resident_data = {
-                        "status": "Has patient, not vaccinated for this vaccine",
-                        "pat_id": patient.pat_id,
-                        "rp_id": rp_id,
-                        "personal_info": personal_info,
-                        "vaccine_not_received": vaccine_data,
-                        "age_info": self.get_age_info(resident, age_group) if age_group else None
-                    }
-            else:
-                # No patient — definitely not vaccinated for this vaccine
-                is_unvaccinated = True
+                # Check vaccination status for patients with patient records
+                vaccination_status = self.get_vaccination_status(patient.pat_id, vaccine)
+                
                 resident_data = {
-                    "status": "No patient record",
+                    "status": vaccination_status['status'],
+                    "pat_id": patient.pat_id,
+                    "rp_id": rp_id,
+                    "personal_info": personal_info,
+                    "vaccine_info": vaccine_data,
+                    "vaccination_status": vaccination_status,
+                    "age_info": self.get_age_info(resident, age_group) if age_group else None
+                }
+            else:
+                # No patient record - use vaccine's no_of_doses for routine vaccines
+                is_conditional = self.is_conditional_vaccine(vaccine)
+                total_required_doses = self.get_total_required_doses(vaccine)  # This will return no_of_doses for routine vaccines
+                
+                vaccination_status = {
+                    'status': 'unvaccinated',
+                    'completed_doses': 0,
+                    'total_required_doses': total_required_doses,
+                    'is_conditional': is_conditional,
+                    'has_dose_requirement': not is_conditional or (is_conditional and total_required_doses > 0)
+                }
+                resident_data = {
+                    "status": "no_patient_record",
                     "pat_id": None,
                     "rp_id": rp_id,
                     "personal_info": personal_info,
-                    "vaccine_not_received": vaccine_data,
+                    "vaccine_info": vaccine_data,
+                    "vaccination_status": vaccination_status,
                     "age_info": self.get_age_info(resident, age_group) if age_group else None
                 }
             
-            if is_unvaccinated and resident_data:
+            if resident_data:
+                # Apply vaccination status filter if provided
+                if vaccination_status_filter and vaccination_status_filter != 'all':
+                    if resident_data['vaccination_status']['status'] != vaccination_status_filter:
+                        continue
+                
                 # Apply search filter if provided
+                search_match = True
                 if search:
                     search_lower = search.lower()
                     searchable_fields = [
@@ -392,6 +512,8 @@ class UnvaccinatedVaccinesDetailsView(APIView):
                         personal_info.get('per_lname', ''),
                         personal_info.get('per_mname', ''),
                         personal_info.get('per_sex', ''),
+                        resident_data.get('status', ''),
+                        resident_data['vaccination_status']['status'],  # Include vaccination status in search
                     ]
                     
                     # Add address fields using the correct relationship
@@ -412,11 +534,19 @@ class UnvaccinatedVaccinesDetailsView(APIView):
                     searchable_text = ' '.join(filter(None, searchable_fields)).lower()
                     
                     if search_lower not in searchable_text:
-                        continue
+                        search_match = False
                 
-                unvaccinated_residents.append(resident_data)
+                # If search matches or no search, include the resident
+                if not search or search_match:
+                    # Update counts based on vaccination status
+                    status = resident_data['vaccination_status']['status']
+                    vaccination_counts[status] += 1
+                    vaccination_counts['total'] += 1
+                    
+                    # Add to results list
+                    all_residents_data.append(resident_data)
         
-        return unvaccinated_residents
+        return all_residents_data, vaccination_counts
 
     def get_age_info(self, resident, age_group):
         """Get age information for the resident"""
@@ -434,14 +564,14 @@ class UnvaccinatedVaccinesDetailsView(APIView):
             "birth_date": birth_date.isoformat(),
             "age": age,
             "time_unit": age_group.time_unit,
-            "age_group_range": f"{age_group.min_age}-{age_group.max_age} {age_group.time_unit}"
+            "age_group_range": f"{age_group.min_age}-{age_group.max_age} {age_group.time_unit}",
+            "is_in_age_group": self.is_resident_in_age_group(resident, age_group)
         }
-    
 
 
 class UnvaccinatedVaccinesSummaryView(APIView):
     """
-    First endpoint: Get all vaccines with their unvaccinated resident counts and age ranges
+    First endpoint: Get all vaccines with their vaccination status counts and age ranges
     """
     pagination_class = StandardResultsPagination
     
@@ -458,16 +588,22 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                 # Get age groups for this vaccine first
                 age_groups = self.get_age_groups_for_vaccine(vaccine)
                 
-                # Calculate total unvaccinated as sum of all age groups
+                # Calculate total counts as sum of all age groups
                 total_unvaccinated = sum(age_group['unvaccinated_count'] for age_group in age_groups)
+                total_partially_vaccinated = sum(age_group['partially_vaccinated_count'] for age_group in age_groups)
+                total_fully_vaccinated = sum(age_group['fully_vaccinated_count'] for age_group in age_groups)
                 
                 vaccine_data = {
                     'vac_id': vaccine.vac_id,
                     'vac_name': vaccine.vac_name,
                     'vac_description': getattr(vaccine, 'vac_description', ''),
                     'total_unvaccinated': total_unvaccinated,
+                    'total_partially_vaccinated': total_partially_vaccinated,
+                    'total_fully_vaccinated': total_fully_vaccinated,
+                    'total_residents': total_unvaccinated + total_partially_vaccinated + total_fully_vaccinated,
                     'age_groups': age_groups,
-                    'total_residents_count': total_residents_count
+                    'total_residents_count': total_residents_count,
+                    'is_conditional': self.is_conditional_vaccine(vaccine),
                 }
                 result.append(vaccine_data)
             
@@ -501,6 +637,76 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                 'success': False,
                 'error': f'Error fetching vaccines: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def is_conditional_vaccine(self, vaccine):
+        """
+        Determine if a vaccine is conditional
+        """
+        # Check by name pattern
+        conditional_keywords = ['conditional', 'special', 'medical', 'high risk', 'immunocompromised', 'specific']
+        vaccine_name_lower = vaccine.vac_name.lower()
+        
+        if any(keyword in vaccine_name_lower for keyword in conditional_keywords):
+            return True
+        
+        # Check if this vaccine has individual dosing records
+        has_individual_dosing = VaccinationRecord.objects.filter(
+            vaccination_histories__vacStck_id__vac_id=vaccine.vac_id,
+            vacrec_totaldose__isnull=False
+        ).exclude(vacrec_totaldose=0).exists()
+        
+        return has_individual_dosing
+
+    def get_patient_total_doses(self, patient_id, vaccine):
+        """
+        Get total required doses for a specific patient and vaccine
+        """
+        is_conditional = self.is_conditional_vaccine(vaccine)
+        
+        if is_conditional:
+            # For conditional vaccines, get from patient's vaccination record
+            patient_vacrec = VaccinationRecord.objects.filter(
+                patrec_id__pat_id=patient_id,
+                vaccination_histories__vacStck_id__vac_id=vaccine.vac_id
+            ).first()
+            
+            if patient_vacrec and patient_vacrec.vacrec_totaldose and patient_vacrec.vacrec_totaldose > 0:
+                return patient_vacrec.vacrec_totaldose
+            else:
+                return 0
+        else:
+            # For routine vaccines, use fixed no_of_doses
+            return vaccine.no_of_doses or 1
+
+    def get_vaccination_status_for_patient(self, patient_id, vaccine):
+        """
+        Get vaccination status for a specific patient
+        Returns: 'unvaccinated', 'partially_vaccinated', or 'fully_vaccinated'
+        """
+        # Get patient-specific total required doses
+        total_required_doses = self.get_patient_total_doses(patient_id, vaccine)
+        is_conditional = self.is_conditional_vaccine(vaccine)
+        
+        # For conditional vaccines, check if dose requirement is set
+        has_dose_requirement = not is_conditional or (is_conditional and total_required_doses > 0)
+        
+        # Count completed doses for this patient and vaccine
+        completed_doses = VaccinationHistory.objects.filter(
+            Q(vacStck_id__vac_id=vaccine.vac_id) | Q(vac__vac_id=vaccine.vac_id),
+            vacrec__patrec_id__pat_id=patient_id,
+            vachist_status="completed"
+        ).count()
+        
+        # Determine vaccination status
+        if completed_doses == 0:
+            return 'unvaccinated'
+        elif has_dose_requirement and completed_doses >= total_required_doses:
+            return 'fully_vaccinated'
+        elif has_dose_requirement and completed_doses > 0:
+            return 'partially_vaccinated'
+        else:
+            # For conditional vaccines without dose requirement but with some doses
+            return 'partially_vaccinated' if completed_doses > 0 else 'unvaccinated'
 
     def get_total_residents_count(self):
         """Get total count of all residents"""
@@ -539,12 +745,11 @@ class UnvaccinatedVaccinesSummaryView(APIView):
             # Default to years
             return relativedelta(today, birth_date).years
 
-    def get_unvaccinated_count_for_vaccine(self, vac_id, age_group=None):
-        # Get pat_ids of residents who already got this vaccine
-        vaccinated_ids = VaccinationHistory.objects.filter(
-            Q(vacStck_id__vac_id=vac_id) | Q(vac__vac_id=vac_id),
-            vachist_status="completed"
-        ).values_list('vacrec__patrec_id__pat_id', flat=True).distinct()
+    def get_vaccination_counts_for_vaccine(self, vac_id, age_group=None):
+        """
+        Get counts of unvaccinated, partially vaccinated, and fully vaccinated residents for a vaccine
+        """
+        vaccine = VaccineList.objects.get(vac_id=vac_id)
         
         # Get all residents
         all_residents = ResidentProfile.objects.select_related('per').all()
@@ -559,6 +764,8 @@ class UnvaccinatedVaccinesSummaryView(APIView):
         patient_map = {p.rp_id.rp_id: p for p in patients if p.rp_id}
         
         unvaccinated_count = 0
+        partially_vaccinated_count = 0
+        fully_vaccinated_count = 0
         
         for resident in all_residents:
             # Apply age group filter if specified
@@ -568,14 +775,24 @@ class UnvaccinatedVaccinesSummaryView(APIView):
             patient = patient_map.get(resident.rp_id)
             
             if patient:
-                # Has patient — check if not vaccinated
-                if patient.pat_id not in vaccinated_ids:
+                # Has patient — check vaccination status
+                status = self.get_vaccination_status_for_patient(patient.pat_id, vaccine)
+                if status == 'unvaccinated':
                     unvaccinated_count += 1
+                elif status == 'partially_vaccinated':
+                    partially_vaccinated_count += 1
+                elif status == 'fully_vaccinated':
+                    fully_vaccinated_count += 1
             else:
                 # No patient — definitely not vaccinated
                 unvaccinated_count += 1
         
-        return unvaccinated_count
+        return {
+            'unvaccinated_count': unvaccinated_count,
+            'partially_vaccinated_count': partially_vaccinated_count,
+            'fully_vaccinated_count': fully_vaccinated_count,
+            'total_count': unvaccinated_count + partially_vaccinated_count + fully_vaccinated_count
+        }
 
     def is_resident_in_age_group(self, resident, age_group):
         """Check if resident falls within the specified age group"""
@@ -604,7 +821,7 @@ class UnvaccinatedVaccinesSummaryView(APIView):
         if vaccine.ageGroup:
             # Single age group associated with vaccine
             age_group = vaccine.ageGroup
-            unvaccinated_count = self.get_unvaccinated_count_for_vaccine(vaccine.vac_id, age_group)
+            vaccination_counts = self.get_vaccination_counts_for_vaccine(vaccine.vac_id, age_group)
             total_residents_count = self.get_residents_count_for_age_group(age_group)
             
             age_groups.append({
@@ -614,12 +831,14 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                 'max_age': age_group.max_age,
                 'time_unit': age_group.time_unit,
                 'age_range_display': f"{age_group.min_age}-{age_group.max_age} {age_group.time_unit}",
-                'unvaccinated_count': unvaccinated_count,
+                'unvaccinated_count': vaccination_counts['unvaccinated_count'],
+                'partially_vaccinated_count': vaccination_counts['partially_vaccinated_count'],
+                'fully_vaccinated_count': vaccination_counts['fully_vaccinated_count'],
                 'total_residents_count': total_residents_count
             })
         else:
             # No specific age group - show all ages
-            all_ages_unvaccinated_count = self.get_unvaccinated_count_for_vaccine(vaccine.vac_id)
+            vaccination_counts = self.get_vaccination_counts_for_vaccine(vaccine.vac_id)
             all_ages_total_residents_count = self.get_residents_count_for_age_group()
             
             age_groups.append({
@@ -629,12 +848,13 @@ class UnvaccinatedVaccinesSummaryView(APIView):
                 'max_age': 999,
                 'time_unit': 'years',
                 'age_range_display': 'All Ages',
-                'unvaccinated_count': all_ages_unvaccinated_count,
+                'unvaccinated_count': vaccination_counts['unvaccinated_count'],
+                'partially_vaccinated_count': vaccination_counts['partially_vaccinated_count'],
+                'fully_vaccinated_count': vaccination_counts['fully_vaccinated_count'],
                 'total_residents_count': all_ages_total_residents_count
             })
         
         return age_groups
-    
 class CheckVaccineExistsView(APIView):
     def get(self, request, pat_id, vac_id):
         exists = has_existing_vaccine_history(pat_id, vac_id)
@@ -704,11 +924,12 @@ class ForwardedVaccinationCountView(APIView):
 
 
 
-
 # ======SCHEDULES VACCINATION LAST STEP======
 
-import logging
+
+
 logger = logging.getLogger(__name__)
+
 class VaccinationCompletionAPIView(APIView):
     @transaction.atomic
     def post(self, request):
@@ -721,6 +942,7 @@ class VaccinationCompletionAPIView(APIView):
             follow_up_data = data.get('followUpData')  # This will be None if not provided
             patient_id = data.get('patientId')
             patrec_id = data.get('patrec_id')
+            imz_stock_id = data.get('imzStck_id')  # Immunization stock ID
             
             if not vaccination_id:
                 return Response(
@@ -731,7 +953,7 @@ class VaccinationCompletionAPIView(APIView):
             # Get the vaccination history record
             try:
                 vaccination = VaccinationHistory.objects.select_related(
-                    'followv', 'vacrec', 'vacrec__patrec_id'
+                    'followv', 'vacrec', 'vacrec__patrec_id', 'vacStck_id', 'vacStck_id__vac_id', 'staff'
                 ).get(vachist_id=vaccination_id)
             except VaccinationHistory.DoesNotExist:
                 return Response(
@@ -743,6 +965,17 @@ class VaccinationCompletionAPIView(APIView):
             sid = transaction.savepoint()
             
             try:
+                # CHECK: If it's a routine vaccine and previous follow-up was missed
+                is_routine_missed = self.check_routine_followup_missed(vaccination)
+                
+                if is_routine_missed:
+                    return Response({
+                        "success": False,
+                        "error": "Cannot complete routine vaccination - previous follow-up was missed and scheduled date has passed the interval",
+                        "patientId": patient_id,
+                        "vaccinationId": vaccination_id
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
                 # 1. Handle previous vaccination's follow-up if exists
                 previous_vaccination = VaccinationHistory.objects.filter(
                     vacrec=vaccination.vacrec,
@@ -790,7 +1023,76 @@ class VaccinationCompletionAPIView(APIView):
                         # If date parsing fails, just log it and continue without follow-up
                         logger.warning("Invalid date format in follow-up data, skipping follow-up processing")
                 
-                # 3. Update vaccination status to completed (this always happens)
+                # 3. Handle immunization stock deduction if imzStck_id is provided
+                antigen_transaction_id = None
+                if imz_stock_id:
+                    try:
+                        imz_stock = ImmunizationStock.objects.select_related('inv_id').get(imzStck_id=imz_stock_id)
+                        
+                        # Check if there's enough stock
+                        if imz_stock.imzStck_avail <= 0:
+                            transaction.savepoint_rollback(sid)
+                            return Response(
+                                {"error": "Insufficient immunization stock available"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
+                        
+                        # Deduct stock based on unit type
+                        unit_lower = imz_stock.imzStck_unit.lower()
+                        
+                        if 'box' in unit_lower or 'boxes' in unit_lower:
+                            # For boxes, deduct 1 piece from available pcs
+                            if imz_stock.imzStck_pcs <= 0:
+                                transaction.savepoint_rollback(sid)
+                                return Response(
+                                    {"error": "No pieces available in boxes"},
+                                    status=status.HTTP_400_BAD_REQUEST
+                                )
+                            
+                            imz_stock.imzStck_pcs -= 1
+                            imz_stock.wasted += 1
+                            imz_stock.imzStck_avail -= 1
+                            transaction_qty = "1 pcs"
+                        else:
+                            # For other units (vials, doses, etc.), deduct based on unit
+                            imz_stock.imzStck_qty = max(0, imz_stock.imzStck_qty - 1)
+                            imz_stock.wasted += 1
+                            imz_stock.imzStck_avail = max(0, imz_stock.imzStck_avail - 1)
+                            transaction_qty = f"1 {imz_stock.imzStck_unit}"
+                        
+                        imz_stock.save()
+                        logger.info(f"Immunization stock updated: {imz_stock_id}, Available: {imz_stock.imzStck_avail}")
+                        
+                        # Update inventory updated_at timestamp
+                        if imz_stock.inv_id:
+                            imz_stock.inv_id.updated_at = timezone.now()
+                            imz_stock.inv_id.save()
+                        
+                        # Create antigen transaction record
+                        antigen_transaction = AntigenTransaction.objects.create(
+                            antt_qty=transaction_qty,
+                            antt_action="Administered",
+                            imzStck_id=imz_stock,
+                            staff=vaccination.staff
+                        )
+                        antigen_transaction_id = antigen_transaction.antt_id
+                        logger.info(f"Antigen transaction created: {antigen_transaction_id}")
+                        
+                    except ImmunizationStock.DoesNotExist:
+                        transaction.savepoint_rollback(sid)
+                        return Response(
+                            {"error": f"Immunization stock with id {imz_stock_id} not found"},
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+                    except Exception as e:
+                        transaction.savepoint_rollback(sid)
+                        logger.error(f"Error processing immunization stock: {str(e)}")
+                        return Response(
+                            {"error": f"Failed to process immunization stock: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        )
+                
+                # 4. Update vaccination status to completed (this always happens if not routine missed)
                 logger.info(f"Updating vaccination status to completed: {vaccination_id}")
                 vaccination.vachist_status = 'completed'
                 if follow_up_visit:
@@ -805,7 +1107,8 @@ class VaccinationCompletionAPIView(APIView):
                     "success": True,
                     "patientId": patient_id,
                     "vaccinationId": vaccination_id,
-                    "followUpVisitId": follow_up_visit.followv_id if follow_up_visit else None
+                    "followUpVisitId": follow_up_visit.followv_id if follow_up_visit else None,
+                    "antigenTransactionId": antigen_transaction_id
                 }, status=status.HTTP_200_OK)
                 
             except Exception as e:
@@ -823,6 +1126,86 @@ class VaccinationCompletionAPIView(APIView):
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    def check_routine_followup_missed(self, vaccination):
+        """
+        Check if this is a routine vaccine where previous follow-up was missed
+        and the scheduled date has passed the set time interval
+        """
+        try:
+            # Get the vaccine information
+            vaccine = None
+            if vaccination.vacStck_id and vaccination.vacStck_id.vac_id:
+                vaccine = vaccination.vacStck_id.vac_id
+            elif vaccination.vac:
+                vaccine = vaccination.vac
+            
+            if not vaccine or vaccine.vac_type_choices != 'routine':
+                return False
+            
+            # Get routine frequency for this vaccine
+            try:
+                routine_freq = RoutineFrequency.objects.get(vac_id=vaccine.vac_id)
+            except RoutineFrequency.DoesNotExist:
+                # No frequency defined, can't check intervals
+                return False
+            
+            # Get the most recent completed vaccination for this patient and vaccine
+            previous_vaccination = VaccinationHistory.objects.filter(
+                vacrec=vaccination.vacrec,
+                vachist_status='completed'
+            ).filter(
+                Q(vacStck_id__vac_id=vaccine.vac_id) | 
+                Q(vac__vac_id=vaccine.vac_id)
+            ).exclude(vachist_id=vaccination.vachist_id).order_by('-date_administered').first()
+            
+            if not previous_vaccination:
+                # No previous vaccination, so no follow-up to miss
+                return False
+            
+            # Check if previous vaccination had a follow-up that was missed
+            if previous_vaccination.followv:
+                previous_followup = previous_vaccination.followv
+                today = timezone.now().date()
+                
+                # Calculate the expected completion date based on frequency
+                last_administered = previous_vaccination.date_administered
+                
+                if routine_freq.time_unit == 'days':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval)
+                elif routine_freq.time_unit == 'weeks':
+                    expected_completion_date = last_administered + timedelta(weeks=routine_freq.interval)
+                elif routine_freq.time_unit == 'months':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval * 30)
+                elif routine_freq.time_unit == 'years':
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval * 365)
+                else:
+                    expected_completion_date = last_administered + timedelta(days=routine_freq.interval)
+                
+                # Check conditions for missed follow-up:
+                # 1. Previous follow-up status is not 'completed'
+                # 2. Today is past the expected completion date
+                # 3. The scheduled follow-up date has passed
+                is_missed = (
+                    previous_followup.followv_status != 'completed' and
+                    today > expected_completion_date and
+                    previous_followup.followv_date and
+                    today > previous_followup.followv_date
+                )
+                
+                if is_missed:
+                    logger.warning(f"Routine vaccine follow-up missed: vaccine {vaccine.vac_name}, "
+                                 f"last administered {last_administered}, "
+                                 f"expected by {expected_completion_date}, "
+                                 f"scheduled for {previous_followup.followv_date}")
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error checking routine follow-up status: {str(e)}")
+            # If there's an error in checking, allow the completion to proceed
+            return False
 
 
  
@@ -967,7 +1350,7 @@ class VaccinationSubmissionView(APIView):
             
             AntigenTransaction.objects.create(
                 antt_qty=antt_qty,
-                antt_action="Vaccination administered",
+                antt_action="Administered",
                 vacStck_id=vaccine_stock,
                 staff_id=staff_id
             )
@@ -1023,28 +1406,23 @@ class VaccinationSubmissionView(APIView):
             )
 
     def process_routine_vaccination(self, data, form_data, signature, pat_id, 
-                                  vaccine_stock, status_val, follow_up_data, 
-                                  vac_name, staff_id,assigned_to_instance):
-    
-        # Check if there's an existing vaccination record for this patient and vaccine
+                                vaccine_stock, status_val, follow_up_data, 
+                                vac_name, staff_id, assigned_to_instance):
+        
+        # Check if there's an existing vaccination record for this patient
         existing_vacrec = None
+        
         try:
             # First find patient records for this patient
             patient_records = PatientRecord.objects.filter(pat_id_id=pat_id, patrec_type="Vaccination Record")
             
-            # Look for a vaccination record that has history with the same vaccine
+            # Look for any existing vaccination record for this patient
             for patrec in patient_records:
                 try:
                     vacrec = VaccinationRecord.objects.get(patrec_id=patrec.patrec_id)
-                    # Check if this vacrec has any history with the same vaccine
-                    if VaccinationHistory.objects.filter(
-                        vacrec=vacrec, 
-                        vacStck_id__vac_id=vaccine_stock.vac_id,
-                        
-                    ).exists():
-                        existing_vacrec = vacrec
-                        existing_patrec = patrec
-                        break
+                    existing_vacrec = vacrec
+                    existing_patrec = patrec
+                    break
                 except VaccinationRecord.DoesNotExist:
                     continue
                     
@@ -1077,6 +1455,7 @@ class VaccinationSubmissionView(APIView):
                 vital_temp=form_data.get('temp', ''),
                 vital_o2=form_data.get('o2', ''),
                 vital_pulse=form_data.get('pr', ''),
+                vital_RR=form_data.get('vital_RR', ''),
                 staff_id=staff_id,
                 patrec=patient_record
             )
@@ -1092,18 +1471,18 @@ class VaccinationSubmissionView(APIView):
                 patrec=patient_record
             )
         
-        # Create vaccination history - convert to integer
+        # Create vaccination history - always use dose 1 for routine vaccinations
         vachist = VaccinationHistory.objects.create(
             vacrec=vaccination_record,
-            vacStck_id=vaccine_stock,  # Removed assigned_to field
-            vachist_doseNo=int(form_data.get('vachist_doseNo', 1)),
+            vacStck_id=vaccine_stock,
+            vachist_doseNo=1,  # Always dose 1 for routine vaccinations
             vachist_status=status_val,
             staff_id=staff_id,
             vital=vital,
             followv=followv,
             signature=signature,
             date_administered=timezone.now().date(),
-            assigned_to= assigned_to_instance
+            assigned_to=assigned_to_instance
         )
         
         return {
@@ -1114,7 +1493,6 @@ class VaccinationSubmissionView(APIView):
             'followv_id': followv.followv_id if followv else None,
             'is_new_record': not existing_vacrec
         }
-
     def process_primary_vaccination(self, data, form_data, signature, pat_id, 
                                    vaccine_stock, status_val, follow_up_data, 
                                    vac_name, staff_id, vaccination_history,assigned_to_instance):
@@ -1137,6 +1515,7 @@ class VaccinationSubmissionView(APIView):
                     vital_temp=form_data.get('temp', ''),
                     vital_o2=form_data.get('o2', ''),
                     vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
                     staff_id=staff_id,
                     patrec=patient_record
                 )
@@ -1202,6 +1581,7 @@ class VaccinationSubmissionView(APIView):
                     vital_temp=form_data.get('temp', ''),
                     vital_o2=form_data.get('o2', ''),
                     vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
                     staff_id=staff_id,
                     patrec=old_vaccination_record.patrec_id
                 )
@@ -1257,6 +1637,7 @@ class VaccinationSubmissionView(APIView):
                     vital_temp=form_data.get('temp', ''),
                     vital_o2=form_data.get('o2', ''),
                     vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
                     staff_id=staff_id,
                     patrec=patient_record
                 )
@@ -1324,6 +1705,7 @@ class VaccinationSubmissionView(APIView):
                     vital_temp=form_data.get('temp', ''),
                     vital_o2=form_data.get('o2', ''),
                     vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
                     staff_id=staff_id,
                     patrec=old_vaccination_record.patrec_id
                 )
@@ -1358,8 +1740,10 @@ class VaccinationSubmissionView(APIView):
             }
 
 # ======================== Monthly Vaccination REPORTS ========================
-            
+
 class MonthlyVaccinationSummariesAPIView(APIView):
+    pagination_class = StandardResultsPagination
+    
     def get(self, request):
         try:
             queryset = VaccinationHistory.objects.select_related(
@@ -1372,8 +1756,9 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                 'vacStck_id__vac_id',
                 'vac',
                 'followv'
-            ).order_by('-created_at')
+            ).order_by('-date_administered')
 
+            search_query = request.GET.get('search', '').strip().lower()
             year_param = request.GET.get('year')  # '2025' or '2025-07'
 
             if year_param and year_param != 'all':
@@ -1381,13 +1766,13 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                     if '-' in year_param:
                         year, month = map(int, year_param.split('-'))
                         queryset = queryset.filter(
-                            created_at__year=year,
-                            created_at__month=month
+                            date_administered__year=year,
+                            date_administered__month=month
                         )
                     else:
                         year = int(year_param)
                         queryset = queryset.filter(
-                            created_at__year=year
+                            date_administered__year=year
                         )
                 except ValueError:
                     return Response({
@@ -1395,81 +1780,214 @@ class MonthlyVaccinationSummariesAPIView(APIView):
                         'error': 'Invalid format for year. Use YYYY or YYYY-MM.'
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Annotate and count records by month
-            monthly_data = queryset.annotate(
-                month=TruncMonth('created_at')
-            ).values('month').annotate(
-                record_count=Count('vachist_id')
-            ).order_by('-month')
+            # Group records by month and count unique patient-vaccine combinations
+            monthly_counts = defaultdict(set)
+            
+            for record in queryset:
+                if record.vacrec:
+                    # Get the vaccine from either direct relationship or through stock
+                    vaccine = record.vac if record.vac else (
+                        record.vacStck_id.vac_id if record.vacStck_id else None
+                    )
+                    
+                    if vaccine and record.date_administered:
+                        # Create month key in YYYY-MM format
+                        month_key = record.date_administered.strftime('%Y-%m')
+                        month_name = record.date_administered.strftime('%B %Y')
+                        short_month_name = record.date_administered.strftime('%b %Y')
+                        year_only = record.date_administered.strftime('%Y')
+                        month_only = record.date_administered.strftime('%B')
+                        
+                        # Apply search filter if provided
+                        if search_query:
+                            matches_search = (
+                                search_query in month_name.lower() or
+                                search_query in short_month_name.lower() or
+                                search_query in year_only.lower() or
+                                search_query in month_only.lower() or
+                                search_query in month_key
+                            )
+                            if not matches_search:
+                                continue
+                        
+                        # Create unique key for patient-vaccine combination
+                        # Using vacrec.patrec_id (patient record) + vaccine_id
+                        unique_key = (
+                            record.vacrec.patrec_id.patrec_id,
+                            vaccine.vac_id
+                        )
+                        
+                        # Add to set for this month (sets automatically handle uniqueness)
+                        monthly_counts[month_key].add(unique_key)
 
-            formatted_data = [{
-                'month': item['month'].strftime('%Y-%m'),
-                'record_count': item['record_count']
-            } for item in monthly_data]
+            # Format the data with additional information for search
+            formatted_data = []
+            for month_key in sorted(monthly_counts.keys(), reverse=True):
+                # Create month date object for additional info
+                month_date = datetime.strptime(month_key + '-01', '%Y-%m-%d')
+                month_name = month_date.strftime('%B %Y')
+                
+                formatted_data.append({
+                    'month': month_key,
+                    'record_count': len(monthly_counts[month_key]),
+                    'month_name': month_name
+                })
 
-            return Response({
+            # Apply pagination
+            paginator = self.pagination_class()
+            paginated_data = paginator.paginate_queryset(formatted_data, request, view=self)
+            
+            response_data = {
                 'success': True,
-                'data': formatted_data,
+                'data': paginated_data,
                 'total_months': len(formatted_data)
-            }, status=status.HTTP_200_OK)
+            }
+            
+            return paginator.get_paginated_response(response_data)
 
         except Exception as e:
             return Response({
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 
 
-class MonthlyVaccinationRecordsDetailAPIView(APIView):
-    def get(self, request, month):
+
+
+
+
+class MonthlyVaccinationRecordsDetailAPIView(generics.ListAPIView):
+    serializer_class = VaccinationHistorySerializer
+    pagination_class = StandardResultsPagination
+
+    def get_queryset(self):
+        month = self.kwargs['month']
+        
+        # Validate month format (YYYY-MM)
         try:
-            # Validate month format (YYYY-MM)
-            try:
-                year, month_num = map(int, month.split('-'))
-                if month_num < 1 or month_num > 12:
-                    raise ValueError
-            except ValueError:
-                return Response({
-                    'success': False,
-                    'error': 'Invalid month format. Use YYYY-MM.'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            year, month_num = map(int, month.split('-'))
+            if month_num < 1 or month_num > 12:
+                raise ValueError
+        except ValueError:
+            return VaccinationHistory.objects.none()
 
-            # Get records for the specified month
-            queryset = VaccinationHistory.objects.select_related(
-                'staff',
-                'vital',
-                'vacrec',
-                'vacrec__patrec_id',
-                'vacStck_id',
-                'vacStck_id__inv_id',
-                'vacStck_id__vac_id',
-                'vac',
-                'followv'
-            ).filter(
-                created_at__year=year,
-                created_at__month=month_num
-            ).order_by('-created_at')
+        # Base queryset
+        queryset = VaccinationHistory.objects.select_related(
+            'staff',
+            'vital',
+            'vacrec',
+            'vacrec__patrec_id',
+            'vacrec__patrec_id__pat_id',
+            'vacrec__patrec_id__pat_id__rp_id',
+            'vacrec__patrec_id__pat_id__rp_id__per',
+            'vacrec__patrec_id__pat_id__trans_id',
+            'vacrec__patrec_id__pat_id__trans_id__tradd_id',
+            'vacStck_id',
+            'vacStck_id__inv_id',
+            'vacStck_id__vac_id',
+            'vac',
+            'followv'
+        ).filter(
+            created_at__year=year,
+            created_at__month=month_num
+        ).order_by('-created_at')
 
-            serialized_records = [
-                VaccinationHistorySerializer(record).data for record in queryset
-            ]
+        # Search functionality
+        search_query = self.request.query_params.get('search', '').strip()
+        if search_query:
+            # Search for resident personal info
+            resident_name_query = Q(
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_fname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_mname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__rp_id__per__per_lname__icontains=search_query)
+            )
 
-            return Response({
+            # Search for transient personal info
+            transient_name_query = Q(
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_fname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_mname__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tran_lname__icontains=search_query)
+            )
+
+            # Search for vaccine names
+            vaccine_query = Q(
+                Q(vac__vac_name__icontains=search_query) |
+                Q(vacStck_id__vac_id__vac_name__icontains=search_query)
+            )
+
+            # Search for dose number
+            dose_query = Q(vachist_doseNo__icontains=search_query)
+
+            # Search for status
+            status_query = Q(vachist_status__icontains=search_query)
+
+            # Search for resident addresses
+            resident_address_ids = PersonalAddress.objects.filter(
+                Q(add__add_city__icontains=search_query) |
+                Q(add__add_barangay__icontains=search_query) |
+                Q(add__add_street__icontains=search_query) |
+                Q(add__add_external_sitio__icontains=search_query) |
+                Q(add__add_province__icontains=search_query) |
+                Q(add__sitio__sitio_name__icontains=search_query)
+            ).values_list('per', flat=True)
+
+            resident_address_query = Q(vacrec__patrec_id__pat_id__rp_id__per__in=resident_address_ids)
+
+            # Search for transient addresses
+            transient_address_query = Q(
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_province__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_city__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_barangay__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_sitio__icontains=search_query) |
+                Q(vacrec__patrec_id__pat_id__trans_id__tradd_id__tradd_street__icontains=search_query)
+            )
+
+            # Combine all search queries
+            queryset = queryset.filter(
+                resident_name_query |
+                transient_name_query |
+                vaccine_query |
+                dose_query |
+                status_query |
+                resident_address_query |
+                transient_address_query
+            )
+
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        month = self.kwargs['month']
+        
+        # Get paginated data
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response({
                 'success': True,
-                'data': {
-                    'month': month,
-                    'record_count': len(serialized_records),
-                    'records': serialized_records
-                }
-            }, status=status.HTTP_200_OK)
+                'month': month,
+                'record_count': queryset.count(),
+                'records': serializer.data
+            })
 
-        except Exception as e:
-            return Response({
-                'success': False,
-                'error': str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)     
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'success': True,
+            'month': month,
+            'record_count': queryset.count(),
+            'records': serializer.data
+        }, status=status.HTTP_200_OK)
 
-            
+
+
+def get_ordinal_suffix(n):
+    """Return ordinal suffix for a number (1st, 2nd, 3rd, etc.)"""
+    if 11 <= (n % 100) <= 13:
+        return 'th'
+    else:
+        return {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
 
 class MonthlyVaccinationChart(APIView):
     def get(self, request, month):
@@ -1545,3 +2063,462 @@ class VaccinationTotalCountAPIView(APIView):
                 'success': False,
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            
+            
+            
+class MaternalVaccinationSubmissionView(APIView):
+    @transaction.atomic
+    def post(self, request):
+        try:
+            data = request.data
+            
+            # Extract data from request - fixed structure
+            form_data = data.get('form_data', {})
+            signature = data.get('signature')
+            vacStck_id = data.get('vacStck_id')
+            vac_id = data.get('vac_id')
+            vac_name = data.get('vac_name')
+            expiry_date = data.get('expiry_date')
+            follow_up_data = data.get('follow_up_data', {})
+            vaccination_history = data.get('vaccination_history', [])
+            assigned_to_id=form_data.get("selectedStaffId")  # This can be None
+            print("staff",form_data.get("staff_id"))
+            print("form",form_data)
+            
+            # Get staff_id from request user
+            staff_id = form_data.get("staff_id") or None
+            if not staff_id:
+                return Response(
+                    {'error': 'Staff ID not found'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            assigned_to_instance = None
+            if assigned_to_id:
+                try:
+                    assigned_to_instance = Staff.objects.get(staff_id=assigned_to_id)
+                except Staff.DoesNotExist:
+                    return Response(
+                        {'error': 'Assigned staff not found'}, 
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            
+            # Get vaccine stock
+            try:
+                vaccine_stock = VaccineStock.objects.select_related('vac_id').get(vacStck_id=vacStck_id)
+            except VaccineStock.DoesNotExist:
+                return Response(
+                    {'error': 'Vaccine stock not found'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            vac_type = vaccine_stock.vac_id.vac_type_choices
+            
+            # Update vaccine stock quantity
+            if vaccine_stock.vacStck_qty_avail < 1:
+                return Response(
+                    {'error': 'Insufficient vaccine stock available'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            vaccine_stock.vacStck_qty_avail -= 1
+            vaccine_stock.save()
+            
+            # Create antigen transaction with appropriate unit
+            if vaccine_stock.solvent == 'diluent':
+                antt_qty = "1 container"
+            else:
+                antt_qty = "1 dose"
+            
+            AntigenTransaction.objects.create(
+                antt_qty=antt_qty,
+                antt_action="Administered",
+                vacStck_id=vaccine_stock,
+                staff_id=staff_id
+            )
+            
+            # Update inventory timestamp
+            if vaccine_stock.inv_id:
+                inventory = vaccine_stock.inv_id
+                inventory.updated_at = timezone.now()
+                inventory.save()
+            
+            # Determine status - removed assignment_option since it's not in frontend
+            status_val = "completed"  # Default to completed since no assignment option
+            
+            # Get patient ID from request or data - you need to determine how this is passed
+            pat_id = form_data.get("pat_id")  # You need to ensure this is passed from frontend
+            
+            if not pat_id:
+                return Response(
+                    {'error': 'Patient ID is required'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Process based on vaccine type
+            if vac_type == "routine":
+                result = self.process_routine_vaccination(
+                    data, form_data, signature, pat_id,
+                    vaccine_stock, status_val, follow_up_data, vac_name, staff_id,assigned_to_instance
+                )
+            elif vac_type == "primary":
+                result = self.process_primary_vaccination(
+                    data, form_data, signature, pat_id,
+                    vaccine_stock, status_val, follow_up_data, vac_name, staff_id,
+                    vaccination_history,assigned_to_instance
+                )
+            elif vac_type == "conditional":
+                result = self.process_conditional_vaccination(
+                    data, form_data, signature, pat_id,
+                    vaccine_stock, status_val, follow_up_data, vac_name, staff_id,
+                    vaccination_history,assigned_to_instance
+                )
+            else:
+                return Response(
+                    {'error': f'Unknown vaccine type: {vac_type}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            return Response(result, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def process_routine_vaccination(self, data, form_data, signature, pat_id, 
+                              vaccine_stock, status_val, follow_up_data, 
+                              vac_name, staff_id, assigned_to_instance):
+    
+        # Check if there's an existing vaccination record for this patient
+        existing_vacrec = None
+        
+        try:
+            # First find patient records for this patient
+            patient_records = PatientRecord.objects.filter(pat_id_id=pat_id, patrec_type="Vaccination Record")
+            
+            # Look for any existing vaccination record for this patient
+            for patrec in patient_records:
+                try:
+                    vacrec = VaccinationRecord.objects.get(patrec_id=patrec.patrec_id)
+                    existing_vacrec = vacrec
+                    existing_patrec = patrec
+                    break
+                except VaccinationRecord.DoesNotExist:
+                    continue
+                    
+        except (PatientRecord.DoesNotExist, VaccinationRecord.DoesNotExist):
+            existing_vacrec = None
+        
+        # Create or use existing patient record
+        if existing_vacrec:
+            patient_record = existing_patrec
+            vaccination_record = existing_vacrec
+        else:
+            # Create new patient record if no existing record found
+            patient_record = PatientRecord.objects.create(
+                pat_id_id=pat_id,
+                patrec_type="Vaccination Record",
+            )
+            
+            # Create new vaccination record
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=int(form_data.get('vacrec_totaldose', 1))
+            )
+        
+        # Create vital signs - always create if data is available
+        vital = None
+        if form_data:  # Check if form_data exists
+            vital = VitalSigns.objects.create(
+                vital_bp_systolic=form_data.get('bpsystolic', ''),
+                vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                vital_temp=form_data.get('temp', ''),
+                vital_o2=form_data.get('o2', ''),
+                vital_pulse=form_data.get('pr', ''),
+                vital_RR=form_data.get('vital_RR', ''),
+                staff_id=staff_id,
+                patrec=patient_record
+            )
+        
+        # Create follow-up visit if needed
+        followv = None
+        if follow_up_data:
+            followv = FollowUpVisit.objects.create(
+                followv_date=follow_up_data.get('followv_date'),
+                followv_status='pending',
+                followv_description=follow_up_data.get('followv_description') or 
+                                f"Follow-up visit for {vac_name}",
+                patrec=patient_record
+            )
+        
+        # Create vaccination history - always use dose 1 for routine vaccinations
+        vachist = VaccinationHistory.objects.create(
+            vacrec=vaccination_record,
+            vacStck_id=vaccine_stock,
+            vachist_doseNo=1,  # Always dose 1 for routine vaccinations
+            vachist_status=status_val,
+            staff_id=staff_id,
+            vital=vital,
+            followv=followv,
+            signature=signature,
+            date_administered=timezone.now().date(),
+            assigned_to=assigned_to_instance
+        )
+        
+        return {
+            'patrec_id': patient_record.patrec_id,
+            'vacrec_id': vaccination_record.vacrec_id,
+            'vachist_id': vachist.vachist_id,
+            'vital_id': vital.vital_id if vital else None,
+            'followv_id': followv.followv_id if followv else None,
+            'is_new_record': not existing_vacrec
+        }
+
+    def process_primary_vaccination(self, data, form_data, signature, pat_id, 
+                                   vaccine_stock, status_val, follow_up_data, 
+                                   vac_name, staff_id, vaccination_history,assigned_to_instance):
+        # Convert to integers for comparison
+        dose_no = int(form_data.get('vachist_doseNo', 1))
+        total_dose = int(form_data.get('vacrec_totaldose', 0))
+        
+        if dose_no == 1:
+            # First dose - create new records
+            patient_record = PatientRecord.objects.create(
+                pat_id_id=pat_id,
+                patrec_type="Vaccination Record",
+            )
+            
+            vital = None
+            if form_data:
+                vital = VitalSigns.objects.create(
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
+                    staff_id=staff_id,
+                    patrec=patient_record
+                )
+            
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=total_dose
+            )
+            
+            followv = None
+            if follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name}",
+                    patrec=patient_record
+                )
+            
+            vachist = VaccinationHistory.objects.create(
+                vacrec=vaccination_record,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
+                vachist_doseNo=dose_no,
+                vachist_status=status_val,
+                staff_id=staff_id,
+                vital=vital,
+                followv=followv,
+                signature=signature,
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
+            )
+            
+            return {
+                'patrec_id': patient_record.patrec_id,
+                'vacrec_id': vaccination_record.vacrec_id,
+                'vachist_id': vachist.vachist_id,
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
+            }
+            
+        else:
+            # Subsequent doses - use existing records
+            if not vaccination_history:
+                raise Exception("Previous vaccination history not found for subsequent dose")
+            
+            # Get the latest vaccination history record
+            latest_history = vaccination_history[0] if isinstance(vaccination_history, list) and vaccination_history else vaccination_history
+            
+            old_vacrec_id = latest_history.get('vacrec_id') or latest_history.get('vacrec')
+            if not old_vacrec_id:
+                raise Exception("Previous vaccination record ID not found")
+            
+            try:
+                old_vaccination_record = VaccinationRecord.objects.get(vacrec_id=old_vacrec_id)
+            except VaccinationRecord.DoesNotExist:
+                raise Exception("Previous vaccination record not found")
+            
+            vital = None
+            if form_data:
+                vital = VitalSigns.objects.create(
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
+                    staff_id=staff_id,
+                    patrec=old_vaccination_record.patrec_id
+                )
+            
+            followv = None
+            # FIXED: Use integer comparison
+            if dose_no < total_dose and follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name}",
+                    patrec=old_vaccination_record.patrec_id
+                )
+            
+            vachist = VaccinationHistory.objects.create(
+                vacrec=old_vaccination_record,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
+                vachist_doseNo=dose_no,
+                vachist_status=status_val,
+                staff_id=staff_id,
+                vital=vital,
+                followv=followv,
+                signature=signature,
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
+            )
+            
+            return {
+                'vachist_id': vachist.vachist_id,
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
+            }
+
+    def process_conditional_vaccination(self, data, form_data, signature, pat_id, 
+                                      vaccine_stock, status_val, follow_up_data, 
+                                      vac_name, staff_id, vaccination_history,assigned_to_instance):
+        # Convert to integer
+        dose_no = int(form_data.get('vachist_doseNo', 1))
+        
+        if dose_no == 1:
+            # First dose
+            patient_record = PatientRecord.objects.create(
+                pat_id_id=pat_id,
+                patrec_type="Vaccination Record",
+            )
+            
+            vital = None
+            if form_data:
+                vital = VitalSigns.objects.create(
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
+                    staff_id=staff_id,
+                    patrec=patient_record
+                )
+            
+            # Convert to integer for the vaccination record
+            vaccination_record = VaccinationRecord.objects.create(
+                patrec_id=patient_record,
+                vacrec_totaldose=int(form_data.get('vacrec_totaldose', 0))
+            )
+            
+            # Create follow-up visit if needed for first dose
+            followv = None
+            if follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name}",
+                    patrec=patient_record
+                )
+            
+            vachist = VaccinationHistory.objects.create(
+                vacrec=vaccination_record,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
+                vachist_doseNo=dose_no,
+                vachist_status=status_val,
+                staff_id=staff_id,
+                vital=vital,
+                followv=followv,
+                signature=signature,
+                date_administered=timezone.now().date(),
+                assigned_to=assigned_to_instance
+            )
+            
+            return {
+                'patrec_id': patient_record.patrec_id,
+                'vacrec_id': vaccination_record.vacrec_id,
+                'vachist_id': vachist.vachist_id,
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
+            }
+            
+        else:
+            # Subsequent doses
+            if not vaccination_history:
+                raise Exception("Previous vaccination history not found for subsequent dose")
+            
+            # Get the latest vaccination history record
+            latest_history = vaccination_history[0] if isinstance(vaccination_history, list) and vaccination_history else vaccination_history
+            
+            old_vacrec_id = latest_history.get('vacrec_id') or latest_history.get('vacrec')
+            if not old_vacrec_id:
+                raise Exception("Previous vaccination record ID not found")
+            
+            try:
+                old_vaccination_record = VaccinationRecord.objects.get(vacrec_id=old_vacrec_id)
+            except VaccinationRecord.DoesNotExist:
+                raise Exception("Previous vaccination record not found")
+            
+            vital = None
+            if form_data:
+                vital = VitalSigns.objects.create(
+                    vital_bp_systolic=form_data.get('bpsystolic', ''),
+                    vital_bp_diastolic=form_data.get('bpdiastolic', ''),
+                    vital_temp=form_data.get('temp', ''),
+                    vital_o2=form_data.get('o2', ''),
+                    vital_pulse=form_data.get('pr', ''),
+                    vital_RR=form_data.get('vital_RR', ''),
+                    staff_id=staff_id,
+                    patrec=old_vaccination_record.patrec_id
+                )
+            
+            followv = None
+            if follow_up_data:
+                followv = FollowUpVisit.objects.create(
+                    followv_date=follow_up_data.get('followv_date'),
+                    followv_status='pending',
+                    followv_description=follow_up_data.get('followv_description') or 
+                                      f"Follow-up visit for {vac_name}",
+                    patrec=old_vaccination_record.patrec_id
+                )
+            
+            vachist = VaccinationHistory.objects.create(
+                vacrec=old_vaccination_record,
+                vacStck_id=vaccine_stock,  # Removed assigned_to
+                vachist_doseNo=dose_no,
+                vachist_status=status_val,
+                staff_id=staff_id,
+                vital=vital,
+                followv=followv,
+                signature=signature,
+                date_administered=timezone.now().date(),
+                assigned_to= assigned_to_instance
+            )
+            
+            return {
+                'vachist_id': vachist.vachist_id,
+                'vital_id': vital.vital_id if vital else None,
+                'followv_id': followv.followv_id if followv else None
+            }

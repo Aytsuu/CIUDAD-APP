@@ -1,9 +1,8 @@
 // InvChildHealthRecords.js - WITH HORIZONTALLY SCROLLABLE HEALTH RECORD CARDS
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl, FlatList } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import { ChevronLeft, FileText, Plus, Calendar, Weight, Ruler, Thermometer, Shield, Stethoscope, Heart, Droplets, Eye, ArrowRight } from "lucide-react-native";
-import { router } from "expo-router";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { ChevronLeft, Calendar, Weight, Ruler, Thermometer, Shield, Stethoscope, Heart, ArrowRight } from "lucide-react-native";
 // Custom hooks
 import { useNutriotionalStatus, useChildData } from "../admin/admin-childhealth/queries/fetchQueries";
 import { useUnvaccinatedVaccines } from "../admin/admin-vaccination/queries/fetch";

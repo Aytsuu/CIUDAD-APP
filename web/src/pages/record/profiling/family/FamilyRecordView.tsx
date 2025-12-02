@@ -5,17 +5,20 @@ import { DataTable } from "@/components/ui/table/data-table"
 import { familyMembersCol } from "./FamilyColumns"
 import { useLocation, useNavigate } from "react-router"
 import { Card } from "@/components/ui/card"
-import { Pen, UserRoundPlus, Calendar, User, Hash } from "lucide-react"
+import { Pen, UserRoundPlus, Calendar, User, Hash, ClipboardList } from "lucide-react"
 import { Button } from "@/components/ui/button/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import AddMemberForm from "./AddMemberForm"
 import EditGeneralDetails from "./EditGeneralDetails"
 import { useFamilyData, useFamilyMembers, useHouseholdsList } from "../queries/profilingFetchQueries"
+import { useSurveyIdentificationByFamily } from "../../health-family-profiling/family-profling/queries/profilingFetchQueries"
 import { useLoading } from "@/context/LoadingContext"
 import { formatDate } from "@/helpers/dateHelper"
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
+import { useAuth } from "@/context/AuthContext"
+import HealthFamilyProfileView from "../../health-family-profiling/HealthFamilyProfileView"
 
 export default function FamilyRecordView() {
   // =================== STATE INITIALIZATION ===================
@@ -26,17 +29,44 @@ export default function FamilyRecordView() {
   const [isOpenEditDialog, setIsOpenEditDialog] = React.useState<boolean>(false)
   const [accordionValue, setAccordionValue] = React.useState<string>("general-info")
   const { showLoading, hideLoading } = useLoading()
+  const { user } = useAuth()
   const { data: householdsList, isLoading: isLoadingHHList } = useHouseholdsList()
   const { data: familyData, isLoading: isLoadingFamData } = useFamilyData(params?.fam_id)
   const { data: familyMembers, isLoading: isLoadingFamMembers } = useFamilyMembers(params?.fam_id)
+  const { data: surveyByFamily, isLoading: isLoadingSurvey } = useSurveyIdentificationByFamily(params?.fam_id || null)
+  
+  // Only show Complete Health Family Profiling when family has a Survey Identification (si_id)
+  const hasSurveyIdentification = React.useMemo(() => {
+    if (!surveyByFamily) return false
+    // Assume API returns { success, data } or a list; support common shapes safely
+    const payload = (surveyByFamily as any)
+    const si = payload?.data ?? payload
+    if (!si) return false
+    // If an array is returned, check first item; if object, check si_id directly
+    if (Array.isArray(si)) {
+      return si.length > 0 && !!si[0]?.si_id
+    }
+    return !!si?.si_id
+  }, [surveyByFamily])
+
+  // Check if current user is health staff and should show health profiling data
+  // AND ensure there is a survey identification (si_id)
+  const showHealthProfiling = (params?.showHealthProfiling || user?.staff?.staff_type === "HEALTH STAFF") && hasSurveyIdentification
+
+  // Check if current user is health staff and family doesn't have survey identification
+  // to show "Complete Profiling" button
+  const isHealthStaff = user?.staff?.staff_type === "HEALTH STAFF"
+  const showCompleteProfiling = isHealthStaff && !hasSurveyIdentification
 
   const members = familyMembers?.results || []
 
   // =================== SIDE EFFECTS ===================
   React.useEffect(() => {
-    if (isLoadingFamData || isLoadingHHList || isLoadingFamMembers) showLoading()
+    const loadingStates = [isLoadingFamData, isLoadingHHList, isLoadingFamMembers, isLoadingSurvey]
+    
+    if (loadingStates.some(loading => loading)) showLoading()
     else hideLoading()
-  }, [isLoadingFamData, isLoadingHHList, isLoadingFamMembers])
+  }, [isLoadingFamData, isLoadingHHList, isLoadingFamMembers, isLoadingSurvey, showLoading, hideLoading])
 
   // =================== HANDLERS ====================
   const handleViewInfo = async (resId: string, famId: string) => {
@@ -51,6 +81,10 @@ export default function FamilyRecordView() {
         },
       },
     })
+  }
+
+  const handleCompleteProfiling = () => {
+    navigate(`/family/continue-profiling/${params?.fam_id}`)
   }
 
   const formatRegisteredBy = () => {
@@ -206,19 +240,31 @@ export default function FamilyRecordView() {
                 A comprehensive list of all members in this family, including their roles and key details.
               </p>
             </div>
-            <DialogLayout
-              trigger={
-                <Button className="gap-2">
-                  <UserRoundPlus className="h-4 w-4" />
-                  Add Member
+            <div className="flex gap-2">
+              {showCompleteProfiling && (
+                <Button 
+                  onClick={handleCompleteProfiling}
+                  variant="outline"
+                  className="gap-2 bg-green-500 text-white"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Complete Profiling
                 </Button>
-              }
-              title="New Member"
-              description="Select a registered resident from the database and assign their role within the family."
-              mainContent={<AddMemberForm familyId={familyData?.fam_id} setIsOpenDialog={setIsOpenAddDialog} />}
-              isOpen={isOpenAddDialog}
-              onOpenChange={setIsOpenAddDialog}
-            />
+              )}
+              <DialogLayout
+                trigger={
+                  <Button className="gap-2">
+                    <UserRoundPlus className="h-4 w-4" />
+                    Add Member
+                  </Button>
+                }
+                title="New Member"
+                description="Select a registered resident from the database and assign their role within the family."
+                mainContent={<AddMemberForm familyId={familyData?.fam_id} setIsOpenDialog={setIsOpenAddDialog} />}
+                isOpen={isOpenAddDialog}
+                onOpenChange={setIsOpenAddDialog}
+              />
+            </div>
           </div>
 
           {isLoadingFamMembers ? (
@@ -234,6 +280,12 @@ export default function FamilyRecordView() {
             </div>
           )}
         </Card>
+
+        {/* Health Profiling Section - Only show for Health Staff */}
+        <HealthFamilyProfileView 
+          familyId={params?.fam_id} 
+          showHealthProfiling={showHealthProfiling}
+        />
       </div>
     </LayoutWithBack>
   )

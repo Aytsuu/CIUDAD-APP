@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addPrenatalAppointment } from "../restful-api/post";
+import { addPrenatalAppointment, checkOrCreatePatient } from "../restful-api/post";
 import { useToast } from "@/hooks/use-toast";
 
 export const useAddPrenatalAppointment = () => {
@@ -19,3 +19,9 @@ export const useAddPrenatalAppointment = () => {
         }
     });
 }
+
+export const useCheckOrCreatePatient = () => {
+    return useMutation({
+        mutationFn: (rp_id: string) => checkOrCreatePatient(rp_id),
+    });
+};

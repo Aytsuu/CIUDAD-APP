@@ -1,16 +1,20 @@
 import { useNavigate } from "react-router";
-import { ArrowUpDown, Building, CircleUserRound, House, UsersRound } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import ViewButton from "@/components/ui/view-button";
 import { Badge } from "@/components/ui/badge";
-import React from "react";
-import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord } from "../ProfilingTypes";
+import { ResidentRecord, ResidentFamilyRecord, ResidentBusinessRecord, ResidentHouseholdRecord } from "../ProfilingTypes";
 import { calculateAge } from "@/helpers/ageCalculator";
 import { useLinkToVoter } from "../queries/profilingUpdateQueries";
 import { showErrorToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/helpers/currencyFormat";
 import { formatDate } from "@/helpers/dateHelper";
+import React from "react";
+import { Combobox } from "@/components/ui/combobox";
+import { useLoading } from "@/context/LoadingContext";
+import { useFamFilteredByHouse } from "../queries/profilingFetchQueries";
+import { formatFamilies } from "../ProfilingFormats";
 
 // Define the columns for the data table
 // -----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -20,7 +24,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     accessorKey: "rp_id",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Resident No.
@@ -32,7 +36,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     accessorKey: "lname",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Last Name
@@ -41,7 +45,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     ),
     cell: ({ row }) => (
       <div className="hidden lg:block max-w-xs truncate">
-        {row.getValue("lname")}
+        {`${row.original.lname}${row.original.suffix ? (' ' + row.original.suffix) : ''}`}
       </div>
     ),
   },
@@ -49,7 +53,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     accessorKey: "fname",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         First Name
@@ -66,18 +70,13 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     accessorKey: "mname",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full items-center gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Middle Name
         <ArrowUpDown size={14} />
       </div>
     ),
-  },
-  {
-    accessorKey: "suffix",
-    header: "Suffix",
-    size: 60
   },
   {
     accessorKey: "sex",
@@ -93,7 +92,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
     cell: ({row}) => (
       calculateAge(row.original.dob )
     ),
-    size: 60
+    size: 70
   },
   {
     accessorKey: "pwd",
@@ -115,7 +114,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
       }
 
       switch(status) {
-        case "Link":
+        case "LINK":
           return (
             <div className="flex justify-center">
               <div className="bg-green-500 px-5 py-1 rounded-full cursor-pointer hover:opacity-80 transition-opacity"
@@ -125,7 +124,7 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
               </div>
             </div>
           )
-        case "Review":
+        case "REVIEW":
           return (
             <div className="flex justify-center">
               <div className="bg-amber-500">
@@ -136,100 +135,8 @@ export const residentColumns: ColumnDef<ResidentRecord>[] = [
         default:
           return status
       }
-    }
-  },
-  {
-    accessorKey: "completed_profiles",
-    header: "Profile",
-    cell: ({row}) => {
-      const navigate = useNavigate();
-      const profiles = [
-        {
-          id: 'account', 
-          icon: CircleUserRound, 
-          route: {
-            create: {
-              link: "/profiling/account/create",
-              params: {
-                residentId: row.original.rp_id
-              }
-            },
-          }},
-        {
-          id: 'household', 
-          icon: House, 
-          tooltip: "ID: " + row.original.household_no, 
-          route: {
-            create: {
-              link: "/profiling/household"
-            },
-            view: {
-              link: "/profiling/household/view",
-              params: {
-                hh_id: row.original.household_no
-              }
-            }
-          }},
-        {
-          id: 'family', 
-          icon: UsersRound, 
-          tooltip: "ID: " + row.original.family_no, 
-          route: {
-            create: "/profiling/family",
-            view: {
-              link: "/profiling/family/view",
-              params: {
-                fam_id: row.original.family_no
-              }
-            }
-          }},
-        {
-          id: 'business', 
-          icon: Building, 
-          route: {
-            view: ""
-          }},
-      ]
-      const completed: any[] = [];
-
-      row.original.has_account && completed.push('account')
-      row.original.household_no && completed.push('household')
-      row.original.family_no && completed.push('family')
-      row.original.business_owner && completed.push('business')
-
-      return (
-        <div className="flex items-center justify-between px-5">
-          {profiles.map((profile: any, idx: number) => (
-            <React.Fragment key={idx}>
-              {completed.includes(profile.id) ? (
-                <TooltipLayout
-                  trigger={
-                    <profile.icon size={20} 
-                      className="text-blue-600 cursor-pointer"
-                      onClick={() => navigate(profile.route.view.link, {
-                        state: {
-                          params: profile.route.view.params
-                        }
-                      })}
-                    />
-                  }
-                  content={profile.tooltip}
-                />
-              ) : (profile.id !== 'business' &&
-                <profile.icon size={20} 
-                  className="text-gray-300 cursor-pointer"
-                  onClick={() => navigate(profile.route.create.link, {
-                    state: {
-                      params: profile.route.create.params
-                    }
-                  })}
-                />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-      )
-    }
+    },
+    size: 70
   },
   {
     accessorKey: "action",
@@ -331,6 +238,106 @@ export const familyDetailsColumns = (residentId: string, familyId: string): Colu
     enableHiding: false,
   }
 ]
+
+export const houseDetailsColumns = (): ColumnDef<ResidentHouseholdRecord>[] => [
+  {
+    accessorKey: 'hh_id',
+    header: ({ column }) => (
+      <div
+        className="flex w-full items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Household No.
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'total_families',
+    header: ({ column }) => (
+      <div
+        className="flex w-full items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Families
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const { showLoading, hideLoading } = useLoading();
+      const { data: famFilteredByHouse, isLoading } = useFamFilteredByHouse(row.getValue('hh_id'));
+      const formattedFamilies = React.useMemo(() => formatFamilies(famFilteredByHouse), [famFilteredByHouse]);
+
+      React.useEffect(() => {
+        if(isLoading) {
+          showLoading();
+        } else {
+          hideLoading();
+        }
+      }, [isLoading])
+
+      return (
+        <Combobox 
+          options={formattedFamilies}
+          value={row.getValue('total_families')}
+          placeholder="Search family"
+          emptyMessage="No family found"
+          staticVal={true}
+          size={300}
+        />
+      )
+    }
+  },
+  {
+    accessorKey: 'sitio',
+    header: ({ column }) => (
+      <div
+        className="flex w-full items-center gap-2 cursor-pointer"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Sitio
+        <ArrowUpDown size={14} />
+      </div>
+    ),
+  },  
+  {
+    accessorKey: 'street',
+    header: 'Street Address',
+  },
+  {
+    accessorKey: 'nhts',
+    header: 'NHTS',
+    size: 100
+  },
+  {
+    accessorKey: 'date_registered',
+    header: 'Registered',
+    cell: ({row}) => (
+      formatDate(row.original.date_registered, "short" as any)
+    )
+  },
+  {
+    accessorKey: 'action',
+    header: '',
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const handleViewClick = async () => {
+        navigate("/profiling/household/view", {
+          state: {
+            params: {
+              hh_id: row.original.hh_id
+            }
+          }
+        })
+        
+      }
+      return (
+        <ViewButton onClick={handleViewClick} />
+      ) 
+    }
+  },
+]
+
 
 export const businessDetailsColumns = (): ColumnDef<ResidentBusinessRecord>[] => [
   {

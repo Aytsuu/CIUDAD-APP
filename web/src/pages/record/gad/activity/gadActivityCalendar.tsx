@@ -1,24 +1,77 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import EventCalendar from "@/components/ui/calendar/EventCalendar.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetAnnualDevPlansByYear } from "../annual_development_plan/queries/annualDevPlanFetchQueries";
 import { useGetCouncilEvents } from "../../council/Calendar/queries/councilEventfetchqueries";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { getWasteEvents } from "../../waste-scheduling/waste-event/queries/wasteEventQueries";
 import { useGetHotspotRecords } from "../../waste-scheduling/waste-hotspot/queries/hotspotFetchQueries";
 import { useGetWasteCollectionSchedFull } from "../../waste-scheduling/waste-collection/queries/wasteColFetchQueries";
-import { hotspotColumns, wasteColColumns } from "../../waste-scheduling/event-columns/event-cols";
 import { useGetProjectProposals } from "../project-proposal/queries/projprop-fetchqueries";
 import { useResolution } from "@/pages/record/council/resolution/queries/resolution-fetch-queries";
 import { useLoading } from "@/context/LoadingContext";
+import { getAnnualDevPlansByYear, getAnnualDevPlans } from "../annual_development_plan/restful-api/annualGetAPI";
 
 const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set<number>) => {
   if (!Array.isArray(annualDevPlans)) {
     return [];
   }
-  return annualDevPlans
-    .filter((plan: any) => Boolean(plan?.dev_mandated) || devIdsWithProposals.has(plan.dev_id))
-    .map((plan: any) => ({
+  
+  
+  const filteredPlans = annualDevPlans.filter((plan: any) => {
+    // STRICT: Check archived status - handle all possible formats
+    const archivedValue = plan?.dev_archived;
+    if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
+      return false; // Exclude archived
+    }
+    
+    // STRICT: Also exclude past dates (backend should archive but frontend backup)
+    if (plan?.dev_date) {
+      const planDate = new Date(plan.dev_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      planDate.setHours(0, 0, 0, 0);
+      if (planDate < today) {
+        return false; // Exclude past dates
+      }
+    }
+    
+    const isMandated = Boolean(plan?.dev_mandated);
+    const hasProposal = devIdsWithProposals.has(plan.dev_id);
+    const shouldInclude = isMandated || hasProposal;
+    
+    return shouldInclude;
+  });
+  
+  
+  return filteredPlans.map((plan: any) => {
+    // Parse budget items to calculate correct total
+    let budgetItems = [];
+    let calculatedTotal = 0;
+    
+    try {
+      const rawBudgetItems = plan.dev_budget_items;
+      if (rawBudgetItems) {
+        if (typeof rawBudgetItems === 'string') {
+          budgetItems = JSON.parse(rawBudgetItems);
+        } else if (Array.isArray(rawBudgetItems)) {
+          budgetItems = rawBudgetItems;
+        }
+        
+        // Calculate total from budget items
+        calculatedTotal = budgetItems.reduce((sum: number, item: any) => {
+          const quantity = Number(item.quantity || item.pax || 0);
+          const price = Number(item.price || item.amount || 0);
+          return sum + (quantity * price);
+        }, 0);
+      }
+    } catch (error) {
+      // Error parsing budget items - silently continue
+    }
+    
+    // Use calculated total if available, otherwise fall back to plan.total
+    const finalTotal = calculatedTotal > 0 ? calculatedTotal : (Number(plan.total) || 0);
+    
+    return {
       id: plan.dev_id,
       title: plan.dev_client,
       date: plan.dev_date,
@@ -30,9 +83,11 @@ const transformAnnualDevPlans = (annualDevPlans: any[], devIdsWithProposals: Set
       indicator: plan.dev_indicator,
       responsible_person: plan.dev_res_person,
       staff: plan.staff,
-      total: plan.total,
+      total: finalTotal,
+      budget_items: budgetItems,
       type: "annual_development_plan"
-    }));
+    };
+  });
 };
 
 const createDevIdsWithProposals = (projectProposals: any[], resolutions: any[]) => {
@@ -142,10 +197,6 @@ const parsePerformanceIndicator = (raw: any) => {
   }
 };
 
-const formatBudget = (total: any) => {
-  return total ? `₱${Number(total).toFixed(2)}` : "-";
-};
-
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', { 
     day: 'numeric', 
@@ -154,7 +205,6 @@ const formatDate = (date: string) => {
   });
 };
 
-// Column definitions and constants moved from constants directory
 const annualDevPlanColumns = [
   { accessorKey: "title", header: "GAD Mandate" },
   { accessorKey: "project", header: "Project/Activity" },
@@ -167,13 +217,6 @@ const annualDevPlanColumns = [
     }
   },
   { accessorKey: "responsible_person", header: "Responsible Person" },
-  { 
-    accessorKey: "total", 
-    header: "Budget",
-    cell: ({ row }: { row: { original: any } }) => {
-      return formatBudget(row.original.total);
-    }
-  },
 ];
 
 const wasteEventColumns = [
@@ -203,15 +246,13 @@ const getCalendarSources = (
   transformedAnnualDevPlans: any[],
   wasteEventData: any[],
   calendarEvents: any[],
-  hotspotData: any[],
-  wasteCollectionData: any[]
+  _hotspotData: any[],
+  _wasteCollectionData: any[]
 ) => {
   // Ensure all data arrays are properly initialized
   const safeTransformedAnnualDevPlans = Array.isArray(transformedAnnualDevPlans) ? transformedAnnualDevPlans : [];
   const safeWasteEventData = Array.isArray(wasteEventData) ? wasteEventData : [];
   const safeCalendarEvents = Array.isArray(calendarEvents) ? calendarEvents : [];
-  const safeHotspotData = Array.isArray(hotspotData) ? hotspotData : [];
-  const safeWasteCollectionData = Array.isArray(wasteCollectionData) ? wasteCollectionData : [];
 
   return [
   {
@@ -241,25 +282,7 @@ const getCalendarSources = (
     timeAccessor: "ce_time",
     defaultColor: "#191970", // midnight blue for council events
   },
-  {
-    name: "Hotspot Assignment",
-    data: safeHotspotData,
-    columns: hotspotColumns,
-    titleAccessor: "watchman",
-    dateAccessor: "wh_date",
-    timeAccessor: "wh_start_time",
-    endTimeAccessor: "wh_end_time",
-    defaultColor: "#3b82f6", // blue
-  },
-  {
-    name: "Waste Collection",
-    data: safeWasteCollectionData,
-    columns: wasteColColumns,
-    titleAccessor: "sitio_name",
-    dateAccessor: "wc_day",
-    timeAccessor: "wc_time",
-    defaultColor: "#10b981", // emerald
-  }
+  
 ];
 };
 
@@ -271,26 +294,239 @@ const legendItems = [
   { label: "Waste Collection", color: "#10b981" },
 ];
 
+// Helper function to safely extract array from API response
+const safeExtractArray = (data: any): any[] => {
+  return Array.isArray(data) ? data : data?.results || [];
+};
 
+// Custom hook to get GAD Annual Development Plans calendar source
+export const useGADCalendarSource = (enabled: boolean = true) => {
+  // First, fetch all annual dev plans to determine the start year (including archived)
+  const { data: allAnnualDevPlansData } = useQuery({
+    queryKey: ["annualDevPlans", "all"],
+    queryFn: async () => getAnnualDevPlans(undefined, 1, 10000, true), // Fetch all plans including archived
+    enabled: enabled,
+    staleTime: 0, // Always refetch to get latest data
+  });
+  
+  const { data: projectProposals = [] } = useGetProjectProposals(1, 1000, undefined, false, undefined, { enabled });
+  const { data: resolutions = [] } = useResolution(1, 1000);
+  
+  // Determine the start and end years based on plans with proposals and resolutions
+  const { startYear, endYear } = useMemo(() => {
+    if (!enabled) {
+      const currentYear = new Date().getFullYear();
+      return { startYear: currentYear, endYear: currentYear };
+    }
+    
+    const allPlans = safeExtractArray(allAnnualDevPlansData);
+    const proposalsList = safeExtractArray(projectProposals);
+    const resolutionsList = safeExtractArray(resolutions);
+    const devIdsWithProposals = createDevIdsWithProposals(proposalsList, resolutionsList);
+    
+    // Filter plans that are either mandated or have proposals with resolutions
+    const qualifyingPlans = allPlans.filter((plan: any) => {
+      const isMandated = Boolean(plan?.dev_mandated);
+      const hasProposal = devIdsWithProposals.has(plan.dev_id);
+      return isMandated || hasProposal;
+    });
+    
+    // Extract years from qualifying plans
+    const years = qualifyingPlans
+      .map((plan: any) => {
+        if (plan?.dev_date) {
+          const year = new Date(plan.dev_date).getFullYear();
+          return isNaN(year) ? null : year;
+        }
+        return null;
+      })
+      .filter((year): year is number => year !== null);
+    
+    if (years.length === 0) {
+      const currentYear = new Date().getFullYear();
+      return { startYear: currentYear, endYear: currentYear };
+    }
+    
+    // Return both min and max years to include future plans
+    const currentYear = new Date().getFullYear();
+    const maxYear = Math.max(...years, currentYear); // Include current year at minimum, or max plan year
+    return { 
+      startYear: Math.min(...years), 
+      endYear: maxYear 
+    };
+  }, [allAnnualDevPlansData, projectProposals, resolutions, enabled]);
+  
+  // Dynamically generate years from start year to end year (includes future years)
+  const yearsToFetch = useMemo(() => {
+    return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
+  }, [startYear, endYear]);
+  
+  // Fetch data for all years using useQueries for cleaner parallel fetching (including archived)
+  const yearQueries = useQueries({
+    queries: yearsToFetch.map((year) => ({
+      queryKey: ["annualDevPlans", year],
+      queryFn: async () => getAnnualDevPlansByYear(year, undefined, undefined, undefined, true), // Include archived plans
+      enabled: enabled && Boolean(year),
+      staleTime: 0, // Always refetch to get latest data
+    })),
+  });
+  
+  // Combine all year plans into a single array using helper function
+  const annualDevPlans = useMemo(() => {
+    if (!enabled) return [];
+    const allPlans = yearQueries.map(query => safeExtractArray(query.data)).flat();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return allPlans.filter((plan: any) => {
+      // STRICT archived check
+      const archivedValue = plan?.dev_archived;
+      if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
+        return false;
+      }
+      
+      // STRICT past date check
+      if (plan?.dev_date) {
+        const planDate = new Date(plan.dev_date);
+        planDate.setHours(0, 0, 0, 0);
+        if (planDate < today) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [yearQueries, enabled]);
+  
+  const devIdsWithProposals = useMemo(() => {
+    if (!enabled) return new Set<number>();
+    const proposalsList = safeExtractArray(projectProposals);
+    const resolutionsList = safeExtractArray(resolutions);
+    return createDevIdsWithProposals(proposalsList, resolutionsList);
+  }, [projectProposals, resolutions, enabled]);
+  
+  const transformedAnnualDevPlans = useMemo(() => {
+    if (!enabled) return [];
+    return transformAnnualDevPlans(annualDevPlans, devIdsWithProposals);
+  }, [annualDevPlans, devIdsWithProposals, enabled]);
+  
+  return useMemo(() => {
+    if (!enabled || transformedAnnualDevPlans.length === 0) return null;
+    
+    return {
+      name: "Annual Development Plans",
+      data: transformedAnnualDevPlans,
+      columns: annualDevPlanColumns,
+      titleAccessor: "title",
+      dateAccessor: "date",
+      timeAccessor: "time",
+      defaultColor: "#8b5cf6", // purple for annual development plans
+    };
+  }, [transformedAnnualDevPlans, enabled]);
+};
+
+// Export legend item for GAD
+export const gadLegendItem = { label: "GAD Activity", color: "#8b5cf6" };
 
 function GADActivityPage() {
   const { showLoading, hideLoading } = useLoading();
-  const [isLoading] = useState(false);
   
-
-  const currentYear = new Date().getFullYear();
-  const { data: annualDevPlans = [], isLoading: isAnnualDevPlansLoading } = useGetAnnualDevPlansByYear(currentYear);
+  // First, fetch all annual dev plans to determine the start year (including archived)
+  const { data: allAnnualDevPlansData } = useQuery({
+    queryKey: ["annualDevPlans", "all"],
+    queryFn: async () => getAnnualDevPlans(undefined, 1, 10000, true), // Fetch all plans including archived
+    staleTime: 0, // Always refetch to get latest data
+  });
   
   // Fetch project proposals and resolutions to filter annual dev plans
   const { data: projectProposals = [], isLoading: isProjectProposalsLoading } = useGetProjectProposals();
   const { data: resolutions = [], isLoading: isResolutionsLoading } = useResolution();
+  
+  // Determine the start and end years based on plans with proposals and resolutions
+  const { startYear, endYear } = useMemo(() => {
+    const allPlans = safeExtractArray(allAnnualDevPlansData);
+    const proposalsList = safeExtractArray(projectProposals);
+    const resolutionsList = safeExtractArray(resolutions);
+    const devIdsWithProposals = createDevIdsWithProposals(proposalsList, resolutionsList);
+    
+    // Filter plans that are either mandated or have proposals with resolutions
+    const qualifyingPlans = allPlans.filter((plan: any) => {
+      const isMandated = Boolean(plan?.dev_mandated);
+      const hasProposal = devIdsWithProposals.has(plan.dev_id);
+      return isMandated || hasProposal;
+    });
+    
+    // Extract years from qualifying plans
+    const years = qualifyingPlans
+      .map((plan: any) => {
+        if (plan?.dev_date) {
+          const year = new Date(plan.dev_date).getFullYear();
+          return isNaN(year) ? null : year;
+        }
+        return null;
+      })
+      .filter((year): year is number => year !== null);
+    
+    if (years.length === 0) {
+      const currentYear = new Date().getFullYear();
+      return { startYear: currentYear, endYear: currentYear };
+    }
+    
+    // Return both min and max years to include future plans
+    const currentYear = new Date().getFullYear();
+    const maxYear = Math.max(...years, currentYear); // Include current year at minimum, or max plan year
+    return { 
+      startYear: Math.min(...years), 
+      endYear: maxYear 
+    };
+  }, [allAnnualDevPlansData, projectProposals, resolutions]);
+  
+  const yearsToFetch = useMemo(() => {
+    return Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
+  }, [startYear, endYear]);
+  
+  const yearQueries = useQueries({
+    queries: yearsToFetch.map((year) => ({
+      queryKey: ["annualDevPlans", year],
+      queryFn: async () => getAnnualDevPlansByYear(year, undefined, undefined, undefined, true), // Include archived plans
+      enabled: Boolean(year),
+      staleTime: 0, // Always refetch to get latest data
+    })),
+  });
+  
+  const annualDevPlans = useMemo(() => {
+    const allPlans = yearQueries.map(query => safeExtractArray(query.data)).flat();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return allPlans.filter((plan: any) => {
+      // STRICT archived check
+      const archivedValue = plan?.dev_archived;
+      if (archivedValue === true || archivedValue === "true" || archivedValue === "True" || archivedValue === "TRUE" || archivedValue === 1) {
+        return false;
+      }
+      
+      // STRICT past date check
+      if (plan?.dev_date) {
+        const planDate = new Date(plan.dev_date);
+        planDate.setHours(0, 0, 0, 0);
+        if (planDate < today) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [yearQueries]);
+  
+  const isAnnualDevPlansLoading = yearQueries.some(query => query.isLoading);
  
   const { data: wasteEventData = [], isLoading: isWasteEventLoading } = useQuery({
     queryKey: ['wasteEvents'],
-    queryFn: getWasteEvents
+    queryFn: () => getWasteEvents(false)
   });
   const { data: councilEvents = [] } = useGetCouncilEvents();
-  const calendarEvents = filterCalendarEvents(Array.isArray(councilEvents) ? councilEvents : (councilEvents as any)?.results || []);
+  const calendarEvents = filterCalendarEvents(safeExtractArray(councilEvents));
   
   // Fetch hotspot and waste collection data
   const { data: hotspotData = [], isLoading: isHotspotLoading } = useGetHotspotRecords();
@@ -307,8 +543,8 @@ function GADActivityPage() {
 
   // Create a set of dev_ids that have project proposals
   const devIdsWithProposals = useMemo(() => {
-    const proposalsList = Array.isArray(projectProposals) ? projectProposals : (projectProposals as any)?.results || [];
-    const resolutionsList = Array.isArray(resolutions) ? resolutions : (resolutions as any)?.results || [];
+    const proposalsList = safeExtractArray(projectProposals);
+    const resolutionsList = safeExtractArray(resolutions);
     return createDevIdsWithProposals(proposalsList, resolutionsList);
   }, [projectProposals, resolutions]);
 
@@ -323,10 +559,10 @@ function GADActivityPage() {
     filterWasteEvents(wasteEventData),
     calendarEvents,
     hotspotData,
-    wasteCollectionData
+    safeExtractArray(wasteCollectionData)
   );
 
-  if (isLoading || isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
+  if (isAnnualDevPlansLoading || isProjectProposalsLoading || isResolutionsLoading || isWasteEventLoading || isHotspotLoading || isWasteColLoading) {
     return (
       <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-800 dark:to-gray-900 p-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-4">

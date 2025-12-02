@@ -15,7 +15,7 @@ export const putCouncilEvent = async (
       ce_description: eventInfo.ce_description,
       ce_is_archive: eventInfo.ce_is_archive || false,
       ...(eventInfo.ce_rows !== undefined && { ce_rows: eventInfo.ce_rows }),
-      ...(eventInfo.staff_id !== undefined && { staff_id: eventInfo.staff_id }),
+      // ...(eventInfo.staff_id !== undefined && { staff_id: eventInfo.staff_id }),
     });
 
     return res.data;

@@ -13,11 +13,6 @@ import { showErrorToast } from "@/components/ui/toast";
 // Define the columns for the data table
 export const IRColumns = (): ColumnDef<IRReport>[] => [
   {
-    accessorKey: "ir_id",
-    header: "No.",
-    size: 50
-  },
-  {
     accessorKey: "ir_area",
     header: "Incident Area",
   },
@@ -30,15 +25,22 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
     header: "Type",
   },
   {
-    accessorKey: "ir_reported_by",
-    header: "Reported By",
-  },
-  {
-    accessorKey: "ir_date",
-    header: "Date",
-    cell: ({ row }) => (
-      formatDate(row.original.ir_date, "short")
-    )
+    accessorKey: "ir_severity",
+    header: "Severity",
+    cell: ({ row }) => {
+      const severity_color: Record<string, any> = {
+        LOW: 'bg-green-100 border-green-400 text-green-700 hover:bg-green-100',
+        MEDIUM: 'bg-amber-100 border-amber-400 text-amber-700 hover:bg-amber-100',
+        HIGH: 'bg-red-100 border-red-400 text-red-700 hover:bg-red-100',
+      }
+      return (
+        <div className="flex">
+          <Badge className={`px-3 rounded-full ${ severity_color[row.original.ir_severity as string]}`}>
+            {row.original.ir_severity}
+          </Badge>
+        </div>
+      )
+    }
   },
   {
     accessorKey: "ir_date",
@@ -98,9 +100,7 @@ export const ARColumns = (
       }
     },
     cell: ({ row }) => {
-      const files = row.original.ar_files;
-      const docs = files.filter((file: any) => file.arf_type.startsWith('application/'))
-      const unsigned = docs.length === 0
+      const unsigned = row.original.status?.toLowerCase() == "unsigned"
 
       if (isCreatingWeeklyAR) {
         React.useEffect(() => {
@@ -161,7 +161,10 @@ export const ARColumns = (
   },
   {
     accessorKey: "id",
-    header: "Report No.",
+    header: "Report ID",
+    cell: ({ row }) => (
+      `AR-${row.original.id}`
+    )
   },
   {
     accessorKey: "ar_title",
@@ -173,7 +176,7 @@ export const ARColumns = (
   },
   {
     accessorKey: "date",
-    header: "Date",
+    header: "Created",
   },
   {
     accessorKey: "status",
@@ -182,9 +185,9 @@ export const ARColumns = (
       const status = row.original.status
 
       return (
-        <Badge className={`${status?.toLowerCase() === 'signed' ? 
-          "bg-green-100 text-green-700 hover:bg-green-100 shadow-none" : 
-          "bg-amber-100 text-amber-700 hover:bg-amber-100 shadow-none"}`}>
+        <Badge className={`rounded-full border ${status?.toLowerCase() === 'signed' ? 
+          "bg-green-100 text-green-700 border-green-400 hover:bg-green-100 shadow-none" : 
+          "bg-amber-100 text-amber-700 border-amber-400 hover:bg-amber-100 shadow-none"}`}>
           {status}
         </Badge>
       )

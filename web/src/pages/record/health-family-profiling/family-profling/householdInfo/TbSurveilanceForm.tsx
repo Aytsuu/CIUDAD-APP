@@ -117,7 +117,7 @@ export default function TbSurveilanceForm({
       
       // Find the resident data from the default residents array
       const residentData = residents.default?.find((res: any) => res.rp_id === memberId);
-      console.log('Selected resident data:', residentData);
+      // console.log('Selected resident data:', residentData);
       
       if (residentData) {
         const personalData = residentData.per || residentData;
@@ -127,8 +127,8 @@ export default function TbSurveilanceForm({
                            sexValue.toLowerCase() === 'female' ? 'Female' : 
                            sexValue;
         
-        console.log('TbSurveilanceForm - Sex value from data:', sexValue);
-        console.log('TbSurveilanceForm - Formatted sex:', formattedSex);
+        // console.log('TbSurveilanceForm - Sex value from data:', sexValue);
+        // console.log('TbSurveilanceForm - Formatted sex:', formattedSex);
         
         const formData = {
           id: memberId,
@@ -146,7 +146,7 @@ export default function TbSurveilanceForm({
           }
         };
         
-        console.log('TbSurveilanceForm - Setting form data:', formData);
+        // console.log('TbSurveilanceForm - Setting form data:', formData);
         form.setValue(`${prefix}.new`, formData);
         
         // Update calculated age
@@ -333,10 +333,10 @@ export default function TbSurveilanceForm({
               name={`${prefix}.new.tbSurveilanceSchema.tbStatus`} 
               label="TB Status"
               options={[
-                { id: "Positive", name: "Positive" },
-                { id: "Negative", name: "Negative" },
-                { id: "Under Treatment", name: "Under Treatment" },
-                { id: "Treatment Completed", name: "Treatment Completed" },
+                { id: "TREATMENT ONGOING", name: "Treatment Ongoing" },
+                { id: "COMPLETED", name: "Completed" },
+                { id: "NOT COMPLETED", name: "Not Completed" },
+
               ]}
             />
            

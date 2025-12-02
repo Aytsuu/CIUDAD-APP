@@ -1,6 +1,6 @@
 
-import { View, Text, TextInput, TextInputProps } from 'react-native';
-import { Controller, Control, FieldError } from 'react-hook-form';
+import { View, Text, TextInputProps } from 'react-native';
+import { Controller, Control } from 'react-hook-form';
 import { Textarea } from '../textarea';
 
 interface FormTextAreaProps {

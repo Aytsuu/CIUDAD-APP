@@ -28,6 +28,8 @@ import BudgetTrackerSchema, {
 import PageLayout from "@/screens/_PageLayout";
 import { removeLeadingZeros } from "./gad-btracker-types";
 import { useAuth } from "@/contexts/AuthContext";
+import { BudgetYear } from "./gad-btracker-types";
+import { LoadingModal } from "@/components/ui/loading-modal";
 
 function GADAddEntryForm() {
   const { user } = useAuth();
@@ -56,14 +58,18 @@ function GADAddEntryForm() {
   const budgetEntries = budgetEntriesData?.results || [];
   const { data: projectProposals, isLoading: projectProposalsLoading } =
     useProjectProposalsAvailability(year);
-  const { mutate: createBudget } = useCreateGADBudget(
-    yearBudgets || [],
-    budgetEntries
-  );
+  const yearBudgetsArray = yearBudgets?.results || [];
+  const {
+    mutate: createBudget,
+    isPending,
+    error: _createError,
+  } = useCreateGADBudget(yearBudgetsArray, budgetEntries);
 
   const calculateRemainingBalance = (): number => {
     if (!yearBudgets || !year) return 0;
-    const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+    const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === year
+    );
     if (!currentYearBudget) return 0;
     const initialBudget = Number(currentYearBudget.gbudy_budget) || 0;
     const totalExpenses = Number(currentYearBudget.gbudy_expenses) || 0;
@@ -92,7 +98,7 @@ function GADAddEntryForm() {
       gbud_reference_num: null,
       gbud_remaining_bal: 0,
       gbudy: 0,
-      staff: null,
+      staff: user?.staff?.staff_id || '00001250924',
     },
     context: { calculateRemainingBalance },
   });
@@ -120,7 +126,9 @@ function GADAddEntryForm() {
 
   useEffect(() => {
     if (yearBudgets && !yearBudgetsLoading) {
-      const currentYearBudget = yearBudgets.find((b) => b.gbudy_year === year);
+      const currentYearBudget = yearBudgets.results?.find(
+      (b: BudgetYear) => b.gbudy_year === year
+    );
       if (currentYearBudget) {
         form.setValue("gbudy", currentYearBudget.gbudy_num);
         form.setValue("gbud_remaining_bal", calculateRemainingBalance());
@@ -286,14 +294,14 @@ useEffect(() => {
             refetchYearBudgets();
             router.back();
           },
-          onError: (error) => {
-            console.error("Submission error:", error);
+          onError: (_error) => {
+            // console.error("Submission error:", error);
             setIsSubmitting(false);
           },
         }
       );
     } catch (error) {
-      console.error("Error:", error);
+      // console.error("Error:", error);
       setIsSubmitting(false);
     }
   };
@@ -308,6 +316,18 @@ useEffect(() => {
       headerTitle={<Text>Create Budget Entry</Text>}
       rightAction={<View />}
       footer={ <View >
+          {/* {Object.keys(form.formState.errors).length > 0 && (
+            <View className="mb-2 p-2 bg-red-50 rounded border border-red-200">
+              <Text className="text-red-600 text-xs font-bold mb-1">
+                Validation Errors:
+              </Text>
+              {Object.entries(form.formState.errors).map(([field, error]) => (
+                <Text key={field} className="text-red-500 text-xs">
+                  {field}: {error?.message}
+                </Text>
+              ))}
+            </View>
+          )} */}
         <TouchableOpacity
           className="bg-blue-500 py-3 rounded-lg"
           onPress={form.handleSubmit(onSubmit)}
@@ -322,7 +342,7 @@ useEffect(() => {
               {isSubmitting ? "Saving..." : "Save Entry"}
             </Text>
             {isSubmitting && (
-              <ActivityIndicator size="small" color="white" className="ml-2" />
+               <LoadingModal visible={isSubmitting} />
             )}
           </View>
         </TouchableOpacity>
@@ -341,7 +361,7 @@ useEffect(() => {
       </View>}
     >
       <ScrollView
-        className="flex-1 p-4"
+        className="flex-1 p-4 px-6"
         contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View className="space-y-4">
@@ -497,8 +517,7 @@ useEffect(() => {
                 <MediaPicker
                   selectedImages={mediaFiles}
                   setSelectedImages={setMediaFiles}
-                  multiple={true}
-                  maxImages={5}
+                  limit={5}
                 />
               </View>
         </View>

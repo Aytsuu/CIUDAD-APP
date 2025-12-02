@@ -15,7 +15,7 @@ export const patientQueryKey = {
 
 export const usePatients = (filters: PatientFilters, options = {}) => {
 	return useQuery({
-		queryKey: patientQueryKey.lists(),
+		queryKey: patientQueryKey.list(filters),
 		queryFn: () => getPatients(filters),
 		staleTime: 30 * 1,
 		retry: 3,

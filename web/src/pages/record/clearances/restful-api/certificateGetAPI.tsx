@@ -2,7 +2,7 @@ import { api } from "@/api/api";
 import { AxiosError } from "axios";
 
 // Fetch certificates with search and pagination
-export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, paymentStatus?: string) => {
+export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, purpose?: string, paymentStatus?: string) => {
     try {
         const params = new URLSearchParams();
         if (search) {
@@ -17,16 +17,27 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
         if (status) {
             params.append('status', status);
         }
+        if (purpose) {
+            params.append('purpose', purpose);
+        }
         if (paymentStatus) {
             params.append('payment_status', paymentStatus);
         }
         
         const queryString = params.toString();
-        const url = `/clerk/certificate/${queryString ? '?' + queryString : ''}`;
+        const url = `/clerk/certificate-combined/${queryString ? '?' + queryString : ''}`;
         
         console.log('Making request to:', url);
         const res = await api.get(url);
         console.log('API Response:', res.data);
+        
+        // Debug: Check if per_mname is in the response
+        if (res.data.results && res.data.results.length > 0) {
+            const firstCert = res.data.results[0];
+            console.log('First certificate resident_details:', firstCert.resident_details);
+            console.log('per_mname in API response:', firstCert.resident_details?.per_mname);
+        }
+        
         return res.data;
     } catch (err) {
         const error = err as AxiosError;

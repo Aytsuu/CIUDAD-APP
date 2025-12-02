@@ -47,63 +47,46 @@ const FindingsModal = ({ findings, trigger }: { findings: FindingsData; trigger:
       .filter(Boolean);
   };
 
-  const hasFindings = findings && (
-    findings.subj_summary || 
-    findings.obj_summary || 
-    findings.assessment_summary || 
-    findings.plantreatment_summary
-  );
+  const hasFindings = findings && (findings.subj_summary || findings.obj_summary || findings.assessment_summary || findings.plantreatment_summary);
 
   if (!hasFindings) {
-    return (
-      <span className="text-gray-400 text-sm">No findings</span>
-    );
+    return <span className="text-gray-400 text-sm">No findings</span>;
   }
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-darkBlue2">Clinical Findings Details</DialogTitle>
+          <DialogTitle className="text-lg font-medium text-gray-800">Clinical Findings Details</DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-6 mt-4">
+
+        <div className="space-y-4 mt-4">
           {findings.subj_summary && (
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-blue-800 mb-2 text-lg">Subjective Findings</h3>
-              <div className="text-gray-700 whitespace-pre-wrap">
-                {formatTextWithBullets(findings.subj_summary)}
-              </div>
+            <div className="p-4 border rounded-md">
+              <h3 className="font-medium text-gray-700 mb-2">Subjective Findings</h3>
+              <div className="text-gray-600 whitespace-pre-wrap">{formatTextWithBullets(findings.subj_summary)}</div>
             </div>
           )}
 
           {findings.obj_summary && (
-            <div className="bg-green-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-green-800 mb-2 text-lg">Objective Findings</h3>
-              <div className="text-gray-700 whitespace-pre-wrap">
-                {formatTextWithBullets(findings.obj_summary)}
-              </div>
+            <div className="p-4 border rounded-md">
+              <h3 className="font-medium text-gray-700 mb-2">Objective Findings</h3>
+              <div className="text-gray-600 whitespace-pre-wrap">{formatTextWithBullets(findings.obj_summary)}</div>
             </div>
           )}
 
           {findings.assessment_summary && (
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-purple-800 mb-2 text-lg">Assessment</h3>
-              <div className="text-gray-700 whitespace-pre-wrap">
-                {formatTextWithBullets(findings.assessment_summary)}
-              </div>
+            <div className="p-4 border rounded-md">
+              <h3 className="font-medium text-gray-700 mb-2">Assessment</h3>
+              <div className="text-gray-600 whitespace-pre-wrap">{formatTextWithBullets(findings.assessment_summary)}</div>
             </div>
           )}
 
           {findings.plantreatment_summary && (
-            <div className="bg-orange-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-orange-800 mb-2 text-lg">Plan & Treatment</h3>
-              <div className="text-gray-700 whitespace-pre-wrap">
-                {formatTextWithBullets(findings.plantreatment_summary)}
-              </div>
+            <div className="p-4 border rounded-md">
+              <h3 className="font-medium text-gray-700 mb-2">Plan & Treatment</h3>
+              <div className="text-gray-600 whitespace-pre-wrap">{formatTextWithBullets(findings.plantreatment_summary)}</div>
             </div>
           )}
         </div>
@@ -114,27 +97,17 @@ const FindingsModal = ({ findings, trigger }: { findings: FindingsData; trigger:
 
 // Compact Findings Cell for Table View
 const FindingsCell = ({ findings }: { findings: FindingsData }) => {
-  const hasFindings = findings && (
-    findings.subj_summary || 
-    findings.obj_summary || 
-    findings.assessment_summary || 
-    findings.plantreatment_summary
-  );
+  const hasFindings = findings && (findings.subj_summary || findings.obj_summary || findings.assessment_summary || findings.plantreatment_summary);
 
   if (!hasFindings) {
     return <span className="text-gray-400 text-sm">No findings</span>;
   }
 
-
-
   return (
     <FindingsModal
       findings={findings}
       trigger={
-        <Button 
-          variant="ghost" 
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 text-xs"
-        >
+        <Button variant="ghost" className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 text-xs">
           <Eye size={14} />
           View Findings
         </Button>
@@ -149,11 +122,9 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
     header: "#",
     cell: ({ row }) => (
       <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">
-          {row.original.id}
-        </div>
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">{row.original.id}</div>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "age",
@@ -162,7 +133,7 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
       <div className="w-full flex justify-center">
         <div className="w-10">{row.original.age || "N/A"}</div>
       </div>
-    )
+    ),
   },
   {
     accessorKey: "wt_ht",
@@ -171,12 +142,12 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
       const weight = row.original.wt;
       const height = row.original.ht;
       return <div className="text-center">{weight && height ? `${weight} kg / ${height} cm` : "N/A"}</div>;
-    }
+    },
   },
   {
     accessorKey: "temp",
     header: "Temp (°C)",
-    cell: ({ row }) => <div className="text-center">{row.original.temp || "N/A"}</div>
+    cell: ({ row }) => <div className="text-center">{row.original.temp || "N/A"}</div>,
   },
   {
     accessorKey: "findings",
@@ -185,7 +156,7 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
       const findings = row.original.findings as FindingsData;
       return <FindingsCell findings={findings} />;
     },
-    enableSorting: false
+    enableSorting: false,
   },
   {
     accessorKey: "latestNote",
@@ -195,53 +166,75 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
       return (
         <div className="flex justify-center">
           <div className="w-[300px] px-2">
-          {record.latestNote ? (
-            <p className="text-sm mb-2 line-clamp-3">{record.latestNote}</p>
-          ) : (
-            <p className="text-gray-500 text-sm mb-2">No notes</p>
-          )}
+            {record.latestNote ? <p className="text-sm mb-2 line-clamp-3">{record.latestNote}</p> : <p className="text-gray-500 text-sm mb-2">No notes</p>}
 
-          {(record.followUpDescription || record.followUpDate) && (
-            <div className="border-t pt-2 mt-2">
-              <div className="flex flex-col items-center gap-2 mb-1">
-                <span className="text-xs font-medium text-gray-600">Follow-up:</span>
-                <span className={`text-xs px-2 py-1 rounded ${
-                  record.followUpStatus === "completed" ? "bg-green-100 text-green-800" : 
-                  record.followUpStatus === "missed" ? "bg-red-100 text-red-800" : 
-                  "bg-blue-100 text-blue-800"
-                }`}>
-                  {record.followUpStatus || "pending"}
-                </span>
+            {(record.followUpDescription || record.followUpDate) && (
+              <div className="border-t pt-2 mt-2">
+                <div className="flex flex-col items-center gap-2 mb-1">
+                  <span className="text-xs font-medium text-gray-600">Follow-up:</span>
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      record.followUpStatus === "completed" ? "bg-green-100 text-green-800" : record.followUpStatus === "missed" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"
+                    }`}
+                  >
+                    {record.followUpStatus || "pending"}
+                  </span>
+                </div>
+
+                {record.followUpDescription && (
+                  <p className="text-xs text-gray-600 break-words line-clamp-2">
+                    {record.followUpDescription.split("|").map((part: any, i: any) => (
+                      <span key={i}>
+                        {part.trim()}
+                        {i < record.followUpDescription.split("|").length - 1 && <br />}
+                      </span>
+                    ))}
+                  </p>
+                )}
+
+                {record.followUpDate && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    <span className="font-medium">Date:</span> {record.followUpDate}
+                  </p>
+                )}
               </div>
-
-              {record.followUpDescription && (
-                <p className="text-xs text-gray-600 break-words line-clamp-2">
-                  {record.followUpDescription.split("|").map((part: any, i: any) => (
-                    <span key={i}>
-                      {part.trim()}
-                      {i < record.followUpDescription.split("|").length - 1 && <br />}
-                    </span>
-                  ))}
-                </p>
-              )}
-
-              {record.followUpDate && (
-                <p className="text-xs text-gray-600 mt-1">
-                  <span className="font-medium">Date:</span> {record.followUpDate}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "updatedAt",
-    header: "Updated At",
-    cell: ({ row }) => 
-      <div className="w-full flex justify-center text-center"><div className="w-16">{row.original.updatedAt}</div></div>
+    header: "Date Visited",
+    cell: ({ row }) => (
+      <div className="w-full flex justify-center text-center">
+        <div className="w-16">{row.original.updatedAt}</div>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original.status;
+      const displayStatus = status === "recorded" ? "completed" : status;
+      const isCompleted = status === "recorded";
+      
+      return (
+        <div className="w-full flex justify-center">
+          <span 
+            className={`text-xs px-2 py-1 rounded capitalize ${
+              isCompleted 
+                ? "bg-green-100 text-green-800" 
+                : "bg-blue-100 text-blue-800"
+            }`}
+          >
+            {displayStatus || "N/A"}
+          </span>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "action",
@@ -251,7 +244,10 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
 
       return (
         <ViewButton
-          onClick={() =>
+          onClick={() => {
+            localStorage.removeItem("childHRFormData");
+            localStorage.removeItem("childHRSelectedPatient");
+            localStorage.removeItem("childHRSelectedPatientId");
             navigate(`/services/childhealthrecords/records/history`, {
               state: {
                 params: {
@@ -260,13 +256,13 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
                   originalRecord: row.original,
                   patientData: childData,
                   chrecId: childData?.chrec_id,
-                  nutritionalStatusData: nutritionalStatusData
-                }
-              }
-            })
-          }
+                  nutritionalStatusData: nutritionalStatusData,
+                },
+              },
+            });
+          }}
         />
       );
-    }
-  }
+    },
+  },
 ];

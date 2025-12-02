@@ -91,7 +91,7 @@ export default function DependentForm({ form, residents, selectedParents, depend
     <div className="grid gap-3">
       <div className="mb-4">
         <h2 className="font-semibold text-lg">Dependents Information</h2>
-        <p className="text-xs text-black/50">Review all fields before proceeding</p>
+        <p className="text-sm text-black/50">Review all fields before proceeding</p>
       </div>
 
       <Form {...form}>

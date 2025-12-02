@@ -27,6 +27,14 @@ class PostQueries:
         )
         return response
     
+    def resident_personal(self, data):
+        response = requests.post(
+            f"{self.client}/health-profiling/resident/create/combined",
+            json=data
+        )
+
+        return response
+    
     def complete_profile(self, data):
         response = requests.post(
             f"{self.client}/health-profiling/complete/registration/",
@@ -37,6 +45,13 @@ class PostQueries:
     def family(self, data):
         response = requests.post(
             f"{self.client}/health-profiling/family/create/",
+            json=data
+        )
+        return response
+    
+    def family_registration_request(self, data):
+        response = requests.post(
+            f"{self.client}/health-profiling/family/registration-request/approve/",
             json=data
         )
         return response

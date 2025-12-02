@@ -1,7 +1,6 @@
 import CardLayout from "@/components/ui/card/card-layout";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import {
   Plus,
@@ -22,6 +21,7 @@ import {
   useGetProjectProposal,
   useGetSupportDocs,
   useGetProjectProposalYears,
+  useGetProjectProposalGrandTotal 
 } from "./queries/projprop-fetchqueries";
 import {
   usePermanentDeleteProjectProposal,
@@ -54,14 +54,14 @@ function GADProjectProposal() {
   const { mutate: restoreProject } = useRestoreProjectProposal();
   const { mutate: archiveSupportDoc } = useArchiveSupportDocument();
   const { mutate: restoreSupportDoc } = useRestoreSupportDocument();
+  const { data: grandTotalData } = useGetProjectProposalGrandTotal();
+  const grandTotal = grandTotalData?.grand_total || 0;
   const [selectedYear, setSelectedYear] = useState("All");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [_isPdfLoading, setIsPdfLoading] = useState(true);
-  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(
-    null
-  );
+  const [editingProject, setEditingProject] = useState<ProjectProposal | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -245,25 +245,6 @@ function GADProjectProposal() {
     );
   };
 
-  // Calculate total budget of all displayed projects
-  const totalBudget = projects.reduce((sum, project) => {
-    if (!project.budgetItems || project.budgetItems.length === 0) return sum;
-
-    const projectTotal = project.budgetItems.reduce((projectSum, item) => {
-      const amount =
-        typeof item.amount === "string"
-          ? parseFloat(item.amount) || 0
-          : item.amount || 0;
-      const paxCount =
-        typeof item.pax === "string"
-          ? parseInt(item.pax.replace(/\D/g, "")) || 1
-          : 1;
-      return projectSum + paxCount * amount;
-    }, 0);
-
-    return sum + projectTotal;
-  }, 0);
-
   if (isError) {
     return (
       <div className="text-red-500 p-4">
@@ -307,13 +288,13 @@ function GADProjectProposal() {
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
-          <div className="flex flex-row gap-2 justify-center items-center">
-            <Label>Filter: </Label>
+          <div className="flex flex-row gap-2 justify-center items-center min-w-[150px]">
             <SelectLayout
               className="bg-white"
               options={yearFilterOptions}
               placeholder="Year"
               value={selectedYear}
+              valueLabel="Filter"
               onChange={handleYearChange}
             />
           </div>
@@ -365,7 +346,7 @@ function GADProjectProposal() {
                 {new Intl.NumberFormat("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
-                }).format(totalBudget)}
+                }).format(grandTotal)}
               </span>
             </span>
           </div>
@@ -374,8 +355,9 @@ function GADProjectProposal() {
 
       <div className="flex flex-col gap-4">
         {isLoading ? (
-          <div className="flex items-center justify-center py-16">
+          <div className="flex items-center justify-center py-16 gap-2 text-gray-500">
             <Spinner size="lg" />
+            Loading project proposals...
           </div>
         ) : projects.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
@@ -530,7 +512,7 @@ function GADProjectProposal() {
 
       <Dialog open={isViewDialogOpen} onOpenChange={closePreview}>
         <DialogContent className="max-w-[90vw] w-[90vw] h-[95vh] max-h-[95vh] p-0 flex flex-col">
-          <DialogHeader className="p-4 bg-background border-b sticky top-0 z-50">
+          <DialogHeader className="p-4 bg-background border-b rounded sticky top-0 z-50">
             <div className="flex items-center justify-between w-full">
               <DialogTitle className="text-left">
                 {selectedProject?.projectTitle || "Project Proposal"}
@@ -566,7 +548,7 @@ function GADProjectProposal() {
       </Dialog>
 
       <Dialog open={isSuppDocDialogOpen} onOpenChange={setIsSuppDocDialogOpen}>
-        <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
+         <DialogContent className="max-w-[90vw] w-[90vw] h-[90vh] flex flex-col">
           <DialogHeader className="sticky top-0 z-10 pb-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle>Supporting Documents</DialogTitle>
@@ -578,7 +560,7 @@ function GADProjectProposal() {
             onValueChange={(value) =>
               setSuppDocTab(value as "active" | "archived")
             }
-            className="w-full flex-1 flex flex-col"
+             className="w-full flex-1 flex flex-col min-h-0"
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="active">Active</TabsTrigger>

@@ -43,6 +43,7 @@ export const useSubmitVaccinationRecord = () => {
           o2: data.o2,
           bpsystolic: data.bpsystolic,
           bpdiastolic: data.bpdiastolic,
+          vital_RR:data.vital_RR,
           // Add pat_id if available
           pat_id: data.pat_id,
           staff_id: data.staff_id || null,
@@ -65,10 +66,6 @@ export const useSubmitVaccinationRecord = () => {
       };
 
       console.log("Submission Data:", submissionData);
-
-      console.log("Submission Data:", submissionData);
-
-      // Make API call to submit the complete vaccination record
       const response = await api2.post("/vaccination/submit-vaccination-records/", submissionData);
       return response.data;
     },

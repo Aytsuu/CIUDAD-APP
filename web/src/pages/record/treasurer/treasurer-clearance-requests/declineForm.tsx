@@ -6,20 +6,39 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import {z} from "zod"
 import { useDeclineRequest, useDeclineNonReq } from "./queries/personalClearanceUpdateQueries";
+import { useDeclineServiceChargeRequest } from "./queries/serviceChargeQueries";
+import { useDeclinePermitClearance } from "./queries/permitClearanceFetchQueries";
+import { useAuth } from "@/context/AuthContext";
 
-function DeclineRequestForm({id, isResident, onSuccess}:{
+function DeclineRequestForm({id, isResident, isServiceCharge, isPermitClearance, onSuccess}:{
     id: string;
     isResident: boolean;
+    isServiceCharge?: boolean;
+    isPermitClearance?: boolean;
     onSuccess?: () => void;
 }){
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id;
 
     const{mutate: declineResident, isPending: pendingResident} = useDeclineRequest(onSuccess)
     const{mutate: declineNonResident, isPending: pendingNonResident} = useDeclineNonReq(onSuccess)
+    const{mutate: declineServiceCharge, isPending: pendingServiceCharge} = useDeclineServiceChargeRequest(onSuccess)
+    const{mutate: declinePermitClearance, isPending: pendingPermitClearance} = useDeclinePermitClearance(onSuccess)
 
     const onSubmit = (value: z.infer<typeof DeclineReqSchema>) => {
-        console.log("Data: ", value);
-
-        if(isResident){
+        if(isServiceCharge){
+            declineServiceCharge({
+                pay_id: id,
+                reason: value.reason,
+                staff_id: staffId
+            })
+        } else if(isPermitClearance){
+            declinePermitClearance({
+                bpr_id: id,
+                reason: value.reason,
+                staffId: staffId
+            })
+        } else if(isResident){
             declineResident({
                 cr_id: id,
                 ...value,
@@ -60,7 +79,7 @@ function DeclineRequestForm({id, isResident, onSuccess}:{
                     </div>
                     <div className="flex justify-end mt-[20px]">
                         
-                        <Button type="submit" disabled={pendingResident || pendingNonResident}>  {pendingResident || pendingNonResident ? "Submitting..." : "Submit"} </Button>  
+                        <Button type="submit" disabled={pendingResident || pendingNonResident || pendingServiceCharge || pendingPermitClearance}>  {pendingResident || pendingNonResident || pendingServiceCharge || pendingPermitClearance ? "Submitting..." : "Submit"} </Button>  
                     </div>
                 </form>
             </Form>

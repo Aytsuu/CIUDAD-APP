@@ -65,11 +65,16 @@ export const personalInfoSchema = z.object({
       message: "Must be 11 digits (e.g., 09171234567)",
     }),
   per_disability: z.string(),
+  per_is_deceased: z.string(),
 });
 
 export const perAddDetails = z.object({
   bloodType: z.string().optional(),
-  philHealthId: z.string().optional(),
+  philHealthId: z.string()
+    .refine((val) => !val || val.length === 0 || val.length === 12, {
+      message: "PhilHealth ID must be exactly 12 digits",
+    })
+    .optional(),
   covidVaxStatus: z.string().optional(),
 });
 
@@ -78,6 +83,7 @@ export const motherHealthInfo = z.object({
   immunizationStatus: z.string().optional(),
   method: z.array(z.string()).optional(), 
   source: z.string().optional(),
+  lmpDate: z.string().optional(),
 });
 
 const parentInfoSchema = z.object({
@@ -109,6 +115,8 @@ export const dependentSchema = z.object({
   suffix: z.string(),
   dateOfBirth: z.string(),
   sex: z.string(),
+  relationshipToHead: z.string().optional(),
+  perAddDetails: perAddDetails.optional(),
   dependentUnderFiveSchema: dependentUnderFiveSchema.optional(),
 });
 

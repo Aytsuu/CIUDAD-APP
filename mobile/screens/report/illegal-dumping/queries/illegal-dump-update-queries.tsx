@@ -1,5 +1,4 @@
-import { z } from "zod";
-import { useQuery, useMutation, useQueryClient  } from "@tanstack/react-query";
+import { useMutation, useQueryClient  } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import { updateWasteReport } from "../request/illegal-dump-put-request";
 import { uploadResolvedImage } from "../request/illegal-dump-put-request";
@@ -14,7 +13,7 @@ type FileData = {
 };
 
 
-export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => {
+export const useUpdateWasteReport = (rep_id: string, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const {toast} = useToastContext();  
 
@@ -22,10 +21,12 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
     mutationFn: async (values: { 
       rep_status: string;
       files?: FileData[] 
+      staff_id: string;
     }) => {
       // 1. Update the main report status and date
       await updateWasteReport(rep_id, {
         rep_status: values.rep_status,
+        staff_id: values.staff_id
       });
       
       // 2. Upload all resolution images in parallel (if any)
@@ -40,7 +41,10 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
                 file: file.file
               }
             }).catch(error => {
-              console.error("Error creating file entry:", error);
+              // console.error("Error creating file entry:", error);
+              toast.error(
+                `Error creating file entry: ${error}`,
+              );              
               return null;
             })
           )
@@ -58,8 +62,8 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error updating waste report:", err);
+    onError: (_err) => {
+      // console.error("Error updating waste report:", err);
       toast.error(
         "Failed to update report. Please try again.",
       );
@@ -71,7 +75,7 @@ export const useUpdateWasteReport = (rep_id: number, onSuccess?: () => void) => 
 
 // =========================================== RESIDENT ========================================
 
-export const useUpdateWasteResReport = (rep_id: number, onSuccess?: () => void) => {
+export const useUpdateWasteResReport = (rep_id: string, onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const {toast} = useToastContext();  
 
@@ -97,8 +101,8 @@ export const useUpdateWasteResReport = (rep_id: number, onSuccess?: () => void) 
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error in cancelling waste report:", err);
+    onError: (_err) => {
+      // console.error("Error in cancelling waste report:", err);
       toast.error(
         "Failed to cancel report. Please try again.",
       );

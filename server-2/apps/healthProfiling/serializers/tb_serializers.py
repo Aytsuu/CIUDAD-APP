@@ -48,10 +48,35 @@ class TBSurveilanceCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class TBSurveilanceUpdateSerializer(serializers.ModelSerializer):
+    staff_id = serializers.CharField(write_only=True, required=False)
+    
     class Meta:
         model = TBsurveilance
         fields = [
             'tb_meds_source',
             'tb_days_taking_meds',
-            'tb_status'
+            'tb_status',
+            'staff_id'
         ]
+    
+    def update(self, instance, validated_data):
+        from apps.administration.models import Staff
+        
+        # Extract staff_id for history tracking
+        staff_id = validated_data.pop('staff_id', None)
+        
+        # Set history user if staff_id provided
+        if staff_id:
+            try:
+                staff = Staff.objects.get(staff_id=staff_id)
+                instance._history_user = staff
+            except Staff.DoesNotExist:
+                pass
+        
+        # Update instance fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
+

@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { postDisbursementVoucher, addDisbursementFiles } from "../api/incDisb-postreq";
 import { DisbursementInput, DisbursementFileInput } from "../incDisb-types"; 
 
@@ -11,18 +10,10 @@ export const useAddDisbursementVoucher = () => {
     mutationFn: (disbursementData: DisbursementInput) => postDisbursementVoucher(disbursementData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["disbursementVouchers"] });
-      toast.success("Disbursement voucher added successfully", {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-        duration: 2000,
-      });
+      showSuccessToast("Disbursement voucher added successfully");
     },
-    onError: (error: any) => {
-      toast.error("Failed to add disbursement voucher", {
-        description: error.response?.data
-          ? JSON.stringify(error.response.data, null, 2)
-          : error.message,
-        duration: 5000,
-      });
+    onError: (_error: any) => {
+      showErrorToast("Failed to add disbursement voucher");
     },
   });
 };
@@ -37,13 +28,8 @@ export const useAddDisbursementFiles = () => {
         queryKey: ["disbursementFiles", variables.dis_num],
       });
     },
-    onError: (error: any) => {
-      toast.error("Failed to add disbursement files", {
-        description: error.response?.data
-          ? JSON.stringify(error.response.data, null, 2)
-          : error.message,
-        duration: 5000,
-      });
+    onError: (_error: any) => {
+      showErrorToast("Failed to add disbursement files");
     },
   });
 };

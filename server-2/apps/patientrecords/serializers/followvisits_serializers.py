@@ -61,4 +61,27 @@ class FollowUpVisitSerializerBase(serializers.ModelSerializer):
         model = FollowUpVisit
         fields = '__all__'
     
-   
+
+
+class UnifiedPatientSerializer(serializers.Serializer):
+    firstName = serializers.CharField(source='per.per_fname', allow_null=True)
+    lastName = serializers.CharField(source='per.per_lname', allow_null=True)
+    middleName = serializers.CharField(source='per.per_mname', allow_null=True)
+    gender = serializers.CharField(source='per.per_sex', allow_null=True)
+    age = serializers.SerializerMethodField()
+    ageTime = serializers.SerializerMethodField()
+    patientId = serializers.CharField(source='pat_id', allow_null=True)
+
+    def get_age(self, obj):
+        dob = obj.per.per_dob if hasattr(obj, 'per') and obj.per else None
+        if not dob:
+            return 0
+        today = date.today()
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        return age
+
+    def get_ageTime(self, obj):
+        age = self.get_age(obj)
+        if age < 1:
+            return 'months'  # You can refine to calculate months if needed
+        return 'years' if age > 1 else 'year'

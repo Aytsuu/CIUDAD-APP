@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { CheckCircle, XCircle, RefreshCw } from "lucide-react-native";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToastContext } from "@/components/ui/toast";
 import IncomeExpenseFormSchema from "../schema";
 import IncomeFormSchema from "@/form-schema/treasurer/treasurer-income-schema";
@@ -9,7 +8,6 @@ import { income_expense_file_create } from "../request/income-expense-PostReques
 import { updateIncomeExpenseMain } from "../request/income-expense-PostRequest";
 import { updateExpenseParticular } from "../request/income-expense-PostRequest";
 import { expense_log } from "../request/income-expense-PostRequest";
-import { updateBudgetPlanDetail } from "../request/income-expense-PostRequest";
 import { income_tracking } from "../request/income-expense-PostRequest";
 import { updateIncomeMain } from "../request/income-expense-PostRequest";
 
@@ -28,6 +26,7 @@ type ExtendedIncomeExpense = z.infer<typeof IncomeExpenseFormSchema> & {
   proposedBud: number;
   particularId: number;
   files: FileData[]; 
+  staff_id: string;
 };
 
 
@@ -51,8 +50,8 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
                 type: file.type,
                 file: file.file
               }
-            }).catch(error => {
-              console.error("Error creating file entry:", error);
+            }).catch(_error => {
+              // console.error("Error creating file entry:", error);
               return null;
             })
           )
@@ -72,13 +71,12 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
       });
 
       //5. Add new Expense log
-      if(values.returnAmount > 0){
-        await expense_log(iet_num, {
-          returnAmount: values.returnAmount,
-          el_proposed_budget: values.iet_amount,
-          el_actual_expense: values.iet_actual_amount
-        });
-      }      
+      await expense_log(iet_num, {
+        returnAmount: values.returnAmount,
+        el_proposed_budget: values.iet_amount,
+        el_actual_expense: values.iet_actual_amount
+      });
+ 
       
       return iet_num;
     },  
@@ -95,7 +93,7 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
         if (onSuccess) onSuccess();
     },
     onError: (err) => {
-        console.error("Failed to submit expense.", err);
+        // console.error("Failed to submit expense.", err);
         toast.error(err.message || 'Failed to submit expense.');
 
     }
@@ -111,6 +109,7 @@ export const useCreateIncomeExpense = (onSuccess?: () => void) => {
 type ExtendedIncomeValues = z.infer<typeof IncomeFormSchema> & {
   totalIncome: number;
   year: number;
+  staff_id: string;
 };
 
 
@@ -142,8 +141,8 @@ export const useCreateIncome = (onSuccess?: () => void) => {
 
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error submitting income:", err);
+    onError: (_err) => {
+      // console.error("Error submitting income:", err);
       toast.error("Failed to submit income. Please check the input data and try again.");
     }
   });

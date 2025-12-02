@@ -18,7 +18,7 @@ export const formatPositionGroups = (groups: any) => {
   if(!groups) return [];
   
   return groups.map((group: any) => ({
-    id: group.toLowerCase(),
+    id: group,
     name: group
   }))
 }

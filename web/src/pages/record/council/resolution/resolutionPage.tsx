@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import React from 'react';
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
-import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, FileInput, CircleAlert } from 'lucide-react';
+import { Pencil, Trash, Eye, Plus, Search, Archive, ArchiveRestore, CircleAlert } from 'lucide-react';
 import TooltipLayout from '@/components/ui/tooltip/tooltip-layout.tsx';
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { Input } from '@/components/ui/input';
 import { DataTable } from "@/components/ui/table/data-table"
 import { ConfirmationModal } from '@/components/ui/confirmation-modal';
@@ -19,6 +20,40 @@ import { useArchiveOrRestoreResolution } from './queries/resolution-delete-queri
 import { useDebounce } from "@/hooks/use-debounce";
 import { Spinner } from "@/components/ui/spinner";
 import { useLoading } from "@/context/LoadingContext";
+import { useAuth } from "@/context/AuthContext";
+
+
+
+export const getAreaFocusDisplayName = (focus: string): string => {
+  switch (focus) {
+    case "gad":
+      return "GAD"
+    case "finance":
+      return "Finance"
+    case "council":
+      return "Council"
+    case "waste":
+      return "Waste"
+    default:
+      return focus
+  }
+}
+
+export const getAreaFocusColor = (focus: string): string => {
+  switch (focus) {
+    case "gad":
+      return "bg-purple-100 text-purple-800"
+    case "finance":
+      return "bg-orange-100 text-orange-800"
+    case "council":
+      return "bg-primary/10 text-primary"
+    case "waste":
+      return "bg-green-100 text-green-800"
+    default:
+      return "bg-gray-100 text-gray-800"
+  }
+}
+
 
 
 
@@ -26,20 +61,28 @@ function ResolutionPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false); 
     const [editingRowId, setEditingRowId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState("active");
-    const [currentPage, setCurrentPage] = useState(1);
+    const [activeCurrentPage, setActiveCurrentPage] = useState(1);
+    const [archiveCurrentPage, setArchiveCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [searchQuery, setSearchQuery] = useState("");
     const [filter, setFilter] = useState<string>("all");
     const [yearFilter, setYearFilter] = useState<string>("all");
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
     const { showLoading, hideLoading } = useLoading();
+
+    const currentPage = activeTab === "active" ? activeCurrentPage : archiveCurrentPage;
+    const isArchive = activeTab === "archive";     
   
 
     // Fetch mutation
-    const { data: resolutionData = [], isLoading, isError } = useResolution(
+    const { data: resolutionData = { results: [], count: 0 }, isLoading, isError } = useResolution
+    (
+        currentPage,
+        pageSize,
         debouncedSearchQuery, 
         filter, 
-        yearFilter
+        yearFilter,
+        isArchive
     );
 
     // Delete mutation
@@ -47,6 +90,12 @@ function ResolutionPage() {
 
     // Archive / Restore mutation
     const { mutate: archiveRestore } = useArchiveOrRestoreResolution();
+    const { user } = useAuth();
+    const staffId = user?.staff?.staff_id as string | undefined;
+
+    // Extract data from paginated response
+    const fetchedData = resolutionData.results || [];
+    const totalCount = resolutionData.count || 0;    
 
     useEffect(() => {
         if (isLoading) {
@@ -56,6 +105,11 @@ function ResolutionPage() {
         }
     }, [isLoading, showLoading, hideLoading]);      
 
+    // Calculate total pages for current tab
+    const activeTotalPages = activeTab === "active" ? Math.ceil(totalCount / pageSize) : 0;
+    const archiveTotalPages = activeTab === "archive" ? Math.ceil(totalCount / pageSize) : 0;    
+
+
     const filterOptions = [
         { id: "all", name: "All" },
         { id: "council", name: "Council" },
@@ -64,11 +118,12 @@ function ResolutionPage() {
         { id: "finance", name: "Finance" }
     ];
 
+
     // Extract unique years from resolution data
     const yearOptions = useMemo(() => {
         const years = new Set<number>();
         
-        resolutionData.forEach(record => {
+        fetchedData.forEach(record => {
             if (record.res_date_approved) {
                 try {
                     const date = new Date(record.res_date_approved);
@@ -76,7 +131,8 @@ function ResolutionPage() {
                         years.add(date.getFullYear());
                     }
                 } catch (error) {
-                    console.error('Error parsing date:', record.res_date_approved, error);
+                    // console.error('Error parsing date:', record.res_date_approved, error);
+                    throw new Error("Error parsing date: " + error);
                 }
             }
         });
@@ -90,52 +146,56 @@ function ResolutionPage() {
         });
 
         return options;
-    }, [resolutionData]);
+    }, [fetchedData]);
 
-    // Filter data based on active/archive tab, search query, filter, and year
-    const filteredData = React.useMemo(() => {
-        return resolutionData.filter(row => 
-            activeTab === "active" ? row.res_is_archive === false : row.res_is_archive === true
-        );
-    }, [resolutionData, activeTab]);
 
-    const totalPages = Math.ceil(filteredData.length / pageSize);
-    const paginatedData = filteredData.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
-    );
+    // Handle tab change - reset to page 1 when switching tabs
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab);
+        if (tab === "active") {
+            setActiveCurrentPage(1);
+        } else {
+            setArchiveCurrentPage(1);
+        }
+    };    
+
 
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchQuery(e.target.value);
-        setCurrentPage(1);
+        setActiveCurrentPage(1);
+        setArchiveCurrentPage(1);
     };
 
     const handleFilterChange = (value: string) => {
         setFilter(value);
-        setCurrentPage(1);
+        setActiveCurrentPage(1);
+        setArchiveCurrentPage(1);
     };
 
     const handleYearFilterChange = (value: string) => {
         setYearFilter(value);
-        setCurrentPage(1);
-    };    
+        setActiveCurrentPage(1);
+        setArchiveCurrentPage(1);
+    };        
 
     const handleDelete = (res_num: number) => {
-        deleteRes(String(res_num));
+        deleteRes({ res_num: String(res_num), staffId: staffId });
     };
 
     const handleArchive = (res_num: number) => {
         archiveRestore({
             res_num: String(res_num),
-            res_is_archive: true
+            res_is_archive: true,
+            staffId: staffId
         });
     };
 
     const handleRestore = (res_num: number) => {
         archiveRestore({
             res_num: String(res_num),
-            res_is_archive: false
+            res_is_archive: false,
+            staffId: staffId
         });
     };
 
@@ -152,7 +212,12 @@ function ResolutionPage() {
                 </div>
             ),
             cell: ({row}) => (
-                <div className="flex w-full justify-center items-center">{row.getValue("res_num")}</div>
+                // <div className="flex w-full justify-center items-center">{row.getValue("res_num")}</div>
+                <div className="bg-blue-100 px-3 py-1 rounded-sm inline-block shadow-sm">
+                    <p className="text-primary text-[13px] font-bold tracking-wider uppercase">
+                        {row.getValue("res_num")}
+                    </p>
+                </div>                 
             )
         },
         {
@@ -175,15 +240,20 @@ function ResolutionPage() {
             header: "Resolution Title", 
         },
         {
-            accessorKey: "res_area_of_focus",
-            header: "Area of Focus",
-            cell: ({ row }) => (
-                <div className="text-center max-w-[200px]">
-                    {row.original.res_area_of_focus.join("\n").split("\n").map((line, index) => (
-                        <div key={index} className="text-sm">{line}</div>
-                    ))}
+        accessorKey: "res_area_of_focus",
+        header: "Area of Focus",
+        cell: ({ row }) => (
+            <div className="flex flex-wrap justify-center gap-2">
+            {row.original.res_area_of_focus?.map((focus: string, index: number) => (
+                <div
+                key={index}
+                className={`text-xs px-3 py-1 rounded-full font-medium ${getAreaFocusColor(focus)}`}
+                >
+                {getAreaFocusDisplayName(focus)}
                 </div>
-            )
+            ))}
+            </div>
+        ),
         },
         {
             accessorKey: "resolution_supp",
@@ -205,17 +275,18 @@ function ResolutionPage() {
                                 mainContent={
                                     <div className="flex flex-col gap-4 p-5">
                                         {files.map((file) => (
-                                            <div key={file.rsd_id} className="border p-3 rounded-md">
+                                            <div key={file.rsd_id} className="border p-2 rounded-md">
                                                 <a 
                                                     href={file.rsd_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                                                    className="text-primary hover:text-blue-800 flex items-center gap-2"
                                                 >
-                                                    <FileInput size={16} />
-                                                    Image {file.rsd_name}
+                                                    <span className="truncate max-w-[500px] block" title={file.rsd_name}>
+                                                        {file.rsd_name}
+                                                    </span>
                                                 </a>
-                                            </div>
+                                            </div>                                            
                                         ))}
                                     </div>
                                 }
@@ -326,7 +397,7 @@ function ResolutionPage() {
                                     trigger={<div className="bg-[#10b981] hover:bg-[#34d399] text-white border px-3 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"><ArchiveRestore size={16}/></div>}
                                     title="Restore Archived Resolution"
                                     description="Would you like to restore this resolution from the archive and make it active again?"
-                                    actionLabel="confirm"
+                                    actionLabel="Confirm"
                                     onClick={() => handleRestore(row.original.res_num)}
                                 />
                             </div>
@@ -340,7 +411,7 @@ function ResolutionPage() {
                                     trigger={<div className="bg-[#ff2c2c] hover:bg-[#ff4e4e] text-white border px-3 py-2 rounded cursor-pointer flex items-center justify-center h-8.5"><Trash size={16}/></div>}
                                     title="Confirm Delete"
                                     description="This record will be permanently deleted and cannot be recovered. Do you wish to proceed?"
-                                    actionLabel="confirm"
+                                    actionLabel="Confirm"
                                     onClick={() => handleDelete(row.original.res_num)}
                                 />
                             </div>
@@ -386,6 +457,7 @@ function ResolutionPage() {
                         placeholder="Area Filter"
                         options={filterOptions}
                         value={filter}
+                        valueLabel="Area"
                         onChange={handleFilterChange}
                     />
 
@@ -395,6 +467,7 @@ function ResolutionPage() {
                         placeholder="Year Filter"
                         options={yearOptions}
                         value={yearFilter}
+                        valueLabel="Year"
                         onChange={handleYearFilterChange}
                     />                              
                 </div>
@@ -418,26 +491,35 @@ function ResolutionPage() {
             </div>                    
 
             <div className="w-full bg-white border-none"> 
-                <div className="flex justify-between items-center p-4">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 m-6 pt-6">
                     <div className="flex gap-x-2 items-center">
                         <p className="text-xs sm:text-sm">Show</p>
-                        <Input 
-                            type="number" 
-                            className="w-14 h-8" 
-                            value={pageSize}
-                            onChange={(e) => {
-                                const value = +e.target.value;
-                                if (value >= 1) {
-                                    setPageSize(value);
-                                    setCurrentPage(1);
-                                }
+                        <Select 
+                            value={pageSize.toString()} 
+                            onValueChange={(value) => {
+                                const newPageSize = Number.parseInt(value);
+                                setPageSize(newPageSize);
+                                // Reset both pagination states to page 1
+                                setActiveCurrentPage(1);
+                                setArchiveCurrentPage(1);
                             }}
-                        />
+                        >
+                            <SelectTrigger className="w-20 h-8 bg-white border-gray-200">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="5">5</SelectItem>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="25">25</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                                <SelectItem value="100">100</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <p className="text-xs sm:text-sm">Entries</p>
                     </div>
                 </div>  
 
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <Tabs value={activeTab} onValueChange={handleTabChange}>
                     <div className='pl-5 pb-3'>
                         <TabsList className="grid w-full grid-cols-2 max-w-xs">
                             <TabsTrigger value="active">Active Resolutions</TabsTrigger>
@@ -459,10 +541,26 @@ function ResolutionPage() {
                             ) : (
                                 <DataTable 
                                     columns={activeColumns} 
-                                    data={paginatedData.filter(row => row.res_is_archive === false)} 
+                                    data={fetchedData}  // No filtering needed - backend already sent active records
                                 />
                             )}                            
                         </div>
+
+                        {/* Active Tab Pagination */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                                Showing {(activeCurrentPage - 1) * pageSize + 1}-
+                                {Math.min(activeCurrentPage * pageSize, totalCount)} of{" "}
+                                {totalCount} rows
+                            </p>
+                            {totalCount > 0 && (
+                                <PaginationLayout
+                                    currentPage={activeCurrentPage}
+                                    totalPages={activeTotalPages}
+                                    onPageChange={setActiveCurrentPage}
+                                />
+                            )}
+                        </div>                        
                     </TabsContent>
 
                     <TabsContent value="archive">
@@ -475,28 +573,29 @@ function ResolutionPage() {
                             ) : (
                                 <DataTable 
                                     columns={archiveColumns} 
-                                    data={paginatedData.filter(row => row.res_is_archive === true)} 
-                                />                                
+                                    data={fetchedData}  // No filtering needed - backend already sent archived records
+                                />                               
                             )}                               
                         </div>
+
+                        {/* Archive Tab Pagination */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
+                            <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                                Showing {(archiveCurrentPage - 1) * pageSize + 1}-
+                                {Math.min(archiveCurrentPage * pageSize, totalCount)} of{" "}
+                                {totalCount} rows
+                            </p>
+                            {totalCount > 0 && (
+                                <PaginationLayout
+                                    currentPage={archiveCurrentPage}
+                                    totalPages={archiveTotalPages}
+                                    onPageChange={setArchiveCurrentPage}
+                                />
+                            )}
+                        </div>                        
                     </TabsContent>
                 </Tabs>
-            </div>   
-
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
-                <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-                    Showing {(currentPage - 1) * pageSize + 1}-
-                    {Math.min(currentPage * pageSize, filteredData.length)} of{" "}
-                    {filteredData.length} rows
-                </p>
-                {filteredData.length > 0 && (
-                    <PaginationLayout
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                    />
-                )}
-            </div>                                 
+            </div>                                
         </div>
     );
 }

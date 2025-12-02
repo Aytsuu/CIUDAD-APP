@@ -7,7 +7,7 @@ from apps.medicineservices.models import MedicineRequestItem,MedicineRequest,Med
 from simple_history.models import HistoricalRecords
 from simple_history.utils import update_change_reason
 from django.conf import settings
-
+from apps.maternal.models import *
 
 # Create your models here.
 class ChildHealthrecord(models.Model):  
@@ -44,6 +44,7 @@ class ChildHealthrecord(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     staff =models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_records', null=True, blank=True)
     patrec = models.ForeignKey(PatientRecord, on_delete=models.CASCADE, related_name='child_health_records')
+    pregnancy = models.ForeignKey(Pregnancy, on_delete=models.CASCADE, related_name='child_health_records', null=True, blank=True)
     class Meta:
         db_table = 'child_healthrecord'
         ordering = ['-created_at']
@@ -56,7 +57,9 @@ class ChildHealth_History(models.Model):
     chrec = models.ForeignKey(ChildHealthrecord, on_delete=models.CASCADE, related_name='child_health_histories')
     tt_status = models.CharField(max_length=100, blank=True, null=True)
     assigned_to = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_histories', null=True, blank=True)
-
+    assigned_doc =  models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_histories_assigned_doc', null=True, blank=True,db_column='assigned_doc')
+    created_by = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_histories_created_by', null=True, blank=True,db_column='created_by')
+    
     status = models.CharField(
         max_length=20,
         choices=[
@@ -105,7 +108,8 @@ class ChildHealthSupplements(models.Model):
     chsupplement_id = models.BigAutoField(primary_key=True)
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='child_health_supplements')
     # staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
-    medrec = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='child_health_supplements')
+    # medrec = models.ForeignKey(MedicineRecord, on_delete=models.CASCADE, related_name='child_health_supplements')
+    medreq=models.ForeignKey(MedicineRequest, on_delete=models.CASCADE, related_name='child_health_supplements', null=True, blank=True)
     
     class Meta:
         db_table = 'child_health_supplements'
@@ -124,27 +128,7 @@ class ChildHealthSupplementsStatus(models.Model):
     class Meta:
         db_table = 'child_health_supplements_status'
               
-class NutritionalStatus(models.Model):
-    nutstat_id = models.BigAutoField(primary_key=True)
-    wfa = models.CharField(max_length=100, blank=True, null=True)  # Weight-for-Age
-    lhfa = models.CharField(max_length=100, blank=True, null=True)  # Length-for-Age
-    wfl = models.CharField(max_length=100, blank=True, null=True)  # Weight-for-Length
-    muac = models.CharField(max_length=100, blank=True, null=True)  # Mid-Upper Arm Circumference
-    created_at = models.DateTimeField(auto_now_add=True)
-    edemaSeverity= models.CharField(max_length=100, default="None")  # Edema severity
-    muac_status = models.CharField(max_length=100, blank=True, null=True)  # Status of MUAC
-    remarks = models.TextField(blank=True, null=True)  # Additional remarks
-    is_opt = models.BooleanField(default=False)  # Indicates if the vital sign is optional
 
-    
-    bm = models.ForeignKey(BodyMeasurement, on_delete=models.CASCADE, related_name='child_health_histories')
-    # chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chhist_id')
-    # chvital=models.ForeignKey(ChildHealthVitalSigns, on_delete=models.CASCADE, related_name='nutritional_status', db_column='chvital_id')
-    pat = models.ForeignKey(Patient,on_delete=models.CASCADE, related_name='child_health_histories' )
-   
-  
-    class Meta:
-        db_table = 'nutritional_status'
         
         
 class ExclusiveBFCheck(models.Model):
@@ -152,7 +136,7 @@ class ExclusiveBFCheck(models.Model):
     ebf_date = models.CharField(max_length=100, blank=True, null=True)  # Date of the check
     chhist = models.ForeignKey(ChildHealth_History, on_delete=models.CASCADE, related_name='exclusive_bf_checks')
     created_at = models.DateTimeField(auto_now_add=True)
-
+    type_of_feeding=models.CharField(max_length=100, blank=True, null=True)
     class Meta:
         db_table = 'exclusive_bf_check'
 

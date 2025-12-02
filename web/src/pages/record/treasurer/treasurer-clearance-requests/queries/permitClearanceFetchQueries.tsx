@@ -1,5 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBusinesses, getPermitPurposes, getGrossSales, getPermitClearances,getAnnualGrossSalesForPermit,getPurposesAndRates } from "../restful-api/permitClearanceGetAPI";
+import { declinePermitClearance } from "../restful-api/permitClearancePostAPI";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 
 
 export type Businesses = {
@@ -70,10 +72,10 @@ export const useGetGrossSales = () => {
 }
 
 // Hook for permit clearances list
-export const useGetPermitClearances = () => {
+export const useGetPermitClearances = (page: number = 1, pageSize: number = 10, search: string = '', status: string = '', paymentStatus: string = '') => {
     return useQuery<any[]>({
-        queryKey: ["permitClearances"],
-        queryFn: () => getPermitClearances(),
+        queryKey: ["permitClearances", page, pageSize, search, status, paymentStatus],
+        queryFn: () => getPermitClearances(search, page, pageSize, status, paymentStatus),
         staleTime: 1000 * 60 * 30,
     });
 }
@@ -96,4 +98,20 @@ export const useGetPurposesAndRates = () => {
     });
 }
 
-
+// Hook for declining permit clearance
+export const useDeclinePermitClearance = (onSuccess?: () => void) => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: ({ bpr_id, reason, staffId }: { bpr_id: string; reason: string; staffId: string }) => 
+            declinePermitClearance(bpr_id, reason, staffId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['permitClearances'] });
+            showSuccessToast('Request Declined!');
+            onSuccess?.();
+        },
+        onError: (_err) => {
+            showErrorToast("Failed to decline request. Please check the data and try again.");
+        }
+    });
+}

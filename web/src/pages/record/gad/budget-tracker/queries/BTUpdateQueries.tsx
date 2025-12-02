@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { CircleCheck } from "lucide-react";
+import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useNavigate } from "react-router";
 import { updateGADBudget, createGADBudgetFile } from "../requestAPI/BTPutRequest";
 import { deleteGADBudgetFiles } from "../requestAPI/BTDelRequest";
@@ -67,12 +66,13 @@ export const useUpdateGADBudget = (yearBudgets: BudgetYear[]) => {
       queryClient.invalidateQueries({ queryKey: ['gad-budgets', year] });
       queryClient.invalidateQueries({ queryKey: ['gad-budget-entry', variables.gbud_num] });
       queryClient.invalidateQueries({ queryKey: ['gadYearBudgets'] });
+      queryClient.invalidateQueries({ queryKey: ["budgetAggregates", year] });
 
-      toast.success('Budget entry updated successfully', {
-        icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
-      });
-
+      showSuccessToast('Budget entry updated successfully');
       navigate(`/gad/gad-budget-tracker-table/${year}/`);
+    },
+    onError: (_error: Error) => {
+      showErrorToast("Failed to update budget entry");
     },
   });
 };

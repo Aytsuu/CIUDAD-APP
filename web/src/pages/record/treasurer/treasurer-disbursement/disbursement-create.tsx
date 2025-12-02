@@ -129,17 +129,19 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
     }
   };
 
-  const updateSignatory = (
-    index: number,
-    field: keyof Signatory,
-    value: string,
-    position?: string
-  ) => {
-    setValue(`dis_signatories.${index}.${field}`, value);
-    if (position && field === "name") {
-      setValue(`dis_signatories.${index}.position`, position);
-    }
-  };
+const updateSignatory = (
+  index: number,
+  field: keyof Signatory,
+  value: string,
+  position?: string
+) => {
+  setValue(`dis_signatories.${index}.${field}`, value);
+  
+  // Always update position when name is selected from dropdown
+  if (field === "name" && position) {
+    setValue(`dis_signatories.${index}.position`, position);
+  }
+};
 
   const onSubmit = async (data: DisbursementFormValues) => {
     try {
@@ -367,27 +369,24 @@ export const DisbursementCreate: React.FC<DisbursementVoucherFormProps> = ({
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
                       <ComboboxInput
-                        value={signatory.name}
-                        options={staffList}
-                        isLoading={isStaffLoading}
-                        label=""
-                        placeholder="Select staff..."
-                        emptyText="No staff found. Enter name manually."
-                        onSelect={(value, item) =>
-                          updateSignatory(
-                            index,
-                            "name",
-                            value,
-                            item?.position
-                          )
-                        }
-                        onCustomInput={(value) =>
-                          updateSignatory(index, "name", value)
-                        }
-                        displayKey="full_name"
-                        valueKey="staff_id"
-                        additionalDataKey="position"
-                      />
+  value={signatory.name}
+  options={staffList}
+  isLoading={isStaffLoading}
+  label=""
+  placeholder="Select staff..."
+  emptyText="No staff found. Enter name manually."
+  onSelect={(value, item) => {
+    // Update both name and position when staff is selected
+    updateSignatory(index, "name", value, item?.position);
+  }}
+  onCustomInput={(value) => {
+    // Only update name when typing manually, keep existing position
+    updateSignatory(index, "name", value);
+  }}
+  displayKey="full_name"
+  valueKey="staff_id"
+  additionalDataKey="position"
+/>
                       <FormInput
                       className="h-10 mt-0.5"
                         control={control}

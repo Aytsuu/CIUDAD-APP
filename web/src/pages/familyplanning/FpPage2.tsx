@@ -1,3 +1,5 @@
+"use client"
+
 // FpPage2.tsx
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -8,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button/button"
-import { FormData, page2Schema } from "@/form-schema/FamilyPlanningSchema"
+import { type FormData, page2Schema } from "@/form-schema/FamilyPlanningSchema"
 import { api2 } from "@/api/api"
 
 // NEW: Interface for illness data
@@ -22,8 +24,8 @@ interface Illness {
 // NEW: Function to fetch illnesses from database
 const fetchIllnesses = async (illCodePrefix?: string): Promise<Illness[]> => {
   try {
-    const params = illCodePrefix ? { params: { ill_code_prefix: illCodePrefix } } : {};
-    const response = await api2.get("/familyplanning/illnesses/", params);
+    const params = illCodePrefix ? { params: { ill_code_prefix: illCodePrefix } } : {}
+    const response = await api2.get("/familyplanning/illnesses/", params)
     return response.data
   } catch (error) {
     console.error("Error fetching illnesses:", error)
@@ -51,11 +53,12 @@ export default function FamilyPlanningForm2({
 
   // NEW: State for selected illnesses
   const [selectedIllnesses, setSelectedIllnesses] = useState<number[]>([])
+  const [genderValidationErrors, setGenderValidationErrors] = useState<Record<number, string>>({})
 
   // NEW: Fetch illnesses from database
   const { data: illnesses = [], isLoading: isLoadingIllnesses } = useQuery<Illness[]>({
     queryKey: ["illnesses"],
-    queryFn: () => fetchIllnesses("FP")
+    queryFn: () => fetchIllnesses("FP"),
   })
 
   const form = useForm<FormData>({
@@ -64,7 +67,21 @@ export default function FamilyPlanningForm2({
     values: formData,
     mode: "onChange",
   })
+const { setValue, getValues } = form
+  const watchedObsLivingChildren = form.watch("obstetricalHistory.numOfLivingChildren")
 
+  useEffect(() => {
+    // Get the current value from the *other* field
+    const currentNumValue = getValues("numOfLivingChildren")
+    // Coerce the watched value to a number, defaulting to 0
+    const newObsValue = watchedObsLivingChildren || 0
+
+    // Only update if they are different
+    if (currentNumValue !== newObsValue) {
+      setValue("numOfLivingChildren", newObsValue)
+    }
+  }, [watchedObsLivingChildren, setValue, getValues])
+  
   useEffect(() => {
     form.reset(formData)
   }, [form, formData])
@@ -72,23 +89,24 @@ export default function FamilyPlanningForm2({
   useEffect(() => {
     if (formData.pat_id) {
       // Fetch last pregnancy data when patient ID is available
-      api2.get(`/familyplanning/last-previous-pregnancy/${formData.pat_id}`)
-        .then(response => {
-          const { last_delivery_date, last_delivery_type } = response.data;
+      api2
+        .get(`/familyplanning/last-previous-pregnancy/${formData.pat_id}`)
+        .then((response) => {
+          const { last_delivery_date, last_delivery_type } = response.data
 
           // Set the values in your form
           if (last_delivery_date) {
-            form.setValue("obstetricalHistory.lastDeliveryDate", last_delivery_date);
+            form.setValue("obstetricalHistory.lastDeliveryDate", last_delivery_date)
           }
           if (last_delivery_type) {
-            form.setValue("obstetricalHistory.typeOfLastDelivery", last_delivery_type);
+            form.setValue("obstetricalHistory.typeOfLastDelivery", last_delivery_type)
           }
         })
-        .catch(error => {
-          console.error("Error fetching last pregnancy data:", error);
-        });
+        .catch((error) => {
+          console.error("Error fetching last pregnancy data:", error)
+        })
     }
-  }, [formData.pat_id, form]);
+  }, [formData.pat_id, form])
 
   // NEW: Convert the old boolean medical history to selected illness IDs
   useEffect(() => {
@@ -98,11 +116,15 @@ export default function FamilyPlanningForm2({
 
       // First, check for any existing selected illness IDs from the backend
       if (formData.selectedIllnessIds) {
-        const idsFromBackend = typeof formData.selectedIllnessIds === 'string'
-          ? formData.selectedIllnessIds.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
-          : Array.isArray(formData.selectedIllnessIds)
+        const idsFromBackend =
+          typeof formData.selectedIllnessIds === "string"
             ? formData.selectedIllnessIds
-            : []
+                .split(",")
+                .map((id) => Number.parseInt(id.trim()))
+                .filter((id) => !isNaN(id))
+            : Array.isArray(formData.selectedIllnessIds)
+              ? formData.selectedIllnessIds
+              : []
 
         selected.push(...idsFromBackend)
       }
@@ -135,8 +157,34 @@ export default function FamilyPlanningForm2({
     }
   }, [illnesses, formData.medicalHistory, formData.selectedIllnessIds])
 
+  const isFemaleSpecificIllness = (illnessName: string): boolean => {
+    const femaleSpecificConditions = [
+      "Unexplained vaginal bleeding",
+      "Current or history of breast cancer / breast mass",
+      "Abnormal vaginal discharge",
+    ]
+    return femaleSpecificConditions.includes(illnessName)
+  }
+
   // NEW: Handle illness selection toggle
   const handleIllnessToggle = (illnessId: number, checked: boolean) => {
+    if (checked) {
+      const illness = illnesses.find((ill) => ill.ill_id === illnessId)
+      if (illness && isFemaleSpecificIllness(illness.illname) && formData.gender === "MALE") {
+        setGenderValidationErrors((prev) => ({
+          ...prev,
+          [illnessId]: `This condition (${illness.illname}) is not applicable for male patients.`,
+        }))
+        return // Don't allow selection
+      }
+    }
+
+    setGenderValidationErrors((prev) => {
+      const newErrors = { ...prev }
+      delete newErrors[illnessId]
+      return newErrors
+    })
+
     setSelectedIllnesses((prev) => {
       if (checked) {
         return [...prev, illnessId]
@@ -145,19 +193,38 @@ export default function FamilyPlanningForm2({
       }
     })
   }
+
   const onSubmit = async (data: FormData) => {
+    if (formData.gender === "MALE") {
+      const invalidSelections: string[] = []
+
+      selectedIllnesses.forEach((illnessId) => {
+        const illness = illnesses.find((ill) => ill.ill_id === illnessId)
+        if (illness && isFemaleSpecificIllness(illness.illname)) {
+          invalidSelections.push(illness.illname)
+        }
+      })
+
+      if (invalidSelections.length > 0) {
+        // Show error toast
+        const errorMessage = `The following conditions are not applicable for male patients: ${invalidSelections.join(", ")}`
+        // You can use your toast library here
+        alert(errorMessage) // Replace with toast.error(errorMessage) if using sonner
+        return // Prevent form submission
+      }
+    }
 
     // let customDisabilityIllnessId: number | null = null;
     if (data.medicalHistory?.disability && data.medicalHistory.disabilityDetails) {
-      const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
+      const disabilityIllness = illnesses.find((ill) => ill.illname === "Others")
       if (disabilityIllness && !selectedIllnesses.includes(disabilityIllness.ill_id)) {
-        selectedIllnesses.push(disabilityIllness.ill_id);
+        selectedIllnesses.push(disabilityIllness.ill_id)
       }
     } else {
       // If disability is unchecked or details are empty, ensure the "Others" illness is not selected
-      const disabilityIllness = illnesses.find((ill) => ill.illname === "Others");
+      const disabilityIllness = illnesses.find((ill) => ill.illname === "Others")
       if (disabilityIllness) {
-        setSelectedIllnesses(prev => prev.filter(id => id !== disabilityIllness.ill_id));
+        setSelectedIllnesses((prev) => prev.filter((id) => id !== disabilityIllness.ill_id))
       }
     }
     const medicalHistory = {
@@ -228,7 +295,7 @@ export default function FamilyPlanningForm2({
       customDisabilityDetails: data.medicalHistory?.disabilityDetails || null,
     }
 
-    console.log("PAGE 2 Data:", updatedData)
+    // console.log("PAGE 2 Data:", updatedData)
     updateFormData(updatedData)
     onNext3()
   }
@@ -239,10 +306,10 @@ export default function FamilyPlanningForm2({
     // NEW: Include selected illness IDs when saving
     const dataToSave = {
       ...currentValues,
-      selectedIllnessIds: selectedIllnesses.join(',')
+      selectedIllnessIds: selectedIllnesses.join(","),
     }
 
-    console.log("Saving current form data:", dataToSave)
+    // console.log("Saving current form data:", dataToSave)
     updateFormData(dataToSave)
   }
 
@@ -266,32 +333,37 @@ export default function FamilyPlanningForm2({
                 {/* NEW: Use database illnesses if available, otherwise use hardcoded options */}
                 {illnesses.length > 0
                   ? // NEW: Render illnesses from database
-                  illnesses.map((illness) => (
-                    <div key={illness.ill_id} className="flex justify-between items-center mb-4">
-                      <Label className="flex-1">■ {illness.illname}</Label>
-                      <div className="flex space-x-7">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={selectedIllnesses.includes(illness.ill_id)}
-                            onCheckedChange={(checked) => handleIllnessToggle(illness.ill_id, checked as boolean)}
-                            disabled={isReadOnly}
-                          />
-                          <Label>Yes</Label>
+                    illnesses.map((illness) => (
+                      <div key={illness.ill_id}>
+                        <div className="flex justify-between items-center mb-4">
+                          <Label className="flex-1">■ {illness.illname}</Label>
+                          <div className="flex space-x-7">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={selectedIllnesses.includes(illness.ill_id)}
+                                onCheckedChange={(checked) => handleIllnessToggle(illness.ill_id, checked as boolean)}
+                                disabled={isReadOnly}
+                              />
+                              <Label>Yes</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                checked={!selectedIllnesses.includes(illness.ill_id)}
+                                onCheckedChange={() => handleIllnessToggle(illness.ill_id, false)}
+                                disabled={isReadOnly}
+                              />
+                              <Label>No</Label>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            checked={!selectedIllnesses.includes(illness.ill_id)}
-                            onCheckedChange={() => handleIllnessToggle(illness.ill_id, false)}
-                            disabled={isReadOnly}
-                          />
-                          <Label>No</Label>
-                        </div>
+                        {genderValidationErrors[illness.ill_id] && (
+                          <div className="text-red-500 text-sm mb-2 ml-4">{genderValidationErrors[illness.ill_id]}</div>
+                        )}
                       </div>
-                    </div>
-                  ))
+                    ))
                   : " "}
 
-                {/* <div className="flex justify-between items-center mb-4">
+                <div className="flex justify-between items-center mb-4">
                   <Label className="flex-1">■ Others</Label>
                   <div className="flex space-x-7">
                     <div className="flex items-center space-x-2">
@@ -311,7 +383,7 @@ export default function FamilyPlanningForm2({
                       <Label>No</Label>
                     </div>
                   </div>
-                </div> */}
+                </div>
 
                 {form.watch("medicalHistory.disability") && (
                   <FormField
@@ -472,8 +544,13 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Date of last delivery</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale}
-                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                          <Input
+                            {...field}
+                            type="date"
+                            className=" w-[150px]"
+                            readOnly={isReadOnly || !isFemale}
+                            value={field.value ? new Date(field.value).toISOString().split("T")[0] : ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -525,7 +602,7 @@ export default function FamilyPlanningForm2({
                             type="date"
                             className=" w-[150px]"
                             readOnly={isReadOnly || !isFemale}
-                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                            value={field.value ? new Date(field.value).toISOString().split("T")[0] : ""}
                           />
                         </FormControl>
                         <FormMessage />
@@ -540,8 +617,13 @@ export default function FamilyPlanningForm2({
                       <FormItem>
                         <Label>Previous menstrual period</Label>
                         <FormControl>
-                          <Input {...field} type="date" className=" w-[150px]" readOnly={isReadOnly || !isFemale}
-                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                          <Input
+                            {...field}
+                            type="date"
+                            className=" w-[150px]"
+                            readOnly={isReadOnly || !isFemale}
+                            value={field.value ? new Date(field.value).toISOString().split("T")[0] : ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -591,7 +673,11 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-4">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isReadOnly || !isFemale}
+                        />
                       </FormControl>
                       <Label className="ml-2">Dysmenorrhea</Label>
                       <FormMessage />
@@ -605,7 +691,11 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isReadOnly || !isFemale}
+                        />
                       </FormControl>
                       <Label className="ml-2">Hydatidiform mole (within the last 12 months)</Label>
                       <FormMessage />
@@ -619,7 +709,11 @@ export default function FamilyPlanningForm2({
                   render={({ field }) => (
                     <FormItem className="mt-2">
                       <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly || !isFemale} />
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isReadOnly || !isFemale}
+                        />
                       </FormControl>
                       <Label className="ml-2">History of ectopic pregnancy</Label>
                       <FormMessage />
@@ -644,17 +738,33 @@ export default function FamilyPlanningForm2({
               <Button
                 type="button"
                 onClick={async () => {
+                  if (formData.gender === "MALE") {
+                    const invalidSelections: string[] = []
+
+                    selectedIllnesses.forEach((illnessId) => {
+                      const illness = illnesses.find((ill) => ill.ill_id === illnessId)
+                      if (illness && isFemaleSpecificIllness(illness.illname)) {
+                        invalidSelections.push(illness.illname)
+                      }
+                    })
+
+                    if (invalidSelections.length > 0) {
+                      const errorMessage = `The following conditions are not applicable for male patients: ${invalidSelections.join(", ")}`
+                      alert(errorMessage) // Replace with toast.error(errorMessage) if using sonner
+                      return // Prevent navigation
+                    }
+                  }
+
                   const currentValues = form.getValues()
                   // NEW: Include selected illness IDs when moving to next page
                   const dataToUpdate = {
                     ...currentValues,
-                    selectedIllnessIds: selectedIllnesses.join(','),
+                    selectedIllnessIds: selectedIllnesses.join(","),
                     customDisabilityDetails: currentValues.medicalHistory?.disabilityDetails || null,
                   }
                   updateFormData(dataToUpdate)
                   onNext3()
                 }}
-              // disabled={isReadOnly}
               >
                 Next{" "}
               </Button>

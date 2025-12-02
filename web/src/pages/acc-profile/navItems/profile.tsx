@@ -70,7 +70,7 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="w-full h-full flex items-center justify-center min-h-[400px] bg-white/50">
-        <div className="flex flex-col items-center gap-4 p-8 bg-white rounded-2xl shadow-lg">
+        <div className="flex flex-col items-center gap-4 p-8 bg-white rounded-2xl">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <p className="text-gray-600 font-medium">Loading user profile...</p>
         </div>
@@ -83,7 +83,7 @@ export default function Profile() {
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         
         {/* Header Section with Cover Photo Effect */}
-        <div className="relative rounded-2xl shadow-xl overflow-hidden bg-gradient-to-r from-blue-400 via-sky-300 to-sky-400">
+        <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-blue-400 via-sky-300 to-sky-400">
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative px-8 pt-16 pb-8">
             
@@ -91,7 +91,7 @@ export default function Profile() {
             <div className="flex flex-col md:flex-row md:items-end gap-6">
               <div className="relative">
                 <div className="relative group">
-                  <Avatar className="h-36 w-36 shadow-2xl transition-all duration-300 ">
+                  <Avatar className="h-36 w-36 transition-all duration-300 ">
                     <AvatarImage
                       src={user?.profile_image || sanRoqueLogo}
                       alt="Profile"
@@ -102,7 +102,7 @@ export default function Profile() {
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="absolute -bottom-2 -right-2 h-12 w-12 rounded-full bg-white text-gray-700 shadow-xl hover:bg-blue-50 hover:border-blue-200 transition-all duration-300 hover:scale-110"
+                    className="absolute -bottom-2 -right-2 h-12 w-12 rounded-full bg-white text-gray-700 hover:bg-blue-50 hover:border-blue-200 transition-all duration-300 hover:scale-110"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
                   >
@@ -124,13 +124,13 @@ export default function Profile() {
 
               {/* Name and Status */}
               <div className="text-white">
-                <h1 className="text-4xl font-bold mb-2 drop-shadow-lg">
+                <h1 className="text-4xl font-bold mb-2">
                   {user?.personal?.per_fname}{" "}
                   {user?.personal?.per_lname}
                 </h1>
                 <div className="flex items-center gap-3">
                   {user.staff && (
-                    <Badge className="text-white shadow-lg bg-blue-500 backdrop-blur-sm font-semibold px-4 py-2 hover:bg-white/10 hover:border-white/50 hover:text-white">
+                    <Badge className="text-white bg-blue-500 backdrop-blur-sm font-semibold px-4 py-2 hover:bg-white/10 hover:border-white/50 hover:text-white">
                       <Shield className="w-4 h-4 mr-2" />
                       {user.staff.staff_type || "Staff Member"}
                     </Badge>
@@ -146,7 +146,7 @@ export default function Profile() {
         </div>
 
         {uploadError && (
-          <Alert variant="destructive" className="border-red-300 bg-red-50/80 backdrop-blur-sm rounded-xl shadow-lg">
+          <Alert variant="destructive" className="border-red-300 bg-red-50/80 backdrop-blur-sm rounded-xl">
             <AlertDescription className="text-red-800 font-medium">
               {uploadError}
             </AlertDescription>
@@ -154,7 +154,7 @@ export default function Profile() {
         )}
 
         {/* Account Information Section */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="bg-white px-8 py-6">
             <div className="flex items-center justify-between">
               <div>
@@ -227,7 +227,7 @@ export default function Profile() {
         </div>
 
         {/* Personal Information Section */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="bg-white px-8 py-6">
             <div className="flex items-center justify-between">
               <div>
@@ -380,7 +380,7 @@ export default function Profile() {
         </div>
 
         {/* Address Section */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
           <div className="bg-white px-8 py-6">
             <div className="flex items-center justify-between">
               <div>

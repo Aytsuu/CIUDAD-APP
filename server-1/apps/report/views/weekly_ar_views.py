@@ -71,6 +71,14 @@ class WARFileCreateView(generics.CreateAPIView):
                 url = upload_to_storage(file_data, 'report-bucket', 'war')
                 file.warf_url = url
                 instances.append(file)
+            
+            WARFile.objects.bulk_create(instances)
+            war.war_status = "SIGNED"
+            war.save()
+        
+            return Response(data=WARFileBaseSerializer(instances, many=True).data,status=status.HTTP_201_CREATED)
+      
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class WARFileDeleteView(generics.DestroyAPIView):

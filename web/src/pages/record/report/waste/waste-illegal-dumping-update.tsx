@@ -57,7 +57,7 @@ function WasteReportResolved( { rep_id, is_resolve, onSuccess  }: WasteReportRes
                 <ConfirmationModal
                     trigger={
                         <Button 
-                            disabled={is_resolve || isPending} // Disable during loading
+                            disabled={is_resolve || isPending || mediaFiles.length === 0} // Disable during loading or is there is no data uploaded
                         >
                             {isPending ? (
                                 <>

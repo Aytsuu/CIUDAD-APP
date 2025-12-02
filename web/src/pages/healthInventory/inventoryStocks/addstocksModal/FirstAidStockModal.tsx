@@ -15,6 +15,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Combobox } from "@/components/ui/combobox";
 import { FetchFirstAid } from "../REQUEST/FirstAid/restful-api/FirstAidGetAPI";
+import { unitOptions } from "./options";
+
 
 export default function FirstAidStockModal() {
   const navigate = useNavigate();
@@ -24,11 +26,11 @@ export default function FirstAidStockModal() {
     resolver: zodResolver(FirstAidStockSchema),
     defaultValues: {
       fa_id: "",
-      category: "",
-      finv_qty_unit: "boxes",
+      // category: "",
+      finv_qty_unit: "pcs",
       finv_qty: undefined,
       finv_pcs: undefined,
-      expiry_date: new Date().toISOString().split("T")[0],
+      expiry_date:"",
       staff: staff_id,
       inv_type: "First Aid"
     }
@@ -80,10 +82,10 @@ export default function FirstAidStockModal() {
                     form.setValue("fa_id", faId);
                     
                     // Update category when first aid item is selected
-                    const selectedFirstAid = firstAidOptions?.default.find((fa: any) => fa.fa_id === faId);
-                    if (selectedFirstAid) {
-                      form.setValue("category", selectedFirstAid.catlist || "");
-                    }
+                    // const selectedFirstAid = firstAidOptions?.default.find((fa: any) => fa.fa_id === faId);
+                    // if (selectedFirstAid) {
+                    //   form.setValue("category", selectedFirstAid.catlist || "");
+                    // }
                   }}
                   placeholder={isFirstAidLoading ? "Loading first aid items..." : "Select first aid item"}
                   emptyMessage="No available first aid items"
@@ -91,13 +93,14 @@ export default function FirstAidStockModal() {
                 />
               </div>
             </div>
-
-            <FormInput control={form.control} name="category" label="Category" readOnly />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
+
+            {/* <FormInput control={form.control} name="category" label="Category" readOnly /> */}
           </div>
+
+          {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormDateTimeInput control={form.control} name="expiry_date" label="Expiry Date" type="date" />
+          </div> */}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormInput control={form.control} name="finv_qty" label={currentUnit === "boxes" ? "Number of Boxes" : "Quantity"} type="number" placeholder="Quantity" />
@@ -105,12 +108,7 @@ export default function FirstAidStockModal() {
               control={form.control}
               name="finv_qty_unit"
               label="Unit"
-              options={[
-                { id: "boxes", name: "Boxes" },
-                { id: "bottles", name: "Bottles" },
-                { id: "packs", name: "Packs" },
-                { id: "pcs", name: "Pc/s" }
-              ]}
+              options={unitOptions}
             />
           </div>
 

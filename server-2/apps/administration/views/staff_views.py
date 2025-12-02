@@ -68,12 +68,6 @@ class StaffDeleteView(generics.DestroyAPIView):
 
 
 
-class HealthStaffListView(generics.ListAPIView):
-  serializer_class = StaffFullSerializer
-
-  def get_queryset(self):
-    # Use uppercase "HEALTH STAFF" as that's what exists in the database
-    return Staff.objects.filter(staff_type="HEALTH STAFF")
 
 class HealthStaffComboboxView(generics.ListAPIView):
   serializer_class = StaffTableSerializer
@@ -128,6 +122,15 @@ class StaffTypeDebugView(APIView):
       })
 
 
+
+
+class HealthStaffListView(generics.ListAPIView):
+  serializer_class = StaffFullSerializer
+
+  def get_queryset(self):
+    # Use uppercase "HEALTH STAFF" as that's what exists in the database
+    return Staff.objects.filter(staff_type="HEALTH STAFF")
+
   
 class DoctorStaffListView(generics.ListAPIView):
   serializer_class = StaffFullSerializer
@@ -135,3 +138,11 @@ class DoctorStaffListView(generics.ListAPIView):
   def get_queryset(self):
     return Staff.objects.filter(pos__pos_title__iexact="DOCTOR")
 
+class MidwifeStaffListView(generics.ListAPIView):
+    serializer_class = StaffFullSerializer
+
+    def get_queryset(self):
+        return Staff.objects.filter(
+            (Q(pos__pos_title__iexact="MIDWIFE") | Q(pos__pos_title__iexact="ADMIN")) & 
+            Q(staff_type__iexact="HEALTH STAFF")
+        )

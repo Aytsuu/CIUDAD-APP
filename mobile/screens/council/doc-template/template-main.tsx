@@ -579,7 +579,6 @@ import {
   ActivityIndicator
 } from 'react-native';
 import {
-  Plus,
   Trash2,
   Archive,
   ArchiveRestore,
@@ -587,7 +586,6 @@ import {
   ChevronLeft
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ConfirmationModal } from '@/components/ui/confirmationModal';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';

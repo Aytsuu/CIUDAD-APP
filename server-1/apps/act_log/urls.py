@@ -1,10 +1,7 @@
-from rest_framework import routers
-from .views import ActivityLogViewSet
-from django.urls import path, include
-
-router = routers.DefaultRouter()
+from django.urls import path
+from .views import ActivityLogListView, ActivityLogDetailView
 
 urlpatterns = [
-    path('', ActivityLogViewSet.as_view({'get': 'list'}), name='activity-log-list'),
-    path('<int:pk>/', ActivityLogViewSet.as_view({'get': 'retrieve'}), name='activity-log-detail'),
+    path('', ActivityLogListView.as_view(), name='activity-log-list'),
+    path('<int:pk>/', ActivityLogDetailView.as_view(), name='activity-log-detail'),
 ]

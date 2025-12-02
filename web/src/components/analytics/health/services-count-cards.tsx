@@ -3,7 +3,6 @@ import { useReportsCount } from "@/pages/healthServices/count-return/count"
 import React from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router";
-
 // Memoized card component that rerenders when props change
 const HealthCard = React.memo(({ 
   title, 
@@ -42,6 +41,7 @@ HealthCard.displayName = "HealthCard";
 export const useHealthServicesSectionCards = () => {
   const navigate = useNavigate();
   const { data: healthCardAnalytics, isLoading } = useReportsCount();
+  
 
   return {
     childHealth: (
@@ -50,7 +50,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.child_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/child-health")
+          navigate("/services/childhealthrecords")
         }}
       />
     ),
@@ -60,7 +60,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.firstaid_records_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/first-aid")
+          navigate("/services/firstaid")
         }}
       />
     ),
@@ -70,7 +70,7 @@ export const useHealthServicesSectionCards = () => {
         value={healthCardAnalytics?.data?.medicine_records_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/medicine")
+          navigate("/services/medicine/records")
         }}
       />
     ),
@@ -97,32 +97,54 @@ export const useHealthServicesSectionCards = () => {
     animalBites: (
       <HealthCard 
         title="Animal Bites" 
-        value={healthCardAnalytics?.data?.animalbite_records_count} 
+        value={healthCardAnalytics?.data?.animal_bites_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/animal-bites")
+          navigate("/services/animalbites")
         }}
       />
     ),
     familyPlanning: (
       <HealthCard 
         title="Family Planning" 
-        value={healthCardAnalytics?.data?.familyplanning_records_count} 
+        value={healthCardAnalytics?.data?.family_planning_count} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/services/family-planning")
+          navigate("/services/familyplanning")
         }}
       />
     ),
     maternal: (
       <HealthCard 
         title="Maternal Health" 
-        value={healthCardAnalytics?.data?.maternal_records_count} 
+        value={healthCardAnalytics?.data?.pregnancy_count} 
         isLoading={isLoading}
         onClick={() => {
           navigate("/services/maternal")
         }}
       />
+    ),
+   
+    consultationsByDoctor: (
+      <HealthCard 
+        title="Adult Consulted" 
+        value={healthCardAnalytics?.data?.completed_consultations_by_doctor || 0} 
+        isLoading={isLoading}
+        onClick={() => {
+          navigate("/services/medical-consultation/records");
+        }}
+      />
+    ),
+    chilrenConsulted:(
+      <HealthCard
+        title="Child Consulted"
+        value={healthCardAnalytics?.data?.completed_childconsultations_by_doctor || 0}
+        isLoading={isLoading}
+        onClick={() => {
+          navigate("/services/childhealthrecords");
+        }}
+      />
     )
+
   };
 };

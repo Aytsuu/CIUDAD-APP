@@ -1,120 +1,117 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+// components/VaccineResidentChart.tsx
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, BarChart3 } from "lucide-react";
+import { AlertCircle, Loader2, TrendingUp, Users, Syringe } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, subMonths, addMonths, parseISO, isSameMonth } from "date-fns";
 import { useState } from "react";
 import { CardTitle } from "@/components/ui/card";
 import CardLayout from "@/components/ui/card/card-layout";
-import { useVaccineChart } from "./queries/chart";
+import { useVaccineResidentChart } from "./queries/chart";
+import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 
-interface VaccineChartProps {
-  initialMonth: string;
+interface VaccineResidentChartProps {
+  initialYear: string;
 }
 
-const COLORS = [
-  "#3b82f6", // Blue
-  "#10b981", // Emerald
-  "#f59e0b", // Amber
-  "#ef4444", // Red
-  "#8b5cf6", // Violet
-  "#ec4899", // Pink
-  "#14b8a6", // Teal
-  "#f97316", // Orange
-  "#64748b", // Slate
-];
+// Two-Column Tooltip Component
+const TwoColumnTooltip = ({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) => {
+  if (active && payload && payload.length) {
+    const monthData = payload[0]?.payload;
 
-export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
-  const [currentMonth, setCurrentMonth] = useState(initialMonth);
-  const { data, isLoading, error } = useVaccineChart(currentMonth);
+    if (!monthData) return null;
 
-  const currentDate = parseISO(`${currentMonth}-01`);
-  const today = new Date();
-  const currentMonthDate = parseISO(`${format(today, "yyyy-MM")}-01`);
+    const allVaccines = monthData.vaccines || [];
 
-  const nextMonthDisabled = isSameMonth(currentDate, currentMonthDate);
+    // Split into two equal columns
+    const midPoint = Math.ceil(allVaccines.length / 2);
+    const leftColumn = allVaccines.slice(0, midPoint);
+    const rightColumn = allVaccines.slice(midPoint);
 
-  const navigateMonth = (direction: "prev" | "next") => {
-    const newDate =
-      direction === "prev"
-        ? subMonths(currentDate, 1)
-        : addMonths(currentDate, 1);
-    setCurrentMonth(format(newDate, "yyyy-MM"));
-  };
-
-  // Transform and sort data
-  const allVaccines = data?.vaccine_counts
-    ? Object.entries(data.vaccine_counts)
-        .filter(([name]) => name !== "null")
-        .map(([name, count]) => ({ name, count: count as number }))
-        .sort((a, b) => b.count - a.count) // Sort by count descending
-    : [];
-
-  // Take top 10 and group the rest
-  const topN = 10;
-  const displayData = allVaccines.slice(0, topN);
-  const othersCount = allVaccines.slice(topN).reduce((sum, item) => sum + item.count, 0);
-  
-  if (othersCount > 0) {
-    displayData.push({ name: "Other Vaccines", count: othersCount });
-  }
-
-  const totalVaccines = allVaccines.length;
-  const otherVaccinesCount = totalVaccines - topN;
-
-  const CustomTooltip = ({
-    active,
-    payload,
-    // label,
-  }: {
-    active?: boolean;
-    payload?: any[];
-    label?: string;
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-4 shadow-md rounded-md border border-gray-200">
-          <p className="font-semibold">{payload[0].payload.name}</p>
-          <p className="text-sm">
-            Doses: <span className="font-medium">{payload[0].value}</span>
+    return (
+      <div className="bg-white p-4 shadow-lg rounded-lg border border-gray-300 z-50 min-w-[500px] max-w-[600px]">
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-semibold text-gray-900 text-lg">
+            {label} {payload[0]?.payload?.year}
           </p>
-          <p className="text-sm">
-            Percentage:{" "}
-            <span className="font-medium">
-              {((payload[0].value / (data?.total_records ?? 1)) * 100 || 0).toFixed(1)}%
-            </span>
-          </p>
-          {payload[0].payload.name === "Other Vaccines" && otherVaccinesCount > 0 && (
-            <p className="text-sm mt-1">
-              (Combines {otherVaccinesCount} other vaccines)
-            </p>
-          )}
+          <div className="text-right">
+            <div className="text-sm font-medium text-blue-700">Total: {monthData.total_residents}</div>
+            <div className="text-xs text-gray-500">{allVaccines.length} vaccines</div>
+          </div>
         </div>
-      );
-    }
-    return null;
+
+        {/* Two-column layout */}
+        <div className="grid grid-cols-2 gap-6 max-h-96 overflow-y-auto">
+          {/* Left Column */}
+          <div className="space-y-2">
+            {leftColumn.map((vaccine: any, index: number) => (
+              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
+                <span className="text-sm font-medium text-gray-700 truncate flex-1" title={vaccine.name}>
+                  {vaccine.name}
+                </span>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  <span className="text-sm font-semibold text-gray-900">{vaccine.residents}</span>
+                  <span className="text-xs text-gray-500 w-8 text-right">({vaccine.percentage?.toFixed(1)}%)</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-2">
+            {rightColumn.map((vaccine: any, index: number) => (
+              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors">
+                <span className="text-sm font-medium text-gray-700 truncate flex-1" title={vaccine.name}>
+                  {vaccine.name}
+                </span>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  <span className="text-sm font-semibold text-gray-900">{vaccine.residents}</span>
+                  <span className="text-xs text-gray-500 w-8 text-right">({vaccine.percentage?.toFixed(1)}%)</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+export function VaccineResidentChart({ initialYear }: VaccineResidentChartProps) {
+  const [currentYear, setCurrentYear] = useState(initialYear);
+  const { data, isLoading, error } = useVaccineResidentChart(currentYear);
+
+  const currentYearNum = parseInt(currentYear);
+  //   const currentDate = new Date(currentYearNum, 0, 1);
+
+  const navigateYear = (direction: "prev" | "next") => {
+    const newYear = direction === "prev" ? currentYearNum - 1 : currentYearNum + 1;
+    setCurrentYear(newYear.toString());
   };
+
+  // Transform data for charts
+  const chartData = data?.chart_data || [];
+  //   const vaccineSummary = data?.vaccine_summary || [];
+  const statistics = data?.statistics;
+
+  // Calculate statistics
+  const totalResidents = statistics?.total_residents || 0;
+  const totalVaccines = statistics?.total_vaccines || 0;
+  //   const uniqueResidents = statistics?.unique_residents || 0;
+
+  const peakMonth = statistics?.peak_month || { month: "None", total_residents: 0 };
+  //   const averagePerVaccine = totalVaccines > 0 ? Math.round(totalResidents / totalVaccines) : 0;
 
   if (error) {
     return (
       <CardLayout
-        title="Vaccine Distribution"
+        title="Vaccination Trends"
         description="Error loading data"
         content={
           <Alert variant="destructive" className="m-4">
             <AlertCircle className="h-5 w-5" />
-            <AlertDescription className="text-sm">
-              Failed to load vaccine distribution data. Please try again later.
-            </AlertDescription>
+            <AlertDescription className="text-sm">Failed to load vaccination data. Please try again later.</AlertDescription>
           </Alert>
         }
         cardClassName="border border-gray-200 shadow-sm rounded-xl"
@@ -126,40 +123,34 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
     <CardLayout
       title={
         <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-gray-500" />
-          <CardTitle className="text-xl font-semibold text-gray-900">
-            Vaccine Distribution
-          </CardTitle>
+          <TrendingUp className="h-5 w-5 text-gray-500" />
+          <CardTitle className="text-xl font-semibold text-gray-900">Vaccination Trends</CardTitle>
         </div>
       }
-      description={`Vaccine doses administered in ${format(
-        currentDate,
-        "MMMM yyyy"
-      )}`}
+      description={`Monthly vaccination patterns for ${currentYear} - Hover over months to see detailed breakdown`}
       content={
         <div className="space-y-6 p-4">
+          {/* Header with controls */}
           <div className="flex items-center justify-end">
+            {/* <div className="text-sm text-gray-600">Hover over any month to see all vaccines in two columns</div> */}
             <div className="flex items-center space-x-3">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigateMonth("prev")}
+                onClick={() => navigateYear("prev")}
                 className="group flex items-center gap-1.5 border-gray-200 hover:bg-gray-50 transition-colors"
-                aria-label="Previous month"
+                aria-label="Previous year"
               >
                 <ChevronLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
                 <span>Previous</span>
               </Button>
-              <div className="px-4 py-1.5 bg-blue-50 text-blue-800 rounded-md text-sm font-medium min-w-[120px] text-center">
-                {format(currentDate, "MMMM yyyy")}
-              </div>
+              <div className="px-4 py-1.5 bg-blue-50 text-blue-800 rounded-md text-sm font-medium min-w-[80px] text-center">{currentYear}</div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigateMonth("next")}
-                disabled={nextMonthDisabled}
-                className="group flex items-center gap-1.5 border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                aria-label="Next month"
+                onClick={() => navigateYear("next")}
+                className="group flex items-center gap-1.5 border-gray-200 hover:bg-gray-50 transition-colors"
+                aria-label="Next year"
               >
                 <span>Next</span>
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
@@ -167,62 +158,104 @@ export function VaccineDistributionChart({ initialMonth }: VaccineChartProps) {
             </div>
           </div>
 
+          {/* Summary Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <EnhancedCardLayout
+              title="Total Vaccinations"
+              description="Total residents vaccinated"
+              value={totalResidents}
+              icon={<Users className="h-6 w-6 text-blue-500" />}
+              cardClassName="bg-blue-50 border-blue-200"
+              headerClassName="pb-2"
+            />
+            <EnhancedCardLayout
+              title="Vaccine Types"
+              description="Types of vaccines administered"
+              value={totalVaccines}
+              icon={<Syringe className="h-6 w-6 text-green-500" />}
+              cardClassName="bg-green-50 border-green-200"
+              headerClassName="pb-2"
+            />
+            <EnhancedCardLayout
+              title="Peak Month"
+              description={peakMonth.month}
+              value={peakMonth.total_residents}
+              valueDescription={`Most vaccinations in ${peakMonth.month}`}
+              icon={<TrendingUp className="h-6 w-6 text-purple-500" />}
+              cardClassName="bg-purple-50 border-purple-200"
+              headerClassName="pb-2"
+            />
+          </div>
+
           {isLoading ? (
-            <div className="flex items-center justify-center h-[300px]">
+            <div className="flex items-center justify-center h-[400px]">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
-          ) : !data || allVaccines.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center h-[300px]">
-              <BarChart3 className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                No Data Available
-              </h3>
-              <p className="text-sm text-gray-500 max-w-sm">
-                No vaccine administration data available for the selected period.
-              </p>
+          ) : !data || chartData.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center h-[400px]">
+              <TrendingUp className="h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Data Available</h3>
+              <p className="text-sm text-gray-500 max-w-sm">No vaccination data available for {currentYear}.</p>
             </div>
           ) : (
             <>
-              <div className="text-sm text-gray-500 text-center mb-2">
-                Showing top {Math.min(topN, allVaccines.length)} vaccines
-                {otherVaccinesCount > 0 && (
-                  <span> and {otherVaccinesCount} others combined</span>
-                )}
-              </div>
-              <div className="h-[450px]">
+              {/* Main Chart */}
+              <div className="h-[500px] border border-gray-200 rounded-lg bg-white p-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={displayData}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                  <AreaChart
+                    data={chartData.map((item: any) => ({
+                      ...item,
+                      year: currentYear,
+                    }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                   >
-                    <XAxis
-                      dataKey="name"
-                      angle={-45}
-                      textAnchor="end"
-                      height={70}
-                      tick={{ fontSize: 12 }}
-                      interval={0}
-                    />
-                    <YAxis
-                    
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                  
-                    <Bar
-                      name="Doses"
-                      dataKey="count"
-                      barSize={40}
-                    >
-                      {displayData.map((_entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#64748b" }} />
+                    <YAxis tick={{ fontSize: 12, fill: "#64748b" }} label={{ value: "Residents Vaccinated", angle: -90, position: "insideLeft" }} />
+                    <Tooltip content={<TwoColumnTooltip />} />
+                    <Area type="monotone" dataKey="total_residents" name="Total Residents Vaccinated" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} strokeWidth={2} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Vaccine Summary Table
+              <div className="bg-white rounded-lg border border-gray-200">
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="font-semibold text-gray-900">Vaccine Summary</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    All vaccines administered in {currentYear}, sorted by total residents
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vaccine</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Residents</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {vaccineSummary.map((vaccine: any, index: number) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                            {vaccine.name}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                            {vaccine.total_residents}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {totalResidents > 0 
+                              ? ((vaccine.total_residents / totalResidents) * 100).toFixed(1) 
+                              : 0
+                            }%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div> */}
             </>
           )}
         </div>

@@ -9,8 +9,8 @@ import {
   UserRoundCog,
   Plus,
   Users,
-  FileDown,
   CircleAlert,
+  MapPin,
 } from "lucide-react";
 import { administrationColumns } from "./AdministrationColumns";
 import { useStaffs } from "./queries/administrationFetchQueries";
@@ -26,7 +26,6 @@ import { Card } from "@/components/ui/card";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLoading } from "@/context/LoadingContext";
 import { useAuth } from "@/context/AuthContext";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import SitioManagement from "./SitioManagement";
 import { Spinner } from "@/components/ui/spinner";
@@ -58,20 +57,6 @@ export default function AdministrationRecords() {
     else hideLoading();
   }, [isLoadingStaffs]);
 
-  // ----------------- HANDLERS --------------------
-  // const handleExport = (type: "csv" | "excel" | "pdf") => {
-  //   switch (type) {
-  //     case "csv":
-  //       // exportToCSV(residents)
-  //       break;
-  //     case "excel":
-  //       // exportToExcel(residents)
-  //       break;
-  //     case "pdf":
-  //       // exportToPDF(residents)
-  //       break;
-  //   }
-  // };
 
   return (
     // ----------------- RENDER --------------------
@@ -98,22 +83,9 @@ export default function AdministrationRecords() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-              <DropdownLayout
-                trigger={
-                  <Button variant="outline" className="gap-2">
-                    <FileDown className="h-4 w-4" />
-                    Export
-                  </Button>
-                }
-                options={[
-                  { id: "csv", name: "Export as CSV" },
-                  { id: "excel", name: "Export as Excel" },
-                  { id: "pdf", name: "Export as PDF" },
-                ]}
-              />
-
               <DialogLayout 
                 trigger={<Button variant={"outline"}>
+                  <MapPin  className="mr-1"/>
                   Sitio
                 </Button>}
                 title="Sitio"
@@ -126,7 +98,7 @@ export default function AdministrationRecords() {
                   variant="outline"
                   className="px-4 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors"
                 >
-                  <UserRoundCog size={16} className="mr-2" />
+                  <UserRoundCog size={16} className="mr-1" />
                   Manage Roles
                 </Button>
               </Link>
@@ -143,7 +115,7 @@ export default function AdministrationRecords() {
                 }}
               >
                 <Button className="px-4">
-                  <Plus size={16} className="mr-2" />
+                  <Plus size={16} className="mr-1" />
                   Add New Staff
                 </Button>
               </Link>

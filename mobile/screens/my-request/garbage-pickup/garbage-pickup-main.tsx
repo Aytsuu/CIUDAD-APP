@@ -55,6 +55,7 @@ export default function GarbagePickupTrackingMain() {
       rightAction={
         <View className="w-10 h-10 "></View>
       }
+      wrapScroll={false} 
     >
       <View className="flex-1">
         {/* Horizontally scrollable tabs - Fixed spacing */}

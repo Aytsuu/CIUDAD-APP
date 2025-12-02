@@ -12,12 +12,17 @@ export const updateMedicineRequest = async (medreq_id: string, data: Record<stri
   };
 
 
-  export const confirmAllPendingItems = async (medreq_id: string) => {
+  export const confirmAllPendingItems = async (payload: {
+    medreq_id: string;
+    selected_medicines: any[];
+    staff_id?: string;
+    pat_id: string;
+  }) => {
     try {
-      const response = await api2.patch(`medicine/update-pending-medreq/${medreq_id}/`);
+      const response = await api2.post(`medicine/update-pending-medreq/`, payload); // Change to POST and remove URL parameter
       return response.data;
     } catch (error) {
       console.error("Error confirming pending items:", error);
       throw error;
-    }
+    };
   };

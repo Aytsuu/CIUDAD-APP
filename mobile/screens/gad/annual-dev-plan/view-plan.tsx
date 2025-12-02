@@ -1,33 +1,118 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { getAnnualDevPlansByYear } from './restful-api/annualDevPlanGetAPI';
-
-interface BudgetItem {
-  gdb_id?: number;
-  gdb_name: string;
-  gdb_pax: string;
-  gdb_price: string;
-}
+import PageLayout from '@/screens/_PageLayout';
+import { LoadingState } from '@/components/ui/loading-state';
+import { ChevronLeft } from 'lucide-react-native';
+import { useResolution } from '@/screens/council/resolution/queries/resolution-fetch-queries';
+import { useGetApprovedProposals } from './queries/annualDevPlanQueries';
 
 interface DevelopmentPlan {
   dev_id: number;
-  dev_date: string;
-  dev_client: string;
   dev_issue: string;
   dev_project: string;
-  dev_indicator: string;
-  dev_gad_budget: string;
   dev_res_person: string;
-  staff: string;
-  budgets?: BudgetItem[];
+  dev_mandated?: boolean;
 }
 
 const ViewPlan = () => {
   const { year } = useLocalSearchParams();
   const [plans, setPlans] = useState<DevelopmentPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Fetch GAD Project Proposals and Resolutions to determine status
+  const { data: proposalsRaw = [] } = useGetApprovedProposals();
+
+  const { data: resolutionData = { results: [], count: 0 } } = useResolution();
+
+  // Build quick lookup maps for status determination
+  const proposalByDevId = useMemo(() => {
+    const map = new Map<number, any>();
+    const proposalsList = Array.isArray(proposalsRaw) ? proposalsRaw : [];
+    proposalsList.forEach((p: any) => {
+      let devId: number | null = null;
+      if (p?.dev_id !== undefined) {
+        devId = typeof p.dev_id === 'number' ? p.dev_id : Number(p.dev_id);
+      } else if (p?.dev !== undefined) {
+        if (typeof p.dev === 'object' && p.dev !== null) {
+          devId = typeof p.dev.dev_id === 'number' ? p.dev.dev_id : Number(p.dev.dev_id);
+        } else if (typeof p.dev === 'number') {
+          devId = p.dev;
+        } else if (typeof p.dev === 'string') {
+          devId = Number(p.dev);
+        }
+      }
+      if (devId && p?.gpr_id) {
+        map.set(devId, p);
+      }
+    });
+    return map;
+  }, [proposalsRaw]);
+
+  const resolutionByGprId = useMemo(() => {
+    const map = new Map<number, any>();
+    const resolutionsList = Array.isArray(resolutionData) ? resolutionData : Array.isArray(resolutionData?.results) ? resolutionData.results : [];
+    resolutionsList.forEach((r: any) => {
+      if (r && typeof r.gpr_id === 'number') {
+        map.set(r.gpr_id, r);
+      }
+    });
+    return map;
+  }, [resolutionData]);
+
+  const getStatusBadges = (plan: DevelopmentPlan) => {
+    const badges: React.ReactElement[] = [];
+    const proposal = proposalByDevId.get(plan.dev_id);
+    const hasProposal = Boolean(proposal && proposal.gpr_id);
+    const hasResolution = hasProposal && resolutionByGprId.has(proposal.gpr_id);
+
+    if (plan.dev_mandated) {
+      badges.push(
+        <View key="mandated" className="bg-green-100 px-2 py-1 rounded-full mr-1 mb-1">
+          <Text className="text-xs font-medium text-green-800">Mandated</Text>
+        </View>
+      );
+    }
+
+    if (hasProposal) {
+      badges.push(
+        <View key="with-proposal" className="bg-yellow-100 px-2 py-1 rounded-full mr-1 mb-1">
+          <Text className="text-xs font-medium text-yellow-800">With Project Proposal</Text>
+        </View>
+      );
+    }
+
+    if (hasResolution) {
+      badges.push(
+        <View key="with-resolution" className="bg-blue-100 px-2 py-1 rounded-full mr-1 mb-1">
+          <Text className="text-xs font-medium text-blue-800">With Resolution</Text>
+        </View>
+      );
+    }
+    
+    if (badges.length === 0) {
+      return (
+        <Text className="text-sm text-gray-500">-</Text>
+      );
+    }
+
+    return (
+      <View className="flex-row flex-wrap">
+        {badges}
+      </View>
+    );
+  };
+
+  const handlePreview = (plan: DevelopmentPlan) => {
+    router.push({
+      pathname: '/(gad)/annual-dev-plan/preview-plan',
+      params: { devId: plan.dev_id.toString(), year: year || '' }
+    });
+  };
 
   useEffect(() => {
     if (year) {
@@ -39,200 +124,136 @@ const ViewPlan = () => {
     try {
       const yearValue = Array.isArray(year) ? year[0] : year;
       const data = await getAnnualDevPlansByYear(yearValue);
-      setPlans(data);
+      
+      const plansData = Array.isArray(data) 
+        ? data 
+        : Array.isArray(data?.results) 
+        ? data.results 
+        : Array.isArray(data?.data) 
+        ? data.data 
+        : [];
+      
+      setPlans(plansData);
     } catch (error) {
-      console.error('Error fetching plans:', error);
       Alert.alert('Error', 'Failed to fetch annual development plans');
+      setPlans([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleEdit = (devId: number) => {
-    router.push({
-      pathname: '/gad/annual-dev-plan/update-plan',
-      params: { planId: devId.toString() }
-    });
-  };
-
-  const handleCreate = () => {
-    router.push('/gad/annual-dev-plan/create-plan');
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'long', 
-      year: 'numeric' 
-    });
-  };
-
-  const calculateTotal = () => {
-    return plans.reduce((sum, plan) => sum + parseFloat(plan.dev_gad_budget), 0).toFixed(2);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchPlans();
+    setIsRefreshing(false);
   };
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-blue-50 justify-center items-center">
-        <Text className="text-gray-600 text-lg">Loading data...</Text>
-      </View>
+      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
+        <LoadingState />
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView className="flex-1 bg-blue-50">
-      <View className="p-4">
-        {/* Header */}
-        <View className="flex-row items-center mb-4 pt-12">
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            className="mr-3 p-2"
-          >
-            <Ionicons name="chevron-back" size={24} color="#374151" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-xl font-bold text-gray-800">
-              Annual Development Plan
-            </Text>
-            <Text className="text-lg font-semibold text-blue-600">
-              Year {year}
-            </Text>
-          </View>
-        </View>
-
-        {/* Create Button */}
-        <View className="mb-4">
-          <TouchableOpacity
-            className="bg-orange-500 rounded-xl py-3 px-4 shadow-sm"
-            onPress={handleCreate}
-            activeOpacity={0.8}
-          >
-            <View className="flex-row items-center justify-center">
-              <Ionicons name="add" size={20} color="white" />
-              <Text className="text-white font-semibold ml-2">Create New Plan</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Plans List */}
+    <PageLayout
+      leftAction={
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          className="items-center justify-center"
+        >
+          <ChevronLeft size={20} color="#374151" />
+        </TouchableOpacity>
+      }
+      headerTitle={<Text className="text-gray-900 text-[13px]">Year {year}</Text>}
+      rightAction={<View className="w-10 h-10" />}
+      wrapScroll={false}
+    >
+      <View className="flex-1 border-t border-gray-200 bg-gray-50">
         {plans.length === 0 ? (
-          <View className="flex-1 justify-center items-center py-20">
-            <Ionicons name="document-outline" size={64} color="#9CA3AF" />
-            <Text className="text-gray-500 text-lg mt-4 text-center">
-              No development plans found for this year.
+          <View className="flex-1 justify-center items-center py-20 px-6">
+            <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+              No development plans found for Year {year}
+            </Text>
+            <Text className="text-gray-500 text-sm text-center">
+              Development plans will appear here when available
             </Text>
           </View>
         ) : (
-          <View className="space-y-4">
-            {plans.map((plan, index) => (
-              <View key={plan.dev_id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                {/* Plan Header */}
-                <View className="flex-row justify-between items-start mb-3">
-                  <View className="flex-1">
-                    <Text className="text-lg font-bold text-blue-900 underline">
-                      {plan.dev_client}
+          <ScrollView 
+            className="flex-1" 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={['#00a8f0']}
+                tintColor="#00a8f0"
+              />
+            }
+          >
+            <View className="p-6">
+              {plans.map((plan) => (
+                <View 
+                  key={plan.dev_id} 
+                  className="bg-white rounded-xl p-5 mb-4 shadow-sm border border-gray-200"
+                >
+                  {/* GAD Mandate */}
+                  <View className="mb-3">
+                    <Text className="text-xs font-semibold text-gray-600 mb-1">
+                      GAD Mandate
                     </Text>
-                    <Text className="text-sm text-gray-600 mt-1">
-                      {formatDate(plan.dev_date)}
+                    <Text className="text-sm text-gray-800" numberOfLines={2}>
+                      {plan.dev_issue || '—'}
                     </Text>
                   </View>
+
+                  {/* Program/Project */}
+                  <View className="mb-3">
+                    <Text className="text-xs font-semibold text-gray-600 mb-1">
+                      Program/Project
+                    </Text>
+                    <Text className="text-sm text-gray-800" numberOfLines={2}>
+                      {plan.dev_project || '—'}
+                    </Text>
+                  </View>
+
+                  {/* Responsible Person */}
+                  <View className="mb-3">
+                    <Text className="text-xs font-semibold text-gray-600 mb-1">
+                      Responsible Person
+                    </Text>
+                    <Text className="text-sm text-gray-800">
+                      {plan.dev_res_person || '—'}
+                    </Text>
+                  </View>
+
+                  {/* Status Badges */}
+                  <View className="mb-4">
+                    <Text className="text-xs font-semibold text-gray-600 mb-2">
+                      Status
+                    </Text>
+                    {getStatusBadges(plan)}
+                  </View>
+
+                  {/* Preview Button */}
                   <TouchableOpacity
-                    onPress={() => handleEdit(plan.dev_id)}
-                    className="bg-blue-500 rounded-lg p-2 ml-2"
+                    onPress={() => handlePreview(plan)}
+                    className="bg-blue-600 py-3 rounded-lg items-center"
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="create-outline" size={16} color="white" />
+                    <Text className="text-white font-semibold text-sm">
+                      View
+                    </Text>
                   </TouchableOpacity>
                 </View>
-
-                {/* Gender Issue */}
-                <View className="mb-3">
-                  <Text className="text-sm font-semibold text-gray-700 mb-1">
-                    Gender Issue or GAD Mandate:
-                  </Text>
-                  <Text className="text-sm text-gray-800 bg-gray-50 p-2 rounded-lg">
-                    {plan.dev_issue}
-                  </Text>
-                </View>
-
-                {/* GAD Program */}
-                <View className="mb-3">
-                  <Text className="text-sm font-semibold text-gray-700 mb-1">
-                    GAD Program/Project/Activity:
-                  </Text>
-                  <Text className="text-sm text-gray-800 bg-gray-50 p-2 rounded-lg">
-                    {plan.dev_project}
-                  </Text>
-                </View>
-
-                {/* Performance Indicator */}
-                <View className="mb-3">
-                  <Text className="text-sm font-semibold text-gray-700 mb-1">
-                    Performance Indicator and Target:
-                  </Text>
-                  <Text className="text-sm text-gray-800 bg-gray-50 p-2 rounded-lg">
-                    {plan.dev_indicator}
-                  </Text>
-                </View>
-
-                {/* Budget Section */}
-                <View className="mb-3">
-                  <Text className="text-sm font-semibold text-gray-700 mb-2">
-                    GAD Budget:
-                  </Text>
-                  {plan.budgets && plan.budgets.length > 0 ? (
-                    plan.budgets.map((item, idx) => (
-                      <View key={item.gdb_id || idx} className="bg-blue-50 p-3 rounded-lg mb-2">
-                        <View className="flex-row justify-between items-center mb-1">
-                          <Text className="text-sm font-medium text-gray-800">
-                            {item.gdb_name}
-                          </Text>
-                          <Text className="text-sm font-bold text-green-600">
-                            ₱{item.gdb_price}
-                          </Text>
-                        </View>
-                        <Text className="text-xs text-gray-600">
-                          Quantity: {item.gdb_pax} pcs
-                        </Text>
-                      </View>
-                    ))
-                  ) : (
-                    <View className="bg-blue-50 p-3 rounded-lg">
-                      <Text className="text-sm font-bold text-green-600">
-                        Total Budget: ₱{plan.dev_gad_budget}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                {/* Responsible Person */}
-                <View className="border-t border-gray-200 pt-3">
-                  <Text className="text-sm font-semibold text-gray-700 mb-1">
-                    Responsible Person:
-                  </Text>
-                  <Text className="text-sm text-gray-800 bg-gray-50 p-2 rounded-lg">
-                    {plan.dev_res_person}
-                  </Text>
-                </View>
-              </View>
-            ))}
-
-            {/* Total Summary */}
-            <View className="bg-gray-100 rounded-xl p-4 mt-4">
-              <View className="flex-row justify-between items-center">
-                <Text className="text-lg font-bold text-gray-800">
-                  Total Budget
-                </Text>
-                <Text className="text-xl font-bold text-green-600">
-                  ₱{calculateTotal()}
-                </Text>
-              </View>
-              <Text className="text-sm text-gray-600 mt-1">
-                {plans.length} plan{plans.length !== 1 ? 's' : ''} for Year {year}
-              </Text>
+              ))}
             </View>
-          </View>
+          </ScrollView>
         )}
       </View>
-    </ScrollView>
+    </PageLayout>
   );
 };
 

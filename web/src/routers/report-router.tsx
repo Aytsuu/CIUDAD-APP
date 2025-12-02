@@ -6,12 +6,17 @@ import ARFormLayout from '@/pages/record/report/acknowledgement/ARFormLayout';
 import ReportDocument from '@/pages/record/report/ReportDocument';
 import CreateMissingWeeks from '@/pages/record/report/weekly/CreateMissingWeeks';
 import IRArchive from '@/pages/record/report/incident/IRArchive';
+import SecuradoReports from '@/pages/record/report/incident/securado/SecuradoReports';
 
 // Creating routes
 export const report_router = [
   {
     path: '/report/incident',
     element: <IRRecords/>,
+  },
+  {
+    path: '/report/incident/securado',
+    element: <SecuradoReports/>,
   },
   {
     path: '/report/incident/archive',

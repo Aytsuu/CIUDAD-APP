@@ -28,7 +28,7 @@ export default function AccountProfile(): JSX.Element {
 
   const handleLogout = () => {
     logout();
-    navigate("/home");
+    navigate("/");
     setShowLogoutAlert(false);
   };
 

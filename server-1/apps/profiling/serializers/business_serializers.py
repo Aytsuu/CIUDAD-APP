@@ -7,6 +7,8 @@ from utils.supabase_client import upload_to_storage, remove_from_storage
 from datetime import datetime
 from ..utils import *
 import logging
+from apps.notification.utils import create_notification
+from ..notif_recipients import general_recipients
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +48,25 @@ class BusinessHistoryBaseSerializer(serializers.ModelSerializer):
       return None
 
 class BusinessTableSerializer(serializers.ModelSerializer):
+  registered_by = serializers.SerializerMethodField()
+
   class Meta:
     model = Business
     fields = ['bus_id', 'bus_name', 'bus_gross_sales', 'bus_location', 'bus_status',
-              'bus_date_of_registration', 'bus_date_verified', 
-              'rp', 'br']
+              'bus_date_of_registration', 'bus_date_verified', 'rp', 'br', 'registered_by']
+    
+  def get_registered_by(self, obj):
+    staff = obj.staff
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
+
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
 
 class BusinessRespondentTableSerializer(serializers.ModelSerializer):
   businesses = serializers.SerializerMethodField()
@@ -90,14 +106,14 @@ class BusinessRespondentInfoSerializer(serializers.ModelSerializer):
         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
         fam_id = fam.fam.fam_id if fam else ""
         personal = staff.rp.per
-        middle_name = f' {personal.per_mname}' if personal.per_mname else ''
-        staff_name = f'{personal.per_lname}, {personal.per_fname}{middle_name}'
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 
 class BusinessInfoSerializer(serializers.ModelSerializer):
-  bus_registered_by = serializers.SerializerMethodField()
+  registered_by = serializers.SerializerMethodField()
   br = BusinessRespondentInfoSerializer()
   rp = ResidentPersonalInfoSerializer()
   files = serializers.SerializerMethodField()
@@ -106,7 +122,7 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
     model = Business
     fields = ['bus_id', 'br', 'rp', 'bus_name', 'bus_gross_sales', 'bus_status',
               'bus_location', 'bus_date_of_registration', 'bus_date_verified',
-              'bus_registered_by', 'files']
+              'registered_by', 'files']
     
   def get_files(self, obj):
     files = [
@@ -120,13 +136,18 @@ class BusinessInfoSerializer(serializers.ModelSerializer):
     
     return files
   
-  def get_bus_registered_by(self, obj):
-    if not obj.staff:
-      return None
+  def get_registered_by(self, obj):
+    staff = obj.staff
+    if staff:
+        staff_type = staff.staff_type
+        staff_id = staff.staff_id
+        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+        fam_id = fam.fam.fam_id if fam else ""
+        personal = staff.rp.per
+        middle = f" {personal.per_mname}" if personal.per_mname else ""
+        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-    info = obj.staff.rp.per
-    return f'{info.per_lname}, {info.per_fname} ' \
-          f'{info.per_mname}' if info.per_mname else None 
+        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 class FileInputSerializer(serializers.Serializer):
   name = serializers.CharField()
@@ -148,6 +169,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
 
   @transaction.atomic
   def create(self, validated_data):
+    # Create business record
     try:
         create_files = validated_data.pop('create_files', [])
         rp = validated_data.pop('rp', None)
@@ -166,6 +188,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
             staff = validated_data["staff"]
           )
 
+          # Create notification
+          create_notification(
+            title="New Business Respondent",
+            message=(
+                f"A new business respondent has been registered."
+            ),
+            recipients=general_recipients(True, br.staff.staff_id),
+            notif_type="REGISTRATION",
+            web_route="profiling/business/record",
+            web_params={},
+            mobile_route="/(profiling)/business/records",
+            mobile_params={},
+          )
+
         # Handle respondent/rp/br logic
         business_instance = self.create_business_instance(
             validated_data, rp, br
@@ -174,6 +210,20 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
         # Handle file uploads
         if create_files:
             self.upload_files(business_instance, create_files)
+
+        # Create notification
+        create_notification(
+          title="New Business Record",
+          message=(
+              f"A new business has been registered."
+          ),
+          recipients=general_recipients(True, business_instance.staff.staff_id),
+          notif_type="REGISTRATION",
+          web_route="profiling/business/record",
+          web_params={},
+          mobile_route="/(profiling)/business/records",
+          mobile_params={},
+        )
 
         return business_instance
 
@@ -215,6 +265,7 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
   
   @transaction.atomic
   def update(self, instance, validated_data):
+    # Update business details
     modification_request_files = validated_data.pop('modification_files', [])
     edit_files = validated_data.pop('edit_files', [])
     staff = validated_data.pop('staff', None)
@@ -266,13 +317,13 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
           url = upload_to_storage(file_data, 'business-bucket', folder)
           business_file.bf_url=url
           business_files.append(business_file)
-          continue
 
         files_to_keep.append(file_data['name'])
       
       # Consider removed files, should be removed in the db
       for file in current_files:
         if file.bf_name not in files_to_keep:
+          remove_from_storage('business-bucket', file.bf_path)
           file.delete()
 
       # Bulk create newly added files

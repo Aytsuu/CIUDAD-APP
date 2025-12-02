@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, Ban, ArchiveRestore, Trash, Loader2, Plus } from "lucide-react";
+import { Eye, ArchiveRestore, Trash, Loader2, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -85,8 +85,8 @@ const TruckManagement = ({
       accessorKey: "truck_plate_num",
       header: "Plate Number",
       cell: ({ row }) => (
-        <div className="text-center font-medium">
-          {row.getValue("truck_plate_num")}
+        <div className="flex-row items-center bg-blue-50 px-2.5 py-0.5 rounded-full border border-primary">
+          <div className="text-primary text-sm font-medium">{row.getValue("truck_plate_num")}</div>
         </div>
       ),
       size: 120,
@@ -214,7 +214,7 @@ const TruckManagement = ({
               />
             )}
 
-            {activeTab === "archive" && (
+            {/* {activeTab === "archive" && (
               <TooltipLayout
                 trigger={
                   <div className="flex items-center h-8">
@@ -243,7 +243,7 @@ const TruckManagement = ({
                 }
                 content="Delete"
               />
-            )}
+            )} */}
           </div>
         );
       },

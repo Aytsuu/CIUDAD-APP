@@ -6,33 +6,11 @@ import {
   addFamily,
   addFamilyComposition,
   addHousehold,
-  addPersonal,
+  // addPersonal,
   addPersonalAddress,
   addResidentAndPersonal,
 } from "../restful-api/profiingPostAPI";
 import { api } from "@/api/api";
-
-export const useAddSitio = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: Record<string, any>[]) => {
-      try {
-        const res = await api.post("profiling/sitio/create/", data);
-        return res.data;
-      } catch (err) {
-        console.error(err);
-        throw err;
-      }
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(["sitioList"], (old: any[] = []) => [
-        ...old,
-        data
-      ]);
-      queryClient.invalidateQueries({queryKey: ["sitioList"]})
-    }
-  }) 
-}
 
 export const useAddAllProfile = () => {
   return useMutation({
@@ -48,12 +26,12 @@ export const useAddAllProfile = () => {
   })
 }
 
-export const useAddPersonal = () => {
-  return useMutation({
-    mutationFn: (data: Record<string, any>) => addPersonal(data),
-    onSuccess: () => {}
-  })
-}
+// export const useAddPersonal = () => {
+//   return useMutation({
+//     mutationFn: (data: Record<string, any>) => addPersonal(data),
+//     onSuccess: () => {}
+//   })
+// }
 
 export const useAddAddress = () => {
   return useMutation({
@@ -87,6 +65,23 @@ export const useAddResidentAndPersonal = () => { // For registration from the we
       queryClient.invalidateQueries({
         queryKey: ['residentsTableData'],
       });
+    }
+  })
+}
+
+export const useApproveFamilyRegistration = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      try{
+        const res = await api.post('profiling/family/registration-request/approve/', data);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['registrationRequests']})
     }
   })
 }

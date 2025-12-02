@@ -59,50 +59,172 @@ class PersonalUpdateView(APIView):
     
     return Response(serializer.errors, status=400)
 
-class PersonalHistoryView(APIView):
-  permission_classes = [AllowAny]
-  def get(self, request, *args, **kwargs):
-    per_id = request.query_params.get('per_id', None)
-    if per_id:
-      query = Personal.history.filter(per_id=per_id)
-    else:
-      return Response(status=status.HTTP_404_NOT_FOUND)
+# class PersonalHistoryView(APIView):
+#   permission_classes = [AllowAny]
+#   def get(self, request, *args, **kwargs):
+#     per_id = request.query_params.get('per_id', None)
+#     if per_id:
+#       query = Personal.history.filter(per_id=per_id)
+#     else:
+#       return Response(status=status.HTTP_404_NOT_FOUND)
       
-    return Response(data=PersonalHistoryBaseSerializer(query, many=True).data, 
-                    status=status.HTTP_200_OK)
+#     return Response(data=PersonalHistoryBaseSerializer(query, many=True).data, 
+#                     status=status.HTTP_200_OK)
 
 
 class HealthRelatedDetailsCreateView(generics.CreateAPIView):
     queryset = HealthRelatedDetails.objects.all()
     serializer_class = HealthRelatedDetailsSerializer
 
-class PersonalModificationCreateView(APIView):
-  permission_classes = [AllowAny]
-  def post(self, request):
-    personal = request.data.get("personal", None)
-    print(personal)
-    if not personal:
-      return Response(status=status.HTTP_400_BAD_REQUEST)
+class HealthRelatedDetailsUpdateView(APIView):
+    permission_classes = [AllowAny]
+    
+    def patch(self, request, rp_id):
+        try:
+            instance = get_object_or_404(HealthRelatedDetails, rp_id=rp_id)
+            serializer = HealthRelatedDetailsSerializer(
+                instance,
+                data=request.data,
+                partial=True
+            )
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-    request = PersonalModification(
-      pm_fname=personal.get('per_fname', None),
-      pm_lname=personal.get('per_lname', None),
-      pm_mname=personal.get('per_mname', None),
-      pm_suffix=personal.get('per_suffix', None),
-      pm_dob=personal.get('per_dob', None),
-      pm_sex=personal.get('per_sex', None),
-      pm_status=personal.get('per_status', None),
-      pm_edAttainment=personal.get('per_edAttainment', None),
-      pm_religion=personal.get('per_religion', None),
-      pm_contact=personal.get('per_contact', None),
-      per=Personal.objects.get(per_id=personal.get('per_id', None))
-    )
-    request.save()
+class MotherHealthInfoUpdateView(APIView):
+    permission_classes = [AllowAny]
+    
+    def patch(self, request, mhi_id):
+        try:
+            print(f"=== Mother Health Info Update ===")
+            print(f"MHI ID: {mhi_id}")
+            print(f"Request Data: {request.data}")
+            
+            instance = get_object_or_404(MotherHealthInfo, mhi_id=mhi_id)
+            print(f"Found instance: {instance}")
+            
+            serializer = MotherHealthInfoSerializer(
+                instance,
+                data=request.data,
+                partial=True
+            )
+            
+            if serializer.is_valid():
+                saved_instance = serializer.save()
+                print(f"Saved successfully: {saved_instance}")
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            print(f"Serializer errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-    return Response(status=status.HTTP_200_OK)
+class DependentsUnderFiveUpdateView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        """Create a new under-five record"""
+        try:
+            print(f"=== Dependents Under Five Create ===")
+            print(f"Request Data: {request.data}")
+            
+            serializer = DependentsUnderFiveSerializer(data=request.data)
+            
+            if serializer.is_valid():
+                saved_instance = serializer.save()
+                print(f"Created successfully: {saved_instance}")
+                return Response(
+                    {
+                        "success": True,
+                        "message": "Under-five record created successfully",
+                        "data": DependentsUnderFiveSerializer(saved_instance).data
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            else:
+                print(f"Serializer errors: {serializer.errors}")
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def patch(self, request, duf_id):
+        try:
+            print(f"=== Dependents Under Five Update ===")
+            print(f"DUF ID: {duf_id}")
+            print(f"Request Data: {request.data}")
+            
+            instance = get_object_or_404(Dependents_Under_Five, duf_id=duf_id)
+            print(f"Found instance: {instance}")
+            
+            serializer = DependentsUnderFiveSerializer(
+                instance,
+                data=request.data,
+                partial=True
+            )
+            
+            if serializer.is_valid():
+                saved_instance = serializer.save()
+                print(f"Saved successfully: {saved_instance}")
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            
+            print(f"Serializer errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-class PersonalModificationRequestsView(generics.RetrieveAPIView):
-  serializer_class = PersonalModificationBaseSerializer
-  queryset = PersonalModification.objects.all()
-  lookup_field = 'per'
+# class PersonalModificationCreateView(APIView):
+#   permission_classes = [AllowAny]
+#   def post(self, request):
+#     personal = request.data.get("personal", None)
+#     print(personal)
+#     if not personal:
+#       return Response(status=status.HTTP_400_BAD_REQUEST)
+
+#     request = PersonalModification(
+#       pm_fname=personal.get('per_fname', None),
+#       pm_lname=personal.get('per_lname', None),
+#       pm_mname=personal.get('per_mname', None),
+#       pm_suffix=personal.get('per_suffix', None),
+#       pm_dob=personal.get('per_dob', None),
+#       pm_sex=personal.get('per_sex', None),
+#       pm_status=personal.get('per_status', None),
+#       pm_edAttainment=personal.get('per_edAttainment', None),
+#       pm_religion=personal.get('per_religion', None),
+#       pm_contact=personal.get('per_contact', None),
+#       per=Personal.objects.get(per_id=personal.get('per_id', None))
+#     )
+#     request.save()
+
+#     return Response(status=status.HTTP_200_OK)
+
+# class PersonalModificationRequestsView(generics.RetrieveAPIView):
+#   serializer_class = PersonalModificationBaseSerializer
+#   queryset = PersonalModification.objects.all()
+#   lookup_field = 'per'
   

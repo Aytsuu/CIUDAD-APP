@@ -34,6 +34,7 @@ class ListOfExistingEmail(APIView):
         return  Response([acc.email for acc in accounts])
     
 class PhoneVerificationView(generics.ListCreateAPIView):
+    permission_classes = [AllowAny]
     serializer_class = PhoneVerificationBaseSerializer
     queryset = PhoneVerification.objects.all()
 

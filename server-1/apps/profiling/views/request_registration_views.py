@@ -9,10 +9,14 @@ from ..models import RequestRegistration
 from ..serializers.request_registration_serializers import *
 from rest_framework.permissions import AllowAny
 from ..double_queries import PostQueries
+from apps.notification.utils import create_notification
+from apps.administration.models import Assignment, Staff
+import logging
 import copy
 
+logger = logging.getLogger(__name__)
+
 class RequestTableView(generics.ListAPIView):
-  permission_classes = [AllowAny]
   serializer_class = RequestTableSerializer
   pagination_class = StandardResultsPagination
 
@@ -47,14 +51,13 @@ class RequestTableView(generics.ListAPIView):
     return queryset.filter(req_is_archive=False)
 
 class RequestCreateView(APIView):
-  permission_classes = [AllowAny]
 
   @transaction.atomic
   def post(self, request, *args, **kwargs):
-    comp = request.data.get('comp', None)
+    composition = request.data.get('comp', None)
     request = RequestRegistration.objects.create()
     new_comp = []
-    for data in comp:
+    for data in composition:
       try: 
         new_data = { 
           'rrc_fam_role': data['role'],
@@ -64,18 +67,17 @@ class RequestCreateView(APIView):
         
         if 'acc' in data:  
           acc = data['acc']  
-          print(acc)
           account = Account.objects.create_user(
               email=acc.get('email', None),
               phone=acc.get('phone', None),
               username=acc.get('phone', None),
-              password=acc['password']
+              password="!"
           )
 
           new_data['acc'] = account
 
       except Exception as e:
-        print(f"Error processing composition: {str(e)}")
+        logger.error(f"Error processing composition: {str(e)}")
         raise serializers.ValidationError(str(e))
       
       new_comp.append(
@@ -85,6 +87,51 @@ class RequestCreateView(APIView):
     if len(new_comp) > 0:
       for comp in new_comp:
         comp.save()
+
+      recipients = [
+        assi.staff.rp
+        for assi in Assignment.objects.filter(Q(feat__feat_name="PROFILING"))
+      ]
+
+      admins = Staff.objects.filter(Q(pos__pos_title="ADMIN"))
+      for staff_data in admins:
+        recipients.append(staff_data.rp)
+
+      if len(new_comp) > 1:
+        web_params = {
+          "data": RequestTableSerializer(request).data
+        }
+      else:
+        web_params = {
+          "title": "Registration Request",
+          "description": "This is a registration request submitted by the user. Please review the details and approve accordingly.",
+          "data": RequestTableSerializer(request).data
+        }
+
+      create_notification(
+        title="New Request",
+        message=(
+            f"A user has requested for resident registration"
+        ),
+        recipients=recipients,
+        notif_type="REQUEST",
+        web_route=f"profiling/request/pending/{'family/registration' if len(new_comp) > 1 else 'individual/registration'}",
+        web_params=web_params,
+        mobile_route="",
+        mobile_params={},
+      )
+
+      # Perform double query
+      for data in composition:
+        personal = data['per']
+        response = PostQueries().personal(personal)
+        if not response.ok:
+          try:
+            error_details = response.json()
+          except ValueError:
+            error_details = response.text
+          raise serializers.ValidationError({'error': error_details})
+    
       return Response(status=status.HTTP_200_OK)
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -119,24 +166,14 @@ class RequestCreateView(APIView):
       history = PersonalAddressHistory(add=add, per=per_instance)
       history.history_id=history_id
       history.save()
-
-    response = PostQueries().personal(personal)
-    if not response.ok:
-      try:
-        error_details = response.json()
-      except ValueError:
-        error_details = response.text
-      raise serializers.ValidationError({'error': error_details})
     
     return per_instance
 
 class RequestDeleteView(generics.DestroyAPIView):
-  permission_classes = [AllowAny]
   serializer_class = RequestBaseSerializer
   queryset = RequestRegistration.objects.all()
   lookup_field = 'req_id'
 
 class RequestCountView(APIView):
-  permission_classes = [AllowAny]
   def get(self, request, *args, **kwargs):
     return Response(RequestRegistration.objects.filter(~Q(req_is_archive=True)).count())

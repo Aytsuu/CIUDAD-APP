@@ -7,9 +7,6 @@ import LivingSoloForm from "./LivingSoloForm"
 import { formatHouseholds, formatOwnedHouses, formatResidents } from "../../ProfilingFormats"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import {
-  User,
-  Home,
-  Users,
   MoveRight,
   UsersRound,
 } from "lucide-react"
@@ -236,14 +233,6 @@ export default function SoloFormLayout({ tab_params } : { tab_params?: Record<st
 
         {/* Rest of the component remains the same */}
         <CardContent className="space-y-6">
-          {/* Info Alert */}
-          {/* <Alert className="border-blue-200 bg-blue-50">
-            <AlertDescription className="text-blue-800">
-              <strong>Independent Living:</strong> This registration is for individuals who live separately within a
-              household structure, maintaining their own family unit while sharing the same address.
-            </AlertDescription>
-          </Alert> */}
-
           <Separator />
 
           {/* Form Content */}
@@ -257,27 +246,6 @@ export default function SoloFormLayout({ tab_params } : { tab_params?: Record<st
           </div>
 
           <Separator />
-
-          {/* Help Section */}
-          <div className="text-center pt-4">
-            <p className="text-xs text-gray-500 mb-2">
-              Need assistance with this form? Contact your administrator for help.
-            </p>
-            <div className="flex justify-center gap-4 text-xs text-gray-400">
-              <span className="flex items-center gap-1">
-                <User className="w-3 h-3" />
-                Resident Selection
-              </span>
-              <span className="flex items-center gap-1">
-                <Home className="w-3 h-3" />
-                Household Assignment
-              </span>
-              <span className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                Family Creation
-              </span>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

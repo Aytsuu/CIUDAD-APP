@@ -9,53 +9,165 @@ from .serializers import *
 from rest_framework.decorators import api_view
 from .models import *
 from apps.patientrecords.models import Patient, PatientRecord 
-# from apps.healthProfiling.models import ResidentProfile, Personal, FamilyComposition, Household, PersonalAddress, Address
+from django.db.models import Count, Max, Subquery, OuterRef, F, Q
+from django.db.models.functions import Concat, Cast, TruncMonth, Coalesce
+from rest_framework.pagination import PageNumberPagination
+from django.db.models.fields import CharField
+from datetime import datetime, timedelta
+from collections import defaultdict
+import calendar
+from dateutil.relativedelta import relativedelta
 
-from django.db.models import F 
+class StandardPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'limit'  # Matches your frontend pageSize
+    max_page_size = 100
 
+class UniqueAnimalBitePatientsView(generics.ListAPIView):
+    serializer_class = AnimalBiteUniquePatientSerializer
+    pagination_class = StandardPagination
 
-class AnimalBiteInfographicView(APIView):
-    def get(self, request):
-        try:
-            # Fetch the single infographic record (assuming one record with id=1)
-            infographic = AnimalBiteInfographic.objects.first()
-            if not infographic:
-                return Response(
-                    {"error": "Infographic content not found"},
-                    status=status.HTTP_404_NOT_FOUND
+    def get_queryset(self):
+        queryset = PatientRecord.objects.filter(patrec_type="Animal Bites")
+
+        # Annotate latest referral and details from latest referral
+        latest_referral_pk = Subquery(
+            AnimalBite_Referral.objects.filter(patrec=OuterRef('pk')).order_by('-date').values('pk')[:1]
+        )
+        queryset = queryset.annotate(
+            latest_referral_pk=latest_referral_pk,
+            bite_count=Count('referrals', distinct=True),
+            latest_date=Max('referrals__date'),
+            latest_exposure=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('exposure_type')[:1]
+            ),
+            latest_site=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('exposure_site')[:1]
+            ),
+            latest_animal=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('biting_animal')[:1]
+            ),
+            latest_actions=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('actions_taken')[:1]
+            ),
+            latest_referredby=Subquery(
+                AnimalBite_Details.objects.filter(referral=OuterRef('latest_referral_pk')).values('referredby')[:1]
+            ),
+        )
+
+        # --- FILTERS ---
+        filter_value = self.request.query_params.get('filter', 'all')
+        if filter_value != 'all':
+            if filter_value == 'bite':
+                queryset = queryset.filter(latest_exposure='Bite')
+            elif filter_value == 'non-bite':
+                queryset = queryset.filter(latest_exposure='Non-bite')
+            elif filter_value == 'resident':
+                queryset = queryset.filter(pat_id__pat_type='Resident')
+            elif filter_value == 'transient':
+                queryset = queryset.filter(pat_id__pat_type='Transient')
+
+        # --- SITIO FILTER (Database Level) ---
+        sitio_filter = self.request.query_params.get('sitio', '')
+        if sitio_filter:
+            sitios = [s.strip() for s in sitio_filter.split(',') if s.strip()]
+            
+            if sitios:
+                sitio_query = Q()
+                for sitio in sitios:
+                    # 1. Resident Address Path
+                    sitio_query |= Q(pat_id__rp_id__per__personal_addresses__add__sitio__sitio_name__icontains=sitio)
+                    
+                    # 2. Transient Address Path
+                    sitio_query |= Q(pat_id__trans_id__tradd_id__tradd_sitio__icontains=sitio)
+                
+                queryset = queryset.filter(sitio_query).distinct()
+
+        # --- SEARCH ---
+        search = self.request.query_params.get('search', '')
+        if search:
+            resident_name_q = Q(
+                Q(pat_id__rp_id__per__per_fname__icontains=search) |
+                Q(pat_id__rp_id__per__per_lname__icontains=search) |
+                Q(pat_id__rp_id__per__per_mname__icontains=search)
+            )
+            
+            transient_name_q = Q(
+                Q(pat_id__trans_id__tran_fname__icontains=search) |
+                Q(pat_id__trans_id__tran_lname__icontains=search) |
+                Q(pat_id__trans_id__tran_mname__icontains=search)
+            )
+            
+            name_q = resident_name_q | transient_name_q
+            
+            other_fields_q = Q(
+                Q(pat_id__rp_id__per__per_sex__icontains=search) |
+                Q(pat_id__trans_id__tran_sex__icontains=search) |
+                Q(pat_id__pat_type__icontains=search) |
+                Q(latest_exposure__icontains=search) |
+                Q(latest_site__icontains=search) |
+                Q(latest_animal__icontains=search)
+            )
+            
+            queryset = queryset.filter(name_q | other_fields_q).distinct()
+
+        # --- ORDERING ---
+        ordering = self.request.query_params.get('ordering')
+        if ordering:
+            if ordering == 'patient':
+                queryset = queryset.annotate(
+                    resident_lname=F('pat_id__rp_id__per__per_lname'),
+                    resident_fname=F('pat_id__rp_id__per__per_fname'),
+                    transient_lname=F('pat_id__trans_id__tran_lname'),
+                    transient_fname=F('pat_id__trans_id__tran_fname')
+                ).order_by(
+                    F('resident_lname').asc(nulls_last=True),
+                    F('resident_fname').asc(nulls_last=True),
+                    F('transient_lname').asc(nulls_last=True),
+                    F('transient_fname').asc(nulls_last=True)
                 )
-            serializer = AnimalBiteInfographicSerializer(infographic)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            print(f"Error fetching infographic: {str(e)}")
-            return Response(
-                {"error": f"Failed to fetch infographic: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            elif ordering == '-patient':
+                queryset = queryset.annotate(
+                    resident_lname=F('pat_id__rp_id__per__per_lname'),
+                    resident_fname=F('pat_id__rp_id__per__per_fname'),
+                    transient_lname=F('pat_id__trans_id__tran_lname'),
+                    transient_fname=F('pat_id__trans_id__tran_fname')
+                ).order_by(
+                    F('resident_lname').desc(nulls_last=True),
+                    F('resident_fname').desc(nulls_last=True),
+                    F('transient_lname').desc(nulls_last=True),
+                    F('transient_fname').desc(nulls_last=True)
+                )
+            elif ordering == 'patientType':
+                queryset = queryset.order_by('pat_id__pat_type')
+            elif ordering == '-patientType':
+                queryset = queryset.order_by(F('pat_id__pat_type').desc())
+            elif ordering == 'recordCount':
+                queryset = queryset.order_by('bite_count')
+            elif ordering == '-recordCount':
+                queryset = queryset.order_by(F('bite_count').desc())
+        else:
+            queryset = queryset.order_by('-latest_date')
 
-    def put(self, request):
-        # Restrict to admins
-        if not request.user.is_authenticated or not request.user.is_staff:
-            return Response(
-                {"error": "Only admins can update infographic content"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        try:
-            infographic = AnimalBiteInfographic.objects.first()
-            if not infographic:
-                # Create if it doesn't exist
-                infographic = AnimalBiteInfographic.objects.create(content=request.data.get('content', {}))
-            else:
-                infographic.content = request.data.get('content', infographic.content)
-                infographic.save()
-            serializer = AnimalBiteInfographicSerializer(infographic)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            print(f"Error updating infographic: {str(e)}")
-            return Response(
-                {"error": f"Failed to update infographic: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        return queryset
+    
+class AnimalBiteStatsView(APIView):
+    def get(self, request):
+        qs = PatientRecord.objects.filter(patrec_type="Animal Bites")
+        total = qs.count()
+        residents = qs.filter(pat_id__pat_type="Resident").count()
+        transients = qs.filter(pat_id__pat_type="Transient").count()
+        resident_percentage = round((residents / total) * 100) if total > 0 else 0
+        transient_percentage = round((transients / total) * 100) if total > 0 else 0
+        return Response({
+            'total': total,
+            'residents': residents,
+            'transients': transients,
+            'residentPercentage': resident_percentage,
+            'transientPercentage': transient_percentage
+        })    
+    
+
             
 class AnimalBiteReferralCountView(APIView):
     def get(self, request, pat_id=None):
@@ -303,3 +415,303 @@ class AnimalbiteDetailsView(generics.ListCreateAPIView):
 class AnimalbiteReferralView(generics.ListCreateAPIView):
     serializer_class = AnimalBiteReferralSerializer
     queryset = AnimalBite_Referral.objects.all()
+
+
+
+@api_view(['GET'])
+def get_animal_bite_analytics(request):
+    months = int(request.GET.get('months', 12)) 
+    month_str = request.GET.get('month')  
+    
+    # --- MODIFICATION START ---
+    months_to_average = months # Default to the 'months' parameter
+    
+    if month_str:
+        # If a specific month is requested, override the date range
+        try:
+            year, month = map(int, month_str.split('-'))
+            _, last_day = calendar.monthrange(year, month)
+            
+            # Set start and end date to the same month
+            start_date = datetime(year, month, 1).date() 
+            end_date = datetime(year, month, last_day).date() 
+            
+            months_to_average = 1 # We are only calculating for one month
+            
+            print(f"📊 Fetching analytics for SINGLE MONTH: {month_str} (from {start_date} to {end_date})")
+            
+        except ValueError:
+            return Response({'error': 'Invalid month format. Use YYYY-MM'}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        # No specific month, use the 'months' parameter for a rolling window
+        end_date = datetime.now().date()
+        start_date = (end_date - relativedelta(months=months - 1)).replace(day=1)
+        # months_to_average is already set to 'months'
+        
+        print(f"📊 Fetching animal bite analytics for {months} months (from {start_date} to {end_date})")
+    
+    # --- MODIFICATION END ---
+    
+    # Get all Animal Bite referrals in the calculated date range
+    referrals = AnimalBite_Referral.objects.filter(
+        date__gte=start_date,
+        date__lte=end_date,
+        patrec__patrec_type="Animal Bites"
+    ).select_related('patrec', 'patrec__pat_id')
+    
+    total_referrals = referrals.count()
+    print(f"✅ Found {total_referrals} referrals in date range")
+    
+    # Get all bite details for these referrals
+    bite_details = AnimalBite_Details.objects.filter(
+        referral__in=referrals
+    ).select_related('referral', 'referral__patrec')
+    
+    monthly_data = referrals.annotate(
+        month=TruncMonth('date')
+    ).values('month').annotate(
+        cases=Count('referral_id', distinct=True)
+    ).order_by('month')
+    
+    # Count bites specifically
+    monthly_bites = {}
+    for detail in bite_details:
+        month_key = detail.referral.date.replace(day=1)
+        if detail.exposure_type and detail.exposure_type.lower().strip() == 'bite':
+            monthly_bites[month_key] = monthly_bites.get(month_key, 0) + 1
+    
+    monthly_trends = []
+    for item in monthly_data:
+        month = item['month']
+        monthly_trends.append({
+            'month': month.strftime('%b %Y'),
+            'cases': item['cases'],
+            'bites': monthly_bites.get(month, 0)
+        })
+    
+    # If viewing a single month, the 'monthlyTrends' will be small.
+    # If no month_str was provided, we should populate the full trend data.
+    if not month_str:
+        # This part is fine, it will just show the 12-month trend
+        print(f"📈 Monthly trends calculated: {len(monthly_trends)} months")
+    else:
+        # When a single month is selected, the 'monthlyTrends' list
+        # will only contain data for that one month, which is correct for the chart.
+        print(f"📈 Monthly trends calculated for single month.")
+    
+    animal_counts = bite_details.values(
+        'biting_animal'
+    ).annotate(
+        count=Count('bite_id')
+    ).order_by('-count')[:10]  # Top 10 animals
+    
+    animal_types = []
+    for item in animal_counts:
+        animal_name = item['biting_animal']
+        if animal_name:
+            animal_types.append({
+                'animal': animal_name.title(),
+                'count': item['count']
+            })
+    
+    print(f"🐾 Animal types: {len(animal_types)} different animals")
+    
+    exposure_counts = {}
+    for detail in bite_details:
+        exp_type = detail.exposure_type or 'Unknown'
+        exposure_counts[exp_type] = exposure_counts.get(exp_type, 0) + 1
+    
+    exposure_types = [
+        {
+            'name': exp_type,
+            'value': count
+        }
+        for exp_type, count in exposure_counts.items()
+    ]
+    
+    print(f"💉 Exposure types: {exposure_types}")
+    
+    patient_type_counts = referrals.values(
+        'patrec__pat_id__pat_type'
+    ).annotate(
+        count=Count('patrec__pat_id', distinct=True)  # Count distinct patients per type
+    )
+
+    patient_types = []
+    for item in patient_type_counts:
+        pat_type = item['patrec__pat_id__pat_type']
+        if pat_type:
+            patient_types.append({
+                'name': pat_type,
+                'value': item['count']
+            })
+
+    print(f"👥 Patient types: {patient_types}")
+    
+    site_counts = bite_details.values(
+        'exposure_site'
+    ).annotate(
+        count=Count('bite_id')
+    ).order_by('-count')[:8]  # Top 8 sites
+    
+    exposure_sites = []
+    for item in site_counts:
+        site_name = item['exposure_site']
+        if site_name:
+            exposure_sites.append({
+                'site': site_name.title(),
+                'count': item['count']
+            })
+    
+    print(f"📍 Exposure sites: {len(exposure_sites)} different sites")
+    
+    total_cases = referrals.count()
+    
+    # Count bite cases
+    bite_cases = 0
+    for detail in bite_details:
+        if detail.exposure_type and detail.exposure_type.lower().strip() == 'bite':
+            bite_cases += 1
+    
+    # Most common animal
+    most_common_animal = animal_types[0]['animal'] if animal_types else 'N/A'
+    
+    # --- MODIFICATION START ---
+    # Monthly average - now uses the correct divisor
+    monthly_average = round(total_cases / months_to_average) if months_to_average > 0 else 0
+    # --- MODIFICATION END ---
+    
+    # Most common exposure site
+    most_common_site = exposure_sites[0]['site'] if exposure_sites else 'N/A'
+    
+    print(f"✅ Summary - Total: {total_cases}, Bites: {bite_cases}, Avg/month: {monthly_average}")
+    
+    # ============================================
+    # 7. RECENT CASES (for timeline)
+    # ============================================
+    recent_cases = referrals.order_by('-date')[:10]
+    recent_timeline = []
+    
+    for ref in recent_cases:
+        try:
+            # Get patient name based on type
+            patient = ref.patrec.pat_id
+            if patient.pat_type == 'Resident' and hasattr(patient, 'rp_id'):
+                name = f"{patient.rp_id.per.per_fname} {patient.rp_id.per.per_lname}"
+            elif patient.pat_type == 'Transient' and hasattr(patient, 'trans_id'):
+                name = f"{patient.trans_id.tran_fname} {patient.trans_id.tran_lname}"
+            else:
+                name = "Unknown"
+            
+            # Get bite details
+            bite_detail = bite_details.filter(referral=ref).first()
+            
+            recent_timeline.append({
+                'date': ref.date.strftime('%Y-%m-%d'),
+                'patient': name,
+                'animal': bite_detail.biting_animal if bite_detail else 'Unknown',
+                'exposure_type': bite_detail.exposure_type if bite_detail else 'Unknown'
+            })
+        except Exception as e:
+            print(f"⚠️ Error processing recent case: {e}")
+            continue
+    
+    response_data = {
+        'totalCases': total_cases,
+        'biteCases': bite_cases,
+        'nonBiteCases': total_cases - bite_cases,
+        'mostCommonAnimal': most_common_animal,
+        'mostCommonSite': most_common_site,
+        'monthlyAverage': monthly_average,
+        'monthlyTrends': monthly_trends,
+        'animalTypes': animal_types,
+        'exposureTypes': exposure_types,
+        'patientTypes': patient_types,
+        'exposureSites': exposure_sites,
+        'recentCases': recent_timeline
+    }
+    
+    print(f"📦 Returning analytics data (Date Range: {start_date} to {end_date})")
+    return Response(response_data)
+
+
+@api_view(['GET'])
+def get_animal_bite_patient_analytics(request, patient_id):
+    """
+    Get detailed analytics for a specific patient's animal bite history
+    """
+    try:
+        patient = Patient.objects.get(pat_id=patient_id)
+        
+        # Get all patient records for this patient (Animal Bites type)
+        patient_records = PatientRecord.objects.filter(
+            pat_id=patient,
+            patrec_type="Animal Bites"
+        )
+        
+        # Get all referrals
+        referrals = AnimalBite_Referral.objects.filter(
+            patrec__in=patient_records
+        ).order_by('date')
+        
+        # Get all bite details
+        bite_details = AnimalBite_Details.objects.filter(
+            referral__in=referrals
+        )
+        
+        # Calculate statistics
+        total_incidents = referrals.count()
+        
+        # Exposure types
+        exposure_type_counts = {}
+        animal_counts = {}
+        site_counts = {}
+        
+        for detail in bite_details:
+            # Exposure types
+            exp_type = detail.exposure_type or 'Unknown'
+            exposure_type_counts[exp_type] = exposure_type_counts.get(exp_type, 0) + 1
+            
+            # Animals
+            animal = detail.biting_animal or 'Unknown'
+            animal_counts[animal] = animal_counts.get(animal, 0) + 1
+            
+            # Sites
+            site = detail.exposure_site or 'Unknown'
+            site_counts[site] = site_counts.get(site, 0) + 1
+        
+        # Timeline
+        timeline = []
+        for ref in referrals:
+            detail = bite_details.filter(referral=ref).first()
+            timeline.append({
+                'date': ref.date.strftime('%Y-%m-%d'),
+                'exposure_type': detail.exposure_type if detail else 'Unknown',
+                'animal': detail.biting_animal if detail else 'Unknown',
+                'site': detail.exposure_site if detail else 'Unknown'
+            })
+        
+        return Response({
+            'patient_id': patient_id,
+            'total_incidents': total_incidents,
+            'exposure_types': [{'name': k, 'value': v} for k, v in exposure_type_counts.items()],
+            'animal_types': [{'name': k, 'value': v} for k, v in animal_counts.items()],
+            'exposure_sites': [{'name': k, 'value': v} for k, v in site_counts.items()],
+            'timeline': timeline,
+            'most_common_animal': max(animal_counts, key=animal_counts.get) if animal_counts else 'N/A',
+            'most_common_site': max(site_counts, key=site_counts.get) if site_counts else 'N/A'
+        })
+        
+    except Patient.DoesNotExist:
+        return Response(
+            {'error': f'Patient with ID {patient_id} not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        print(f"Error in patient analytics: {e}")
+        import traceback
+        traceback.print_exc()
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

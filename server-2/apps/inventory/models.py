@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from apps.administration.models import Staff
 
 
+
 class Category(models.Model):
     cat_id = models.BigAutoField(primary_key=True)
     cat_type = models.CharField(max_length=100)
@@ -17,11 +18,17 @@ class Medicinelist(models.Model):
     med_id = models.CharField(primary_key=True, max_length=20, editable=False)
     med_name = models.CharField(max_length=100)
     med_type = models.CharField(max_length=100, default='')
+    med_dsg = models.PositiveIntegerField(default=0)
+    med_dsg_unit = models.CharField(max_length=100,default="")
+    med_form = models.CharField(max_length=100, default="") 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     cat = models.ForeignKey(Category, on_delete=models.PROTECT)   
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, null=True, blank=True)
+    
     class Meta:
         db_table = 'medicine_list'
+        ordering = ['-updated_at']
     
     def save(self, *args, **kwargs):
         if not self.med_id:
@@ -64,30 +71,44 @@ class CommodityList(models.Model):
     ]
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
     gender_type = models.CharField(max_length=10, choices=SEX_TYPE_CHOICES, default='Both')
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, null=True, blank=True)  
 
     class Meta:
         db_table = 'commodity_list'
+        ordering = ['-updated_at']
         
     def save(self, *args, **kwargs):
         if not self.com_id:
-            today = timezone.now()
-            prefix = f"COM{today.day:02d}{today.year % 100:02d}"
-            
-            # Get the maximum existing ID with this prefix
-            max_id = CommodityList.objects.filter(
-                com_id__startswith=prefix
-            ).order_by('-com_id').first()
-            
-            if max_id:
-                last_num = int(max_id.com_id[len(prefix):]) + 1
-            else:
-                last_num = 1
+            with transaction.atomic():
+                # Get current date
+                now = timezone.now()
                 
-            self.com_id = f"{prefix}{last_num:03d}"
+                # Prefix: COM (Commodity)
+                prefix = "COM"
+                
+                # Format: COM + Year (2-digit) + Month + Day
+                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
+                base_id = f"{prefix}{date_part}"
+                
+                # Get the maximum existing ID for today using database aggregation
+                max_id_today = CommodityList.objects.filter(
+                    com_id__startswith=base_id
+                ).aggregate(Max('com_id'))['com_id__max']
+                
+                if max_id_today:
+                    try:
+                        # Extract the numeric part from the max ID and increment
+                        last_num = int(max_id_today[len(base_id):]) + 1
+                    except (ValueError, IndexError):
+                        last_num = 1
+                else:
+                    last_num = 1
+                
+                # Generate unique com_id with 4-digit number
+                self.com_id = f"{base_id}{last_num:04d}"
             
         if self.com_name:
             self.com_name = self.com_name.title()
-        
         
         super().save(*args, **kwargs)
             
@@ -96,10 +117,11 @@ class FirstAidList(models.Model):
     fa_name = models.CharField(max_length=100,default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    cat = models.ForeignKey(Category, on_delete=models.PROTECT , related_name='firstaid_category')
+    # cat = models.ForeignKey(Category, on_delete=models.PROTECT , related_name='firstaid_category')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, null=True, blank=True)  
     class Meta:
         db_table = 'firstaid_list'
+        ordering = ['-updated_at']
         
     def save(self, *args, **kwargs):
         if not self.fa_id:
@@ -123,21 +145,22 @@ class FirstAidList(models.Model):
             
         super().save(*args, **kwargs)
         
-        
-
 class Inventory(models.Model):
     inv_id = models.CharField(max_length=20, primary_key=True)
     expiry_date = models.DateField(null=True, blank=True)
     inv_type = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    created_at = models.DateTimeField(auto_now_add=True)
     is_Archived = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def save(self, *args, **kwargs):
         if not self.inv_id:
-            # Ensure expiry_date is provided
-            if not self.expiry_date:
-                raise ValueError("Expiry date is required to generate inv_id")
+            # Use expiry_date if provided, else use current date
+            if self.expiry_date:
+                date_source = self.expiry_date
+            else:
+                # Use current date if no expiry date provided
+                date_source = timezone.now().date()
             
             # Map inv_type to prefix
             type_prefixes = {
@@ -147,33 +170,31 @@ class Inventory(models.Model):
                 'Antigen': 'INVANT'
             }
             prefix = type_prefixes.get(self.inv_type, 'INV')
-            
-            # Format: PREFIX + Expiry YY + Expiry MM
-            full_prefix = f"{prefix}{self.expiry_date.year % 100:02d}{self.expiry_date.month:02d}"
-            
+            # Format: PREFIX + YY + MM (from date_source)
+            full_prefix = f"{prefix}{date_source.year % 100:02d}{date_source.month:02d}"
             # Get the maximum existing ID with this prefix
             max_id = Inventory.objects.filter(
                 inv_id__startswith=full_prefix
             ).order_by('-inv_id').first()
-            
             if max_id:
                 # Extract the numeric part and increment
                 last_num = int(max_id.inv_id[len(full_prefix):]) + 1
             else:
                 last_num = 1
-            
             # Generate unique inv_id with auto-increment number
             self.inv_id = f"{full_prefix}{last_num:03d}"
-        
         super().save(*args, **kwargs)
+
     class Meta:
         db_table = 'inventory'
+        indexes = [
+            models.Index(fields=['inv_type']),
+            models.Index(fields=['expiry_date']),
+            models.Index(fields=['is_Archived']),
+        ]
         
 class MedicineInventory(models.Model):
     minv_id =models.BigAutoField(primary_key=True)
-    minv_dsg = models.PositiveIntegerField(default=0)
-    minv_dsg_unit = models.CharField(max_length=100,default="N/A")
-    minv_form = models.CharField(max_length=100, default="N/A") 
     minv_qty = models.PositiveIntegerField(default=0,)
     minv_qty_unit = models.CharField(max_length=100, default="N/A") 
     minv_pcs = models.PositiveIntegerField(default=0)
@@ -193,16 +214,48 @@ class MedicineInventory(models.Model):
 
 
 class MedicineTransactions(models.Model):
-    mdt_id =models.BigAutoField(primary_key=True)
+    mdt_id = models.CharField(primary_key=True, max_length=20, editable=False)
     mdt_qty = models.CharField(max_length=100)
     mdt_action = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_transaction', null=True, blank=True)  
-    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT,related_name='medicine_transaction',  db_column='minv_id')
+    created_at = models.DateTimeField(auto_now_add=True)
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='medicine_transaction', null=True, blank=True)  
+    minv_id = models.ForeignKey('MedicineInventory', on_delete=models.PROTECT, related_name='medicine_transaction', db_column='minv_id')
 
     class Meta:
         db_table = 'medicine_transaction'
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.mdt_id:
+            with transaction.atomic():
+                # Get current date
+                now = timezone.now()
+                
+                # Prefix: TRNSMED
+                prefix = "TRNSMED"
+                
+                # Format: TRNSMED + Year (2-digit) + Month + Day
+                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
+                base_id = f"{prefix}{date_part}"
+                
+                # Get the maximum existing ID for today using database aggregation
+                max_id_today = MedicineTransactions.objects.filter(
+                    mdt_id__startswith=base_id
+                ).aggregate(Max('mdt_id'))['mdt_id__max']
+                
+                if max_id_today:
+                    try:
+                        # Extract the numeric part from the max ID and increment
+                        last_num = int(max_id_today[len(base_id):]) + 1
+                    except (ValueError, IndexError):
+                        last_num = 1
+                else:
+                    last_num = 1
+                
+                # Generate unique mdt_id with 4-digit number
+                self.mdt_id = f"{base_id}{last_num:04d}"
+        
+        super().save(*args, **kwargs)
 
 
         
@@ -226,7 +279,7 @@ class CommodityInventory(models.Model):
         
         
 class CommodityTransaction(models.Model):
-    comt_id =models.BigAutoField(primary_key=True)
+    comt_id = models.CharField(primary_key=True, max_length=20, editable=False)
     comt_qty = models.CharField(max_length=100)
     comt_action = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
@@ -237,35 +290,100 @@ class CommodityTransaction(models.Model):
         db_table = 'commodity_transaction'
         ordering = ['-created_at']
 
+    def save(self, *args, **kwargs):
+        if not self.comt_id:
+            with transaction.atomic():
+                # Get current date
+                now = timezone.now()
+                
+                # Prefix: TRNSCOM
+                prefix = "TRNSCOM"
+                
+                # Format: TRNSCOM + Year (2-digit) + Month + Day
+                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
+                base_id = f"{prefix}{date_part}"
+                
+                # Get the maximum existing ID for today using database aggregation
+                max_id_today = CommodityTransaction.objects.filter(
+                    comt_id__startswith=base_id
+                ).aggregate(Max('comt_id'))['comt_id__max']
+                
+                if max_id_today:
+                    try:
+                        # Extract the numeric part from the max ID and increment
+                        last_num = int(max_id_today[len(base_id):]) + 1
+                    except (ValueError, IndexError):
+                        last_num = 1
+                else:
+                    last_num = 1
+                
+                # Generate unique comt_id with 4-digit number
+                self.comt_id = f"{base_id}{last_num:04d}"
+        
+        super().save(*args, **kwargs)
+
 
 
 
 class FirstAidInventory(models.Model):
-    finv_id = models.BigAutoField(primary_key=True)
+    finv_id =  models.BigAutoField(primary_key=True)
     finv_qty = models.PositiveIntegerField(default=0)
-    finv_qty_unit = models.CharField(max_length=100,default="N/A")
+    finv_qty_unit = models.CharField(max_length=100, default="N/A")
     finv_pcs = models.PositiveIntegerField(default=0)
     finv_used = models.PositiveIntegerField(default=0)
     finv_qty_avail = models.PositiveIntegerField(default=0)
-    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE,db_column='inv_id',related_name='inventory_firstaid')
+    inv_id = models.OneToOneField(Inventory, on_delete=models.CASCADE, db_column='inv_id', related_name='inventory_firstaid')
     fa_id = models.ForeignKey(FirstAidList, on_delete=models.PROTECT, db_column='fa_id', related_name='firstaid_inventory')
     wasted = models.PositiveIntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
+    created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         db_table = 'firstaid_inventory'
-        
-  
+
+    
 class FirstAidTransactions(models.Model):
-    fat_id =models.BigAutoField(primary_key=True)
+    fat_id = models.CharField(primary_key=True, max_length=20, editable=False)
     fat_qty = models.CharField(max_length=100)
     fat_action = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
     finv_id = models.ForeignKey('FirstAidInventory', on_delete=models.PROTECT,  db_column='finv_id')
     staff= models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='firstaid_transaction', null=True, blank=True)  
 
-    class Meta:
+    class Meta: 
         db_table = 'firstaid_transaction'
         ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.fat_id:
+            with transaction.atomic():
+                # Get current date
+                now = timezone.now()
+                
+                # Prefix: TRNSFA
+                prefix = "TRNSFA"
+                
+                # Format: TRNSFA + Year (2-digit) + Month + Day
+                date_part = f"{now.year % 100:02d}{now.month:02d}{now.day:02d}"
+                base_id = f"{prefix}{date_part}"
+                
+                # Get the maximum existing ID for today using database aggregation
+                max_id_today = FirstAidTransactions.objects.filter(
+                    fat_id__startswith=base_id
+                ).aggregate(Max('fat_id'))['fat_id__max']
+                
+                if max_id_today:
+                    try:
+                        # Extract the numeric part from the max ID and increment
+                        last_num = int(max_id_today[len(base_id):]) + 1
+                    except (ValueError, IndexError):
+                        last_num = 1
+                else:
+                    last_num = 1
+                
+                # Generate unique fat_id with 4-digit number
+                self.fat_id = f"{base_id}{last_num:04d}"
+        
+        super().save(*args, **kwargs)
 
 # VACCINATION MODELS
 
@@ -295,6 +413,7 @@ class VaccineList(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     category =models.CharField(max_length=100, default='Vaccine')
     ageGroup = models.ForeignKey(Agegroup, on_delete=models.PROTECT, db_column='ageGroup', related_name='vaccines', null=True, blank=True)
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, null=True, blank=True)
     class Meta:
         db_table = 'vaccines'
         ordering = ['-created_at']
@@ -359,8 +478,9 @@ class VaccineStock(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE ,db_column='inv_id',related_name='vaccine_stock')
     vac_id = models.ForeignKey('VaccineList',on_delete=models.PROTECT,related_name='vaccine_stock',db_column='vac_id')
+    # volume = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)  # Remove `default`
-
+    
     class Meta:
         db_table = 'vaccine_stocks'
         ordering = ['-created_at']
@@ -371,8 +491,9 @@ class ImmunizationSupplies(models.Model):
     imz_id = models.BigAutoField(primary_key=True)   
     imz_name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True) 
     category =models.CharField(max_length=100, default='Immunization Supplies')
+    staff= models.ForeignKey(Staff, on_delete=models.CASCADE, null=True, blank=True)
 
     
     class Meta:
@@ -384,7 +505,7 @@ class ImmunizationSupplies(models.Model):
         if self.imz_name:
             self.imz_name = self.imz_name.title()
         super().save(*args, **kwargs)
-        
+         
         
 class ImmunizationStock(models.Model):
     imzStck_id = models.BigAutoField(primary_key=True)
@@ -393,10 +514,11 @@ class ImmunizationStock(models.Model):
     imzStck_per_pcs = models.PositiveIntegerField(default=0)
     imzStck_pcs = models.PositiveIntegerField(default=0)
     imzStck_unit = models.CharField(max_length=100)
-    imzStck_used = models.PositiveIntegerField(default=0)
+    # imzStck_used = models.PositiveIntegerField(default=0)
     imzStck_avail = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    wasted=models.PositiveIntegerField(default=0)
 
     inv_id = models.OneToOneField('Inventory', on_delete=models.CASCADE,related_name='immunization_stock',db_column='inv_id')
     imz_id = models.ForeignKey('ImmunizationSupplies',on_delete=models.PROTECT ,related_name='immunization_stock',db_column='imz_id')

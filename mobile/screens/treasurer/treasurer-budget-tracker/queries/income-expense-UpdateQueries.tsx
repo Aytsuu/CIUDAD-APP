@@ -1,14 +1,13 @@
 import { z } from "zod";
 import {api} from "@/api/api";
 import { useToastContext } from "@/components/ui/toast";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import IncomeExpenseFormSchema from "../schema";
 import IncomeFormSchema from "@/form-schema/treasurer/treasurer-income-schema";
 import { updateIncomeExpense } from "../request/income-expense-PutRequest";
 import { updateIncomeExpenseMain } from "../request/income-expense-PostRequest";
 import { updateExpenseParticular } from "../request/income-expense-PostRequest";
 import { expense_log } from "../request/income-expense-PostRequest";
-import { updateBudgetPlanDetail } from "../request/income-expense-PostRequest";
 import { updateIncomeTracking } from "../request/income-expense-PutRequest";
 import { updateIncomeMain } from "../request/income-expense-PostRequest";
 
@@ -25,8 +24,10 @@ type ExtendedIncomeExpenseUpdateValues = z.infer<typeof IncomeExpenseFormSchema>
   totalBudget: number;
   totalExpense: number;
   returnAmount: number;
+  prevAmount: number;
   proposedBud: number;
   particularId: number;
+  staff_id: string;
 };
 
 
@@ -64,7 +65,7 @@ export const useUpdateIncomeExpense = (
       });
 
       //5. add new expense log
-      if(values.returnAmount > 0){
+      if(values.returnAmount > 0 || values.prevAmount!=Number(values.iet_amount)){
         await expense_log(iet_num, {
           returnAmount: values.returnAmount,
           el_proposed_budget: values.iet_amount,
@@ -86,8 +87,8 @@ export const useUpdateIncomeExpense = (
       
         if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error updating expense:", err);
+    onError: (_err) => {
+      // console.error("Error updating expense:", err);
       toast.error("Failed to update expense entry");
     }
   });
@@ -125,7 +126,7 @@ const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
       })
     ));
   } catch (err) {
-    console.error("Error updating files:", err);
+    // console.error("Error updating files:", err);
     throw err;
   }
 };
@@ -140,6 +141,7 @@ const handleFileUpdates = async (iet_num: number, mediaFiles: any[]) => {
 type ExtendedIncomeValues = z.infer<typeof IncomeFormSchema> & {
   totalIncome: number;
   year: number;
+  staff_id: string;
 };
 
 export const useUpdateIncome = (
@@ -171,8 +173,8 @@ export const useUpdateIncome = (
       
       if (onSuccess) onSuccess();
     },
-    onError: (err) => {
-      console.error("Error updating income:", err);
+    onError: (_err) => {
+      // console.error("Error updating income:", err);
       toast.error("Failed to update income entry");
     }
   });

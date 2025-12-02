@@ -4,6 +4,7 @@ import {
   getAnnouncementRecipientRequest,
   getCreatedReceivedAnnouncements,
 } from "../restful-api/announcementGetRequest";
+import api from "@/api/api";
 
 // Matches Django Announcement model
 export type Announcement = {
@@ -45,6 +46,42 @@ export function useGetAnnouncement() {
     staleTime: 5000
   });
 }
+
+export function useGetAnnouncementList(
+  page: number = 1,
+  page_size: number = 10,
+  search: string,
+  staff: string | null,
+  sort: string,
+  filter: string,
+  recipient: string
+) {
+  return useQuery({
+    queryKey: ["announcements", page, page_size, search, staff, sort, filter, recipient],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`announcement/list/`, {
+          params: {
+            page,
+            page_size,
+            search,
+            staff,
+            sort,
+            filter,
+            recipient
+          },
+        });
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 1000 * 60 * 15,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+}
+
 
 // Pass ann_id to fetch only its recipients
 export function useGetAnnouncementRecipient(ann_id: number) {

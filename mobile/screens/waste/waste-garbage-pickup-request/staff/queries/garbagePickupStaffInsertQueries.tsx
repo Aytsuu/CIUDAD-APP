@@ -5,7 +5,6 @@ import { RejectPickupRequestSchema, AcceptPickupRequestSchema } from "@/form-sch
 import { addPickupAssignmentandCollectors, addDecision } from "../restful-API/garbagePickupStaffPostAPI";
 import { useRouter } from "expo-router";
 
-
 export const useAddDecision = (onSuccess?: () => void) => {
         const queryClient = useQueryClient();
         const {toast} = useToastContext();
@@ -14,7 +13,8 @@ export const useAddDecision = (onSuccess?: () => void) => {
         return useMutation({
             mutationFn: (values: z.infer<typeof RejectPickupRequestSchema>) => 
             addDecision(values.garb_id, {
-                reason: values.reason
+                reason: values.reason,
+                staff_id: values.staff_id
             }),
             onSuccess: () => {
                 Promise.all([
@@ -25,10 +25,10 @@ export const useAddDecision = (onSuccess?: () => void) => {
         
                 toast.success('Request rejected!')
                 onSuccess?.()
-                router.back()
+                router.push('/(waste)/garbage-pickup/staff/main-request')
             },
             onError: (err) => {
-                console.error("Error submitting record:", err);
+                // console.error("Error submitting record:", err);
                 toast.error( "Failed to submit record. Please check the input data and try again.",)
             }
         })
@@ -46,7 +46,8 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
                 driver: values.driver,
                 time: values.time,
                 truck: values.truck,
-                collectors: values.collectors
+                collectors: values.collectors,
+                staff_id: values.staff_id
             }),
         onSuccess: () => {
             Promise.all([
@@ -55,10 +56,10 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
             ]);
             toast.success('Request Accepted!')
             onSuccess?.();
-            router.back()
+            router.push('/(waste)/garbage-pickup/staff/main-request')
         },
         onError: (err) => {
-            console.error("Error creating pickup assignment:", err);
+            // console.error("Error creating pickup assignment:", err);
             toast.error("Failed to create pickup assignment. Please check the input data and try again.")
         }
     });

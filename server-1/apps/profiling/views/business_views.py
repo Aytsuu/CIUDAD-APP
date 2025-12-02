@@ -7,6 +7,7 @@ from ..models import Business, BusinessFile
 from apps.account.models import Account
 from ..serializers.business_serializers import *
 from apps.pagination import StandardResultsPagination
+from ..utils import generate_busrespondent_no
 
 
 class BusinessCreateView(generics.CreateAPIView):
@@ -14,26 +15,29 @@ class BusinessCreateView(generics.CreateAPIView):
   serializer_class = BusinessCreateUpdateSerializer
   queryset = Business.objects.all()
 
-class BRCreateUpdateView(generics.CreateAPIView):
-  permission_classes = [AllowAny]
-  serializer_class = BusinessRespondentBaseSerializer
-  queryset = BusinessRespondent.objects.all()
+class BRCreateView(APIView):
+  @transaction.atomic
+  def post(self, request, *args, **kwargs):
+    data = request.data
+    acc = data.pop("acc", None)
+    
+    respondent = BusinessRespondent.objects.create(
+      **data,
+      br_id=generate_busrespondent_no(),
+    )
 
-  def create(self, request, *args, **kwargs):
-    acc = request.data.pop("acc", None)
-    serializer = self.get_serializer(data=request.data)
-    
-    if serializer.is_valid():
-      respondent = serializer.save()
-    
     if acc and respondent:
-      Account.objects.create_user(
-        **acc,
-        br = respondent,
-        username=acc['phone']
+      account = Account.objects.create_user(
+        phone=acc.get('phone'),
+        email=acc.get('email',None),
+        br=respondent,
+        username=acc.get('phone'),
+        password='!'
       )
 
-    return Response(serializer.data, status=status.HTTP_200_OK)
+      if account:
+        return Response(BusinessRespondentBaseSerializer(respondent).data, status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_400_BAD_REQUEST)
 
 class ActiveBusinessTableView(generics.ListAPIView):
   permission_classes = [AllowAny]
@@ -41,6 +45,9 @@ class ActiveBusinessTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
+    search_query = self.request.query_params.get('search', '').strip()
+    size = self.request.query_params.get('size', None)
+
     queryset = Business.objects.filter(~Q(bus_status='PENDING')).select_related(
       'staff',
     ).prefetch_related(
@@ -56,7 +63,16 @@ class ActiveBusinessTableView(generics.ListAPIView):
       'staff__rp__per__per_mname',
     )
 
-    search_query = self.request.query_params.get('search', '').strip()
+    if size and size != "all":
+      if size == "micro":
+        queryset = queryset.filter(bus_gross_sales__lt=3000000)
+      elif size == "small":
+        queryset = queryset.filter(Q(bus_gross_sales__gte=3000000) & Q(bus_gross_sales__lt=20000000))
+      elif size == "medium":
+        queryset = queryset.filter(Q(bus_gross_sales__gte=20000000) & Q(bus_gross_sales__lt=1000000000))
+      else:
+        queryset = queryset.filter(bus_gross_sales__gte=1000000000)
+
     if search_query:
       queryset = queryset.filter(
         Q(bus_id__icontains=search_query) |
@@ -65,7 +81,7 @@ class ActiveBusinessTableView(generics.ListAPIView):
         Q(bus_location=search_query) 
       ).distinct()
 
-    return queryset.order_by('bus_id')
+    return queryset.order_by('-bus_id')
   
 class PendingBusinessTableView(generics.ListAPIView):
   permission_classes = [AllowAny]
@@ -87,7 +103,15 @@ class BusinessRespondentTableView(generics.ListAPIView):
       business_count=Count('owned_business')
     ).filter(business_count__gt=0)
 
-    return queryset
+    search = self.request.query_params.get('search', '').strip()
+    if search:
+      queryset = queryset.filter(
+        Q(br_lname__icontains=search) | 
+        Q(br_fname__icontains=search) | 
+        Q(br_mname__icontains=search)
+      )
+
+    return queryset.order_by('-br_id')
 
 
 class BusinessFileCreateView(generics.CreateAPIView):

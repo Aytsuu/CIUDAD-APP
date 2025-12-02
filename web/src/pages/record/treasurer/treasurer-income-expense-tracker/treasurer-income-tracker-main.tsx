@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
@@ -144,7 +142,6 @@ function IncomeTracking() {
         };
 
         archiveRestore(allValues);
-        console.log("ARCHIVE INC: ", allValues)
     };
 
     const handleRestore = (inc_num: number, inc_amount: number) => {
@@ -162,7 +159,6 @@ function IncomeTracking() {
         };
 
         archiveRestore(allValues);
-        console.log("RESTORE INC: ", allValues)
     };
 
     // Common columns for both tabs (rest of your columns remain the same)
@@ -180,11 +176,14 @@ function IncomeTracking() {
             ),
             cell: ({ row }) => (
                 <div className="text-center">
-                    {new Date(row.getValue("inc_datetime")).toLocaleString("en-US", {
-                        timeZone: "UTC",
-                        dateStyle: "medium",
-                        timeStyle: "short"  
-                    })}
+                    {new Date(row.getValue("inc_datetime")).toLocaleString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                    })}                        
                 </div>
             )
         },        
@@ -393,6 +392,7 @@ function IncomeTracking() {
                             className="bg-white w-full" 
                             placeholder="Month"
                             value={selectedMonth} 
+                            valueLabel={"Month"}
                             options={monthOptions}
                             onChange={handleMonthChange}
                         />

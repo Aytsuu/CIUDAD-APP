@@ -8,7 +8,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 // Media Gallery Component
-export const MediaGallery = ({ mediaFiles } : { mediaFiles: any}) => {
+export const MediaGallery = ({ mediaFiles, emptyState } : { mediaFiles: any, emptyState?: React.ReactNode}) => {
   const [selectedImage, setSelectedImage] = React.useState<any>();
 
   const handleOpenDocument = (url: string) => { 
@@ -16,11 +16,15 @@ export const MediaGallery = ({ mediaFiles } : { mediaFiles: any}) => {
     window.open(url, '_blank');
   };
 
+  if (!mediaFiles || mediaFiles.length === 0 && emptyState) {
+    return emptyState
+  }
+
   if (!mediaFiles || mediaFiles.length === 0) {
     return (
       <Alert>
         <AlertDescription>
-          No supporting documents have been uploaded for this business profile.
+          No document
         </AlertDescription>
       </Alert>
     );

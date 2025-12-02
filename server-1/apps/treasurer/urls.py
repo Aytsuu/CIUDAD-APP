@@ -5,6 +5,7 @@ from .views import *
 urlpatterns=[
 
     # Budget Plan and Budget Details URL
+    path('budget-plan-analytics/', BudgetPlanAnalyticsView.as_view(), name='budget-plan-analytics'),
     path('budget-plan-active/', BudgetPlanActiveView.as_view(), name = 'budget-plan-active'),
     path('budget-plan-inactive/', BudgetPlanInactiveView.as_view(), name = 'budget-plan-inactive'),
     path('budget-plan-detail/', BudgetPlanDetailView.as_view(), name='treasurer-budget-plan-details'),
@@ -18,6 +19,7 @@ urlpatterns=[
     path('budget-plan-history/<int:plan_id>/', BudgetPlanHistoryView.as_view(), name='budget-plan-history-record'),
     path('previous-budget-plan/', PreviousYearBudgetPlanView.as_view(), name='previous-budget-plan'),
     path('previous-budget-plan-details/', PreviousYearBudgetPlanDetailsView.as_view(), name='previous-budget-plan-details'),
+    path('gad-budget-year/<int:year>/', GADBudgetYearByYearView.as_view(), name='gad-budget-year'),
 
 
     #Disbursement URL

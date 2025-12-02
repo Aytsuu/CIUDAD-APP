@@ -113,7 +113,7 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
               yPos += finalHeight + 20;
               resolve();
             } catch (e) {
-              console.error("Error adding image to PDF:", e);
+              // console.error("Error adding image to PDF:", e);
               reject(e);
             }
           };
@@ -123,7 +123,7 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
         });
       }
     } catch (e) {
-      console.error("Error processing header image for PDF:", e);
+      // console.error("Error processing header image for PDF:", e);
       yPos = addTextWithPageBreak(
         "No header image available",
         margin,
@@ -182,6 +182,7 @@ export const generateProposalPdf = async (data: ProposalPdfData, preview = false
   yPos += sectionGap;
 
   yPos = addSectionTitle("Budgetary Requirements:", yPos);
+  yPos += sectionGap;
   const tableCols = [200, 80, 80, 80];
   const tableStartX = margin;
 

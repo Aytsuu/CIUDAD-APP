@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button/button"
 import { Form } from "@/components/ui/form/form"
 import { FormInput } from "@/components/ui/form/form-input"
 import { FormSelect } from "@/components/ui/form/form-select"
-import { MoveLeft, Users, UserPlus, UsersRound, MoveRight } from "lucide-react"
+import { MoveLeft, UsersRound, MoveRight } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { showErrorToast } from "@/components/ui/toast"
@@ -18,34 +18,6 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
     }
 
     tab_params?.next(true)
-
-    // setIsSubmitting(true)
-
-    // try {
-    //   const formIsValid = await form.trigger()
-    //   if (!formIsValid) {
-    //     showErrorToast("Please fill out all required fields to continue")
-    //     return
-    //   }
-
-    //   const values = form.getValues()
-
-    //   await addFamilyComposition([
-    //     {
-    //       fam: values.familyId,
-    //       fc_role: capitalize(values.role),
-    //       rp: tab_params?.residentId,
-    //     },
-    //   ])
-
-    //   showSuccessToast("Successfully added to existing family!")
-    //   tab_params.next?.(true)
-    // } catch (error) {
-    //   console.error("Error adding to family:", error)
-    //   showErrorToast("Failed to add to family. Please try again.")
-    // } finally {
-    //   setIsSubmitting(false)
-    // }
   }
 
   // -------------------- RENDER ----------------------
@@ -76,14 +48,6 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Info Alert */}
-          {/* <Alert className="border-blue-200 bg-blue-50">
-            <AlertDescription className="text-blue-800">
-              <strong>Existing Family Registration:</strong> This option allows you to add the resident to a family that
-              already exists in the system. Make sure you have the correct Family ID and role information.
-            </AlertDescription>
-          </Alert> */}
-
           <Separator />
 
           {/* Form Content */}
@@ -103,6 +67,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
                       name="familySchema.familyId"
                       label="Family ID"
                       placeholder="Enter the existing family ID"
+                      required
                     />
                     <p className="text-xs text-gray-500">The unique identifier of the family you want to join</p>
                   </div>
@@ -118,6 +83,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
                         { id: "guardian", name: "Guardian" },
                         { id: "dependent", name: "Dependent" },
                       ]}
+                      required
                     />
                     <p className="text-xs text-gray-500">The resident's role within the family structure</p>
                   </div>
@@ -131,24 +97,7 @@ export function RegisterToExistingFam({ tab_params }: { tab_params: Record<strin
                 </div>
               </form>
             </Form>
-          </div>
-
-          {/* Help Section */}
-          <div className="text-center pt-4">
-            <p className="text-xs text-gray-500 mb-2">
-              Need help finding the Family ID? Contact your administrator for assistance.
-            </p>
-            <div className="flex justify-center gap-4 text-xs text-gray-400">
-              <span className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                Family Connection
-              </span>
-              <span className="flex items-center gap-1">
-                <UserPlus className="w-3 h-3" />
-                Role Assignment
-              </span>
-            </div>
-          </div>
+          </div>    
         </CardContent>
       </Card>
     </div>

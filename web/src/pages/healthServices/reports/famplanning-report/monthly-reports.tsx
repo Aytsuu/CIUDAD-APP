@@ -15,8 +15,8 @@ const methodDisplayNames: Record<Method, string> = {
     "BTL": "a. BTL",
     "NSV": "b. NSV",
     "Condom": "c. Condom",
-    "COC": "d. 2 Pills - COC", 
     "POP": "d. 1 Pills - POP", 
+    "COC": "d. 2 Pills - COC", 
     "DMPA": "e. DMPA",
     "Implant": "f. Implant",
     "IUD-Interval": "g. 1 IUD-I",
@@ -358,7 +358,7 @@ const handlePrint = () => {
             <div className="mt-4">
                 <Button
                     onClick={handlePrint}
-                    className="bg-blue rounded"
+                
                 >
                     Print / Download as PDF
                 </Button>

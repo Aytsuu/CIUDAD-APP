@@ -7,20 +7,8 @@ from ..serializers.family_composition_serializers import *
 from ..models import *
 from apps.pagination import *
 from ..double_queries import PostQueries
-
-class FamilyCompositionCreateView(generics.CreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = FamilyCompositionBaseSerializer
-    queryset = FamilyComposition.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-
-        response_serialzier = FamilyCompositionExtendedSerializer(instance)
-        return Response(response_serialzier.data, status=status.HTTP_201_CREATED)
-    
+from apps.notification.utils import create_notification
+from ..notif_recipients import family_recipients
 
 class FamilyMembersListView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
@@ -67,6 +55,7 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
         instances = []
+
         # Prepare model instances
         for item in serializer.validated_data:
             existing = FamilyComposition.objects.filter(rp=item['rp'], fc_role='INDEPENDENT').first()
@@ -74,10 +63,12 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
                 existing.delete()
             instances.append(FamilyComposition(**item))
 
-        created_instances = FamilyComposition.objects.bulk_create(instances)
+        created_instances = []
+        for instance in instances:
+            instance.save()
+            created_instances.append(instance)
 
         if len(created_instances) > 0:
-            
             # Perform double query
             double_queries = PostQueries()
             response = double_queries.family_composition(self.request.data)
@@ -87,6 +78,18 @@ class FamilyCompositionBulkCreateView(generics.CreateAPIView):
                 except ValueError:
                     error_detail = response.text
                 raise serializers.ValidationError({"error": error_detail})
+            
+            # Create notification
+            create_notification(
+                title="New Family Member",
+                message="You have a new member registered in your family.",
+                recipients=family_recipients(created_instances[0].fam),
+                notif_type="",
+                web_route="",
+                web_params={},
+                mobile_route="/(account)/family",
+                mobile_params={}
+            )
 
             response_serializer = FamilyCompositionExtendedSerializer(created_instances, many=True)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -126,5 +129,3 @@ class FamilyRoleUpdateView(generics.RetrieveUpdateAPIView):
         rp = self.kwargs.get('rp')
         obj = get_object_or_404(FamilyComposition, fam=fam, rp=rp)
         return obj
-
-    
