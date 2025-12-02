@@ -113,12 +113,11 @@ export default () => {
                   <Text className="text-primaryBlue text-sm">Add email</Text>
                 </TouchableOpacity>
               )}
-              {user?.rp ||
-                (user?.br && (
+              {(user?.rp || user?.br) && (
                   <Text className="text-sm text-primaryBlue font-medium">
                     ID: {user?.rp || user?.br}
                   </Text>
-                ))}
+                )}
             </View>
           </View>
           <View className="flex-1 gap-3 mt-5">
