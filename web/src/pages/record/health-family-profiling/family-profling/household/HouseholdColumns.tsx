@@ -7,7 +7,7 @@ import ViewButton from "@/components/ui/view-button";
 import { Combobox } from "@/components/ui/combobox";
 import React from "react";
 import { useFamFilteredByHouseHealth } from "../queries/profilingFetchQueries";
-import { formatFamiles } from "../../../profiling/ProfilingFormats";
+import { formatFamilies } from "../../../profiling/ProfilingFormats";
 import { formatDate } from "@/helpers/dateHelper";
 
 // Define the columns for household the data tables
@@ -40,7 +40,7 @@ export const householdColumns: ColumnDef<HouseholdRecord>[] = [
     cell: ({ row }) => {
       const { showLoading, hideLoading } = useLoading();
       const { data: famFilteredByHouse, isLoading } = useFamFilteredByHouseHealth(row.getValue('hh_id'));
-      const formattedFamilies = React.useMemo(() => formatFamiles(famFilteredByHouse), [famFilteredByHouse]);
+      const formattedFamilies = React.useMemo(() => formatFamilies(famFilteredByHouse), [famFilteredByHouse]);
 
       React.useEffect(() => {
         if(isLoading) {
