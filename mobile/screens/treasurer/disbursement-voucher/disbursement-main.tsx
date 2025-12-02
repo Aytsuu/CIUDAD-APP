@@ -50,8 +50,8 @@ const DisbursementVoucherList: React.FC = () => {
   const [showSearch, setShowSearch] = useState(false);
   
   // Pagination states - simplified version
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [currentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isLoadMore, setIsLoadMore] = useState(false);
@@ -86,7 +86,7 @@ const DisbursementVoucherList: React.FC = () => {
 
   // Reset pagination when search, filter, year or view mode changes
   useEffect(() => {
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   }, [debouncedSearchTerm, selectedYear, viewMode]);
 
   // Handle scrolling timeout
@@ -105,14 +105,14 @@ const DisbursementVoucherList: React.FC = () => {
   const handleLoadMore = () => {
     if (isScrolling && hasMore && !isFetching && !isLoadMore) {
       setIsLoadMore(true);
-      setCurrentPage((prev) => prev + 1);
+      setPageSize((prev) => prev + 5); 
     }
   };
 
   // Handle refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
     await refetch();
     setIsRefreshing(false);
   };
@@ -140,7 +140,7 @@ const DisbursementVoucherList: React.FC = () => {
 
   const handleSearch = () => {
     setSearchQuery(searchInputVal);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   const handleArchivePress = (disbursement: DisbursementVoucher, event?: any) => {
@@ -177,12 +177,12 @@ const DisbursementVoucherList: React.FC = () => {
 
   const handleViewModeChange = (mode: "active" | "archived") => {
     setViewMode(mode);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   const handleYearChange = (option: { label: string; value: string }) => {
     setSelectedYear(option.value);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   // Memoized card component for better performance
@@ -410,11 +410,10 @@ const DisbursementVoucherList: React.FC = () => {
             {/* Result Count - Like receipt page */}
             {!isRefreshing && disbursements.length > 0 && (
               <View className="mb-2">
-                <Text className="text-xs text-gray-500 font-sans">
-                  Showing {disbursements.length} of {totalCount} vouchers
-                  {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
-                </Text>
-              </View>
+              <Text className="text-xs text-gray-500 font-sans">
+                Showing {disbursements.length} of {totalCount} vouchers
+              </Text>
+            </View>
             )}
 
             {/* Tabs */}

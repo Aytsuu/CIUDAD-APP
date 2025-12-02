@@ -11,7 +11,6 @@ export const useGetProjectProposalYears = (options = {}) => {
   });
 };
 
-
 export const useGetProjectProposals = (
   page: number = 1,
   pageSize: number = 10,
@@ -20,13 +19,21 @@ export const useGetProjectProposals = (
   year?: string,
   options = {}
 ) => {
-  return useQuery<{ results: ProjectProposal[]; count: number }, Error>({
+  return useQuery<{ 
+    results: ProjectProposal[]; 
+    count: number; 
+    next: string | null; 
+    previous: string | null 
+  }, Error>({
     queryKey: ["projectProposals", page, pageSize, searchQuery, archive, year],
     queryFn: () => getProjectProposals(page, pageSize, searchQuery, archive, year),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (previous) => previous,
     ...options,
   });
 };
+
+
 export const useGetProjectProposal = (gprId: number, options = {}) => {
   return useQuery<ProjectProposal, Error>({
     queryKey: ["projectProposals", gprId],

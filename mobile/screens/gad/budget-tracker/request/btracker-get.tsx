@@ -8,7 +8,7 @@ export const fetchGADBudgets = async (
   searchQuery?: string,
   selectedMonth?: string,
   isArchive?: boolean
-): Promise<{ results: GADBudgetEntry[]; count: number }> => {
+): Promise<{ results: GADBudgetEntry[]; count: number; next: string | null; previous: string | null }> => { // ADD next and previous here
   const params: any = {
     page,
     page_size: pageSize,
@@ -21,7 +21,9 @@ export const fetchGADBudgets = async (
   const response = await api.get(`/gad/gad-budget-tracker-table/${year}/`, { params });
   return {
     results: response.data.results || response.data || [],
-    count: response.data.count || 0
+    count: response.data.count || 0,
+    next: response.data.next || null, 
+    previous: response.data.previous || null 
   };
 };
 

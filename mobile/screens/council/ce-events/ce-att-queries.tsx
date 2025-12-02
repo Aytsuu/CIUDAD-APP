@@ -196,12 +196,17 @@ export const useGetCouncilEvents = (
   year?: string,
   isArchive?: boolean
 ) => {
-  return useQuery<{ results: CouncilEvent[]; count: number }, Error>({
+  return useQuery<{ 
+    results: CouncilEvent[]; 
+    count: number; 
+    next: string | null; 
+    previous: string | null 
+  }, Error>({
     queryKey: ["councilEvents", page, pageSize, searchQuery, year, isArchive],
     queryFn: () => getCouncilEvents(page, pageSize, searchQuery, year, isArchive).catch((error) => {
       throw error;
     }),
-    staleTime: 1000 * 60 * 5, 
+    staleTime: 1000 * 60 * 5,
     placeholderData: (previous) => previous,
   });
 };

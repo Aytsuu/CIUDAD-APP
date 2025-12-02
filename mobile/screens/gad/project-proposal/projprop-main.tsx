@@ -1,5 +1,5 @@
 import React from "react";
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -52,9 +52,8 @@ const ProjectProposalList: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState("All");
   const [showSearch, setShowSearch] = useState(false);
   
-  // Pagination states like receipt page
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  // Pagination states - using pageSize increment approach like disbursement
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isLoadMore, setIsLoadMore] = useState(false);
@@ -71,8 +70,8 @@ const ProjectProposalList: React.FC = () => {
     error,
     isFetching,
   } = useGetProjectProposals(
-    currentPage,
-    pageSize,
+    1, // Always page 1 since we load more by increasing pageSize
+    pageSize, // This controls how many items to fetch
     debouncedSearchTerm,
     viewMode === "archived",
     selectedYear !== "All" ? selectedYear : undefined
@@ -82,15 +81,12 @@ const ProjectProposalList: React.FC = () => {
   const { mutate: archiveProject, isPending: isArchiving } = useArchiveProjectProposal();
   const { mutate: restoreProject, isPending: isRestoring } = useRestoreProjectProposal();
 
-  // Extract data from paginated response
   const projects = projectsData?.results || [];
   const totalCount = projectsData?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
-  const hasMore = currentPage < totalPages;
-
+  
   // Reset pagination when search, filter, year or view mode changes
   useEffect(() => {
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   }, [debouncedSearchTerm, selectedYear, viewMode]);
 
   // Handle scrolling timeout
@@ -105,18 +101,18 @@ const ProjectProposalList: React.FC = () => {
     }, 150);
   };
 
-  // Handle load more - increment page number
+  // Handle load more - increment pageSize
   const handleLoadMore = () => {
-    if (isScrolling && hasMore && !isFetching && !isLoadMore) {
+    if (isScrolling && !isFetching && !isLoadMore && projects.length < totalCount) {
       setIsLoadMore(true);
-      setCurrentPage((prev) => prev + 1);
+      setPageSize((prev) => prev + 5); // Load 5 more items
     }
   };
 
   // Handle refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
     await refetch();
     setIsRefreshing(false);
   };
@@ -145,7 +141,7 @@ const ProjectProposalList: React.FC = () => {
 
   const handleSearch = () => {
     setSearchQuery(searchInputVal);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   const handleArchivePress = (project: ProjectProposal, event?: any) => {
@@ -182,12 +178,12 @@ const ProjectProposalList: React.FC = () => {
 
   const handleViewModeChange = (mode: "active" | "archived") => {
     setViewMode(mode);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   const handleYearChange = (option: { label: string; value: string }) => {
     setSelectedYear(option.value);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   // Memoized Render Project Card
@@ -201,10 +197,10 @@ const ProjectProposalList: React.FC = () => {
         <CardHeader className="pb-3">
           <View className="flex-row justify-between items-start">
             <View className="flex-1">
-              <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+              <Text className="font-semibold text-lg text-[#1a2332] mb-1 font-sans">
                 {project.projectTitle || "Untitled"}
               </Text>
-              <Text className="text-sm text-gray-500">
+              <Text className="text-sm text-gray-500 font-sans">
                 Date: {project.date || "No date provided"}
               </Text>
             </View>
@@ -255,15 +251,15 @@ const ProjectProposalList: React.FC = () => {
         <CardContent className="pt-3 border-t border-gray-200">
           <View className="space-y-3">
             <View className="pb-2">
-              <Text className="text-sm text-gray-600 mb-1">Description:</Text>
-              <Text className="text-base text-black" numberOfLines={2} ellipsizeMode="tail">
+              <Text className="text-sm text-gray-600 mb-1 font-sans">Description:</Text>
+              <Text className="text-base text-black font-sans" numberOfLines={2} ellipsizeMode="tail">
                 {project.background || "No description available"}
               </Text>
             </View>
             
             <View className="flex-row justify-between items-center">
-              <Text className="text-sm text-gray-600">Total Budget:</Text>
-              <Text className="text-lg font-bold text-[#2a3a61]">
+              <Text className="text-sm text-gray-600 font-sans">Total Budget:</Text>
+              <Text className="text-lg font-bold text-[#2a3a61] font-sans">
                 ₱
                 {project.budgetItems && project.budgetItems.length > 0
                   ? new Intl.NumberFormat("en-US", {
@@ -286,6 +282,22 @@ const ProjectProposalList: React.FC = () => {
                   : "N/A"}
               </Text>
             </View>
+            
+            <View className="flex-row justify-between items-center">
+              <Text className="text-sm text-gray-600 font-sans">Venue:</Text>
+              <Text className="text-sm font-medium text-[#1a2332] font-sans">
+                {project.venue || "No venue provided"}
+              </Text>
+            </View>
+            
+            {project.staffName && (
+              <View className="flex-row justify-between items-center">
+                <Text className="text-sm text-gray-600 font-sans">Staff:</Text>
+                <Text className="text-sm font-medium text-[#1a2332] font-sans">
+                  {project.staffName}
+                </Text>
+              </View>
+            )}
           </View>
         </CardContent>
       </Card>
@@ -306,7 +318,7 @@ const ProjectProposalList: React.FC = () => {
     
     return (
       <View className="flex-1 justify-center items-center py-12">
-        <Text className="text-gray-500 text-center">
+        <Text className="text-gray-500 text-center font-sans">
           {emptyMessage}
         </Text>
       </View>
@@ -330,7 +342,7 @@ const ProjectProposalList: React.FC = () => {
             <ChevronLeft size={24} className="text-gray-700" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="text-gray-900 text-[13px]">Project Proposal</Text>}
+        headerTitle={<Text className="text-gray-900 text-[13px] font-sans">Project Proposal</Text>}
         rightAction={
           <TouchableOpacity 
             onPress={() => setShowSearch(!showSearch)} 
@@ -342,17 +354,17 @@ const ProjectProposalList: React.FC = () => {
         wrapScroll={false}
       >
         <View className="flex-1 justify-center items-center p-4">
-          <Text className="text-red-500 text-lg font-medium mb-2">
+          <Text className="text-red-500 text-lg font-medium mb-2 font-sans">
             Error loading proposals
           </Text>
-          <Text className="text-gray-600 text-center mb-4">
+          <Text className="text-gray-600 text-center mb-4 font-sans">
             {error.message}
           </Text>
           <TouchableOpacity
             onPress={handleRefresh}
             className="bg-primaryBlue px-6 py-3 rounded-xl"
           >
-            <Text className="text-white font-medium">Retry</Text>
+            <Text className="text-white font-medium font-sans">Retry</Text>
           </TouchableOpacity>
         </View>
       </PageLayout>
@@ -367,7 +379,7 @@ const ProjectProposalList: React.FC = () => {
             <ChevronLeft size={24} className="text-gray-700" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="text-gray-900 text-[13px]">Project Proposal</Text>}
+        headerTitle={<Text className="text-gray-900 text-[13px] font-sans">Project Proposal</Text>}
         rightAction={
           <TouchableOpacity 
             onPress={() => setShowSearch(!showSearch)} 
@@ -403,7 +415,7 @@ const ProjectProposalList: React.FC = () => {
             {/* Total Budget Display */}
             <View className="pb-3">
               <View className="px-4 py-3 rounded-xl bg-gray-50 border border-gray-200">
-                <Text className="font-medium text-sm text-center">
+                <Text className="font-medium text-sm text-center font-sans">
                   Grand Total:{" "}
                   <Text className="font-bold text-green-700">
                     ₱
@@ -419,21 +431,20 @@ const ProjectProposalList: React.FC = () => {
             {/* Result Count */}
             {!isRefreshing && projects.length > 0 && (
               <View className="mb-2">
-                <Text className="text-xs text-gray-500">
+                <Text className="text-xs text-gray-500 font-sans">
                   Showing {projects.length} of {totalCount} proposals
-                  {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
                 </Text>
               </View>
             )}
 
-            {/* Tabs - Styled like Budget Plan */}
+            {/* Tabs */}
             <Tabs value={viewMode} onValueChange={val => handleViewModeChange(val as "active" | "archived")} className="flex-1">
               <TabsList className="bg-blue-50 flex-row justify-between">
                 <TabsTrigger 
                   value="active" 
                   className={`flex-1 mx-1 ${viewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
                 >
-                  <Text className={`${viewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                  <Text className={`font-sans text-[13px] ${viewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
                     Active
                   </Text>
                 </TabsTrigger>
@@ -441,7 +452,7 @@ const ProjectProposalList: React.FC = () => {
                   value="archived" 
                   className={`flex-1 mx-1 ${viewMode === 'archived' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
                 >
-                  <Text className={`${viewMode === 'archived' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                  <Text className={`font-sans text-[13px] ${viewMode === 'archived' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
                     Archived
                   </Text>
                 </TabsTrigger>
@@ -488,15 +499,14 @@ const ProjectProposalList: React.FC = () => {
                           isFetching && isLoadMore ? (
                             <View className="py-4 items-center">
                               <ActivityIndicator size="small" color="#3B82F6" />
-                              <Text className="text-xs text-gray-500 mt-2">
+                              <Text className="text-xs text-gray-500 mt-2 font-sans">
                                 Loading more proposals...
                               </Text>
                             </View>
                           ) : (
-                            !hasMore &&
-                            projects.length > 0 && (
+                            projects.length > 0 && projects.length >= totalCount && (
                               <View className="py-4 items-center">
-                                <Text className="text-xs text-gray-400">
+                                <Text className="text-xs text-gray-400 font-sans">
                                   No more proposals
                                 </Text>
                               </View>
@@ -550,15 +560,14 @@ const ProjectProposalList: React.FC = () => {
                           isFetching && isLoadMore ? (
                             <View className="py-4 items-center">
                               <ActivityIndicator size="small" color="#3B82F6" />
-                              <Text className="text-xs text-gray-500 mt-2">
+                              <Text className="text-xs text-gray-500 mt-2 font-sans">
                                 Loading more proposals...
                               </Text>
                             </View>
                           ) : (
-                            !hasMore &&
-                            projects.length > 0 && (
+                            projects.length > 0 && projects.length >= totalCount && (
                               <View className="py-4 items-center">
-                                <Text className="text-xs text-gray-400">
+                                <Text className="text-xs text-gray-400 font-sans">
                                   No more proposals
                                 </Text>
                               </View>
