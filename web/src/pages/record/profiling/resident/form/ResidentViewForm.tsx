@@ -549,7 +549,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
                 </div>
               )}
 
-              {!personalInfo?.acc && (
+              {!personalInfo?.has_account && (
                 <div className="flex items-center gap-2 mt-4">
                   <AlertCircle size={18} className="text-primary" />
                   <p className="text-sm text-primary">

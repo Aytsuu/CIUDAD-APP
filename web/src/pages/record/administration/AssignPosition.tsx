@@ -74,7 +74,7 @@ export default function AssignPosition({
           residentId: residentId, 
           positionId: positionId, 
           staffId: user?.staff?.staff_id || "",
-          staffType: staffType == "Barangay Staff" ? "Barangay Staff" : "Health Staff"
+          staffType: staffType?.toLowerCase() == "barangay staff" ? "BARANGAY STAFF" : "HEALTH STAFF"
 
         });
 
@@ -102,7 +102,7 @@ export default function AssignPosition({
           residentId: resident.rp_id, 
           positionId: positionId,
           staffId: user?.staff?.staff_id || "",
-          staffType: staffType == "Barangay Staff" ? "Barangay Staff" : "Health Staff"
+          staffType: staffType?.toLowerCase() == "barangay staff" ? "BARANGAY STAFF" : "HEALTH STAFF"
         });
 
         deliverFeedback();

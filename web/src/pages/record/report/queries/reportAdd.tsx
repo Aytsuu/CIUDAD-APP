@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/api";
 
 export const useAddAR = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       try {
@@ -11,6 +12,10 @@ export const useAddAR = () => {
       } catch (err) {
         throw err;
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['incidentReports']})
+      queryClient.invalidateQueries({ queryKey: ['arReports']})
     }
   })
 }

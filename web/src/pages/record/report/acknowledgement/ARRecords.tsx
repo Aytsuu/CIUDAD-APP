@@ -2,14 +2,13 @@ import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Check, FileDown, FileText, Plus, Search } from "lucide-react";
+import { Check, FileText, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { ARColumns } from "../ReportColumns";
 import {
   useGetAcknowledgementReport,
   useGetWeeklyAR,
 } from "../queries/reportFetch";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useAddWAR, useAddWARComp } from "../queries/reportAdd";
 import { useAuth } from "@/context/AuthContext";
@@ -155,8 +154,8 @@ export default function ARRecords() {
   // =================== RENDER ===================
   return (
     <MainLayoutComponent
-      title="Action Report"
-      description="Manage and view all acknowledgement reports in your system"
+      title="Action Reports"
+      description="Manage and view all action reports in your system"
     >
       {isCreatingWeeklyAR && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between mb-4">
@@ -292,21 +291,6 @@ export default function ARRecords() {
                 </Select>
                 <span className="text-sm text-gray-600">entries</span>
               </div>
-              <div className="flex items-center gap-1">
-                <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="shadow-none">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
-                  options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
-                  ]}
-                />
-              </div>
             </div>
 
             {/* Empty State */}
@@ -330,7 +314,7 @@ export default function ARRecords() {
               <div className="flex items-center justify-center py-12">
                 <Spinner size="lg" />
                 <span className="ml-2 text-gray-600">
-                  Loading acknowledgement reports...
+                  Loading action reports...
                 </span>
               </div>
             )}

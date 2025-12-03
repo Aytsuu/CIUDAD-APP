@@ -42,11 +42,11 @@ export default function Dashboard() {
   
 
   const validateFeature = (feature: string) => {
-    // Always allow access to basic dashboard sections
-    const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE", "CONCILIATION PROCEEDINGS", "COUNCIL MEDIATION", "SUMMON REMARKS"];
-    if (basicSections.includes(feature)) {
-      return true;
-    }
+    // // Always allow access to basic dashboard sections
+    // const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE", "CONCILIATION PROCEEDINGS", "COUNCIL MEDIATION", "SUMMON REMARKS"];
+    // if (basicSections.includes(feature)) {
+    //   return true;
+    // }
     
     const hasAccess =
       user?.staff?.assignments?.includes(feature) ||
@@ -130,14 +130,12 @@ export default function Dashboard() {
         <div className="flex-1 flex flex-col gap-4 overflow-hidden">
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
-           {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
-              <div className="w-1/2 rounded-lg bg-darkBlue1 shadow-sm p-5">
-                <div className="mb-4">
-                  <Label className="text-white text-xl font-medium">Upcoming Events</Label>
-                </div>
-                {instance.find(item => item.upcomingEvents)?.upcomingEvents}
+            <div className="w-1/2 rounded-lg bg-darkBlue1 shadow-sm p-5">
+              <div className="mb-4">
+                <Label className="text-white text-xl font-medium">Upcoming Events</Label>
               </div>
-            )}
+              {instance.find(item => item.upcomingEvents)?.upcomingEvents}
+            </div>
             {cardsWithAccess.length > 0 && (
               <div className="bg-white rounded-lg border p-6 shadow-sm w-full">
                 <div className="flex items-center justify-between mb-4">
@@ -228,7 +226,7 @@ export default function Dashboard() {
 
         {/* Right Column - Sidebar with Internal Scroll */}
         {sidebarsWithAccess.length > 0 && (
-          <div className="w-full lg:w-96 flex flex-col overflow-y-auto flex-shrink-0 pr-1">
+          <div className="flex flex-col overflow-y-auto flex-shrink-0 pr-1">
             {sidebarsWithAccess.map((item: any, index: number) =>
               item.sidebar.map((component: any, sidebarIndex: number) => (
                 <React.Fragment key={`${item.dashboard}-sidebar-${index}-${sidebarIndex}`}>

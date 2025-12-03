@@ -1,5 +1,4 @@
 import { api } from "@/api/api";
-import { capitalizeAllFields } from "@/helpers/capitalize";
 import { formatDate } from "@/helpers/dateHelper";
 
 export const addStaff = async (
@@ -21,18 +20,6 @@ export const addStaff = async (
     const res = await api.post("administration/staff/", body);
     return res.data;
   } catch (err) {
-    console.error(err);
-    throw err;
-  }
-};
-
-// Add new position
-export const addPosition = async (data: any, staffId: string) => {
-  try {
-    const res = await api.post("administration/position/", {...capitalizeAllFields(data), staffId});
-    return res.data;
-  } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -56,17 +43,6 @@ export const assignFeature = async (
       staff: staffId,
     };
     const res = await api.post("administration/assignment/create/", body);
-    return res.data;
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-};
-
-export const setPermission = async (assignmentId: string) => { //Deprecated
-  try {
-    const body = { assi: assignmentId };
-    const res = await api.post("administration/permission/", body);
     return res.data;
   } catch (err) {
     console.error(err);

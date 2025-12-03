@@ -144,14 +144,7 @@ export const main_router: RouteObject[] = [
           </ProtectedRoute>
         ),
       })),
-      ...council_calendar_router.map((route) => ({
-        ...route,
-        element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
-            {route.element}
-          </ProtectedRoute>
-        ),
-      })),
+      ...council_calendar_router,
       ...donation_router.map((route) => ({
         ...route,
         element: (

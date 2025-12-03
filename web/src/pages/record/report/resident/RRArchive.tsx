@@ -12,7 +12,7 @@ import { useGetIncidentReport } from "../queries/reportFetch"
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
 import { Spinner } from "@/components/ui/spinner"
 
-export default function IRArchive() {
+export default function RRArchive() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
@@ -35,9 +35,9 @@ export default function IRArchive() {
   return (
     <LayoutWithBack
       title={<>
-        Archive / <span className="text-gray-400">Incident Report</span>
+        Archive / <span className="text-gray-400">Resident Reports</span>
       </>}
-      description="View all archived incident reports in your system"
+      description="View all archived resident reports in your system"
     >
       <div className="flex w-full h-full gap-4">
         <Card className="w-full">
