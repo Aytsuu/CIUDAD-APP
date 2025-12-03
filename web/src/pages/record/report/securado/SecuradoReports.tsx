@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button/button";
-import { useNavigate } from "react-router";
 import { Input } from "@/components/ui/input";
 import {
   useGetIncidentReport,
@@ -41,7 +40,6 @@ import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
 
 export default function SecuradoReports(): JSX.Element {
   // ================ STATE INITIALIZATION ================
-  const navigate = useNavigate();
   const [currentPage, _setCurrentPage] = React.useState<number>(1);
   const [search, setSearch] = React.useState<string>("");
   const [selectedReport, setSelectedReport] = React.useState<string>("");
