@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     # Third-party apps
+    'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
     'debug_toolbar',
@@ -72,7 +73,6 @@ INSTALLED_APPS = [
     'apps.treasurer',
     'apps.waste',
     'apps.profiling',
-    'corsheaders',
     'apps.account',
     'apps.file',
     'apps.complaint',
@@ -195,7 +195,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': False,  
@@ -213,7 +213,6 @@ AUTH_USER_MODEL = 'account.Account'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    '192.168.1.52',
     'ciudad-app-server-1.onrender.com',
 ]
 

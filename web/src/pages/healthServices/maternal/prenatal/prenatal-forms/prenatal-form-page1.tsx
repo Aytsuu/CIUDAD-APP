@@ -143,13 +143,13 @@ export default function PrenatalFormFirstPg({
       "obstetricHistory.historyOfLBabies",
       "obstetricHistory.historyOfDiabetes",
     ]);
-    console.log("Page 1 validation result:", isValid);
+    // console.log("Page 1 validation result:", isValid);
 
     if (isValid) {
-      console.log("Form is valid, proceeding to next page");
+      // console.log("Form is valid, proceeding to next page");
       onSubmit();
     } else {
-      console.log("Form validation failed. Errors:", form.formState.errors);
+      // console.log("Form validation failed. Errors:", form.formState.errors);
       // Scroll to the first error if validation fails
       const firstErrorElement = document.querySelector('[data-error="true"]');
       if (firstErrorElement) {
@@ -188,19 +188,27 @@ export default function PrenatalFormFirstPg({
     ) {
       form.setValue("pregnancy_id", latestPrenatalData.pregnancy_id || "");
 
-      if (latestPF?.spouse_details?.spouse_info) {
-        const residentSpouse = latestPF?.spouse_details?.spouse_info;
+      const spouseDetails = latestPF?.spouse_details;
+      if (spouseDetails?.spouse_info) {
+        const residentSpouse = spouseDetails.spouse_info;
         form.setValue("motherPersonalInfo.husbandLName", residentSpouse?.per_lname || "");
         form.setValue("motherPersonalInfo.husbandFName", residentSpouse?.per_fname || "");
         form.setValue("motherPersonalInfo.husbandMName", residentSpouse?.per_mname || "");
         form.setValue("motherPersonalInfo.husbandDob", residentSpouse?.per_dob || "");
         form.setValue("motherPersonalInfo.occupation", residentSpouse?.spouse_occupation?.toUpperCase() || latestPF?.pf_occupation?.toUpperCase() || "");
+      } else if (spouseDetails) {
+        form.setValue("motherPersonalInfo.husbandLName", spouseDetails?.spouse_lname || "");
+        form.setValue("motherPersonalInfo.husbandFName", spouseDetails?.spouse_fname || "");
+        form.setValue("motherPersonalInfo.husbandMName", spouseDetails?.spouse_mname || "");
+        form.setValue("motherPersonalInfo.husbandDob", spouseDetails?.spouse_dob || "");
+        form.setValue("motherPersonalInfo.occupation", spouseDetails?.spouse_occupation || latestPF?.pf_occupation || "");
       } else {
-        form.setValue("motherPersonalInfo.husbandLName", latestPF.spouse_details.spouse_lname || "");
-        form.setValue("motherPersonalInfo.husbandFName", latestPF.spouse_details.spouse_fname || "");
-        form.setValue("motherPersonalInfo.husbandMName", latestPF.spouse_details.spouse_mname || "");
-        form.setValue("motherPersonalInfo.husbandDob", latestPF.spouse_details.spouse_dob || "");
-        form.setValue("motherPersonalInfo.occupation", latestPF.spouse_details.spouse_occupation || latestPF.pf_occupation || "");
+        // No spouse details present; ensure fields are reset
+        form.setValue("motherPersonalInfo.husbandLName", "");
+        form.setValue("motherPersonalInfo.husbandFName", "");
+        form.setValue("motherPersonalInfo.husbandMName", "");
+        form.setValue("motherPersonalInfo.husbandDob", "");
+        form.setValue("motherPersonalInfo.occupation", latestPF?.pf_occupation || "");
       }
 
       if (latestPF && activePregnancyId) {

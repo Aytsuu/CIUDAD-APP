@@ -89,7 +89,7 @@ export const setupApiInterceptor = (apiInstance: typeof api) => {
                         throw new Error('No refresh token available');
                     }
 
-                    const refreshResponse = await apiInstance.post('/api/token/refresh/', {
+                    const refreshResponse = await apiInstance.post('/authentication/token/refresh/', {
                         refresh: refreshToken
                     });
 

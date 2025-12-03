@@ -48,7 +48,6 @@ urlpatterns = [
     path("family/id/<str:rp>/", FamilyIDView.as_view(), name="retrieve-family-id"),
     path("family/composition/delete/<str:fam>/<str:rp>/", FamilyMemberDeleteView.as_view(), name="member-deletion"),
     path("family/role/update/<str:fam>/<str:rp>/", FamilyRoleUpdateView.as_view(), name="family-composition-update"),
-    path("family/composition/create/", FamilyCompositionCreateView.as_view(), name="create-family-member"),
     path("family/composition/bulk/create/", FamilyCompositionBulkCreateView.as_view(), name="family-composition-bulk-create"),
     path("family/verify/account-create/", VerifyFamily.as_view(), name="join-existing-family"),
     path("family/data/resident-specific/", FamilyDataResidentSpecificView.as_view(), name="family-data-resident-specific"),

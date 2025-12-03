@@ -5,6 +5,8 @@ from django.db.models import Count, Q
 from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
 from apps.complaint.models import Complaint
 from apps.complaint.serializers import ComplaintCardAnalyticsSerializer
+from django.utils import timezone
+from datetime import timedelta
 
 class ComplaintCardAnalyticsView(APIView):
     
@@ -32,8 +34,6 @@ class ComplaintCardAnalyticsView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
             
         except Exception as e:
-            print(f"Error in ComplaintCardAnalyticsView: {str(e)}")
-            # Return zeros instead of error for better UX
             safe_counts = {
                 'pending': 0,
                 'accepted': 0,
@@ -49,17 +49,17 @@ class ComplaintChartAnalyticsView(APIView):
     
     def get(self, request):
         try:
-            # Get query parameters for time period (optional)
             period = request.GET.get('period', 'daily')  # daily, weekly, monthly
             
-            end_date = timezone.now().date()
-            start_date = end_date - timedelta(days=90)  # Last 3 months
+            end_date = timezone.now()
+            start_date = end_date - timedelta(days=90)
+
             
             if period == 'weekly':
                 # Group by week
                 complaints = Complaint.objects.filter(
-                    comp_created_at__date__gte=start_date,
-                    comp_created_at__date__lte=end_date
+                    comp_created_at__gte=start_date,
+                    comp_created_at__lte=end_date
                 ).annotate(
                     week=TruncWeek('comp_created_at')
                 ).values('week').annotate(
@@ -74,8 +74,8 @@ class ComplaintChartAnalyticsView(APIView):
             elif period == 'monthly':
                 # Group by month
                 complaints = Complaint.objects.filter(
-                    comp_created_at__date__gte=start_date,
-                    comp_created_at__date__lte=end_date
+                    comp_created_at__gte=start_date,
+                    comp_created_at__lte=end_date
                 ).annotate(
                     month=TruncMonth('comp_created_at')
                 ).values('month').annotate(
@@ -90,8 +90,8 @@ class ComplaintChartAnalyticsView(APIView):
             else:
                 # Default: daily grouping
                 complaints = Complaint.objects.filter(
-                    comp_created_at__date__gte=start_date,
-                    comp_created_at__date__lte=end_date
+                    comp_created_at__gte=start_date,
+                    comp_created_at__lte=end_date
                 ).annotate(
                     date=TruncDate('comp_created_at')
                 ).values('date').annotate(
@@ -103,12 +103,7 @@ class ComplaintChartAnalyticsView(APIView):
                     'complaint': item['complaint']
                 } for item in complaints]
             
-            print(f"DEBUG - Generated {len(complaint_data)} data points for period: {period}")
-            if complaint_data:
-                print(f"DEBUG - Sample data: {complaint_data[:3]}")
-            
             return Response(complaint_data, status=status.HTTP_200_OK)
             
         except Exception as e:
-            print(f"Error in ComplaintChartAnalyticsView: {str(e)}")
             return Response([], status=status.HTTP_200_OK)

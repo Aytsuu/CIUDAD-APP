@@ -14,6 +14,7 @@ import {
 import { formatDate } from "@/helpers/dateHelper"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button/button"
+import { EditMemberHealthModal } from "./EditMemberHealthModal"
 import {
   Printer,
   Users,
@@ -104,7 +105,7 @@ const SectionHeader = ({ icon: Icon, title, description }: { icon: any; title: s
   </div>
 )
 
-const MemberCard = ({ member }: { member: any }) => {
+const MemberCard = ({ member, onEditClick }: { member: any; onEditClick?: (member: any) => void }) => {
   // Calculate age to determine if under 5 or over 5
   const calculateAge = (dateOfBirth: string): number => {
     if (!dateOfBirth) return 0
@@ -143,9 +144,17 @@ const MemberCard = ({ member }: { member: any }) => {
               </Badge>
             )}
           </div>
-          <Badge className="bg-green-500 hover:bg-green-600 text-white font-medium px-3 py-1">
-            {member.resident_id}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {onEditClick && (
+              <Button variant="outline" size="sm" onClick={() => onEditClick(member)} className="flex items-center gap-2">
+                <Edit2 className="h-4 w-4" />
+                Edit Health Info
+              </Button>
+            )}
+            <Badge className="bg-green-500 hover:bg-green-600 text-white font-medium px-3 py-1">
+              {member.resident_id}
+            </Badge>
+          </div>
         </div>
 
         <div>
@@ -266,6 +275,8 @@ export default function HealthFamilyProfileView({ familyId, showHealthProfiling 
   const [envModalOpen, setEnvModalOpen] = useState(false)
   const [ncdModalOpen, setNCDModalOpen] = useState(false)
   const [tbModalOpen, setTBModalOpen] = useState(false)
+  const [editMemberModalOpen, setEditMemberModalOpen] = useState(false)
+  const [selectedMemberToEdit, setSelectedMemberToEdit] = useState<any>(null)
 
   // Edit data state
   const [waterSupplyData, setWaterSupplyData] = useState<any>(null)
@@ -619,7 +630,16 @@ export default function HealthFamilyProfileView({ familyId, showHealthProfiling 
                           (m: any) => m.role?.toLowerCase() === "father",
                         )
                         return fathers.length > 0 ? (
-                          fathers.map((member: any) => <MemberCard key={member.resident_id} member={member} />)
+                          fathers.map((member: any) => (
+                            <MemberCard
+                              key={member.resident_id}
+                              member={member}
+                              onEditClick={(m) => {
+                                setSelectedMemberToEdit(m)
+                                setEditMemberModalOpen(true)
+                              }}
+                            />
+                          ))
                         ) : (
                           <Card className="border-dashed border-2">
                             <CardContent className="py-12">
@@ -643,7 +663,16 @@ export default function HealthFamilyProfileView({ familyId, showHealthProfiling 
                           (m: any) => m.role?.toLowerCase() === "mother",
                         )
                         return mothers.length > 0 ? (
-                          mothers.map((member: any) => <MemberCard key={member.resident_id} member={member} />)
+                          mothers.map((member: any) => (
+                            <MemberCard
+                              key={member.resident_id}
+                              member={member}
+                              onEditClick={(m) => {
+                                setSelectedMemberToEdit(m)
+                                setEditMemberModalOpen(true)
+                              }}
+                            />
+                          ))
                         ) : (
                           <Card className="border-dashed border-2">
                             <CardContent className="py-12">
@@ -667,7 +696,16 @@ export default function HealthFamilyProfileView({ familyId, showHealthProfiling 
                           (m: any) => !["father", "mother"].includes(m.role?.toLowerCase()),
                         )
                         return dependents.length > 0 ? (
-                          dependents.map((member: any) => <MemberCard key={member.resident_id} member={member} />)
+                          dependents.map((member: any) => (
+                            <MemberCard
+                              key={member.resident_id}
+                              member={member}
+                              onEditClick={(m) => {
+                                setSelectedMemberToEdit(m)
+                                setEditMemberModalOpen(true)
+                              }}
+                            />
+                          ))
                         ) : (
                           <Card className="border-dashed border-2">
                             <CardContent className="py-12">
@@ -1205,6 +1243,13 @@ export default function HealthFamilyProfileView({ familyId, showHealthProfiling 
           </Card>
         )}
       </Card>
+
+      {/* Member Health Edit Modal */}
+      <EditMemberHealthModal
+        open={editMemberModalOpen}
+        onOpenChange={setEditMemberModalOpen}
+        member={selectedMemberToEdit}
+      />
     </div>
   )
 }

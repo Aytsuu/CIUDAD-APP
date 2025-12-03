@@ -203,7 +203,7 @@ export function SchedulerSidebar() {
                             return (
                               <Link
                                 key={`${daySchedule.date}-${service.name}-am-${serviceIndex}`}
-                                to="/services/scheduler"
+                                to="/scheduler"
                                 state={{
                                   selectedDate: daySchedule.date,
                                   dayName: daySchedule.day,
@@ -249,7 +249,7 @@ export function SchedulerSidebar() {
                             return (
                               <Link
                                 key={`${daySchedule.date}-${service.name}-pm-${serviceIndex}`}
-                                to="/services/scheduler"
+                                to="/scheduler"
                                 state={{
                                   selectedDate: daySchedule.date,
                                   dayName: daySchedule.day,

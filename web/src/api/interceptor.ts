@@ -58,9 +58,10 @@ export const setupApiInterceptor = (apiInstance: typeof api) => {
                 isRefreshing = true;
 
                 try {
-                    const response = await apiInstance.post('api/token/refresh/');
+                    const response = await apiInstance.post('authentication/token/refresh/');
+                    console.log("Token Refresh Called: ", response.status);
                     const newToken = response.data.access;
-
+                    console.log("New Token issued: ", newToken);
                     store.dispatch(updateAccessToken(newToken));
                     processQueue(null, newToken);
 

@@ -131,17 +131,17 @@ export default function Dashboard() {
           {/* Stats Cards Carousel */}
           <div className="flex gap-4">
            {instance.find(item => item.upcomingEvents && validateFeature(item.dashboard)) && (
-              <div className="w-1/2 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 shadow-sm p-5">
+              <div className="w-1/2 rounded-lg bg-darkBlue1 shadow-sm p-5">
                 <div className="mb-4">
-                  <Label className="text-white text-xl font-bold">Upcoming Events</Label>
+                  <Label className="text-white text-xl font-medium">Upcoming Events</Label>
                 </div>
                 {instance.find(item => item.upcomingEvents)?.upcomingEvents}
               </div>
             )}
             {cardsWithAccess.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm w-full">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900">Analytics Overview</h2>
+              <div className="bg-white rounded-lg border p-6 shadow-sm w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-primary">Summary</h2>
                   {totalPages > 1 && (
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">
@@ -181,7 +181,7 @@ export default function Dashboard() {
                       <button
                         key={index}
                         onClick={() => setCurrentCardPage(index)}
-                        className={`w-2 h-2 rounded-full transition-all ${currentCardPage === index ? "bg-blue-600 w-6" : "bg-gray-300 hover:bg-gray-400"}`}
+                        className={`w-2 h-2 rounded-full transition-all ${currentCardPage === index ? "bg-primary w-6" : "bg-gray-300 hover:bg-gray-400"}`}
                         aria-label={`Go to page ${index + 1}`}
                       />
                     ))}
@@ -193,7 +193,7 @@ export default function Dashboard() {
 
           {/* Chart Section */}
           {chartsWithAccess.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex-1 flex flex-col min-h-0">
+            <div className="bg-white rounded-lg border overflow-hidden shadow-sm flex-1 flex flex-col min-h-0">
               {/* Chart Tabs - Fixed at top */}
               {chartsWithAccess.length > 1 && (
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
@@ -203,11 +203,11 @@ export default function Dashboard() {
                         key={`${chartItem.dashboard}-${chartItem.title}-${index}`}
                         onClick={() => setActiveChartTab(chartItem.title)}
                         className={`pb-3 px-1 text-sm font-medium transition-all duration-200 relative whitespace-nowrap ${
-                          activeChartTab === chartItem.title ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+                          activeChartTab === chartItem.title ? "text-primary" : "text-gray-600 hover:text-gray-900"
                         }`}
                       >
                         {chartItem.title}
-                        {activeChartTab === chartItem.title && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"></div>}
+                        {activeChartTab === chartItem.title && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"></div>}
                       </button>
                     ))}
                   </div>
@@ -228,14 +228,14 @@ export default function Dashboard() {
 
         {/* Right Column - Sidebar with Internal Scroll */}
         {sidebarsWithAccess.length > 0 && (
-          <div className="w-full lg:w-96 flex flex-col gap-4 overflow-y-auto flex-shrink-0 pr-1">
+          <div className="w-full lg:w-96 flex flex-col overflow-y-auto flex-shrink-0 pr-1">
             {sidebarsWithAccess.map((item: any, index: number) =>
               item.sidebar.map((component: any, sidebarIndex: number) => (
                 <React.Fragment key={`${item.dashboard}-sidebar-${index}-${sidebarIndex}`}>
                   {/* Conditionally render specific sidebar items */}
                   {component.title === "Pending Medical Appointments" || component.title == "Pending Medicine Requests" || component.title === "To-Pickup Medicine Requests" ? (
                     <ProtectedComponent exclude={["DOCTOR"]}>
-                      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex-shrink-0">
+                      <div className="bg-white rounded-lg border overflow-hidden shadow-sm flex-shrink-0">
                         {/* Sidebar Header */}
                         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                           <div className="flex items-center justify-between">
@@ -250,22 +250,7 @@ export default function Dashboard() {
                         <div>{component.element}</div>
                       </div>
                     </ProtectedComponent>
-                  ) : (
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex-shrink-0">
-                      {/* Sidebar Header */}
-                      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="text-lg font-bold text-gray-900">{component.title}</h3>
-                            <p className="text-xs text-gray-600 mt-1">Latest updates and activity</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Sidebar Content */}
-                      <div>{component.element}</div>
-                    </div>
-                  )}
+                  ) : (<div>{component.element}</div>)}
                 </React.Fragment>
               ))
             )}

@@ -47,8 +47,11 @@ export default function ReportSectionCharts() {
 
   if (isLoading) {
     return (
-      <Card className="w-full h-full border-none shadow-none">
-        <Spinner size="md" />
+      <Card className="w-full h-full flex items-center border-none shadow-none">
+        <div className="mx-auto flex flex-col items-center">
+          <Spinner size="lg" />
+          <p className="mt-3">Loading Chart...</p>
+        </div>
       </Card>
     );
   }
@@ -59,7 +62,7 @@ export default function ReportSectionCharts() {
       <CardHeader className="border-b border-gray-100 bg-white p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle className="text-xl font-bold text-gray-900">Incident Reports Overview</CardTitle>
+            <CardTitle className="text-xl font-bold text-gray-900">Reports Overview</CardTitle>
             <CardDescription className="text-sm text-gray-600 mt-1">
               Tracking incident reports over the last 3 months
             </CardDescription>
@@ -116,7 +119,7 @@ export default function ReportSectionCharts() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Data Available</h3>
             <p className="text-sm text-gray-600 max-w-sm">
-              There are no incident reports to display for the selected time period.
+              There are no reports to display for the selected time period.
             </p>
           </div>
         ) : (
@@ -134,8 +137,8 @@ export default function ReportSectionCharts() {
                 >
                   <defs>
                     <linearGradient id="colorReport" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(220, 90%, 56%)" stopOpacity={0.9}/>
-                      <stop offset="100%" stopColor="hsl(220, 90%, 56%)" stopOpacity={0.6}/>
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9}/>
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.6}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid 

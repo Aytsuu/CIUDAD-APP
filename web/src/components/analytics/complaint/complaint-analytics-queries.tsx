@@ -4,7 +4,7 @@ import api from "@/api/api";
 export interface ComplaintCardAnalytics {
   pending: number;
   cancelled: number;
-  accepted: number;  // ✅ Fixed: was "request"
+  accepted: number;
   rejected: number;
   raised: number;
 }
@@ -19,11 +19,10 @@ export const useGetCardAnalytics = () => {
         return response.data;
       } catch (error) {
         console.error("Error fetching complaint analytics:", error);
-        // Return default values if API fails
         return {
           pending: 0,
           cancelled: 0,
-          accepted: 0,  // ✅ Fixed: was "request"
+          accepted: 0, 
           rejected: 0,
           raised: 0
         };

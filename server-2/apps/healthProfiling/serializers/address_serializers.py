@@ -5,9 +5,6 @@ class AddressBaseSerializer(serializers.ModelSerializer):
   sitio = serializers.SerializerMethodField()
   add_id = serializers.IntegerField(allow_null=True, required=False)
   
-  sitio = serializers.SerializerMethodField()
-  add_id = serializers.IntegerField(allow_null=True, required=False)
-  
   class Meta:
     model = Address
     fields = ['add_id', 'add_province', 'add_city', 'add_barangay', 'add_external_sitio', 'add_street', 'sitio']
@@ -19,7 +16,6 @@ class AddressBaseSerializer(serializers.ModelSerializer):
   def get_sitio(self, obj):
     if obj.sitio:
       return obj.sitio.sitio_name
-
 
 class AddressBulkCreateSerializer(serializers.ModelSerializer):
   class Meta:

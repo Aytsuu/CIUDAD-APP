@@ -41,9 +41,9 @@ class PatientMedicineRecordSerializer(serializers.ModelSerializer):
         ).order_by('-fulfilled_at').first()
         if latest_item and latest_item.fulfilled_at:
             return latest_item.fulfilled_at.date()
-        return None
-
         return latest_item.fulfilled_at if latest_item else None
+
+        
 
 class MedicineAllocationSerializer(serializers.ModelSerializer):
     minv_details = MedicineInventorySerializer(source='minv', read_only=True)
@@ -127,7 +127,7 @@ class MedicineRecordBaseSerialzer(serializers.ModelSerializer):
         patrec = getattr(obj.medreq_id, 'patrec', None)
         if patrec and hasattr(patrec, 'pat_id') and patrec.pat_id:
             info = extract_personal_info(patrec.pat_id)
-            addr = extract_address(patrec.pat_id)
+            addr = get_address(patrec.pat_id)
             return {
                 'personal_info': info if info is not None else {},
                 'address': addr if addr is not None else {},
@@ -174,7 +174,7 @@ class MedicineRecordSerialzer(serializers.ModelSerializer):
         patrec = getattr(obj.medreq_id, 'patrec', None)
         if patrec and hasattr(patrec, 'pat_id') and patrec.pat_id:
             info = extract_personal_info(patrec.pat_id)
-            addr = extract_address(patrec.pat_id)
+            addr = get_address(patrec.pat_id)
             return {
                 'personal_info': info if info is not None else {},
                 'address': addr if addr is not None else {},
@@ -258,7 +258,7 @@ class MedicineRequestSerializer(serializers.ModelSerializer):
         return extract_personal_info(obj)
 
     def get_address(self, obj):
-        return extract_address(obj)
+        return get_address(obj)
   
 class MedicineRequestItemSerializer(serializers.ModelSerializer):
     medreq_details = MedicineRequestBaseSerializer(source='medreq_id', read_only=True)

@@ -575,7 +575,6 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
                     'followv_id': follow_up_visit,
                     'pregnancy_id': pregnancy,
                     'ppr_lochial_discharges': validated_data.get('ppr_lochial_discharges'),
-                    'ppr_vit_a_date_given': validated_data.get('ppr_vit_a_date_given'),
                     'ppr_num_of_pads': validated_data.get('ppr_num_of_pads'),
                     'ppr_date_of_bf': validated_data.get('ppr_date_of_bf'),
                     'ppr_time_of_bf': validated_data.get('ppr_time_of_bf'),
@@ -748,6 +747,32 @@ class PostpartumCompleteSerializer(serializers.ModelSerializer):
             }
         else:
             representation['tts_info'] = None
+
+        # Add medicine request data (micronutrient supplementation / other dispensed meds)
+        if instance.medreq_id:
+            try:
+                medreq = instance.medreq_id
+                # Gather request items (if any)
+                items = []
+                for item in getattr(medreq, 'items', []).all() if hasattr(medreq, 'items') else []:
+                    items.append({
+                        'medreqitem_id': item.medreqitem_id,
+                        'status': item.status,
+                        'med_id': item.med.med_id if item.med else None,
+                        'med_name': item.med.med_name if item.med else None,
+                        'reason': item.reason,
+                    })
+                representation['medicine_request'] = {
+                    'medreq_id': medreq.medreq_id,
+                    'requested_at': medreq.requested_at,
+                    'mode': getattr(medreq, 'mode', None),
+                    'items': items
+                }
+            except Exception as e:
+                print(f"Error serializing medicine request for postpartum record {instance.ppr_id}: {e}")
+                representation['medicine_request'] = None
+        else:
+            representation['medicine_request'] = None
         
         return representation
     

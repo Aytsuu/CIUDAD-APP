@@ -92,3 +92,58 @@ export const updateSurveyIdentification = async (
   const res = await api2.put(`health-profiling/survey-identification/${si_id}/update/`, payload);
   return res.data;
 };
+
+// ==================== UPDATE HEALTH RELATED DETAILS ====================
+export const updateHealthRelatedDetails = async (
+  rp_id: string,
+  payload: {
+    per_add_bloodType?: string;
+    per_add_philhealth_id?: string;
+    per_add_covid_vax_status?: string;
+  }
+) => {
+  const res = await api2.patch(`health-profiling/per_additional_details/${rp_id}/update/`, payload);
+  return res.data;
+};
+
+// ==================== UPDATE MOTHER HEALTH INFO ====================
+export const updateMotherHealthInfo = async (
+  mhi_id: number,
+  payload: {
+    mhi_healthRisk_class?: string;
+    mhi_immun_status?: string;
+    mhi_famPlan_method?: string;
+    mhi_famPlan_source?: string;
+    mhi_lmp_date?: string;
+  }
+) => {
+  const res = await api2.patch(`health-profiling/mother-health-info/${mhi_id}/update/`, payload);
+  return res.data;
+};
+
+// ==================== CREATE DEPENDENTS UNDER FIVE ====================
+export const createDependentsUnderFive = async (
+  payload: {
+    duf_fic?: string;
+    duf_nutritional_status?: string;
+    duf_exclusive_bf?: string;
+    fc: number;
+    rp: number;
+  }
+) => {
+  const res = await api2.post(`health-profiling/dependent-under-five/create/`, payload);
+  return res.data;
+};
+
+// ==================== UPDATE DEPENDENTS UNDER FIVE ====================
+export const updateDependentsUnderFive = async (
+  duf_id: number,
+  payload: {
+    duf_fic?: string;
+    duf_nutritional_status?: string;
+    duf_exclusive_bf?: string;
+  }
+) => {
+  const res = await api2.patch(`health-profiling/dependent-under-five/${duf_id}/update/`, payload);
+  return res.data;
+};

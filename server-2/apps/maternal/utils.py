@@ -467,7 +467,6 @@ def create_medicine_request_for_maternal(patient_record, selected_medicines, sta
                 mode='app',  # app mode for maternal form submission (prenatal/postpartum)
                 patrec=patient_record,
                 requested_at=timezone.now(),
-                fulfilled_at=timezone.now(),
                 rp_id=patient.rp_id if patient.rp_id else None,
                 trans_id=patient.trans_id if patient.trans_id else None,
             )

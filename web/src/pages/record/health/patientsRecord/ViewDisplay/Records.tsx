@@ -1,4 +1,3 @@
-//// filepath: /c:/CIUDAD-APP/web/src/pages/record/health/patientsRecord/ViewDisplay/Records.tsx
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import CardLayout from "@/components/ui/card/card-layout";
 import { SyringeIcon, Pill, Baby } from "lucide-react";
@@ -122,7 +121,7 @@ export default function Records({
       count: medicineCount,
       title: "Medicine",
       icon: <Pill className="w-5 h-5 text-gray-600" />,
-      link: "/services/medicine/records",
+      link: "/services/medicine/records/individual-records",
       state: { params: { patientData: patientLinkData } },
     },
     {
@@ -204,6 +203,8 @@ export default function Records({
                   {/* Regular Services - Grid Layout */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {services.map((service, index) => {
+                      const hasRecords = service.count && service.count > 0;
+
                       return (
                         <div key={index} className="p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all flex flex-col h-full">
                           <div className="flex items-start space-x-3 mb-3">
@@ -211,20 +212,32 @@ export default function Records({
                             <div className="flex-1 min-w-0">
                               <h3 className="text-base font-semibold text-gray-900 truncate">{service.title}</h3>
                               <span className="text-sm text-gray-600 mt-1 block">
-                                {service.count && service.count > 0 ? `${service.count} Records` : "No Records"}
+                                {hasRecords ? `${service.count} Records` : "No Records"}
                               </span>
                             </div>
                           </div>
-                          <Link to={service.link} state={service.state} className="mt-auto">
+                          
+                          {/* Conditionally render Link or disabled Button */}
+                          {hasRecords && !service.disabled ? (
+                            <Link to={service.link} state={service.state} className="mt-auto">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 px-4 text-sm w-full"
+                              >
+                                View Details
+                              </Button>
+                            </Link>
+                          ) : (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-9 px-4 text-sm w-full"
-                              disabled={service.disabled || !service.count || service.count === 0}
+                              className="h-9 px-4 text-sm w-full mt-auto"
+                              disabled={true}
                             >
                               View Details
                             </Button>
-                          </Link>
+                          )}
                         </div>
                       );
                     })}

@@ -29,29 +29,22 @@ import { NutritionalStatusCalculator } from "@/components/ui/nutritional-status-
 import { PatientSearch } from "@/components/ui/patientSearch"
 import { IllnessCombobox } from "@/pages/healthServices/maternal/maternal-components/illness-combobox"
 
-import { useIllnessList, useMaternalStaff } from "@/pages/healthServices/maternal/queries/maternalFetchQueries"
+import { useIllnessList } from "@/pages/healthServices/maternal/queries/maternalFetchQueries"
 import { useAddIllnessData } from "@/pages/healthServices/maternal/queries/maternalAddQueries"
 import { useCreateBHWDailyNote } from "./queries/Add"
+import { useQuery } from "@tanstack/react-query"
+import { api2 } from "@/api/api"
+import { Input } from "@/components/ui/input"
 
 
 export default function BHWNoteForm() {
    const defaultValues = generateDefaultValues(BHWFormSchema)
    const navigate = useNavigate();
 
-   const [selectedPatIdDisplay, setSelectedPatIdDisplay] = useState<string>("");
    const [selectedIllnessId, setSelectedIllnessId] = useState<string>("");
+   const [patientDisplay, setPatientDisplay] = useState<string>("");
 
-   const { data: staffData } = useMaternalStaff();
    const { data: illnessesData, refetch: refetchIllnesses } = useIllnessList();
-
-   // Extract staff array from API response { staff: [...], count: N }
-   const staffList: any[] = Array.isArray((staffData as any)?.staff)
-      ? (staffData as any).staff
-      : [];
-
-   // Find staff by position field
-   const midwife = staffList.find((staff: any) => staff.position === "ADMIN");
-   const doctor = staffList.find((staff: any) => staff.position === "DOCTOR");
 
    // mutation for adding illness
    const addIllnessMutation = useAddIllnessData();
@@ -63,27 +56,11 @@ export default function BHWNoteForm() {
    const staffId = user?.staff?.staff_id || ""
    
    const today = new Date().toISOString().split("T")[0]
-   // Date object for date-based calculations
-   const todayDate = new Date()
-   const currentYear = new Date().toLocaleString('en-US', { year: 'numeric' })
    
    const form = useForm<z.infer<typeof BHWFormSchema>>({
       resolver: zodResolver(BHWFormSchema),
       defaultValues,
    })
-
-   // for checking if date is 7 days before end of month
-   const isSevenDaysBeforeEndOfMonth = (date: Date) => {
-      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      const sevenDaysBefore = new Date(lastDay);
-      sevenDaysBefore.setDate(lastDay.getDate() -7);
-
-      return (
-         date.getDate() === sevenDaysBefore.getDate() &&
-         date.getMonth() === sevenDaysBefore.getMonth() && 
-         date.getFullYear() === sevenDaysBefore.getFullYear()
-      );
-   }
 
    // Initialize staff/date once available
    useEffect(() => {
@@ -91,38 +68,23 @@ export default function BHWNoteForm() {
       if (today) form.setValue("dateToday", today)
    }, [staffId, today, form])
 
-   // Populate noted/approved when staff list resolves
-   // useEffect(() => {
-   if (isSevenDaysBeforeEndOfMonth(todayDate)) {
-      form.setValue("notedBy", midwife?.full_name || "")
-      form.setValue("approvedBy", doctor?.full_name || "")
-   }
-   // }, [midwife, doctor, form])
-
-
-   // handle patient selection
+   // single patient selection handler
    const handlePatientSelect = (patient: any | null, patientId: string) => {
-      setSelectedPatIdDisplay(patientId)
-      console.log("Selected Patient:", patient)
-
+      setPatientDisplay(patientId || "")
       if (patient) {
          const personalInfo = patient?.personal_info
-
          const dob = personalInfo?.per_dob
          if (dob) {
             const ageData = calculateAgeFromDOB(dob)
             form.setValue("age", ageData.ageString)
          }
-
-         // Convert "MALE"/"FEMALE" to "Male"/"Female"
          const rawGender = personalInfo?.per_sex
          if (rawGender) {
             const normalizedGender = rawGender.charAt(0).toUpperCase() + rawGender.slice(1).toLowerCase()
             if (normalizedGender === "Male" || normalizedGender === "Female") {
-               form.setValue("gender", normalizedGender)
+               form.setValue("gender", normalizedGender as any)
             }
          }
-
          if (patient.pat_id) form.setValue("pat_id", patient.pat_id.toString())
       } else {
          form.setValue("pat_id", "")
@@ -162,29 +124,53 @@ export default function BHWNoteForm() {
       name: "illnesses"
    })
 
-   const handleNutritionalStatusChange = (status: any) => {
-      // Save the nutritional status to your form
-      form.setValue("nutritionalStatus", status)
-      console.log("Nutritional Status:", status)
-   }
+   // Fetch patients with optional (is_opt = true) body measurements
+   const [optSearch, setOptSearch] = useState("")
+   const {
+      data: optPatients,
+      isLoading: isLoadingOpt,
+      isError: isErrorOpt,
+      error: errorOpt,
+      refetch: refetchOpt
+   } = useQuery({
+      queryKey: ["bhwOptPatients", optSearch],
+      queryFn: async () => {
+         const res = await api2.get("/reports/bhw/patients-with-opt-measurements/", {
+            params: { search: optSearch, page_size: 10 }
+         })
+         return res.data
+      },
+      staleTime: 5000,
+      retry: 1
+   })
 
    const weight = form.watch("weight")
    const height = form.watch("height")
    const age = form.watch("age")
-   const gender = form.watch("gender")
+   const gender = form.watch("gender") as any
    const muac = form.watch("muac")
-
 
    const handleSubmit = async (data: z.infer<typeof BHWFormSchema>) => {
       try {
-         console.log("Submitting BHW Daily Note:", data)
-         await createBHWMutation.mutateAsync(data as any)
+         const payload: any = {
+            staffId: data.staffId,
+            dateToday: data.dateToday,
+            description: data.description,
+            illnesses: data.illnesses || [],
+            body_measurement: {
+               pat_id: data.pat_id,
+               weight: data.weight,
+               height: data.height,
+               nutritionalStatus: data.nutritionalStatus,
+            },
+         }
+         await createBHWMutation.mutateAsync(payload)
 
          navigate(-1);
          
          // Reset form after successful submission
          form.reset()
-         setSelectedPatIdDisplay("")
+         setPatientDisplay("")
          setSelectedIllnessId("")
       } catch (error) {
          console.error("Failed to submit BHW Daily Note:", error)
@@ -251,21 +237,19 @@ export default function BHWNoteForm() {
                      </div>
                      
                      <div className="mb-7">
-                        <Label className=" text-md font-semibold">Child Anthropometric Measurement</Label>
+                        <Label className=" text-md font-semibold">Child Anthropometric Measurements</Label>
                         <Separator className="mt-2 mb-4"/>
                         <div className="grid grid-cols-2 mb-4">
                            <div className="border rounded-md">
                               <PatientSearch
-                              onPatientSelect={handlePatientSelect}
-                              value={selectedPatIdDisplay}
-                              onChange={setSelectedPatIdDisplay}
-                              ischildren={true}
-                           />
+                                 onPatientSelect={(p, pid) => handlePatientSelect(p, pid)}
+                                 value={patientDisplay}
+                                 onChange={(val) => setPatientDisplay(val)}
+                                 ischildren={true}
+                              />
                            </div>
-                           
                         </div>
-                        
-                        <div className="grid grid-cols-4 gap-2 mb-5">
+                        <div className="grid grid-cols-4 gap-2 mb-3">
                            <FormInput
                               control={form.control}
                               label="Age"
@@ -303,14 +287,58 @@ export default function BHWNoteForm() {
                            muac={muac}
                            age={age}
                            gender={gender as "Male" | "Female"}
-                           onStatusChange={handleNutritionalStatusChange}
+                           onStatusChange={(status) => form.setValue("nutritionalStatus" as any, status)}
                         />
+                     </div>
 
-                        <div className="flex flex-col border p-5 rounded-lg mt-5">
-                              <Label>{` OPT Completion List for the Year ${currentYear} `}</Label>
-                           <div className="flex h-[200px] border p-5 mt-3 rounded-md overflow-y-auto">
-
-                           </div>
+                     {/* Patients with is_opt body measurements */}
+                     <div className="mb-7">
+                        <Label className=" text-md font-semibold">Recent OPT Body Measurements</Label>
+                        <Separator className="mt-2 mb-4"/>
+                        <div className="flex items-center gap-2 mb-3">
+                           <Input
+                              placeholder="Search by Patient ID"
+                              value={optSearch}
+                              onChange={(e) => setOptSearch(e.target.value)}
+                              className="w-64"
+                           />
+                           <Button type="button" variant="outline" onClick={() => refetchOpt()}>
+                              Search
+                           </Button>
+                        </div>
+                        <div className="border rounded-md p-3 bg-gray-50">
+                           {isLoadingOpt && <p className="text-sm text-gray-600">Loading OPT patients...</p>}
+                           {isErrorOpt && (
+                              <p className="text-sm text-red-600">Failed to load: {String((errorOpt as any)?.message || 'Unknown error')}</p>
+                           )}
+                           {!isLoadingOpt && !isErrorOpt && (
+                              <div className="max-h-56 overflow-auto">
+                                 {(optPatients?.results || []).length === 0 ? (
+                                    <p className="text-sm text-gray-600">No records found.</p>
+                                 ) : (
+                                    <table className="w-full text-sm">
+                                       <thead>
+                                          <tr className="text-left text-gray-700">
+                                             <th className="py-1 pr-2">Patient ID</th>
+                                             <th className="py-1 pr-2">Name</th>
+                                             <th className="py-1 pr-2">MUAC Status</th>
+                                             <th className="py-1 pr-2">Created</th>
+                                          </tr>
+                                       </thead>
+                                       <tbody>
+                                          {(optPatients?.results || []).map((item: any, idx: number) => (
+                                             <tr key={idx} className="border-t border-gray-200">
+                                                <td className="py-1 pr-2">{item?.pat_id || '-'}</td>
+                                                <td className="py-1 pr-2">{item?.patient_name || '-'}</td>
+                                                <td className="py-1 pr-2">{item?.measurement?.muac_status || '-'}</td>
+                                                <td className="py-1 pr-2">{item?.measurement?.created_at || '-'}</td>
+                                             </tr>
+                                          ))}
+                                       </tbody>
+                                    </table>
+                                 )}
+                              </div>
+                           )}
                         </div>
                      </div>
 
@@ -390,53 +418,6 @@ export default function BHWNoteForm() {
                            )}
                         </div>
                      </div>
-                     
-                     {/* {isSevenDaysBeforeEndOfMonth(todayDate) && ( */}
-                        <div className="mb-10">
-                           <span className="flex flex-row gap-2 items-center">
-                              <Label className=" text-md font-semibold">Attendance Summary</Label>
-                              <p className="text-black/70 text-xs">(to be fill-up on the day of reporting)</p>
-                           </span>
-                           <Separator className="mt-2 mb-4"/>
-                           <div className="grid grid-cols-5 gap-2 mb-5">
-                              <FormInput
-                                 control={form.control}
-                                 label="Number of Working Days"
-                                 placeholder="Enter number of working days"
-                                 name="numOfWorkingDays"
-                                 type="number"
-                              />
-                              <FormInput
-                                 control={form.control}
-                                 label="Days Present"
-                                 placeholder="Enter days present"
-                                 name="daysPresent"
-                                 type="number"
-                              />
-                              <FormInput
-                                 control={form.control}
-                                 label="Days Absent"
-                                 placeholder="Enter days absent"
-                                 name="daysAbsent"
-                                 type="number"
-                              />
-                              <FormInput
-                                 control={form.control}
-                                 label="Noted By"
-                                 placeholder="Noted By"
-                                 name="notedBy"
-                                 type="text"
-                              />
-                              <FormInput
-                                 control={form.control}
-                                 label="Approved By"
-                                 placeholder="Approved By"
-                                 name="approvedBy"
-                                 type="text"
-                              />
-                           </div>
-                        </div>
-                     {/* )} */}
                      
                      <div className="flex justify-end">
                         <Button type="submit" disabled={createBHWMutation.isPending}>

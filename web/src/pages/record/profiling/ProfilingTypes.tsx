@@ -24,7 +24,7 @@ export type ResidentRecord = {
   sex: string;
   dob: string;
   pwd: string;
-  voter: "Yes" | "No" | "Link" | "Review";
+  voter: "YES" | "NO" | "LINK" | "REVIEW";
   registered_by: string;
   has_account: boolean;
 };
@@ -44,6 +44,16 @@ export type ResidentFamilyRecord = {
   sex: string;
   dob: string;
   status: string;
+}
+
+export type ResidentHouseholdRecord = {
+  hh_id: string;
+  total_families: string;
+  street: string;
+  sitio: string;
+  nhts: string;
+  date_registered: string;
+  registered_by: string;
 }
 
 export type ResidentBusinessRecord = {

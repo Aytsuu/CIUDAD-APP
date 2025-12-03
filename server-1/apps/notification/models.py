@@ -19,6 +19,9 @@ class Notification(models.Model):
     class Meta:
         ordering = ['-notif_created_at']
         db_table = 'notification'
+        indexes = [
+            models.Index(fields=['notif_created_at']),
+        ]
     def __str__(self):
         return f"Notification {self.notif_title} - {self.notif_created_at}"
 
@@ -43,6 +46,9 @@ class Recipient(models.Model):
     
     class Meta: 
         db_table = 'recipient'
+        indexes = [
+            models.Index(fields=['acc', 'notif']),
+        ]
         
     def mark_as_read(self):
         self.is_read = True

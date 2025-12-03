@@ -97,7 +97,7 @@ export default function IRRecords() {
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-sm font-medium text-gray-700">Show</span>
                   <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>

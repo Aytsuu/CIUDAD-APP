@@ -3,6 +3,7 @@ from rest_framework import serializers
 from rest_framework.permissions import AllowAny
 from apps.account.models import Account
 from rest_framework.response import Response
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from apps.account.models import PhoneVerification
 from django.core.cache import cache
@@ -11,6 +12,7 @@ from rest_framework import status
 from ..serializers import UserAccountSerializer
 from utils.otp import generate_otp
 from django.http import JsonResponse 
+from rest_framework_simplejwt.views import TokenRefreshView
 import logging
 
 logger = logging.getLogger(__name__)
@@ -112,7 +114,7 @@ class ValidateOTPWebView(APIView):
             key='refresh_token',
             value=str(refresh),
             httponly=True,
-            secure=True,
+            secure=False, # change to True in production
             samesite='Lax',
         )
             
@@ -172,10 +174,6 @@ class ValidateOTPMobileView(APIView):
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         
         serializer = UserAccountSerializer(user)
-        
-        # if not serializer.data.get('rp'):
-        #     return Response({'error': 'Resident profile not found'}, status=status.HTTP_404_NOT_FOUND)
-        
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
         
@@ -190,3 +188,15 @@ class ValidateOTPMobileView(APIView):
             },
             status = status.HTTP_200_OK
         )
+        
+class CookieTokenRefreshView(TokenRefreshView):
+    serializer_class = TokenRefreshSerializer
+    
+    def post(self, request, *args, **kwargs):
+        refresh = request.COOKIES.get('refresh_token')
+        
+        if not refresh:
+            return Response({'error': 'Refresh token not found in cookies'}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = self.get_serializer(data={'refresh': refresh})
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
