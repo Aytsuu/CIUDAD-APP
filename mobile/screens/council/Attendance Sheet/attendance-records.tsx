@@ -333,7 +333,7 @@ const AttendanceRecord = () => {
                 showsVerticalScrollIndicator={false}
                 initialNumToRender={5}
                 onEndReached={handleLoadMore}
-                onEndReachedThreshold={0.8}
+                onEndReachedThreshold={0.5}
                 onScroll={handleScroll}
                 windowSize={11}
                 renderItem={renderItem}
