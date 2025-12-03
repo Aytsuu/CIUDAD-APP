@@ -13,7 +13,7 @@ export const getAnimalBitePatientSummary = async () => {
   try {
     console.log("🔍 Fetching unique animal bite patient summary from /animalbites/patient-summary/...")
     const res = await api2.get("animalbites/patient-details/")
-     console.log("API Response:", res.data) // Add this line
+    //  console.log("API Response:", res.data) // Add this line
     const uniquePatients = res.data
 
     console.log(`✅ Found ${uniquePatients.length} unique animal bite patients.`)
@@ -39,7 +39,7 @@ export const getAnimalBitePatientSummary = async () => {
 
     return uniquePatients
   } catch (error) {
-    console.error("❌ Error fetching unique animal bite patients:", error)
+    // console.error("❌ Error fetching unique animal bite patients:", error)
     handleApiError(error, "Fetch Unique Animal Bite Patients")
     return []
   }
@@ -124,12 +124,12 @@ export const getUniqueAnimalbitePatients = async () => {
 
 export const getPatientById = async (patientId: string) => {
   try {
-    console.log(`🔍 Fetching patient with ID: ${patientId}...`)
+    // console.log(`🔍 Fetching patient with ID: ${patientId}...`)
     const res = await api2.get(`patientrecords/patient/${patientId}/`)
-    console.log("✅ Patient fetched successfully:", res.data)
+    // console.log("✅ Patient fetched successfully:", res.data)
     return res.data
   } catch (error) {
-    handleApiError(error, `Fetch Patient by ID: ${patientId}`)
+    // handleApiError(error, `Fetch Patient by ID: ${patientId}`)
     return null
   }
 }
@@ -162,7 +162,7 @@ export const getPatientRecordsByPatId = async (patId: string) => {
   try {
     // This function will now fetch from animalbites/patient-details/ with a filter
     const res = await api2.get(`animalbites/patient-details/${patId}/`)
-    console.log("✅ Patient records by pat_id fetched successfully:", res.data)
+    // console.log("✅ Patient records by pat_id fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, `Fetch Patient Records by Pat ID: ${patId}`)
@@ -185,7 +185,7 @@ export const getPatientByResidentId = async (rpId: string) => {
     const res = await api2.get(`patientrecords/patient/by-resident/${rpId}/`);
     return res.data;
   } catch (error) {
-    handleApiError(error, `Fetch Patient by Resident ID: ${rpId}`);
+    // handleApiError(error, `Fetch Patient by Resident ID: ${rpId}`);
     return null;
   }
 };

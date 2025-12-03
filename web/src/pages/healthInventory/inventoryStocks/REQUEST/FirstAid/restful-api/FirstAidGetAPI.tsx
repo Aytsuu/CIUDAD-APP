@@ -35,7 +35,7 @@ export const getFirstAidStocksTable= async (
       }
     });
 
-    console.log("First Aid Stock API Response:", res.data);
+    // console.log("First Aid Stock API Response:", res.data);
     return res.data;
   } catch (error) {
     console.error("First Aid Stock API Error:", error);

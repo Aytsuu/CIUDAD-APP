@@ -118,7 +118,6 @@ export const getAnimalBitePatientSummary = async () => {
   try {
     console.log("🔍 Fetching unique animal bite patient summary from /animalbites/patient-details/...")
     const res = await api2.get("animalbites/patient-details/")
-    console.log("API Response:", res.data)
     const uniquePatients = res.data
     console.log(`✅ Found ${uniquePatients.length} unique animal bite patients.`)
 
@@ -146,12 +145,12 @@ export const getAnimalBitePatientSummary = async () => {
 
 export const getPatientById = async (patientId: string) => {
   try {
-    console.log(`🔍 Fetching patient with ID: ${patientId}...`)
+    // console.log(`🔍 Fetching patient with ID: ${patientId}...`)
     const res = await api2.get(`patientrecords/patients/${patientId}/`)
-    console.log("✅ Patient fetched successfully:", res.data)
+    // console.log("✅ Patient fetched successfully:", res.data)
     return res.data
   } catch (error) {
-    handleApiError(error, `Fetch Patient by ID: ${patientId}`)
+    // handleApiError(error, `Fetch Patient by ID: ${patientId}`)
     return null
   }
 }
@@ -183,7 +182,7 @@ export const createPatientRecord = async (recordData: any) => {
 export const getPatientRecordsByPatId = async (patId: string) => {
   try {
     const res = await api2.get(`animalbites/patient-details/?patient_id=${patId}`)
-    console.log("✅ Patient records by pat_id fetched successfully:", res.data)
+    // console.log("✅ Patient records by pat_id fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, `Fetch Patient Records by Pat ID: ${patId}`)

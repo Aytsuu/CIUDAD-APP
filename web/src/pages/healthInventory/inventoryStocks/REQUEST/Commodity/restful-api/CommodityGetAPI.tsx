@@ -30,8 +30,6 @@ export const getCommodityStocksTable = async (
         filter: filter || "all"
       }
     });
-
-    console.log("Commodity Stock API Response:", res.data);
     return res.data;
   } catch (error) {
     console.error("Commodity Stock API Error:", error);

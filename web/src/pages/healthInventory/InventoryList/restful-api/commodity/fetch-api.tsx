@@ -10,7 +10,7 @@ export const getCommodity = async (page?: number, pageSize?: number, search?: st
         search: search?.trim() || undefined,
       },
     });
-    console.log("Commodity API Response:", res.data);
+    // console.log("Commodity API Response:", res.data);
     return res.data;
   } catch (error) {
     console.error("Commodity API Error:", error);

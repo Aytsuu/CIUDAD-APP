@@ -48,8 +48,8 @@ export default function MedicineRequestScreen() {
   const { data: fetchedMedicines, isLoading, isError, error } = useMedicines( currentPage, pageSize, debouncedSearchQuery, selectedCategory);
   
   const position = user?.staff?.pos;
-  console.log("Position:",position)
-  console.log("RP_ID:", userId);
+  // console.log("Position:",position)
+  // console.log("RP_ID:", userId);
 
    const handlePageChange = useCallback((page: number) => {
       setCurrentPage(page);
@@ -66,11 +66,11 @@ export default function MedicineRequestScreen() {
     };
   }, [searchQuery]);
 
-  useEffect(() => {
-  console.log("🔍 API Response:", fetchedMedicines);
-  console.log("🔍 Medicines array:", fetchedMedicines?.medicines);
-  console.log("🔍 Total count:", fetchedMedicines?.count);
-}, [fetchedMedicines]);
+//   useEffect(() => {
+//   console.log("🔍 API Response:", fetchedMedicines);
+//   console.log("🔍 Medicines array:", fetchedMedicines?.medicines);
+//   console.log("🔍 Total count:", fetchedMedicines?.count);
+// }, [fetchedMedicines]);
 
   useEffect(() => {
     const checkPendingRequests = async () => {
@@ -241,7 +241,7 @@ const categories = useMemo(() => {
             <Search size={18} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-900 font-medium"
-              placeholder="Search medicines"
+              placeholder="Search medicines..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}

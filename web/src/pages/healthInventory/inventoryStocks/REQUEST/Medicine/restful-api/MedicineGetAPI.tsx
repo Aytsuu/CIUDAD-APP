@@ -30,7 +30,7 @@ export const getMedicineStocks = async (
       }
     });
 
-    console.log("Medicine Stock API Response:", res.data);
+    // console.log("Medicine Stock API Response:", res.data);
     return res.data;
   } catch (error) {
     console.error("Medicine Stock API Error:", error);

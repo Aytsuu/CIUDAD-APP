@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import PageLayout from "../_PageLayout";
 import { usePendingAppointments } from "./my-schedules/pendingAppointment";
 import { Badge } from "@/components/ui/badge"
+import { LoadingState } from "@/components/ui/loading-state";
 
 const { width } = Dimensions.get("window");
 
@@ -39,21 +40,22 @@ interface Module {
 }
 
 const Homepage = () => {
-  const { user, hasCheckedAuth } = useAuth();
-  const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
-  
-  // Determine user role
-  const isAdmin = user?.staff?.staff_type.toLowerCase() === "health staff";
-  const isResident = !!user?.rp;
+const { user, hasCheckedAuth } = useAuth();
+const { pendingCount, isLoading: isLoadingPending } = usePendingAppointments();
+
+// Determine user role
+const isHealthStaff = user?.staff?.staff_type?.toLowerCase() === "health staff";
+const positionTitle = (user?.staff?.pos || "").toLowerCase();
+const isAdmin = isHealthStaff && (positionTitle.includes("admin") || positionTitle.includes("barangay health workers"));
+const isResident = !!user?.rp;
+
+// console.log("User staff object:", user?.staff);
+// console.log("Position value:", user?.staff?.pos);
+// console.log("POS Title:", positionTitle);
+// console.log("Admin check:", isHealthStaff, positionTitle, isAdmin);
 
   // Wait for auth check to complete
-  if (!hasCheckedAuth) {
-    return (
-      <SafeAreaView className="flex-1 bg-gray-50">
-        <Text>Loading...</Text>
-      </SafeAreaView>
-    );
-  }
+  if (!hasCheckedAuth) { return <LoadingState/> }
 
   const modules: Module[] = [
     { name: "Animal Bites", route: "admin/animalbites/overall" as Href, icon: Dog },

@@ -113,16 +113,16 @@ export default function InvMedicalConRecords() {
 
   // Extract medical records from API response
   const medicalRecords = useMemo(() => {
-    console.log("Raw API Response:", medicalRecordsResponse);
+    // console.log("Raw API Response:", medicalRecordsResponse);
 
     if (medicalRecordsResponse?.results) {
-      console.log("Using paginated results");
+      // console.log("Using paginated results");
       return medicalRecordsResponse.results;
     } else if (Array.isArray(medicalRecordsResponse)) {
-      console.log("Using direct array");
+      // console.log("Using direct array");
       return medicalRecordsResponse;
     } else {
-      console.log("No records found, using empty array");
+      // console.log("No records found, using empty array");
       return [];
     }
   }, [medicalRecordsResponse]);
@@ -130,24 +130,24 @@ export default function InvMedicalConRecords() {
   // Extract and serialize patient data from consultation records
   const patientData = useMemo(() => {
     if (!medicalRecords || medicalRecords.length === 0) {
-      console.log("No consultation records found for patient data");
+      // console.log("No consultation records found for patient data");
       return null;
     }
 
     // Get patient data from the first record
     const firstRecord = medicalRecords[0];
-    console.log("First consultation record for patient data:", firstRecord?.patrec_details);
+    // console.log("First consultation record for patient data:", firstRecord?.patrec_details);
 
     // Extract the patient_details which matches what serializePatientData expects
     const patientDetails = firstRecord.patrec_details?.patient_details;
 
     if (!patientDetails) {
-      console.log("No patient_details found in consultation record");
+      // console.log("No patient_details found in consultation record");
       return null;
     }
 
     const serialized = serializePatientData(patientDetails);
-    console.log("Final patient data for display:", serialized);
+    // console.log("Final patient data for display:", serialized);
     return serialized;
   }, [medicalRecords]);
 
@@ -157,8 +157,8 @@ export default function InvMedicalConRecords() {
   const startEntry = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0;
   const endEntry = Math.min(currentPage * pageSize, totalCount);
 
-  console.log("Processed - Total count:", totalCount, "Records:", medicalRecords.length);
-  console.log("Patient Data Available:", !!patientData);
+  // console.log("Processed - Total count:", totalCount, "Records:", medicalRecords.length);
+  // console.log("Patient Data Available:", !!patientData);
 
   // Handle consultation search
   const handleSearchChange = useCallback((text: string) => {
