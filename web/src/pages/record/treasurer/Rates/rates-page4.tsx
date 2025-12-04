@@ -81,21 +81,6 @@ function RatesPage4() {
             cell: ({ row }) => formatNumber(row.original.pr_rate.toString())
         },
         {
-            accessorKey: "pr_date",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Date Updated
-                    <ArrowUpDown size={14} />
-                </div>
-            ),
-            cell: ({ row }) => (
-                <div className="text-center">{formatTimestamp(row.getValue("pr_date"))} </div>            
-            )
-        },
-        {
             accessorKey: "action",
             header: "Action",
             cell: ({ row }) => {
@@ -150,8 +135,18 @@ function RatesPage4() {
         },
         {
             accessorKey: "pr_date",
-            header: "Date Updated",
-            cell: ({ row }) => formatTimestamp(row.original.pr_date)
+            header: ({ column }) => (
+                <div
+                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Last Updated
+                    <ArrowUpDown size={14} />
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{formatTimestamp(row.getValue("pr_date"))} </div>            
+            )
         },
         {
             accessorKey: "staff_name",

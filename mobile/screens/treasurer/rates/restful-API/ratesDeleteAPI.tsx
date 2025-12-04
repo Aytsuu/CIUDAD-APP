@@ -1,7 +1,7 @@
 import { api } from "@/api/api"
 
 
-export const deleteAnnualGrossSales= async (ags_id: number) => {
+export const deleteAnnualGrossSales= async (ags_id: number, staff_id: string) => {
     try{
 
         const res = await api.put(`treasurer/delete-annual-gross-sales/${ags_id}/`, {

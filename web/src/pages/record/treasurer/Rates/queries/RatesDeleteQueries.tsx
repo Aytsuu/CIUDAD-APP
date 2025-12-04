@@ -7,7 +7,7 @@ export const useDeleteAnnualGrossSales = (onSuccess?: () => void) => {
     const queryClient = useQueryClient();
 
     return useMutation({
-      mutationFn: (ags_id: number) => deleteAnnualGrossSales(ags_id),
+      mutationFn: (values: {ags_id: number, staff_id: string}) => deleteAnnualGrossSales(values.ags_id, values.staff_id),
       onMutate: async () => {
             queryClient.invalidateQueries({ queryKey: ['grossSalesActive'] });
             queryClient.invalidateQueries({ queryKey: ['allGrossSales'] });
