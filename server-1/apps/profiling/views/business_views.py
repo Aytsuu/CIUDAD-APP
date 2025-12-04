@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.db.models import Q, Count
-from ..models import Business, BusinessFile
+from ..models import Business, BusinessFile, BusinessRespondent
 from apps.account.models import Account
 from ..serializers.business_serializers import *
 from apps.pagination import StandardResultsPagination
@@ -198,10 +198,29 @@ class SpecificOwnerView(generics.ListAPIView):
       rp = self.request.query_params.get('rp')
       br = self.request.query_params.get('br')
 
+      # Build query to match businesses by either rp or br (or both)
+      query_filter = Q()
       if rp:
-          queryset = Business.objects.filter(rp=rp)
-      elif br:
-          queryset = Business.objects.filter(br=br)
+          query_filter |= Q(rp=rp)
+      if br:
+          # Match by br_id directly
+          query_filter |= Q(br=br)
+          # Also match businesses where the BusinessRespondent has the same contact number
+          # This handles cases where a user creates a new account but has existing businesses
+          # registered under a different br_id with the same contact
+          try:
+              business_respondent = BusinessRespondent.objects.get(br_id=br)
+              if business_respondent.br_contact:
+                  # Find other business respondents with the same contact number
+                  matching_br_ids = BusinessRespondent.objects.filter(
+                      br_contact=business_respondent.br_contact
+                  ).values_list('br_id', flat=True)
+                  query_filter |= Q(br__in=matching_br_ids)
+          except BusinessRespondent.DoesNotExist:
+              pass
+      
+      if query_filter:
+          queryset = Business.objects.filter(query_filter)
       else:
           queryset = Business.objects.none()
 
