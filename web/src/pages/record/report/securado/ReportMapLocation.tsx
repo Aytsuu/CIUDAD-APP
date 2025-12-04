@@ -13,6 +13,7 @@ export default function ReportMapLocation({
 }): JSX.Element {
   const mapContainerRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<maplibregl.Map | null>(null);
+  const [isMapReady, setIsMapReady] = React.useState<boolean>(false);
 
   // Initialize map
   React.useEffect(() => {
@@ -159,6 +160,9 @@ export default function ReportMapLocation({
             "icon-ignore-placement": true,
           },
         });
+
+        // Set map ready flag to true
+        setIsMapReady(true);
       });
     }
 
@@ -215,7 +219,7 @@ export default function ReportMapLocation({
       zoom: 17,
       pitch: 45,
     });
-  }, [selectedReport, IRInfo]);
+  }, [selectedReport, IRInfo, isMapReady]);
 
   return (
     <div

@@ -825,7 +825,7 @@ function TemplatePreview({ templates, signatory, pangkatSecretary = "ANGELICA MA
       
       // Process each line - check for bold placeholders
       let currentX = marginValue;
-      let lineText = splitText[i];
+      const lineText = splitText[i];
       
       // Split by bold placeholders
       const parts = lineText.split(/(__BOLD\d+__)/g);

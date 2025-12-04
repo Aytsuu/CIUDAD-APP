@@ -6,18 +6,18 @@ from ..models import Position, Staff
 from ..serializers.position_serializers import *
 
 
-class PositionView(generics.ListCreateAPIView):
-    serializer_class = PositionListSerializer
+# class PositionView(generics.ListAPIView):
+#     serializer_class = PositionListSerializer
 
-    def get_queryset(self):
-        staff_type = self.request.query_params.get('staff_type', None)
+#     def get_queryset(self):
+#         staff_type = self.request.query_params.get('staff_type', None)
         
-        if staff_type:
-            pos_category = 'BARANGAY POSITION' if staff_type == 'BARANGAY STAFF' \
-                            else 'HEALTH POSITION'
-            queryset = Position.objects.filter(pos_category=pos_category)
-            return queryset
-        return None
+#         if staff_type:
+#             pos_category = 'BARANGAY POSITION' if staff_type == 'BARANGAY STAFF' \
+#                             else 'HEALTH POSITION'
+#             queryset = Position.objects.filter(pos_category=pos_category)
+#             return queryset
+#         return None
     
 class PositionDeleteView(generics.DestroyAPIView):
     serializer_class = PositionBaseSerializer
@@ -36,7 +36,6 @@ class PositionBulkCreateView(generics.CreateAPIView):
         for item in serializer.validated_data:
             instance = Position(**item)
             instance.save()
-
 
         return Response(status=status.HTTP_201_CREATED) 
 
@@ -58,15 +57,15 @@ class PositionUpdateView(generics.RetrieveUpdateAPIView):
                 return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
-class PositionGroupsListView(APIView):
-    def get(self, request, *args, **kwargs):
-        queryset = Position.objects.filter(pos_group__isnull=False) \
-                .exclude(pos_group__exact='') \
-                .values_list('pos_group', flat=True) \
-                .distinct()
-        if queryset:
-            return Response(queryset)
-        return Response(status=status.HTTP_404_NOT_FOUND)
+# class PositionGroupsListView(APIView):
+#     def get(self, request, *args, **kwargs):
+#         queryset = Position.objects.filter(pos_group__isnull=False) \
+#                 .exclude(pos_group__exact='') \
+#                 .values_list('pos_group', flat=True) \
+#                 .distinct()
+#         if queryset:
+#             return Response(queryset)
+#         return Response(status=status.HTTP_404_NOT_FOUND)
     
 class PositionGroupUpdateView(APIView):
     def patch(self, request, *args, **kwargs):

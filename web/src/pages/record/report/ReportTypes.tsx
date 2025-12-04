@@ -11,6 +11,10 @@ export type IRReport = {
   ir_severity: string;
   ir_time: string;
   ir_date: string;
+  ir_status: string;
+  ir_is_tracker: boolean;
+  ir_track_lat: number;
+  ir_track_lng: number;
 }
 
 export type ARReport = {

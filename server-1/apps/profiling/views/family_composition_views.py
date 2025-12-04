@@ -10,20 +10,6 @@ from ..double_queries import PostQueries
 from apps.notification.utils import create_notification
 from ..notif_recipients import family_recipients
 
-class FamilyCompositionCreateView(generics.CreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = FamilyCompositionBaseSerializer
-    queryset = FamilyComposition.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-
-        response_serialzier = FamilyCompositionExtendedSerializer(instance)
-        return Response(response_serialzier.data, status=status.HTTP_201_CREATED)
-    
-
 class FamilyMembersListView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = FamilyCompositionExtendedSerializer

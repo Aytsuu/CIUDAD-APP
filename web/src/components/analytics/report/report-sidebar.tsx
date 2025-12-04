@@ -7,21 +7,21 @@ import { Link, useNavigate } from "react-router";
 
 const SEVERITY: any = {
   LOW: {
-    label: 'Low Priority',
-    textColor: 'text-emerald-600',
+    label: "Low Priority",
+    textColor: "text-emerald-600",
   },
   MEDIUM: {
     icon: AlertTriangle,
-    label: 'Medium Priority',
-    textColor: 'text-amber-600',
-    iconColor: 'text-amber-600'
+    label: "Medium Priority",
+    textColor: "text-amber-600",
+    iconColor: "text-amber-600",
   },
   HIGH: {
     icon: AlertTriangle,
-    label: 'High Priority',
-    textColor: 'text-red-600',
-    bgColor: 'bg-red-100',
-    iconColor: 'text-red-600'
+    label: "High Priority",
+    textColor: "text-red-600",
+    bgColor: "bg-red-100",
+    iconColor: "text-red-600",
   },
 };
 
@@ -40,9 +40,27 @@ export const ReportSidebar = () => {
       },
     });
   };
-  
+
   return (
-    <Card className="w-full bg-white h-full flex flex-col border-none shadow-sm">
+    <Card
+      className={`bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm mb-4 ${
+        total > 0 ? "flex flex-col" : "hidden"
+      }`}
+    >
+      {/* Sidebar Header */}
+      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
+              Report
+            </h3>
+            <p className="text-xs text-gray-600 mt-1">
+              Latest updates and activity
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
@@ -61,11 +79,15 @@ export const ReportSidebar = () => {
             {reports.map((data: Record<string, any>, index: number) => {
               const severityConfig = SEVERITY[data.ir_severity];
               const SeverityIcon = severityConfig?.icon;
-              
+
               return (
-                <div 
+                <div
                   key={index}
-                  className={`${severityConfig?.bgColor} p-4 transition-all duration-200 cursor-pointer border-b border-gray-200 ${index === 0 ? 'border-t' : ''}`}
+                  className={`${
+                    severityConfig?.bgColor
+                  } p-4 transition-all duration-200 cursor-pointer border-b border-gray-200 ${
+                    index === 0 ? "border-t" : ""
+                  }`}
                   onClick={() => handleClick(data.ir_id)}
                 >
                   {/* Content */}
@@ -77,19 +99,24 @@ export const ReportSidebar = () => {
                             {data.ir_reported_by}
                           </h3>
 
-                         <div className="flex gap-2 text-xs font-medium text-gray-600">
-                           <span>{formatTimeAgo(data.ir_created_at)}</span>
-                           <span>-</span>
-                            <span className={severityConfig?.textColor}>{severityConfig?.label}</span>
-                         </div>
+                          <div className="flex gap-2 text-xs font-medium text-gray-600">
+                            <span>{formatTimeAgo(data.ir_created_at)}</span>
+                            <span>-</span>
+                            <span className={severityConfig?.textColor}>
+                              {severityConfig?.label}
+                            </span>
+                          </div>
                         </div>
                         {SeverityIcon && (
                           <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 mr-8">
-                            <SeverityIcon size={20} className={severityConfig?.iconColor} />
+                            <SeverityIcon
+                              size={20}
+                              className={severityConfig?.iconColor}
+                            />
                           </div>
                         )}
                       </div>
-                      
+
                       <ChevronRight className="w-5 h-5 flex-shrink-0 mt-1 text-gray-400" />
                     </div>
                   </div>
@@ -117,7 +144,7 @@ export const ReportSidebar = () => {
         <div className="p-4 border-t border-gray-100">
           <Link to="/report/incident">
             <Button variant={"link"}>
-              View All Reports ({total > 100 ? "100+": total})
+              View All Reports ({total > 100 ? "100+" : total})
             </Button>
           </Link>
         </div>

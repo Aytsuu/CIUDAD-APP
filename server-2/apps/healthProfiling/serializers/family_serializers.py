@@ -10,68 +10,68 @@ class FamilyBaseSerializer(serializers.ModelSerializer):
     fields = '__all__'
   
 
-class FamilyTableSerializer(serializers.ModelSerializer):
-  members = serializers.SerializerMethodField()
-  household_no = serializers.CharField(source='hh.hh_id')
-  sitio = serializers.CharField(source='hh.add.sitio.sitio_name')
-  street = serializers.CharField(source='hh.add.add_street')
-  father = serializers.SerializerMethodField()
-  mother = serializers.SerializerMethodField()
-  guardian = serializers.SerializerMethodField()
-  independent = serializers.SerializerMethodField()
-  registered_by = serializers.SerializerMethodField()
-  class Meta: 
-    model = Family
-    fields = ['fam_id', 'household_no', 'sitio', 'street', 'fam_building', 'fam_indigenous', 'mother', 
-              'father', 'guardian', 'independent', 'fam_date_registered', 'members', 'registered_by']
+# class FamilyTableSerializer(serializers.ModelSerializer):
+#   members = serializers.SerializerMethodField()
+#   household_no = serializers.CharField(source='hh.hh_id')
+#   sitio = serializers.CharField(source='hh.add.sitio.sitio_name')
+#   street = serializers.CharField(source='hh.add.add_street')
+#   father = serializers.SerializerMethodField()
+#   mother = serializers.SerializerMethodField()
+#   guardian = serializers.SerializerMethodField()
+#   independent = serializers.SerializerMethodField()
+#   registered_by = serializers.SerializerMethodField()
+#   class Meta: 
+#     model = Family
+#     fields = ['fam_id', 'household_no', 'sitio', 'street', 'fam_building', 'fam_indigenous', 'mother', 
+#               'father', 'guardian', 'independent', 'fam_date_registered', 'members', 'registered_by']
     
-  def get_members(self, obj):
-    return FamilyComposition.objects.filter(fam=obj).count()
+#   def get_members(self, obj):
+#     return FamilyComposition.objects.filter(fam=obj).count()
 
-  def get_father(self, obj):
-    father = FamilyComposition.objects.filter(fam=obj, fc_role='FATHER').first()
-    if father: 
-      info = father.rp.per
-      return f"{info.per_lname}, {info.per_fname}"
+#   def get_father(self, obj):
+#     father = FamilyComposition.objects.filter(fam=obj, fc_role='FATHER').first()
+#     if father: 
+#       info = father.rp.per
+#       return f"{info.per_lname}, {info.per_fname}"
     
-    return ""
+#     return ""
   
-  def get_mother(self, obj):
-    mother = FamilyComposition.objects.filter(fam=obj, fc_role='MOTHER').first()
-    if mother: 
-      info = mother.rp.per
-      return f"{info.per_lname}, {info.per_fname}"
+#   def get_mother(self, obj):
+#     mother = FamilyComposition.objects.filter(fam=obj, fc_role='MOTHER').first()
+#     if mother: 
+#       info = mother.rp.per
+#       return f"{info.per_lname}, {info.per_fname}"
     
-    return ""
+#     return ""
   
-  def get_guardian(self, obj):
-    guardian = FamilyComposition.objects.filter(fam=obj, fc_role='GUARDIAN').first()
-    if guardian: 
-      info = guardian.rp.per
-      return f"{info.per_lname}, {info.per_fname}"
+#   def get_guardian(self, obj):
+#     guardian = FamilyComposition.objects.filter(fam=obj, fc_role='GUARDIAN').first()
+#     if guardian: 
+#       info = guardian.rp.per
+#       return f"{info.per_lname}, {info.per_fname}"
     
-    return ""
+#     return ""
   
-  def get_independent(self, obj):
-    independent = FamilyComposition.objects.filter(fam=obj, fc_role='INDEPENDENT').first()
-    if independent: 
-      info = independent.rp.per
-      return f"{info.per_lname}, {info.per_fname}"
+#   def get_independent(self, obj):
+#     independent = FamilyComposition.objects.filter(fam=obj, fc_role='INDEPENDENT').first()
+#     if independent: 
+#       info = independent.rp.per
+#       return f"{info.per_lname}, {info.per_fname}"
     
-    return ""
+#     return ""
 
-  def get_registered_by(self, obj):
-    staff = obj.staff
-    if staff:
-        staff_type = staff.staff_type
-        staff_id = staff.staff_id
-        fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
-        fam_id = fam.fam.fam_id if fam else ""
-        personal = staff.rp.per
-        middle = f" {personal.per_mname}" if personal.per_mname else ""
-        staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
+#   def get_registered_by(self, obj):
+#     staff = obj.staff
+#     if staff:
+#         staff_type = staff.staff_type
+#         staff_id = staff.staff_id
+#         fam = FamilyComposition.objects.filter(rp=obj.staff_id).first()
+#         fam_id = fam.fam.fam_id if fam else ""
+#         personal = staff.rp.per
+#         middle = f" {personal.per_mname}" if personal.per_mname else ""
+#         staff_name = f"{personal.per_lname}, {personal.per_fname}{middle}"
 
-        return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
+#         return f"{staff_id}-{staff_name}-{staff_type}-{fam_id}"
   
 class FamilyCreateSerializer(serializers.ModelSerializer):
   class Meta: 
@@ -105,15 +105,15 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
     
     return family_id
 
-class FamilyListSerializer(serializers.ModelSerializer):
-  total_members = serializers.SerializerMethodField()
+# class FamilyListSerializer(serializers.ModelSerializer):
+#   total_members = serializers.SerializerMethodField()
 
-  class Meta:
-    model = Family
-    fields = ['fam_id', 'fam_building', 'total_members', 'fam_indigenous', 'fam_date_registered']
+#   class Meta:
+#     model = Family
+#     fields = ['fam_id', 'fam_building', 'total_members', 'fam_indigenous', 'fam_date_registered']
   
-  def get_total_members(self, obj):
-    return FamilyComposition.objects.filter(fam=obj).count()
+#   def get_total_members(self, obj):
+#     return FamilyComposition.objects.filter(fam=obj).count()
 
 
 

@@ -22,7 +22,6 @@ export const getStaffs = async (
     const res = await api.get("administration/staff/list/table/", { params });
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -37,7 +36,6 @@ export const getPositions = async (staff_type?: string) => {
     });
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -51,7 +49,6 @@ export const getFeatures = async (category: string) => {
     });
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -62,7 +59,6 @@ export const getAssignedFeatures = async (selectedPosition: string) => {
     const res = await api.get(path);
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -72,7 +68,6 @@ export const getAllAssignedFeatures = async () => {
     const res = await api.get("administration/assignment/list/");
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };

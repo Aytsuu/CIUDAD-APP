@@ -62,6 +62,10 @@ export const profiling_router = [
         element: <ResidentFormLayout />,
       },
       {
+        path: "house",
+        element: <ResidentFormLayout />,
+      },
+      {
         path: "business",
         element: <ResidentFormLayout />,
       },

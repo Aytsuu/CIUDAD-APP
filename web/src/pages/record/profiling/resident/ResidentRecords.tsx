@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, ClockArrowUp, Search, Users, CircleUserRound, House, UsersRound, Building } from "lucide-react"
+import { Plus, ClockArrowUp, Search, Users } from "lucide-react"
 import { Link } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
@@ -14,27 +14,8 @@ import { useRequestCount, useResidentsTable } from "../queries/profilingFetchQue
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Skeleton } from "@/components/ui/skeleton"
-import { capitalize } from "@/helpers/capitalize"
 import { Spinner } from "@/components/ui/spinner"
-
-const profiles = [
-  {
-    id: 'account', 
-    icon: CircleUserRound,
-  },
-  {
-    id: 'household', 
-    icon: House
-  },
-  {
-    id: 'family', 
-    icon: UsersRound
-  },
-  {
-    id: 'business', 
-    icon: Building
-  },
-]
+import { SelectLayout } from "@/components/ui/select/select-layout"
 
 export default function ResidentRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -42,6 +23,9 @@ export default function ResidentRecords() {
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
   const [currentPage, setCurrentPage] = React.useState<number>(1)
+  const [age, setAge] = React.useState<string>('all')
+  const [voter, setVoter] = React.useState<string>('all')
+  const [disable, setDisable] = React.useState<string>('all')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
 
@@ -51,6 +35,9 @@ export default function ResidentRecords() {
     currentPage,
     debouncedPageSize,
     debouncedSearchQuery,
+    age,
+    voter,
+    disable
   )
 
   const residents = residentsTableData?.results || [];
@@ -90,7 +77,62 @@ export default function ResidentRecords() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <div className="flex gap-2 w-full sm:w-auto">
+                <SelectLayout
+                  withReset={false}
+                  value={age}
+                  valueLabel="Age"
+                  className="gap-4"
+                  onChange={(value) => {
+                    setAge(value)
+                    setCurrentPage(1);
+                  }}
+                  placeholder=""
+                  options={[
+                    { id: "all", name: "All" },
+                    { id: "child", name: "Child" },
+                    { id: "youth", name: "Youth" },
+                    { id: "adult", name: "Adult" },
+                    { id: "senior", name: "Senior" },
+                  ]}
+                />
+
+                <SelectLayout
+                  withReset={false}
+                  value={voter}
+                  valueLabel="Voter"
+                  className="gap-4"
+                  onChange={(value) => {
+                    setVoter(value)
+                    setCurrentPage(1);
+                  }}
+                  placeholder=""
+                  options={[
+                    { id: "all", name: "All" },
+                    { id: "yes", name: "Yes" },
+                    { id: "no", name: "No" },
+                    { id: "link", name: "Link" },
+                    { id: "review", name: "Review" },
+                  ]}
+                />
+
+                <SelectLayout
+                  withReset={false}
+                  value={disable}
+                  valueLabel="Disable"
+                  className="gap-4"
+                  onChange={(value) => {
+                    setDisable(value)
+                    setCurrentPage(1);
+                  }}
+                  placeholder=""
+                  options={[
+                    { id: "all", name: "All" },
+                    { id: "yes", name: "Yes" },
+                    { id: "no", name: "No" },
+                  ]}
+                />
+
                 <Link to="/profiling/request/pending/individual" className="flex-1 sm:flex-none">
                   <Button variant="outline" className="w-full sm:w-auto">
                     <ClockArrowUp className="h-4 w-4 mr-2" />
@@ -177,7 +219,7 @@ export default function ResidentRecords() {
                 </Select>
                 <span>entries</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-blue-700">
+              {/* <div className="flex items-center gap-2 text-sm text-blue-700">
                 <div className="flex item-center justify-between gap-12">
                   {profiles.map((profile: any, idx: number) => (
                     <div key={idx} className="flex gap-2">
@@ -189,7 +231,7 @@ export default function ResidentRecords() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Loading State */}

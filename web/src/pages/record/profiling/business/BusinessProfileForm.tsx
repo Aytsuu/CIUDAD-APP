@@ -103,7 +103,7 @@ export default function BusinessProfileForm({
   return (
     <div className="mx-auto">
       {!isRegistrationTab && formType == Type.Create && (
-        <div className="bg-blue-600 shadow-sm rounded-t-md">
+        <div className="bg-primary shadow-sm rounded-t-md">
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="respondent-info" className="border-none">
               <AccordionTrigger className="px-10 py-8 hover:no-underline [&[data-state=open]>div]:text-white [&>div]:text-white [&>svg]:text-white">

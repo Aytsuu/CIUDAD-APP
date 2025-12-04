@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Users, Badge, Info } from "lucide-react";
 import { useLocation } from "react-router";
 import { useAuth } from "@/context/AuthContext";
-import { useAddPosition } from "./queries/administrationAddQueries";
+// import { useAddPosition } from "./queries/administrationAddQueries";
 import { useUpdatePosition } from "./queries/administrationUpdateQueries";
 import { renderActionButton } from "./AdministrationActionConfig";
 import { Type } from "./AdministrationEnums";
@@ -17,11 +17,12 @@ import { usePositionGroups } from "./queries/administrationFetchQueries";
 import { formatPositionGroups } from "./AdministrationFormats";
 import { showErrorToast, showPlainToast, showSuccessToast } from "@/components/ui/toast";
 import { Combobox } from "@/components/ui/combobox";
+import { useAddPositionBulk } from "./queries/administrationAddQueries";
 
 export default function NewPositionForm() {
   // ================ STATE INITIALIZATION ================
   const { user } = useAuth(); 
-  const { mutateAsync: addPosition, isPending: isAdding } = useAddPosition();
+  const { mutateAsync: addPositionBulk, isPending: isAdding } = useAddPositionBulk();
   const { mutateAsync: editPosition, isPending: isUpdating } = useUpdatePosition();
   const { data: positionGroups } = usePositionGroups('BARANGAY POSITION');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -76,8 +77,19 @@ export default function NewPositionForm() {
 
   const create = async (values: Record<string, any>, staffId: string) => {
     try {
-      // Add position (API handles dual database insertion)
-      await addPosition({ data: values, staffId });
+
+      // Prepare payload
+      const payload = [{
+        pos_title: values.pos_title,
+        pos_max: parseInt(values.pos_max), 
+        ...(values.pos_group != "" && {pos_group: values.pos_group}),
+        pos_category: values.pos_category,
+        staff: staffId 
+      }]
+
+      // Send api request
+      await addPositionBulk(payload);
+
       // Reset form on success
       form.reset({
         'pos_group': '',

@@ -3,7 +3,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from ..serializers.resident_profile_serializers import *
-from django.db.models import Prefetch, Q
+from django.db.models import Prefetch, Q, F, Count, Value, CharField, Subquery, IntegerField, OuterRef, ExpressionWrapper, Func, BooleanField, Case, When
+from django.db.models.functions import Concat, Length
+from datetime import date
 from apps.pagination import *
 from apps.account.models import *
 
@@ -13,6 +15,11 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
     pagination_class = StandardResultsPagination
 
     def get_queryset(self):
+        search_query = self.request.query_params.get('search', '').strip()
+        age = self.request.query_params.get('age', None).lower()
+        voter = self.request.query_params.get('voter', None).lower()
+        disable = self.request.query_params.get('disable', None).lower()
+
         queryset = ResidentProfile.objects.select_related(
           'per',
         ).prefetch_related(
@@ -44,7 +51,89 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
           'per__per_is_deceased',
         )
 
-        search_query = self.request.query_params.get('search', '').strip()
+        # Filter by age
+        if age != "all":
+            seconds_in_year = 365.25 * 24 * 60 * 60
+            today = date.today()
+
+            age_expression = ExpressionWrapper(
+                Func(
+                    today - F('per__per_dob'),
+                    function='EXTRACT',
+                    template="EXTRACT(EPOCH FROM %(expressions)s)"
+                     
+                ) / seconds_in_year, 
+                output_field=IntegerField()
+            )
+
+            queryset = queryset.annotate(calculated_age=age_expression)
+
+            if age == "child":
+                queryset = queryset.filter(calculated_age__lte=14)
+            elif age == "youth":
+                queryset = queryset.filter(calculated_age__range=(15,24))
+            elif age == "adult":
+                queryset = queryset.filter(calculated_age__range=(25,64))
+            else: 
+                queryset = queryset.filter(calculated_age__gte=65)
+        
+        # Filter by voter status
+        if voter != "all":
+            if voter == "yes":
+                queryset = queryset.filter(~Q(voter=None))
+            elif voter == "no":
+                queryset = queryset.filter(voter=None)
+            else:
+                name = Concat(
+                    OuterRef('per__per_lname'), Value(', '),
+                    OuterRef('per__per_fname'), Value(' '),
+                    OuterRef('per__per_mname'),
+                    output_field=CharField()
+                )
+                
+                voter_match_count_subquery = Voter.objects.filter(
+                    voter_name=name
+                ).annotate(
+                    count_matches=Count('pk')
+                ).values('count_matches')[:1]
+
+                queryset = queryset.annotate(
+                    exist_count=Subquery(
+                        voter_match_count_subquery,
+                        output_field=IntegerField()
+                    )
+                )
+
+                if voter == "link":
+                    queryset = queryset.filter(exist_count=1)
+                else:
+                    queryset = queryset.filter(exist_count__gt=1)
+
+        # Filter by disability status
+        if disable != "all":
+            
+            disability_check_expression = Case(
+                When(
+                    **{
+                        'per__per_disability__isnull': False,
+                        'per__per_disability__gt': ''
+                    },
+                    then=Value(True)
+                ),
+                default=Value(False),
+                output_field=BooleanField()
+            )
+
+            queryset = queryset.annotate(
+                is_disable=disability_check_expression
+            )
+            
+            if disable == "yes":
+                queryset = queryset.filter(is_disable=True)
+            else:
+                queryset = queryset.filter(is_disable=False)
+        
+        # Filter by search
         if search_query:
             if search_query.isdigit():
                 queryset = queryset.filter(
@@ -153,7 +242,7 @@ class LinkRegVerificationView(APIView):
     def post(self, request, *args, **kwargs):
         rp_id = request.data.get('rp_id', None)
         personal_info = request.data.get('personal_info', None)
-        print(personal_info)
+
         if rp_id:
             exists = ResidentProfile.objects.filter(rp_id=rp_id).first()
             if exists:

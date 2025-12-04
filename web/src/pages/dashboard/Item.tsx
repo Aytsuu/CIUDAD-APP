@@ -152,7 +152,7 @@ export const getItemsConfig = (
         card: [incidentReports, acknowledgementReports, weeklyARs],
         chart: [
           {
-            title: "Incident Report",
+            title: "Report Overview",
             element: <ReportSectionCharts />,
           },
         ],

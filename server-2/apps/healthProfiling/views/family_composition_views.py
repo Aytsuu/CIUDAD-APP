@@ -7,54 +7,54 @@ from ..serializers.family_composition_serializers import *
 from ..models import *
 from apps.pagination import *
 
-class FamilyCompositionCreateView(generics.CreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = FamilyCompositionBaseSerializer
-    queryset = FamilyComposition.objects.all()
+# class FamilyCompositionCreateView(generics.CreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = FamilyCompositionBaseSerializer
+#     queryset = FamilyComposition.objects.all()
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         instance = serializer.save()
 
-        response_serialzier = FamilyCompositionExtendedSerializer(instance)
-        return Response(response_serialzier.data, status=status.HTTP_201_CREATED)
+#         response_serialzier = FamilyCompositionExtendedSerializer(instance)
+#         return Response(response_serialzier.data, status=status.HTTP_201_CREATED)
     
 
-class FamilyMembersListView(generics.ListCreateAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = FamilyCompositionExtendedSerializer
-    pagination_class = StandardResultsPagination
+# class FamilyMembersListView(generics.ListCreateAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = FamilyCompositionExtendedSerializer
+#     pagination_class = StandardResultsPagination
 
-    def get_queryset(self):
-        fam_id = self.kwargs['fam_id']
-        return FamilyComposition.objects.filter(
-          fam=fam_id
-        ).select_related(
-            'rp',
-            'fam__hh',
-        ).only(
-            'rp__rp_id',
-            'rp__per__per_lname',
-            'rp__per__per_fname',
-            'rp__per__per_mname',
-            'rp__per__per_sex',
-            'rp__per__per_dob',
-            'rp__per__per_status',
-            'fam__hh__hh_id',
-            'fam__hh__add__sitio__sitio_name',
-        ).distinct()
+#     def get_queryset(self):
+#         fam_id = self.kwargs['fam_id']
+#         return FamilyComposition.objects.filter(
+#           fam=fam_id
+#         ).select_related(
+#             'rp',
+#             'fam__hh',
+#         ).only(
+#             'rp__rp_id',
+#             'rp__per__per_lname',
+#             'rp__per__per_fname',
+#             'rp__per__per_mname',
+#             'rp__per__per_sex',
+#             'rp__per__per_dob',
+#             'rp__per__per_status',
+#             'fam__hh__hh_id',
+#             'fam__hh__add__sitio__sitio_name',
+#         ).distinct()
 
-class FamilyIDView(generics.ListAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = FCFetchFamIDSerializer
-    lookup_field = 'rp'
+# class FamilyIDView(generics.ListAPIView):
+#     permission_classes = [AllowAny]
+#     serializer_class = FCFetchFamIDSerializer
+#     lookup_field = 'rp'
 
-    def get_queryset(self):
-        rp = self.kwargs['rp']
-        return FamilyComposition.objects.filter(
-            rp=rp
-        ).distinct()
+#     def get_queryset(self):
+#         rp = self.kwargs['rp']
+#         return FamilyComposition.objects.filter(
+#             rp=rp
+#         ).distinct()
 
 class FamilyCompositionBulkCreateView(generics.CreateAPIView):
     permission_classes = [AllowAny]

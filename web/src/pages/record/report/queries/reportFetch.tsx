@@ -1,29 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, mapApi } from "@/api/api";
 
-export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, get_tracker?: boolean, severity?: string) => {
+export const useGetIncidentReport = (
+  page: number,
+  pageSize: number,
+  searchQuery: string,
+  isArchive: boolean,
+  get_tracker?: boolean,
+  severity?: string,
+  verified?: boolean,
+  status?: string
+) => {
   return useQuery({
-    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive, severity],
+    queryKey: ["incidentReports", page, pageSize, searchQuery, isArchive, severity, verified, status],
     queryFn: async () => {
       try {
-        const res = await api.get('report/ir/list/table/', {
+        const res = await api.get("report/ir/list/table/", {
           params: {
             page,
             page_size: pageSize,
             search: searchQuery,
             is_archive: isArchive,
             get_tracker,
-            severity
-          }
+            severity,
+            verified,
+            status,
+          },
         });
         return res.data;
-       } catch (err) {
+      } catch (err) {
         throw err;
-       }
+      }
     },
-    staleTime: 5000
-  })
-}
+    staleTime: 5000,
+  });
+};
 
 export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
   return useQuery({
@@ -44,13 +55,13 @@ export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
       }
     },
     staleTime: 5000,
-    retry: false
+    retry: false,
   });
 };
 
 export const useGetIRInfo = (ir_id: string) => {
   return useQuery({
-    queryKey: ['IRInfo', ir_id],
+    queryKey: ["IRInfo", ir_id],
     queryFn: async () => {
       try {
         const res = await api.get(`report/ir/${ir_id}/info/`);
@@ -61,34 +72,39 @@ export const useGetIRInfo = (ir_id: string) => {
     },
     staleTime: 5000,
     enabled: !!ir_id,
-  })
-}
+  });
+};
 
-export const useGetAcknowledgementReport = (page: number, pageSize: number, searchQuery: string, status?: string) => {
+export const useGetAcknowledgementReport = (
+  page: number,
+  pageSize: number,
+  searchQuery: string,
+  status?: string
+) => {
   return useQuery({
-    queryKey: ['arReports', page, pageSize, searchQuery, status],
+    queryKey: ["arReports", page, pageSize, searchQuery, status],
     queryFn: async () => {
       try {
-        const res = await api.get('report/ar/list/table/', {
+        const res = await api.get("report/ar/list/table/", {
           params: {
             page,
             page_size: pageSize,
             search: searchQuery,
-            status
-          }
+            status,
+          },
         });
         return res.data;
-      } catch (err) {;
+      } catch (err) {
         throw err;
       }
     },
-    staleTime: 5000
-  })
-}
+    staleTime: 5000,
+  });
+};
 
 export const useGetARInfo = (arId: string) => {
   return useQuery({
-    queryKey: ['ARInfo', arId],
+    queryKey: ["ARInfo", arId],
     queryFn: async () => {
       try {
         const res = await api.get(`report/ar/${arId}/info/`);
@@ -98,28 +114,28 @@ export const useGetARInfo = (arId: string) => {
       }
     },
     staleTime: 5000,
-    enabled: !!arId
-  })
-}
+    enabled: !!arId,
+  });
+};
 
 export const useGetWeeklyAR = () => {
   return useQuery({
-    queryKey: ['weeklyAR'],
+    queryKey: ["weeklyAR"],
     queryFn: async () => {
       try {
-        const res = await api.get('report/war/comp/list/');
+        const res = await api.get("report/war/comp/list/");
         return res.data;
-      } catch (err) {;
+      } catch (err) {
         throw err;
       }
     },
-    staleTime: 5000
-  })
-}
+    staleTime: 5000,
+  });
+};
 
 export const useGetWARInfo = (warId: string) => {
   return useQuery({
-    queryKey: ['WARInfo', warId],
+    queryKey: ["WARInfo", warId],
     queryFn: async () => {
       try {
         const res = await api.get(`report/war/${warId}/info/`);
@@ -129,13 +145,13 @@ export const useGetWARInfo = (warId: string) => {
       }
     },
     staleTime: 5000,
-    enabled: !!warId
-  })
-}
+    enabled: !!warId,
+  });
+};
 
 export const useGetSpecificTemplate = (type: string) => {
   return useQuery({
-    queryKey: ['reportTemplate', type],
+    queryKey: ["reportTemplate", type],
     queryFn: async () => {
       try {
         const res = await api.get(`report/template/${type}/`);
@@ -143,33 +159,33 @@ export const useGetSpecificTemplate = (type: string) => {
       } catch (err) {
         throw err;
       }
-    }
-  })
-}
+    },
+  });
+};
 
 export const useGetARByDate = (
-  year: number, 
-  month: number, 
-  start_day: number, 
+  year: number,
+  month: number,
+  start_day: number,
   end_day: number
 ) => {
   return useQuery({
-    queryKey: ['ARByDate', year, month, start_day, end_day],
+    queryKey: ["ARByDate", year, month, start_day, end_day],
     queryFn: async () => {
       try {
-        const res = await api.get('report/ar/list/by-date/', {
+        const res = await api.get("report/ar/list/by-date/", {
           params: {
             year,
             month,
             start_day,
-            end_day
-          }
+            end_day,
+          },
         });
         return res.data;
       } catch (err) {
         throw err;
       }
     },
-    staleTime: 5000
-  })
-}
+    staleTime: 5000,
+  });
+};

@@ -31,7 +31,7 @@ const ReportCard = React.memo(({
     {/* Animated Arrow */}
     <div className="absolute top-4 right-4 opacity-0 -translate-x-2 -translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-300">
       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-        <ArrowUpRight className="w-4 h-4 text-primary" />
+        <ArrowUpRight className="w-4 h-4 text-blue-600" />
       </div>
     </div>
   </Card>
@@ -56,11 +56,11 @@ export const useReportSectionCards = () => {
     ),
     acknowledgementReports: (
       <ReportCard 
-        title="Acknowledgement Reports" 
+        title="Action Reports" 
         value={reportCardAnalytics?.acknowledgementReports} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/report/acknowledgement")
+          navigate("/report/action")
         }}
       />
     ),
