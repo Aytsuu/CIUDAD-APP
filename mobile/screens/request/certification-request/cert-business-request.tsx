@@ -16,6 +16,15 @@ import { LoadingModal } from "@/components/ui/loading-modal";
 import MediaPicker, { MediaItem } from "@/components/ui/media-picker";
 import { useOwnedBusinesses } from "@/screens/business/queries/businessGetQueries";
 
+interface BusinessData {
+  br_id?: string | null;
+  bus_id?: string | null;
+  bus_name?: string;
+  bus_location?: string;
+  bus_gross_sales?: number | string;
+  bus_date_verified?: string | null;
+}
+
 const CertPermit: React.FC = () => {
   const router = useRouter();
   const { user, isLoading } = useAuth();
@@ -61,7 +70,7 @@ const CertPermit: React.FC = () => {
   // Use all businesses returned for this user
   const businessData = useMemo(() => {
     console.log("[CertPermit] ownedBusinesses from API:", ownedBusinesses);
-    const results = (ownedBusinesses as any)?.results || [];
+    const results: BusinessData[] = (ownedBusinesses as any)?.results || [];
     console.log("[CertPermit] businessData derived from ownedBusinesses.results:", results);
     return results;
   }, [ownedBusinesses]);
@@ -77,7 +86,8 @@ const CertPermit: React.FC = () => {
   }, [businessData]);
 
   // Fetch business respondent details for the first br_id found (or user's br_id if available)
-  const brIdToFetch = uniqueBrIds.length > 0 ? uniqueBrIds[0] : user?.br;
+  const userBrId = typeof user?.br === 'string' ? (user.br as string) : undefined;
+  const brIdToFetch = uniqueBrIds.length > 0 ? uniqueBrIds[0] : userBrId;
   const { data: businessRespondent, isLoading: isLoadingBusinessRespondent } = useBusinessRespondentById(brIdToFetch);
 
   // Refresh handler
@@ -288,6 +298,8 @@ const CertPermit: React.FC = () => {
   };
 
   // Memoize editable state
+  // Allow editing if it's barangay clearance AND no registered business found
+  // This applies to both residents without businesses AND business accounts without registered businesses
   const isBusinessNameEditable = useMemo(() => {
     return isBarangayClearance && businessData.length === 0;
   }, [isBarangayClearance, businessData.length]);
@@ -589,28 +601,32 @@ const CertPermit: React.FC = () => {
             {/* Business Status Info */}
             {!isLoadingBusiness && (
               <View className={`rounded-lg p-3 mb-3 ${
-                !hasBusinessProfile 
-                  ? 'bg-blue-50 border border-blue-200' 
-                  : 'bg-green-50 border border-green-200'
+                businessData.length > 0
+                  ? 'bg-green-50 border border-green-200'
+                  : (user?.br ? 'bg-yellow-50 border border-yellow-200' : 'bg-blue-50 border border-blue-200')
               }`}>
                 <View className="flex-row items-center mb-1">
                   <Ionicons 
-                  name={!hasBusinessProfile ? "information-circle" : "checkmark-circle"} 
+                    name={businessData.length > 0 ? "checkmark-circle" : "information-circle"} 
                     size={16} 
-                  color={!hasBusinessProfile ? "#2563EB" : "#059669"} 
+                    color={businessData.length > 0 ? "#059669" : (user?.br ? "#D97706" : "#2563EB")} 
                   />
                   <Text className={`text-sm font-medium ml-2 ${
-                    !hasBusinessProfile ? 'text-blue-800' : 'text-green-800'
+                    businessData.length > 0 ? 'text-green-800' : (user?.br ? 'text-yellow-800' : 'text-blue-800')
                   }`}>
-                    {!hasBusinessProfile ? 'No Registered Business' : 'Business Registered'}
+                    {businessData.length > 0 
+                      ? 'Business Registered' 
+                      : (user?.br ? 'Business Account - No Registered Business' : 'No Registered Business')}
                   </Text>
                 </View>
                 <Text className={`text-xs ${
-                  !hasBusinessProfile ? 'text-blue-600' : 'text-green-600'
+                  businessData.length > 0 ? 'text-green-600' : (user?.br ? 'text-yellow-600' : 'text-blue-600')
                 }`}>
-                  {!hasBusinessProfile 
-                    ? 'You can only request Barangay Clearance' 
-                    : 'You can request Barangay Clearance or various permit types for your business'
+                  {businessData.length > 0 
+                    ? 'You can request Barangay Clearance or various permit types for your business'
+                    : (user?.br 
+                        ? 'No business found under your account. You can request Barangay Clearance.' 
+                        : 'You can only request Barangay Clearance')
                   }
                 </Text>
               </View>
@@ -640,12 +656,12 @@ const CertPermit: React.FC = () => {
                   className={`rounded-lg px-3 py-3 mb-3 border border-gray-200 text-base ${
                     isBarangayClearance 
                       ? (businessData.length > 0 ? 'bg-gray-100 text-gray-600' : 'bg-white text-gray-900')
-                      : 'bg-gray-100 text-gray-600'
+                      : (businessData.length > 0 ? 'bg-gray-100 text-gray-600' : 'bg-gray-100 text-gray-600')
                   }`}
                   placeholder={
                     isBarangayClearance 
                       ? (businessData.length > 0 ? "Business name from records" : "Enter business name")
-                      : (isLoadingBusiness ? "Loading business details..." : "No business found")
+                      : (isLoadingBusiness ? "Loading business details..." : (businessData.length > 0 ? "Business name from records" : "No registered business found"))
                   }
                   placeholderTextColor="#888"
                   value={businessName}
@@ -661,12 +677,12 @@ const CertPermit: React.FC = () => {
                   className={`rounded-lg px-3 py-3 mb-3 border border-gray-200 text-base ${
                     isBarangayClearance 
                       ? (businessData.length > 0 ? 'bg-gray-100 text-gray-600' : 'bg-white text-gray-900')
-                      : 'bg-gray-100 text-gray-600'
+                      : (businessData.length > 0 ? 'bg-gray-100 text-gray-600' : 'bg-gray-100 text-gray-600')
                   }`}
                   placeholder={
                     isBarangayClearance 
                       ? (businessData.length > 0 ? "Business address from records" : "Enter business address")
-                      : (isLoadingBusiness ? "Loading business details..." : "No business found")
+                      : (isLoadingBusiness ? "Loading business details..." : (businessData.length > 0 ? "Business address from records" : "No registered business found"))
                   }
                   placeholderTextColor="#888"
                   value={businessAddress}
