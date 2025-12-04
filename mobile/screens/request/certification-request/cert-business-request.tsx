@@ -45,6 +45,7 @@ const CertPermit: React.FC = () => {
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
   // Fetch owned businesses using the same query/params as the business module
   const ownershipParams = useMemo(() => {
+    console.log("[CertPermit] user from AuthContext:", user);
     if (user?.br) {
       // Prefer br_id for business accounts
       return { page: 1, page_size: 20, search: "", br: user.br };
