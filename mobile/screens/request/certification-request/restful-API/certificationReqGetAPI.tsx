@@ -236,14 +236,33 @@ export const getCertificationRequestsByStatus = async (residentId: string, statu
     }
 };
 
-// Business API - fetch business by resident profile ID
-export const getBusinessByResidentId = async (rpId: string) => {
+// Business API - fetch business by resident profile ID or business respondent ID
+export const getBusinessByResidentId = async (rpId: string, brId?: string) => {
     try {
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (rpId) {
+            params.append('rp', rpId);
+        }
+        if (brId) {
+            params.append('br', brId);
+        }
+        
         // Fetch business with address details using the correct endpoint
-        const response = await api.get(`/profiling/business/specific/ownership/?rp=${rpId}`);
+        const response = await api.get(`/profiling/business/specific/ownership/?${params.toString()}`);
         return response.data;
     } catch (error) {
         throw new Error("Failed to fetch business details");
+    }
+};
+
+// Business Respondent API - fetch business respondent by br_id
+export const getBusinessRespondentById = async (brId: string) => {
+    try {
+        const response = await api.get(`/profiling/business/respondent/${brId}/info/`);
+        return response.data;
+    } catch (error) {
+        throw new Error("Failed to fetch business respondent details");
     }
 };
 

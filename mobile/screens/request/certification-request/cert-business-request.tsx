@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAddBusinessPermit } from "./queries/certificationReqInsertQueries";
 import { CertificationRequestSchema } from "@/form-schema/certificates/certification-request-schema";
-import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId } from "./queries/certificationReqFetchQueries";
+import { usePurposeAndRates, useAnnualGrossSales, useBusinessByResidentId, useBusinessRespondentById } from "./queries/certificationReqFetchQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { SelectLayout, DropdownOption } from "@/components/ui/select-layout";
 import PageLayout from '@/screens/_PageLayout';
@@ -43,19 +43,48 @@ const CertPermit: React.FC = () => {
   const { data: purposeAndRates = [], isLoading: isLoadingPurposes } = usePurposeAndRates();
   const { data: annualGrossSales = [], isLoading: isLoadingGrossSales } = useAnnualGrossSales();
   const { data: businessResponse = { results: [] }, isLoading: isLoadingBusiness, error: businessError } = useBusinessByResidentId(
-    user?.rp || ""
+    user?.rp || "",
+    user?.br
   );
-  const businessData = businessResponse?.results || [];
+  // Filter businesses to only show those that match the current user (either by rp_id or br_id)
+  const businessData = useMemo(() => {
+    const allBusinesses = businessResponse?.results || [];
+    return allBusinesses.filter((business) => {
+      // Match by resident profile ID
+      if (user?.rp && business.rp_id === user.rp) {
+        return true;
+      }
+      // Match by business respondent ID
+      if (user?.br && business.br_id === user.br) {
+        return true;
+      }
+      return false;
+    });
+  }, [businessResponse?.results, user?.rp, user?.br]);
+
+  // Get unique br_ids from businessData to fetch business respondent details
+  const uniqueBrIds = useMemo(() => {
+    const brIds = businessData
+      .map(business => business.br_id)
+      .filter((brId): brId is string => brId !== null && brId !== undefined);
+    return [...new Set(brIds)];
+  }, [businessData]);
+
+  // Fetch business respondent details for the first br_id found (or user's br_id if available)
+  const brIdToFetch = uniqueBrIds.length > 0 ? uniqueBrIds[0] : user?.br;
+  const { data: businessRespondent, isLoading: isLoadingBusinessRespondent } = useBusinessRespondentById(brIdToFetch);
 
   // Refresh handler
   const onRefresh = async () => {
     setRefreshing(true);
     try {
       // Invalidate and refetch all relevant queries
+      const brIdToInvalidate = uniqueBrIds.length > 0 ? uniqueBrIds[0] : user?.br;
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["purpose-and-rates"] }),
         queryClient.invalidateQueries({ queryKey: ["annual-gross-sales"] }),
-        queryClient.invalidateQueries({ queryKey: ["business-by-resident", user?.rp] }),
+        queryClient.invalidateQueries({ queryKey: ["business-by-resident", user?.rp, user?.br] }),
+        ...(brIdToInvalidate ? [queryClient.invalidateQueries({ queryKey: ["business-respondent", brIdToInvalidate] })] : []),
       ]);
     } catch (error) {
       console.error("Error refreshing data:", error);
@@ -85,10 +114,6 @@ const CertPermit: React.FC = () => {
     return assessmentImages.length > 0 ? assessmentImages[0].uri : null;
   };
 
-   
-
-
-  
   // Separate permit purposes and barangay clearance
   const permitPurposes = purposeAndRates.filter(purpose => 
     purpose.pr_category === 'Barangay Permit'
@@ -98,8 +123,6 @@ const CertPermit: React.FC = () => {
     purpose.pr_category === 'Barangay Clearance'
   );
 
-
-  
   // Memoize permit type options to prevent re-renders
   const permitTypeOptions: DropdownOption[] = useMemo(() => {
     if (isLoadingBusiness) {
@@ -126,8 +149,6 @@ const CertPermit: React.FC = () => {
     }
   }, [isLoadingBusiness, businessData.length, permitPurposes, barangayClearancePurposes]);
 
-  // Helper function to find matching gross sales rate from manual input
-  // EXACTLY matches the logic from web form (treasurer-permitClearance-form.tsx)
   const findMatchingGrossSalesRate = (inputValue: string) => {
     // Handle empty input
     if (!inputValue || inputValue.trim() === '') return null;
@@ -350,15 +371,24 @@ const CertPermit: React.FC = () => {
       grossSalesValue = "N/A";
     }
     
-    const result = CertificationRequestSchema.safeParse({
+    // Prepare schema validation data - include rp_id or br_id based on account type
+    const schemaData: any = {
       cert_type: "permit",
       business_name: businessName || "",
       business_address: businessAddress || "",
       gross_sales: grossSalesValue,
-      rp_id: user?.rp || "",
       permit_image: isBarangayClearance ? (getPreviousPermitImageUri() || undefined) : undefined,
       assessment_image: isBarangayClearance ? (getAssessmentImageUri() || undefined) : undefined,
-    });
+    };
+
+    // Include rp_id if account has rp_id, otherwise include br_id
+    if (user?.rp) {
+      schemaData.rp_id = user.rp;
+    } else if (user?.br) {
+      schemaData.br_id = user.br;
+    }
+
+    const result = CertificationRequestSchema.safeParse(schemaData);
     
     if (!result.success) {
       setError(result.error.issues[0].message);
@@ -423,7 +453,6 @@ const CertPermit: React.FC = () => {
         : "N/A",
       business_id: businessData.length > 0 ? businessData[0]?.bus_id : null, 
       pr_id: prId || null,
-      rp_id: user?.rp || "",
       req_amount: reqAmount || 0,
       ags_id: agsId || null,
       bus_clearance_gross_sales: isBarangayClearance 
@@ -437,6 +466,13 @@ const CertPermit: React.FC = () => {
           : (inputtedGrossSales ? parseFloat(inputtedGrossSales) : null))
         : null,
     };
+
+    // Include rp_id if account has rp_id, otherwise include br_id
+    if (user?.rp) {
+      payload.rp_id = user.rp;
+    } else if (user?.br) {
+      payload.br_id = user.br;
+    }
 
     // Handle file uploads if images are provided - only for barangay clearance
     if ((previousPermitImages.length > 0 || assessmentImages.length > 0) && isBarangayClearance) {

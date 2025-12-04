@@ -198,10 +198,15 @@ class SpecificOwnerView(generics.ListAPIView):
       rp = self.request.query_params.get('rp')
       br = self.request.query_params.get('br')
 
+      # Build query to match businesses by either rp or br (or both)
+      query_filter = Q()
       if rp:
-          queryset = Business.objects.filter(rp=rp)
-      elif br:
-          queryset = Business.objects.filter(br=br)
+          query_filter |= Q(rp=rp)
+      if br:
+          query_filter |= Q(br=br)
+      
+      if query_filter:
+          queryset = Business.objects.filter(query_filter)
       else:
           queryset = Business.objects.none()
 
