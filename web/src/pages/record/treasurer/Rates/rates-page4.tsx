@@ -74,15 +74,35 @@ function RatesPage4() {
         })}`
 
     const activeColumns: ColumnDef<PurposeAndRate>[] = [
-        { accessorKey: 'pr_purpose', header: "Purpose" },
-        {
-            accessorKey: 'pr_rate',
-            header: 'Amount',
-            cell: ({ row }) => formatNumber(row.original.pr_rate.toString())
+         { 
+            accessorKey: 'pr_purpose', 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Purpose
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.original.pr_purpose}</div>
+            )
         },
         {
-            accessorKey: "action",
-            header: "Action",
+            accessorKey: 'pr_rate', 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Amount
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{formatNumber(row.original.pr_rate.toString())}</div>
+            )
+        },
+        {
+            accessorKey: "action", 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({ row }) => {
                 const prId = row.original.pr_id
                 return (
@@ -114,19 +134,39 @@ function RatesPage4() {
     ]
 
     const historyColumns: ColumnDef<PurposeAndRate>[] = [
-        { accessorKey: 'pr_purpose', header: "Purpose" },
-        {
-            accessorKey: 'pr_rate',
-            header: 'Amount',
-            cell: ({ row }) => formatNumber(row.original.pr_rate.toString())
+        { 
+            accessorKey: 'pr_purpose', 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                   Purpose
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.original.pr_purpose}</div>
+            )
         },
         {
-            accessorKey: "pr_is_archive",
-            header: "Status",
+            accessorKey: 'pr_rate', 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center text-center">
+                    Amount
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{formatNumber(row.original.pr_rate.toString())}</div>
+            )
+        },
+        {
+            accessorKey: "pr_is_archive", 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Status
+                </div>
+            ),
             cell: ({ row }) => {
                 const isArchived = row.original.pr_is_archive
                 return (
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-center gap-2 text-center">
                         <span className={`inline-block h-3 w-3 rounded-full ${isArchived ? 'bg-red-500' : 'bg-green-500'}`} />
                         <span>{isArchived ? 'Inactive' : 'Active'}</span>
                     </div>
@@ -150,7 +190,14 @@ function RatesPage4() {
         },
         {
             accessorKey: "staff_name",
-            header: "Updated By"
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Updated By
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.original.staff_name}</div>
+            )
         }
     ]
 
@@ -190,7 +237,7 @@ function RatesPage4() {
                                     <div className="relative w-full sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
                                         <Input
-                                            placeholder="Search active barangay permits..."
+                                            placeholder="Search..."
                                             className="pl-10 bg-white"
                                             value={searchQueryActive}
                                             onChange={(e) => setSearchQueryActive(e.target.value)}
@@ -240,12 +287,12 @@ function RatesPage4() {
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                            {searchQueryActive ? "No active barangay permits found" : "No active barangay permits yet"}
+                                            {searchQueryActive ? "No records found" : "No records yet"}
                                         </h3>
                                         <p className="text-gray-500 mb-4">
                                             {searchQueryActive
-                                                ? `No active barangay permits match "${searchQueryActive}". Try adjusting your search.`
-                                                : "Active barangay permits will appear here once created."}
+                                                ? `No records match "${searchQueryActive}". Try adjusting your search.`
+                                                : "Records will appear here once created."}
                                         </p>
                                     </div>
                                 ) : (
@@ -291,7 +338,7 @@ function RatesPage4() {
                                     <div className="relative w-full sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
                                         <Input
-                                            placeholder="Search barangay permit history..."
+                                            placeholder="Search..."
                                             className="pl-10 bg-white"
                                             value={searchQueryHistory}
                                             onChange={(e) => setSearchQueryHistory(e.target.value)}
@@ -327,12 +374,12 @@ function RatesPage4() {
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                            {searchQueryHistory ? "No barangay permit history found" : "No barangay permit history yet"}
+                                            {searchQueryHistory ? "No records found" : "No records yet"}
                                         </h3>
                                         <p className="text-gray-500 mb-4">
                                             {searchQueryHistory
-                                                ? `No barangay permit history matches "${searchQueryHistory}". Try adjusting your search.`
-                                                : "Baeangay permit history will appear here once records are created or archived."}
+                                                ? `No records match "${searchQueryHistory}". Try adjusting your search.`
+                                                : "Records will appear here once created or archived."}
                                         </p>
                                     </div>
                                 ) : (

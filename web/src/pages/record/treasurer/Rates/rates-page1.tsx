@@ -104,17 +104,31 @@ function RatesPage1() {
     const sharedColumns: ColumnDef<AnnualGrossSales>[] = [
         {
             accessorKey: "rangeOfGrossSales",
-            header: "Range of Annual Gross Sales",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Range of Annual Gross Sales
+                </div>
+            ),
             cell: ({ row }) => {
                 const min = row.original.ags_minimum
                 const max = row.original.ags_maximum
-                return `${formatNumber(min.toString())} - ${formatNumber(max.toString())}`
+                return (
+                    <div className="text-center">
+                        {formatNumber(min.toString())} - {formatNumber(max.toString())}
+                    </div>
+                )
             }
         },
         {
             accessorKey: "ags_rate",
-            header: "Amount",
-            cell: ({ row }) => formatNumber(row.original.ags_rate.toString())
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Amount
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{formatNumber(row.original.ags_rate.toString())}</div>
+            )
         }
     ]
 
@@ -122,7 +136,11 @@ function RatesPage1() {
         ...sharedColumns,
         {
             accessorKey: "action",
-            header: "Action",
+            header: ({}) => (
+            <div className="flex w-full justify-center items-center">
+                Action
+            </div>
+        ),
             cell: ({ row }) => {
                 const agsId = row.original.ags_id
                 return (
@@ -293,12 +311,12 @@ function RatesPage1() {
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                            {searchQueryActive ? "No active annual gross sales found" : "No active annual gross sales yet"}
+                                            {searchQueryActive ? "No records found" : "No records yet"}
                                         </h3>
                                         <p className="text-gray-500 mb-4">
                                             {searchQueryActive
-                                                ? `No active annual gross sales match "${searchQueryActive}". Try adjusting your search.`
-                                                : "Active annual gross sales will appear here once created."}
+                                                ? `No records match "${searchQueryActive}". Try adjusting your search.`
+                                                : "Records will appear here once created."}
                                         </p>
                                     </div>
                                 ) : (
@@ -366,12 +384,12 @@ function RatesPage1() {
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                                            {searchQueryHistory ? "No history found" : "No history yet"}
+                                            {searchQueryHistory ? "No records found" : "No records yet"}
                                         </h3>
                                         <p className="text-gray-500 mb-4">
                                             {searchQueryHistory
-                                                ? `No history matches "${searchQueryHistory}". Try adjusting your search.`
-                                                : "History will appear here once records are created."}
+                                                ? `No records match "${searchQueryHistory}". Try adjusting your search.`
+                                                : "Records will appear here once created."}
                                         </p>
                                     </div>
                                 ) : (

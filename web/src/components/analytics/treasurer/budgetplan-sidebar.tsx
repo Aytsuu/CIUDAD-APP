@@ -18,7 +18,19 @@ export const BudgetPlanSidebar = () => {
                              budgetPlan.plan_id;
 
   return (
-    <Card className="w-full bg-white h-full flex flex-col border-none">
+    <Card className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm mb-4">
+       <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
+              Budget Plan {budgetPlan?.plan_year || new Date().getFullYear()}
+            </h3>
+            <p className="text-xs text-gray-600 mt-1">
+                Fund allocation and management
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="flex-1 overflow-y-auto">
         {isLoading || isFetching ? (
           <div className="p-4 space-y-3">
@@ -50,23 +62,8 @@ export const BudgetPlanSidebar = () => {
               <Card className="p-4 hover:shadow-sm transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200">
                  <div className="flex items-start justify-between">
                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                     <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                       <FileText className="w-4 h-4 text-green-600" />
-                     </div>
                      <div className="flex-1 min-w-0">
-                       <div className="flex items-start justify-between mb-2">
-                         <h3 className="text-sm font-medium text-gray-700 line-clamp-2">
-                           Budget Plan {budgetPlan.plan_year}
-                         </h3>
-                       </div>
-
                        <div className="space-y-1 text-xs text-gray-500">
-                         {/* Year */}
-                         <div className="flex items-center gap-2">
-                           <Calendar className="w-3 h-3" />
-                           <span>Year: {budgetPlan.plan_year}</span>
-                         </div>
-
                          {/* Issue Date */}
                          <div className="flex items-center gap-2">
                            <Calendar className="w-3 h-3" />
@@ -92,7 +89,7 @@ export const BudgetPlanSidebar = () => {
                         )}
 
                         {/* Budgetary Obligations */}
-                        <div className="flex items-center gap-2 text-blue-500 font-medium">
+                        <div className="flex items-center gap-2 text-primary font-medium">
                           <DollarSign className="w-3 h-3" />
                           <span>
                             Budgetary Obligations: ₱{budgetPlan.plan_budgetaryObligations?.toLocaleString()}
@@ -124,7 +121,7 @@ export const BudgetPlanSidebar = () => {
           <Button
             variant={"link"}
             onClick={handleViewAll}
-            className="text-blue-500 hover:text-blue-700"
+            className="text-primary hover:text-blue-700"
           >
             View All Budget Plans
           </Button>
