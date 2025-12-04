@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LoadingState } from '@/components/ui/loading-state';
 import { LoadingModal } from '@/components/ui/loading-modal';
+import { formatTimestamp } from '@/helpers/timestampformatter';
 
 export default function RatesPage4() {
   const router = useRouter();
@@ -136,24 +137,24 @@ export default function RatesPage4() {
     showStatus?: boolean; 
     showActions?: boolean; 
   }) => (
-    <Card key={item.pr_id} className="mb-3 border-2 border-gray-200 shadow-sm bg-white">
-      <CardHeader className="pb-3">
-        <View className="flex-row justify-between items-start">
-          <View className="flex-1 mr-3">
-            <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+    <Card key={item.pr_id} className="mb-2 border border-gray-200 shadow-xs bg-white">
+      <CardHeader className="pb-2">
+        <View className="flex-row justify-between items-center">
+          <View className="flex-1 mr-2">
+            <Text className="font-semibold text-base text-[#1a2332]">
               {item.pr_purpose}
             </Text>
-
+            
             {showStatus && (
-              <View className="flex-row items-center mb-2">
+              <View className="flex-row items-center mt-1">
                 {item.pr_is_archive ? (
-                  <View className="flex-row items-center bg-red-50 px-2 py-1 rounded-full">
-                    <XCircle size={12} color="#ef4444" />
+                  <View className="flex-row items-center bg-red-50 px-1.5 py-0.5 rounded-full">
+                    <XCircle size={10} color="#ef4444" />
                     <Text className="text-red-600 text-xs font-medium ml-1">Inactive</Text>
                   </View>
                 ) : (
-                  <View className="flex-row items-center bg-green-50 px-2 py-1 rounded-full">
-                    <CheckCircle size={12} color="#22c55e" />
+                  <View className="flex-row items-center bg-green-50 px-1.5 py-0.5 rounded-full">
+                    <CheckCircle size={10} color="#22c55e" />
                     <Text className="text-green-600 text-xs font-medium ml-1">Active</Text>
                   </View>
                 )}
@@ -162,22 +163,27 @@ export default function RatesPage4() {
           </View>
 
           {showActions && (
-            <View className="flex-row space-x-2">
-              <TouchableOpacity className="bg-blue-50 p-2 rounded-lg" onPress={() => handleEdit(item)}>
-                <Edit3 size={16} color="#3b82f6" />
+            <View className="flex-row space-x-1">
+              <TouchableOpacity 
+                className="bg-blue-50 p-1.5 rounded-lg"
+                onPress={() => handleEdit(item)}
+              >
+                <Edit3 size={14} color="#3b82f6" />
               </TouchableOpacity>
             </View>
           )}
         </View>
       </CardHeader>
 
-      <CardContent className="pt-3 border-t border-gray-200">
+      <CardContent className="pt-2 border-t border-gray-100">
         <View className="flex-row justify-between items-center">
           <View>
-            <Text className="text-2xl font-bold text-[#2a3a61]">₱{item.pr_rate.toLocaleString()}</Text>
-            <Text className="text-xs text-gray-500 mt-1">
-              Date Added/Updated: {new Date(item.pr_date).toLocaleDateString()}
-            </Text>
+            <Text className="text-xl font-bold text-[#2a3a61]">₱{item.pr_rate.toLocaleString()}</Text>
+            {activeTab !== 'active' && (
+              <Text className="text-xs text-gray-500 mt-1">
+                Last Updated: {formatTimestamp(item.pr_date)} • {item.staff_name || 'N/A'}
+              </Text>
+            )}
           </View>
         </View>
       </CardContent>

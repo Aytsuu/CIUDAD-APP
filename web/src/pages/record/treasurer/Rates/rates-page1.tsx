@@ -19,8 +19,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Spinner } from "@/components/ui/spinner"
+import { useAuth } from "@/context/AuthContext"
 
 function RatesPage1() {
+    const {user} = useAuth();
     const { showLoading, hideLoading } = useLoading();
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
@@ -60,7 +62,7 @@ function RatesPage1() {
 
     const { mutate: deleteAnnualGrossSales } = useDeleteAnnualGrossSales()
 
-    const handleDelete = (agsId: number) => deleteAnnualGrossSales(agsId)
+    const handleDelete = (agsId: number) => deleteAnnualGrossSales({ags_id: agsId, staff_id: user?.staff?.staff_id})
 
     const activePlans = activeData.results || []
     const activeTotalCount = activeData.count || 0
@@ -113,21 +115,6 @@ function RatesPage1() {
             accessorKey: "ags_rate",
             header: "Amount",
             cell: ({ row }) => formatNumber(row.original.ags_rate.toString())
-        },
-        {
-            accessorKey: "ags_date",
-            header: ({ column }) => (
-                <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Date Created
-                    <ArrowUpDown size={14} />
-                </div>
-            ),
-            cell: ({ row }) => (
-                <div className="text-center">{formatTimestamp(row.getValue("ags_date"))} </div>            
-            )
         }
     ]
 
@@ -187,6 +174,21 @@ function RatesPage1() {
     const historyColumns: ColumnDef<AnnualGrossSales>[] = [
         ...sharedColumns,
         {
+            accessorKey: "ags_date",
+            header: ({ column }) => (
+                <div
+                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Last Updated
+                    <ArrowUpDown size={14} />
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{formatTimestamp(row.getValue("ags_date"))} </div>            
+            )
+        },
+        {
             accessorKey: "ags_is_archive",
             header: "Status",
             cell: ({ row }) => {
@@ -201,7 +203,7 @@ function RatesPage1() {
         },
         {
             accessorKey: "staff_name",
-            header: "Created By"
+            header: "Updated By"
         }
     ]
 
