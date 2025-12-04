@@ -1,45 +1,66 @@
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native'
-import React, { useState, useEffect, useMemo } from 'react'
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
-import { getUnpaidServiceCharges, UnpaidServiceCharge } from './queries/ClearanceQueries'
+import { useUnpaidServiceCharges, UnpaidServiceCharge } from './queries/ClearanceQueries'
 import PageLayout from '../../_PageLayout'
 import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
 import { SelectLayout } from '@/components/ui/select-layout'
+import { useDebounce } from '@/hooks/use-debounce'
+
+const INITIAL_PAGE_SIZE = 10;
 
 const ServiceChargeClearanceList = () => {
-  const [serviceCharges, setServiceCharges] = useState<UnpaidServiceCharge[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<'Unpaid' | 'Paid' | 'Declined'>('Unpaid')
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isScrolling, setIsScrolling] = useState<boolean>(false)
+  const [isLoadMore, setIsLoadMore] = useState<boolean>(false)
+  const [isInitialRender, setIsInitialRender] = useState(true)
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null)
 
-  // Fetch service charges from API (use tab parameter like web)
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Reset pagination when filters change
   useEffect(() => {
-    const fetchServiceCharges = async () => {
-      try {
-        setLoading(true)
-        // Pass the tab parameter to fetch the correct data (like web does)
-        const tab = paymentStatusFilter.toLowerCase() as "unpaid" | "paid" | "declined"
-        const data = await getUnpaidServiceCharges(searchQuery, 1, 1000, tab)
-        setServiceCharges(data.results)
-        setError(null)
-      } catch (err) {
-        console.error('Error fetching service charges:', err)
-        setError('Failed to load service charges')
-      } finally {
-        setLoading(false)
-      }
-    }
+    setCurrentPage(1)
+    setPageSize(INITIAL_PAGE_SIZE)
+  }, [paymentStatusFilter, debouncedSearchQuery])
 
-    fetchServiceCharges()
-  }, [searchQuery, paymentStatusFilter])
+  const tab = paymentStatusFilter.toLowerCase() as "unpaid" | "paid" | "declined"
+
+  // Use React Query hook
+  const { 
+    data: responseData = { results: [], count: 0, next: null, previous: null },
+    isLoading,
+    isError,
+    refetch,
+    isFetching
+  } = useUnpaidServiceCharges(currentPage, pageSize, debouncedSearchQuery || undefined, tab)
+
+  // Extract data from paginated response
+  const serviceCharges = responseData?.results || []
+  const totalCount = responseData?.count || 0
+  const hasNext = !!responseData?.next
+
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false)
+  }, [isFetching, isRefreshing])
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false)
+  }, [isLoading, isInitialRender])
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false)
+  }, [isFetching, isLoadMore])
 
   const getPaymentBadge = (serviceCharge: UnpaidServiceCharge) => {
     // Check payment status (for service charges, declined status is in payment_status)
@@ -81,43 +102,33 @@ const ServiceChargeClearanceList = () => {
   // Refresh function
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    try {
-      const tab = paymentStatusFilter.toLowerCase() as "unpaid" | "paid" | "declined"
-      const data = await getUnpaidServiceCharges(searchQuery, 1, 1000, tab)
-      setServiceCharges(data.results)
-    } catch (err) {
-      // Silently handle error
-    } finally {
-      setIsRefreshing(false);
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
     }
   };
 
-  // Filter service charges based on search (backend already filters by tab)
-  const filteredServiceCharges = useMemo(() => {
-    let filtered = serviceCharges;
-    
-    // Apply search filter (backend already handles tab filtering)
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase();
-      filtered = filtered.filter(sc => {
-        return (
-          sc.sr_code?.toLowerCase().includes(searchLower) ||
-          sc.sr_id?.toLowerCase().includes(searchLower) ||
-          sc.complainant_name?.toLowerCase().includes(searchLower) ||
-          (sc.complainant_names && sc.complainant_names.some(name => 
-            name.toLowerCase().includes(searchLower)
-          )) ||
-          (sc.accused_names && sc.accused_names.some(name => 
-            name.toLowerCase().includes(searchLower)
-          ))
-        );
-      });
-    }
-    
-    return filtered;
-  }, [serviceCharges, searchQuery])
-
-  if (loading) {
+  if (isLoading && isInitialRender) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
         <LoadingState />
@@ -173,28 +184,35 @@ const ServiceChargeClearanceList = () => {
 
         {/* Scrollable Content Area */}
         <View className="flex-1">
-          {error ? (
+          {isError ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <Text className="text-red-800 text-sm text-center">Failed to load unpaid service charges.</Text>
               </View>
             </View>
           ) : (
-            <ScrollView 
-              className="flex-1 p-6" 
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={handleRefresh}
-                  colors={['#00a8f0']}
-                  tintColor="#00a8f0"
-                />
-              }
-            >
-              {filteredServiceCharges.length ? (
-                filteredServiceCharges.map((serviceCharge, idx) => (
-                  <View key={idx} className="bg-white rounded-xl p-5 mb-4 shadow-md border border-gray-200">
+            <>
+              {!isRefreshing && serviceCharges.length > 0 && (
+                <View className="px-6 pt-4">
+                  <Text className="text-xs text-gray-500">{`Showing ${serviceCharges.length} of ${totalCount} service charges`}</Text>
+                </View>
+              )}
+              {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
+              {!isRefreshing && (
+                <FlatList
+                  maxToRenderPerBatch={5}
+                  overScrollMode="never"
+                  data={serviceCharges}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                  initialNumToRender={5}
+                  onEndReached={handleLoadMore}
+                  onEndReachedThreshold={0.5}
+                  onScroll={handleScroll}
+                  windowSize={11}
+                  renderItem={({ item: serviceCharge }) => (
+                    <View className="px-6 pt-4">
+                      <View className="bg-white rounded-xl p-5 mb-4 shadow-md border border-gray-200">
                     <View className="flex-row justify-between items-start mb-3">
                       <View className="flex-1 mr-3">
                         <Text className="text-gray-900 font-bold text-base leading-5">{wrapText(serviceCharge.sr_code || "Service Charge")}</Text>
@@ -237,22 +255,61 @@ const ServiceChargeClearanceList = () => {
                       {(serviceCharge.req_payment_status === 'Declined' || (serviceCharge.req_payment_status || '').toLowerCase().includes('declined')) && serviceCharge.decline_reason && (
                         <Text className="text-gray-700 text-sm font-medium mt-2">Decline Reason: {serviceCharge.decline_reason}</Text>
                       )}
+                      </View>
                     </View>
-                  </View>
-                ))
-              ) : (
-                <View className="flex-1 items-center justify-center py-16">
-                  <View className="items-center bg-white rounded-xl p-8 shadow-sm border border-gray-200">
-                    <Text className="text-gray-800 text-xl font-bold mb-3 text-center">
-                      {searchQuery ? 'No Matching Service Charges' : 'No Service Charges Yet'}
-                    </Text>
-                    <Text className="text-gray-600 text-sm text-center leading-5">
-                      {searchQuery ? 'Try adjusting your search terms' : 'Service charge requests will appear here when available'}
-                    </Text>
-                  </View>
-                </View>
+                    </View>
+                  )}
+                  keyExtractor={(item: UnpaidServiceCharge, idx: number) => item.sr_id || `service-${idx}`}
+                  removeClippedSubviews
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#00a8f0']}
+                      tintColor="#00a8f0"
+                    />
+                  }
+                  contentContainerStyle={{
+                    paddingTop: 0,
+                    paddingBottom: 20,
+                    gap: 15,
+                  }}
+                  ListEmptyComponent={
+                    !isLoading ? (
+                      <View className="flex-1 items-center justify-center py-16 px-6">
+                        <View className="items-center bg-white rounded-xl p-8 shadow-sm border border-gray-200">
+                          <Text className="text-gray-800 text-xl font-bold mb-3 text-center">
+                            {searchQuery ? 'No Matching Service Charges' : 'No Service Charges Yet'}
+                          </Text>
+                          <Text className="text-gray-600 text-sm text-center leading-5">
+                            {searchQuery ? 'Try adjusting your search terms' : 'Service charge requests will appear here when available'}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : null
+                  }
+                  ListFooterComponent={() =>
+                    isFetching && isLoadMore ? (
+                      <View className="py-4 items-center">
+                        <ActivityIndicator size="small" color="#3B82F6" />
+                        <Text className="text-xs text-gray-500 mt-2">
+                          Loading more service charges...
+                        </Text>
+                      </View>
+                    ) : (
+                      !hasNext &&
+                      serviceCharges.length > 0 && (
+                        <View className="py-4 items-center">
+                          <Text className="text-xs text-gray-400">
+                            No more service charges
+                          </Text>
+                        </View>
+                      )
+                    )
+                  }
+                />
               )}
-            </ScrollView>
+            </>
           )}
         </View>
       </View>

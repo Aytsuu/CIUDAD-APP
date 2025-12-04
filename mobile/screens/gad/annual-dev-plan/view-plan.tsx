@@ -1,14 +1,15 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Alert, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { getAnnualDevPlansByYear } from './restful-api/annualDevPlanGetAPI';
 import PageLayout from '@/screens/_PageLayout';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ChevronLeft } from 'lucide-react-native';
 import { useResolution } from '@/screens/council/resolution/queries/resolution-fetch-queries';
-import { useGetApprovedProposals } from './queries/annualDevPlanQueries';
+import { useGetApprovedProposals, useGetAnnualDevPlansByYear } from './queries/annualDevPlanQueries';
+
+const INITIAL_PAGE_SIZE = 10;
 
 interface DevelopmentPlan {
   dev_id: number;
@@ -20,14 +21,43 @@ interface DevelopmentPlan {
 
 const ViewPlan = () => {
   const { year } = useLocalSearchParams();
-  const [plans, setPlans] = useState<DevelopmentPlan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState<boolean>(false);
+  const [isLoadMore, setIsLoadMore] = useState<boolean>(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const yearValue = Array.isArray(year) ? year[0] : year;
 
   // Fetch GAD Project Proposals and Resolutions to determine status
   const { data: proposalsRaw = [] } = useGetApprovedProposals();
 
   const { data: resolutionData = { results: [], count: 0 } } = useResolution();
+
+  // Use React Query hook for pagination
+  const { 
+    data: responseData,
+    isLoading,
+    isError,
+    refetch,
+    isFetching
+  } = useGetAnnualDevPlansByYear(yearValue || '', currentPage, pageSize);
+
+  // Extract data from paginated response
+  const data = responseData || {};
+  const plansData = Array.isArray(data) 
+    ? data 
+    : Array.isArray(data?.results) 
+    ? data.results 
+    : Array.isArray(data?.data) 
+    ? data.data 
+    : [];
+  
+  const plans = plansData as DevelopmentPlan[];
+  const totalCount = data?.count || plans.length;
+  const hasNext = !!data?.next;
 
   // Build quick lookup maps for status determination
   const proposalByDevId = useMemo(() => {
@@ -114,38 +144,52 @@ const ViewPlan = () => {
     });
   };
 
+  // Reset pagination when year changes
   useEffect(() => {
-    if (year) {
-      fetchPlans();
+    if (yearValue) {
+      setCurrentPage(1);
+      setPageSize(INITIAL_PAGE_SIZE);
     }
-  }, [year]);
+  }, [yearValue]);
 
-  const fetchPlans = async () => {
-    try {
-      const yearValue = Array.isArray(year) ? year[0] : year;
-      const data = await getAnnualDevPlansByYear(yearValue);
-      
-      const plansData = Array.isArray(data) 
-        ? data 
-        : Array.isArray(data?.results) 
-        ? data.results 
-        : Array.isArray(data?.data) 
-        ? data.data 
-        : [];
-      
-      setPlans(plansData);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to fetch annual development plans');
-      setPlans([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchPlans();
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+    await refetch();
     setIsRefreshing(false);
+  };
+
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
+    }
   };
 
   if (isLoading) {
@@ -171,34 +215,27 @@ const ViewPlan = () => {
       wrapScroll={false}
     >
       <View className="flex-1 border-t border-gray-200 bg-gray-50">
-        {plans.length === 0 ? (
-          <View className="flex-1 justify-center items-center py-20 px-6">
-            <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-              No development plans found for Year {year}
-            </Text>
-            <Text className="text-gray-500 text-sm text-center">
-              Development plans will appear here when available
-            </Text>
+        {!isRefreshing && plans.length > 0 && (
+          <View className="px-6 pt-4">
+            <Text className="text-xs text-gray-500">{`Showing ${plans.length} of ${totalCount} plans`}</Text>
           </View>
-        ) : (
-          <ScrollView 
-            className="flex-1" 
+        )}
+        {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
+        {!isRefreshing && (
+          <FlatList
+            maxToRenderPerBatch={5}
+            overScrollMode="never"
+            data={plans}
             showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={handleRefresh}
-                colors={['#00a8f0']}
-                tintColor="#00a8f0"
-              />
-            }
-          >
-            <View className="p-6">
-              {plans.map((plan) => (
-                <View 
-                  key={plan.dev_id} 
-                  className="bg-white rounded-xl p-5 mb-4 shadow-sm border border-gray-200"
-                >
+            showsHorizontalScrollIndicator={false}
+            initialNumToRender={5}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            onScroll={handleScroll}
+            windowSize={11}
+            renderItem={({ item: plan }) => (
+              <View className="px-6 pt-4">
+                <View className="bg-white rounded-xl p-5 mb-4 shadow-sm border border-gray-200">
                   {/* GAD Mandate */}
                   <View className="mb-3">
                     <Text className="text-xs font-semibold text-gray-600 mb-1">
@@ -248,9 +285,55 @@ const ViewPlan = () => {
                     </Text>
                   </TouchableOpacity>
                 </View>
-              ))}
-            </View>
-          </ScrollView>
+              </View>
+            )}
+            keyExtractor={(item) => item.dev_id.toString()}
+            removeClippedSubviews
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={['#00a8f0']}
+                tintColor="#00a8f0"
+              />
+            }
+            contentContainerStyle={{
+              paddingTop: 0,
+              paddingBottom: 20,
+              gap: 15,
+            }}
+            ListEmptyComponent={
+              !isLoading ? (
+                <View className="flex-1 justify-center items-center py-20 px-6">
+                  <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                    No development plans found for Year {year}
+                  </Text>
+                  <Text className="text-gray-500 text-sm text-center">
+                    Development plans will appear here when available
+                  </Text>
+                </View>
+              ) : null
+            }
+            ListFooterComponent={() =>
+              isFetching && isLoadMore ? (
+                <View className="py-4 items-center">
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                  <Text className="text-xs text-gray-500 mt-2">
+                    Loading more plans...
+                  </Text>
+                </View>
+              ) : (
+                !hasNext &&
+                plans.length > 0 && (
+                  <View className="py-4 items-center">
+                    <Text className="text-xs text-gray-400">
+                      No more development plans
+                    </Text>
+                  </View>
+                )
+              )
+            }
+          />
         )}
       </View>
     </PageLayout>

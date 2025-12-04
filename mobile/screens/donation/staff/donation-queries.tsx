@@ -32,10 +32,16 @@ export const useGetDonations = (
   category?: string,
   status?: string
 ) => {
-  return useQuery<{ results: Donations[]; count: number }, Error>({
+  return useQuery<{ 
+    results: Donation[]; 
+    count: number; 
+    next: string | null; 
+    previous: string | null 
+  }, Error>({
     queryKey: ["donations", page, pageSize, searchQuery, category, status],
     queryFn: () => getdonationreq(page, pageSize, searchQuery, category, status),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (previous) => previous,
   });
 };
 

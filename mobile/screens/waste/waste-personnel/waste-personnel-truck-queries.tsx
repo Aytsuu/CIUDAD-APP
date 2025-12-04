@@ -27,10 +27,16 @@ export const useGetTrucks = (
   isArchive?: boolean,
   options = {}
 ) => {
-  return useQuery<{ results: Trucks[]; count: number }, Error>({
+  return useQuery<{ 
+    results: Trucks[]; 
+    count: number; 
+    next: string | null; 
+    previous: string | null 
+  }, Error>({
     queryKey: ["trucks", page, pageSize, searchQuery, isArchive],
     queryFn: () => getAllTrucks(page, pageSize, searchQuery, isArchive),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (previous) => previous,
     ...options
   });
 };
@@ -42,13 +48,20 @@ export const useGetAllPersonnel = (
   position?: string,
   options = {}
 ) => {
-  return useQuery<{ results: WastePersonnel[]; count: number }, Error>({
+  return useQuery<{ 
+    results: WastePersonnel[]; 
+    count: number; 
+    next: string | null; 
+    previous: string | null 
+  }, Error>({
     queryKey: ["wastePersonnel", page, pageSize, searchQuery, position],
     queryFn: () => getAllPersonnel(page, pageSize, searchQuery, position),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (previous) => previous,
     ...options
   });
 };
+
 export const useAddTruck = (onSuccess?: () => void) => {
   const queryClient = useQueryClient();
   const { toast } = useToastContext();
