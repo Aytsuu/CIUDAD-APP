@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Search, CheckCircle , Eye, Plus, SquarePen } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Column } from "@tanstack/react-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
@@ -51,7 +52,7 @@ interface ExtendedCertificate extends Certificate {
 }
 
 function CertificatePage() {
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
@@ -520,7 +521,7 @@ function CertificatePage() {
   //       paymentMethod: row.req_pay_method,
   //       isNonResident: row.is_nonresident,
   //       nonResidentData: row.is_nonresident ? {
-  //         requester: row.nrc_requester,
+  //         requester: `${row.nrc_fname || ''} ${row.nrc_mname || ''} ${row.nrc_lname || ''}`.trim(),
   //         address: row.nrc_address,
   //         birthdate: row.nrc_birthdate,
   //       } : undefined,
@@ -528,10 +529,11 @@ function CertificatePage() {
   //   });
   // };
 
+// ...
   const columns: ColumnDef<Certificate>[] = [
     {
       accessorKey: "cr_id",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<Certificate> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -561,7 +563,7 @@ function CertificatePage() {
     },
     {
       accessorKey: "requester",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<Certificate> }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -578,31 +580,47 @@ function CertificatePage() {
             row.original.nrc_fname,
             row.original.nrc_mname
           ].filter(part => part && part.trim() !== '');
-          
-          return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
-        }
         
+        return <div className="text-center">{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
+      } else {
         // For residents, format as "Last Name First Name Middle Name" (all uppercase)
         const resident = row.original.resident_details;
-        if (!resident) return <div>N/A</div>;
-        
+        if (!resident) return <div className="text-center">N/A</div>;
+      
         const nameParts = [
           resident.per_lname,
           resident.per_fname,
           resident.per_mname
         ].filter(part => part && part.trim() !== '');
-        
-        return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
-      },
+      
+        return <div className="text-center">{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
+      }
+    },
     },
     {
       accessorKey: "req_request_date",
-      header: "Date Requested",
-      cell: ({ row }) => <div>{formatDate(row.getValue("req_request_date"), "long")}</div>,
+      header: ({ column }: { column: Column<Certificate> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Requested
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-center">{formatDate(row.getValue("req_request_date"), "long")}</div>,
     },
     {
       accessorKey: "req_purpose",
-      header: "Purpose",
+      header: ({ column }: { column: Column<Certificate> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Purpose
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const value = (row.getValue("req_purpose") as string) || (row.getValue("req_type") as string);
         const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
@@ -627,30 +645,38 @@ function CertificatePage() {
         }
         
         return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {capitalizedValue}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+              style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+            >
+              {capitalizedValue}
+            </span>
+          </div>
         );
       },
     },
     {
       id: "certificate_type",
-      header: "Type",
+      header: () => (
+        <div className="w-full h-full flex justify-center items-center">
+          Type
+        </div>
+      ),
       cell: ({ row }) => {
         const isNonResident = row.original.is_nonresident;
         return (
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              isNonResident 
-                ? "bg-purple-100 text-purple-700 border border-purple-200" 
-                : "bg-green-100 text-green-700 border border-green-200"
-            }`}
-          >
-            {isNonResident ? "Non-resident" : "Resident"}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                isNonResident 
+                  ? "bg-purple-100 text-purple-700 border border-purple-200" 
+                  : "bg-green-100 text-green-700 border border-green-200"
+              }`}
+            >
+              {isNonResident ? "Non-resident" : "Resident"}
+            </span>
+          </div>
         );
       },
     },

@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Column } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search } from "lucide-react";
@@ -97,7 +97,7 @@ function IssuedCertificates() {
   const certificateColumns: ColumnDef<IssuedCertificate>[] = [
     {
       accessorKey: "cr_id",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<IssuedCertificate> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -121,19 +121,19 @@ function IssuedCertificates() {
     },
     {
       accessorKey: "requester",
-      header: "Requester",
-      cell: ({ row }) => <div className="capitalize">{row.getValue("requester")}</div>,
+      header: () => <div className="text-center">Requester</div>,
+      cell: ({ row }) => <div className="text-center capitalize">{row.getValue("requester")}</div>,
     },
     {
       accessorKey: "dateIssued",
-      header: "Date Issued",
+      header: () => <div className="text-center">Date Issued</div>,
       cell: ({ row }) => {
         const dateStr = row.getValue("dateIssued") as string;
         try {
           const date = parseISO(dateStr);
-          return <div>{format(date, "MM/dd/yyyy")}</div>;
+          return <div className="text-center">{format(date, "MM/dd/yyyy")}</div>;
         } catch (e) {
-          return <div>{dateStr || ""}</div>;
+          return <div className="text-center">{dateStr || ""}</div>;
         }
       },
     },
@@ -191,7 +191,7 @@ function IssuedCertificates() {
   const businessPermitColumns: ColumnDef<IssuedBusinessPermit>[] = [
     {
       accessorKey: "bpr_id",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<IssuedBusinessPermit> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -210,12 +210,12 @@ function IssuedCertificates() {
     },
     {
       accessorKey: "business_name",
-      header: "Business Name",
-      cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
+      header: () => <div className="text-center">Business Name</div>,
+      cell: ({ row }) => <div className="text-center capitalize">{row.getValue("business_name")}</div>,
     },
     {
       accessorKey: "dateIssued",
-      header: "Date Issued",
+      header: () => <div className="text-center">Date Issued</div>,
       cell: ({ row }) => {
         const dateStr = row.getValue("dateIssued") as string;
         try {
@@ -282,7 +282,7 @@ function IssuedCertificates() {
   const serviceChargeColumns: ColumnDef<ServiceCharge>[] = [
     {
       accessorKey: "sr_code",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<ServiceCharge> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}

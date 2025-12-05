@@ -6,7 +6,7 @@ import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Column } from "@tanstack/react-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
@@ -80,7 +80,7 @@ function ServiceChargePage() {
   const columns: ColumnDef<ServiceCharge>[] = [
     {
       accessorKey: "sr_code",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<ServiceCharge> }) => ( // Added explicit type annotation
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -99,44 +99,44 @@ function ServiceChargePage() {
     },
     {
       accessorKey: "complainant_names",
-      header: "Complainant(s)",
+      header: () => <div className="text-center">Complainant(s)</div>,
       cell: ({ row }) => {
         const names = row.original.complainant_names || (row.original.complainant_name ? [row.original.complainant_name] : []);
         if (!names.length) return <div>—</div>;
-        return <div className="text-sm">{names.join(', ')}</div>;
+        return <div className="text-sm text-center">{names.join(', ')}</div>;
       },
     },
     {
       id: "complainant_addresses",
-      header: "Complainant Address",
+      header: () => <div className="text-center">Complainant Address</div>,
       cell: ({ row }) => {
         const addrs = row.original.complainant_addresses || [];
         if (!addrs.length) return <div>—</div>;
-        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+        return <div className="text-sm text-center">{addrs.filter(Boolean).join(', ')}</div>;
       },
     },
     {
       accessorKey: "accused_names",
-      header: "Respondent",
+      header: () => <div className="text-center">Respondent</div>,
       cell: ({ row }) => {
         const names = row.original.accused_names || [];
         if (!names.length) return <div>—</div>;
-        return <div className="text-sm">{names.join(', ')}</div>;
+        return <div className="text-sm text-center">{names.join(', ')}</div>;
       },
     },
     {
       id: "accused_addresses",
-      header: "Respondent Address",
+      header: () => <div className="text-center">Respondent Address</div>,
       cell: ({ row }) => {
         const addrs = row.original.accused_addresses || [];
         if (!addrs.length) return <div>—</div>;
-        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+        return <div className="text-sm text-center">{addrs.filter(Boolean).join(', ')}</div>;
       },
     },
     {
       accessorKey: "sr_req_date",
-      header: "Date Requested",
-      cell: ({ row }) => <div>{formatDate(row.getValue("sr_req_date"), "long")}</div>,
+      header: () => <div className="text-center">Date Requested</div>,
+      cell: ({ row }) => <div className="text-center">{formatDate(row.getValue("sr_req_date"), "long")}</div>,
     },
     {
       id: "actions",

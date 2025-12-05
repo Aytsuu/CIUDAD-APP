@@ -181,12 +181,12 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
               </div>
         ),
         cell: ({row}) => (
-            <div className="">{row.getValue("businessName")}</div>
+            <div className="text-center">{row.getValue("businessName")}</div>
         )},
   
     { 
         accessorKey: "grossSales", 
-        header: "Gross Sales",
+        header: () => <div className="text-center">Gross Sales</div>,
         cell: ({ row }) => {
             const agsId = row.original.ags_id;
             const grossSalesData = row.original.grossSalesData;
@@ -222,7 +222,7 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
     },
     {
         accessorKey: "purpose",
-        header: "Purpose",
+        header: () => <div className="text-center">Purpose</div>,
         cell: ({ row }) => {
             const prId = row.original.pr_id;
             const purposeData = row.original.purposeData;
@@ -286,12 +286,12 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
               </div>
         ),
         cell: ({row}) => (
-            <div className="">{row.getValue("reqDate")}</div>
+            <div className="text-center">{row.getValue("reqDate")}</div>
         )
     },
     ...(activeTab === "unpaid" ? [
         { accessorKey: "action", 
-          header: "Action",
+          header: () => <div className="text-center">Action</div>,
           cell: ({row}: {row: any}) =>(
             <div className="flex justify-center gap-0.5">
                 {/* View Documents Icon - Always reserve space, show placeholder if no files */}

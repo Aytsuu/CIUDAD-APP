@@ -1,7 +1,7 @@
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
-import { ColumnDef, Row } from "@tanstack/react-table";
+import { ColumnDef, Row, Column } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ReceiptText, ArrowUpDown, Search, User, Users, CircleCheck, Ban, Clock, CheckCircle } from 'lucide-react';
@@ -140,7 +140,7 @@ function PersonalClearance() {
                 
                 return nameParts.join(' ').toUpperCase() || 'N/A';
             },
-            header: ({ column }) => (
+            header: ({ column }: { column: Column<NonResidentReq> }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -152,20 +152,20 @@ function PersonalClearance() {
         },
         {
             accessorKey: "purpose.pr_purpose",
-            header: ({ column }) => (
+            header: ({ column }: { column: Column<NonResidentReq> }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
-                    Purpose
+                    <div className="text-center">Purpose</div>
                     <ArrowUpDown size={14} />
                 </div>
             ),
-            cell: ({ row }) => <div>{row.original.purpose?.pr_purpose || ""}</div>,
+            cell: ({ row }) => <div className="text-center">{row.original.purpose?.pr_purpose || ""}</div>,
         },
         {
             accessorKey: "purpose.pr_rate",
-            header: ({ column }) => (
+            header: ({ column }: { column: Column<NonResidentReq> }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -177,15 +177,17 @@ function PersonalClearance() {
             cell: ({ getValue }) => {
                 const value = Number(getValue());
                 return (
-                    <span className="text-green-600 font-semibold">
-                        ₱{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    <div className="text-center">
+                        <span className="text-green-600 font-semibold">
+                            ₱{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                    </div>
                 );
             },
         },
         {
             accessorKey: "nrc_req_date",
-            header: ({ column }) => (
+            header: ({ column }: { column: Column<NonResidentReq> }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -203,7 +205,7 @@ function PersonalClearance() {
         ...(activeTab === "unpaid" ? [
             {
                 accessorKey: "action",
-                header: "Action",
+                header: () => <div className="text-center">Action</div>,
                 cell: ({ row }: { row: Row<NonResidentReq> }) => (
                     <div className="flex justify-center gap-1">
                         <TooltipLayout
@@ -265,7 +267,7 @@ function PersonalClearance() {
         ...(activeTab === "declined" ? [
             {
                 accessorKey: "nrc_req_declined_reason",
-                header: "Reason for Decline",
+                header: () => <div className="text-center">Reason for Decline</div>,
                 cell: ({ row }: { row: Row<NonResidentReq> }) => (
                     <div className="text-center">
                         {row.original.nrc_reason || "No reason provided"}
@@ -279,7 +281,7 @@ function PersonalClearance() {
     const residentColumns: ColumnDef<ResidentReq>[] = useMemo(() => [
         {
             accessorKey: "resident_details",
-            header: ({ column }) => (
+            header: ({ column }: { column: Column<ResidentReq> }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -291,7 +293,7 @@ function PersonalClearance() {
             cell: ({ row }) => {
                 // For residents, format as "Last Name First Name Middle Name"
                 const resident = row.original.resident_details;
-                if (!resident) return <div>N/A</div>;
+                if (!resident) return <div className="text-center">N/A</div>;
                 
                 const nameParts = [
                     resident.per_lname,
@@ -299,12 +301,12 @@ function PersonalClearance() {
                     resident.per_mname
                 ].filter(part => part && part.trim() !== '');
                 
-                return <div>{nameParts.join(' ') || 'N/A'}</div>;
+                return <div className="text-center">{nameParts.join(' ') || 'N/A'}</div>;
             },
         },
         {
             accessorKey: "purpose.pr_purpose",
-            header: ({ column }) => (
+            header: ({ column }: { column: Column<ResidentReq> }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -313,11 +315,11 @@ function PersonalClearance() {
                     <ArrowUpDown size={14} />
                 </div>
             ),
-            cell: ({ row }) => <div>{row.original.purpose?.pr_purpose || ""}</div>,
+            cell: ({ row }) => <div className="text-center">{row.original.purpose?.pr_purpose || ""}</div>,
         },
         {
             accessorKey: "purpose.pr_rate",
-            header: ({ column }) => (
+            header: ({ column }: { column: Column<ResidentReq> }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -334,15 +336,17 @@ function PersonalClearance() {
                 const raw = row.original.purpose ? Number(row.original.purpose.pr_rate) : 0;
                 const value = isFree ? 0 : raw;
                 return (
-                    <span className="text-green-600 font-semibold">
-                        ₱{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
+                    <div className="text-center">
+                        <span className="text-green-600 font-semibold">
+                            ₱{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                    </div>
                 );
             },
         },
         {
             accessorKey: "cr_req_request_date",
-            header: ({ column }) => (
+            header: ({ column }: { column: Column<ResidentReq> }) => (
                 <div
                     className="flex w-full justify-center items-center gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -360,7 +364,7 @@ function PersonalClearance() {
         ...(activeTab === "unpaid" ? [
             {
                 accessorKey: "action",
-                header: "Action",
+                header: () => <div className="text-center">Action</div>,
                 cell: ({ row }: { row: Row<ResidentReq> }) => {
                     // Get resident eligibility from table data
                     const eligibility = getResidentEligibility(row.original.resident_details);
@@ -475,7 +479,7 @@ function PersonalClearance() {
         ...(activeTab === "declined" ? [
             {
                 accessorKey: "cr_req_declined_reason",
-                header: "Reason for Decline",
+                header: () => <div className="text-center">Reason for Decline</div>,
                 cell: ({ row }: { row: Row<ResidentReq> }) => (
                     <div className="text-center">
                         {row.original.cr_reason || "No reason provided"}
