@@ -46,7 +46,22 @@ export const GADExpenseSidebar = () => {
   };
 
   return (
-    <Card className="w-full bg-white h-full flex flex-col border-none">
+    <Card
+      className={`bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm mb-4`}
+    >
+      {/* Sidebar Header */}
+      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
+              GAD Budget Tracker
+            </h3>
+            <p className="text-xs text-gray-600 mt-1">
+              Latest GAD activity expenses
+            </p>
+          </div>
+        </div>
+      </div>
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
@@ -73,7 +88,7 @@ export const GADExpenseSidebar = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
-                          <DollarSign className="w-4 h-4 text-blue-600" />
+                          <DollarSign className="w-4 h-4 text-primaryBlue" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-medium text-gray-700 truncate mb-1">
@@ -154,9 +169,9 @@ export const GADExpenseSidebar = () => {
         ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-              <Clock className="w-8 h-8 text-blue-500" />
+              <Clock className="w-8 h-8 text-primaryBlue" />
             </div>
-            <h3 className="text-sm font-medium text-blue-700 mb-1">
+            <h3 className="text-sm font-medium text-primaryBlue mb-1">
               No recent expenses
             </h3>
             <p className="text-sm text-gray-500">
@@ -172,7 +187,6 @@ export const GADExpenseSidebar = () => {
           <Button 
             variant={"link"} 
             onClick={handleViewAll}
-            className="text-blue-600 hover:text-blue-700"
           >
             View All Expenses ({expenses.length > 100 ? "100+" : expenses.length})
           </Button>

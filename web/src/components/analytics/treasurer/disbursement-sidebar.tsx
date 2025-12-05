@@ -54,7 +54,22 @@ export const DisbursementSidebar = () => {
   };
 
   return (
-    <Card className="w-full bg-white h-full flex flex-col border-none">
+    <Card
+      className={`bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm mb-4`}
+    >
+      {/* Sidebar Header */}
+      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
+              Disbursement Vouchers
+            </h3>
+            <p className="text-xs text-gray-600 mt-1">
+              Latest filed vouchers
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="p-4 space-y-3">
@@ -70,7 +85,7 @@ export const DisbursementSidebar = () => {
           </div>
         ) : disbursements && disbursements.length > 0 ? (
           <div className="p-4 space-y-3">
-            {disbursements.slice(0, 1).map((disbursement) => {
+            {disbursements.slice(0, 3).map((disbursement) => {
               const totalAmount = getTotalAmount(disbursement.dis_particulars);
 
               return (
@@ -84,7 +99,7 @@ export const DisbursementSidebar = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
                           <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                            <Banknote className="w-4 h-4 text-blue-600" />
+                            <Banknote className="w-4 h-4 text-primaryBlue" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-2">
@@ -130,7 +145,7 @@ export const DisbursementSidebar = () => {
 
                               {/* Amount */}
                               {totalAmount > 0 && (
-                                <div className="flex items-center gap-2 text-blue-500 font-medium">
+                                <div className="flex items-center gap-2 text-primaryBlue font-medium">
                                   <span>₱{totalAmount.toLocaleString()}</span>
                                 </div>
                               )}
@@ -217,7 +232,7 @@ export const DisbursementSidebar = () => {
                                     <span className="text-gray-600 flex-1 pr-4">
                                       {particular.forPayment || "Payment"} -
                                     </span>
-                                    <span className="font-medium text-blue-500 whitespace-nowrap">
+                                    <span className="font-medium text-primaryBlue whitespace-nowrap">
                                       ₱
                                       {(
                                         particular.amount || 0
@@ -238,9 +253,9 @@ export const DisbursementSidebar = () => {
         ) : (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-              <Banknote className="w-8 h-8 text-blue-500" />
+              <Banknote className="w-8 h-8 text-primaryBlue" />
             </div>
-            <h3 className="text-sm font-medium text-blue-700 mb-1">
+            <h3 className="text-sm font-medium text-primaryBlue mb-1">
               No disbursement vouchers
             </h3>
             <p className="text-sm text-gray-500">
@@ -256,7 +271,6 @@ export const DisbursementSidebar = () => {
           <Button
             variant={"link"}
             onClick={handleViewAll}
-            className="text-blue-500 hover:text-blue-700"
           >
              View All Disbursements ({disbursementsData?.count || disbursements.length})
           </Button>
