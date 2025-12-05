@@ -75,7 +75,9 @@ const TruckManagement = ({
   const truckColumns: ColumnDef<any>[] = [
     {
       accessorKey: "truck_id",
-      header: "Truck ID",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Truck ID</div>
+      ),
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("truck_id")}</div>
       ),
@@ -83,17 +85,25 @@ const TruckManagement = ({
     },
     {
       accessorKey: "truck_plate_num",
-      header: "Plate Number",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Plate Number
+        </div>
+      ),
       cell: ({ row }) => (
         <div className="flex-row items-center bg-blue-50 px-2.5 py-0.5 rounded-full border border-primary">
-          <div className="text-primary text-sm font-medium">{row.getValue("truck_plate_num")}</div>
+          <div className="text-primary text-center text-sm font-medium">
+            {row.getValue("truck_plate_num")}
+          </div>
         </div>
       ),
       size: 120,
     },
     {
       accessorKey: "truck_model",
-      header: "Model",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Model</div>
+      ),
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("truck_model")}</div>
       ),
@@ -101,7 +111,11 @@ const TruckManagement = ({
     },
     {
       accessorKey: "truck_capacity",
-      header: "Capacity (tons)",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Capacity (tons)
+        </div>
+      ),
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("truck_capacity")}</div>
       ),
@@ -109,7 +123,9 @@ const TruckManagement = ({
     },
     {
       accessorKey: "truck_status",
-      header: "Status",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Status</div>
+      ),
       cell: ({ row }) => {
         const status = row.getValue("truck_status") as string;
         const statusColors = {
@@ -134,7 +150,9 @@ const TruckManagement = ({
     },
     {
       accessorKey: "actions",
-      header: "Actions",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Action</div>
+      ),
       cell: ({ row }) => {
         const truck = row.original;
         const isArchived = truck.truck_is_archive;

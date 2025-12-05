@@ -42,20 +42,16 @@ const WastePersonnelDashboard = () => {
     enabled: true,
   });
 
-  const { data: operationalTrucksData } = useGetTrucks(
-  1, 
-  1000,
-  "", 
-  false,
-  { 
+  const { data: operationalTrucksData } = useGetTrucks(1, 1000, "", false, {
     enabled: true,
     select: (data: { results: Trucks[]; count: number }) => ({
-      count: data.results.filter(truck => truck.truck_status === "Operational").length,
-      total: data.count
-    })
-  }
-);
-const operationalTrucksCount = operationalTrucksData?.count || 0;
+      count: data.results.filter(
+        (truck) => truck.truck_status === "Operational"
+      ).length,
+      total: data.count,
+    }),
+  });
+  const operationalTrucksCount = operationalTrucksData?.count || 0;
 
   // Main personnel query - only fetch when NOT on Trucks tab
   const {
@@ -92,24 +88,34 @@ const operationalTrucksCount = operationalTrucksData?.count || 0;
   const personnelColumns: ColumnDef<any>[] = [
     {
       accessorKey: "name",
-      header: "Name",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Name</div>
+      ),
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("name")}</div>
+        <div className="text-center font-medium">{row.getValue("name")}</div>
       ),
       size: 200,
     },
     {
       accessorKey: "position",
-      header: "Position",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Position</div>
+      ),
       cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("position")}</div>
+        <div className="text-center capitalize">{row.getValue("position")}</div>
       ),
       size: 150,
     },
     {
       accessorKey: "contact",
-      header: "Contact",
-      cell: ({ row }) => <div>{row.getValue("contact")}</div>,
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Contact Number
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-center">{row.getValue("contact")}</div>
+      ),
       size: 150,
     },
   ];
@@ -237,9 +243,7 @@ const operationalTrucksCount = operationalTrucksData?.count || 0;
                   {category === "Trucks" && (
                     <div className="flex items-center gap-1 text-sm text-purple-600">
                       <span className="h-2 w-2 rounded-full bg-purple-500"></span>
-                       <span>
-                      Operational: {operationalTrucksCount}
-                    </span>
+                      <span>Operational: {operationalTrucksCount}</span>
                     </div>
                   )}
                 </div>
@@ -356,4 +360,3 @@ const operationalTrucksCount = operationalTrucksData?.count || 0;
 };
 
 export default WastePersonnelDashboard;
-

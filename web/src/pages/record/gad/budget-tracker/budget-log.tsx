@@ -10,7 +10,7 @@ import { BudgetLogTable } from "./budget-tracker-types";
 import { useGADBudgetLogs } from "./queries/BTFetchQueries";
 import { useParams } from "react-router-dom";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useLoading } from "@/context/LoadingContext"; 
+import { useLoading } from "@/context/LoadingContext";
 import { useEffect } from "react";
 
 function GADBudgetLogTable() {
@@ -21,17 +21,12 @@ function GADBudgetLogTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const { showLoading, hideLoading } = useLoading();
 
-  const { 
-    data: logsData, 
-    isLoading, 
+  const {
+    data: logsData,
+    isLoading,
     error,
-    isFetching 
-  } = useGADBudgetLogs(
-    year || "", 
-    currentPage, 
-    pageSize, 
-    debouncedSearchQuery
-  );
+    isFetching,
+  } = useGADBudgetLogs(year || "", currentPage, pageSize, debouncedSearchQuery);
 
   // Extract data from paginated response
   const logs = logsData?.results || [];
@@ -50,7 +45,11 @@ function GADBudgetLogTable() {
   const columns: ColumnDef<BudgetLogTable>[] = [
     {
       accessorKey: "gbudl_project_name",
-      header: "Project Name",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Project Name
+        </div>
+      ),
       cell: ({ row }) => {
         const projectName = row.original.gbud_exp_project || "N/A";
         return <div className="text-center">{projectName}</div>;
@@ -58,7 +57,11 @@ function GADBudgetLogTable() {
     },
     {
       accessorKey: "gbudl_particulars",
-      header: "Particulars",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Particular(s)
+        </div>
+      ),
       cell: ({ row }) => {
         const particulars = row.original.gbud_exp_particulars;
         return (
@@ -72,7 +75,11 @@ function GADBudgetLogTable() {
     },
     {
       accessorKey: "gbudl_proposed_budget",
-      header: "Proposed Budget",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Proposed Budget
+        </div>
+      ),
       cell: ({ row }) => {
         const budget = row.original.gbud_proposed_budget;
         return (
@@ -89,7 +96,11 @@ function GADBudgetLogTable() {
     },
     {
       accessorKey: "gbudl_prev_amount",
-      header: "Actual Expense",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Actual Expense
+        </div>
+      ),
       cell: ({ row }) => {
         const expense = row.original.gbudl_prev_amount;
         return (
@@ -106,7 +117,11 @@ function GADBudgetLogTable() {
     },
     {
       accessorKey: "gbudl_amount_returned",
-      header: "Return/Excess",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Return/Excess
+        </div>
+      ),
       cell: ({ row }) => {
         const amount =
           typeof row.original.gbudl_amount_returned === "number"
@@ -141,7 +156,9 @@ function GADBudgetLogTable() {
     },
     {
       accessorKey: "gbudl_created_at",
-      header: "Date",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Date</div>
+      ),
       cell: ({ row }) => {
         const date = new Date(row.original.gbudl_created_at).toLocaleString();
         return <div className="text-center">{date}</div>;
@@ -212,10 +229,7 @@ function GADBudgetLogTable() {
               </div>
             ) : (
               <>
-                <DataTable 
-                  columns={columns} 
-                  data={logs} 
-                />
+                <DataTable columns={columns} data={logs} />
                 {isFetching && (
                   <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center gap-2 text-gray-500">
                     <Spinner size="lg" />
@@ -233,8 +247,8 @@ function GADBudgetLogTable() {
               <>
                 <p className="text-xs sm:text-sm text-darkGray">
                   Showing {(currentPage - 1) * pageSize + 1}-
-                  {Math.min(currentPage * pageSize, totalCount)} of{" "}
-                  {totalCount} rows
+                  {Math.min(currentPage * pageSize, totalCount)} of {totalCount}{" "}
+                  rows
                 </p>
                 {totalCount > 0 && totalPages > 1 && (
                   <PaginationLayout
@@ -251,7 +265,9 @@ function GADBudgetLogTable() {
 
           {!isLoading && logs.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              {searchQuery ? "No budget logs found matching your search" : "No budget logs found"}
+              {searchQuery
+                ? "No budget logs found matching your search"
+                : "No budget logs found"}
             </div>
           )}
         </div>
