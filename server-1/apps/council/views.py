@@ -1122,7 +1122,8 @@ class MinutesOfMeetingActiveView(ActivityLogMixin, generics.ListCreateAPIView):
         queryset = MinutesOfMeeting.objects.filter(
             mom_is_archive=False
         ).select_related(
-            'staff_id__rp__per'
+            'staff_id__rp__per',
+            'momf_id'  
         ).only(
             'mom_id',
             'mom_date',
@@ -1133,6 +1134,11 @@ class MinutesOfMeetingActiveView(ActivityLogMixin, generics.ListCreateAPIView):
             'staff_id__rp__per__per_lname',
             'staff_id__rp__per__per_fname',
             'staff_id__rp__per__per_mname',
+            'momf_id__momf_id', 
+            'momf_id__momf_url',
+            'momf_id__momf_name',
+            'momf_id__momf_type',
+            'momf_id__momf_path'
         )
 
         # Get search query from request parameters
@@ -1189,11 +1195,11 @@ class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
     permission_classes = [AllowAny]  
 
     def get_queryset(self):
-        # Filter out archived records and select related staff data
         queryset = MinutesOfMeeting.objects.filter(
             mom_is_archive=True
         ).select_related(
-            'staff_id__rp__per'
+            'staff_id__rp__per',
+            'momf_id'  
         ).only(
             'mom_id',
             'mom_date',
@@ -1204,6 +1210,11 @@ class MinutesOfMeetingInactiveView(generics.ListCreateAPIView):
             'staff_id__rp__per__per_lname',
             'staff_id__rp__per__per_fname',
             'staff_id__rp__per__per_mname',
+            'momf_id__momf_id',  
+            'momf_id__momf_url',
+            'momf_id__momf_name',
+            'momf_id__momf_type',
+            'momf_id__momf_path'
         )
 
         # Get search query from request parameters
@@ -1258,7 +1269,8 @@ class UpdateMinutesOfMeetingView(ActivityLogMixin, generics.RetrieveUpdateAPIVie
             'mom_date': instance.mom_date,
             'mom_area_of_focus': instance.mom_area_of_focus,
             'mom_is_archive': instance.mom_is_archive,
-            'staff_id': instance.staff_id.staff_id if instance.staff_id else None
+            'staff_id': instance.staff_id.staff_id if instance.staff_id else None,
+            'momf_id': instance.momf_id.momf_id if instance.momf_id else None  # Add this
         }
         
         serializer = self.get_serializer(instance, data=request.data, partial=True)
@@ -1416,8 +1428,8 @@ class DeleteMOMFileView(generics.DestroyAPIView):
     queryset = MOMFile.objects.all()
 
     def get_object(self):
-        mom_id = self.kwargs.get('mom_id')
-        return get_object_or_404(MOMFile, mom_id=mom_id)
+        momf_id = self.kwargs.get('momf_id')
+        return get_object_or_404(MOMFile, momf_id=momf_id)
 
 class MeetingSuppDocsView(generics.ListAPIView):
     permission_classes = [AllowAny] 

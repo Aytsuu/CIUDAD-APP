@@ -421,6 +421,13 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
     mom_file = serializers.SerializerMethodField(read_only=True)  # Combined field
     supporting_docs = MOMSuppDocViewSerializer(source='momsuppdoc_set', many=True, read_only=True)
     staff_name = serializers.SerializerMethodField(read_only=True)
+    
+    momf_id = serializers.PrimaryKeyRelatedField(
+        queryset=MOMFile.objects.all(),
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = MinutesOfMeeting
@@ -438,13 +445,14 @@ class MinutesOfMeetingSerializer(serializers.ModelSerializer):
 
     def get_mom_file(self, obj):
         try:
-            mom_file = obj.momfile
-            return {
-                'momf_id': mom_file.momf_id,
-                'momf_url': mom_file.momf_url,
-                'momf_name': mom_file.momf_name
-            }
-        except MOMFile.DoesNotExist:
+            if obj.momf_id:  # Check if the ForeignKey is set
+                return {
+                    'momf_id': obj.momf_id.momf_id,
+                    'momf_url': obj.momf_id.momf_url,
+                    'momf_name': obj.momf_id.momf_name
+                }
+            return None
+        except (AttributeError, MOMFile.DoesNotExist):
             return None
         
     def get_staff_name(self, obj):
@@ -470,7 +478,7 @@ class MOMFileCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MOMFile
-        fields = ['mom_id', 'files']
+        fields = ['files']
 
     @transaction.atomic
     def create(self, validated_data):   
@@ -478,22 +486,20 @@ class MOMFileCreateSerializer(serializers.ModelSerializer):
         if not files:
             raise serializers.ValidationError({"files": "At least one file must be provided"})
             
-        mom_id = validated_data.pop('mom_id')
-        created_files = self._upload_files(files, mom_id)
+        created_files = self._upload_files(files)
 
         if not created_files:
             raise serializers.ValidationError("Failed to upload files")
 
         return created_files[0]
 
-    def _upload_files(self, files, mom_id):
+    def _upload_files(self, files):
         mom_files = []
         for file_data in files:
             mom_file = MOMFile(
                 momf_name=file_data['name'],
                 momf_type=file_data['type'],
                 momf_path=f"documents/{file_data['name']}",
-                mom_id=mom_id
             )
 
             url = upload_to_storage(file_data, 'mom-bucket', 'documents')
@@ -503,6 +509,16 @@ class MOMFileCreateSerializer(serializers.ModelSerializer):
         if mom_files:
             return MOMFile.objects.bulk_create(mom_files)
         return []
+    
+    def to_representation(self, instance):
+        # This is what gets returned in the API response
+        return {
+            'momf_id': instance.momf_id,
+            'momf_name': instance.momf_name,
+            'momf_url': instance.momf_url,
+            'momf_type': instance.momf_type,
+            'momf_path': instance.momf_path
+        }
 
 
 class MOMFileViewSerializer(serializers.ModelSerializer):

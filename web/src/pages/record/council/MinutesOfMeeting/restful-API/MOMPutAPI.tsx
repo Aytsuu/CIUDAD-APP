@@ -26,14 +26,14 @@ export const archiveMinutesOfMeeting = async (mom_id: string) => {
 }
 
 
-export const updateMOMFile = async (files: MOMFileType[], mom_id: number) => {
+export const updateMOMFile = async (files: MOMFileType[], momf_id: string) => {
   try {
-    const response = await api.delete(`council/delete-mom-file/${mom_id}/`)
+    const response = await api.delete(`council/delete-mom-file/${momf_id}/`)
 
     if(response){
-        const res = await api.post('council/mom-file/', {files: files, mom_id: mom_id});
+        const res = await api.post('council/mom-file/', {files: files});
 
-        return {res: res.data, response: response.data};
+        return res.data.momf_id
     }
   } catch (error: any) {
     // console.error('MOM file update failed:', error.response?.data || error);
@@ -42,7 +42,7 @@ export const updateMOMFile = async (files: MOMFileType[], mom_id: number) => {
 };
 
 
-export const updateMinutesOfMeeting = async (mom_id: number, meetingTitle: string, meetingAgenda: string, meetingDate: string, meetingAreaOfFocus: string[], files: MOMFileType[]) => {
+export const updateMinutesOfMeeting = async (mom_id: number, meetingTitle: string, meetingAgenda: string, meetingDate: string, meetingAreaOfFocus: string[], files: MOMFileType[], momf_id: string) => {
     try{
 
         const res = await api.put(`council/update-minutes-of-meeting/${mom_id}/`, {
@@ -53,7 +53,10 @@ export const updateMinutesOfMeeting = async (mom_id: number, meetingTitle: strin
         })
 
         if (!files[0].id.startsWith("existing-") && res) {
-            await updateMOMFile(files, mom_id); 
+            const newFile = await updateMOMFile(files, momf_id); 
+            await api.put(`council/update-minutes-of-meeting/${mom_id}/`, {
+                momf_id: newFile
+            })
         }
 
      

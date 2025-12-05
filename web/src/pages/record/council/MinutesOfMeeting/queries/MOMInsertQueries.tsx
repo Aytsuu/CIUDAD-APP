@@ -22,24 +22,23 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
 
   return useMutation({
      mutationFn: async (values: MOMFullData) => {
-        const mom_id = await  insertMinutesOfMeeting(values);
-
-          if (values.files?.length) {
-            await Promise.all(
-              values.files.map(file => 
-                createMOMFile({
-                  mom_id,
-                  file_data: {
-                    name: file.name,
-                    type: file.type,
-                    file: file.file
-                  }
-                })
+            if (values.files?.length) {
+              const momf_id = await Promise.all(
+                values.files.map(file => 
+                  createMOMFile({
+                    file_data: {
+                      name: file.name,
+                      type: file.type,
+                      file: file.file
+                    }
+                  })
               )
             );
-          }
-          
-          if (values.suppDocs && values.suppDocs.length > 0) {
+
+            if(momf_id){
+              const mom_id = await  insertMinutesOfMeeting(values, String(momf_id)); 
+
+              if (values.suppDocs && values.suppDocs.length > 0 && mom_id){
                 await Promise.all(
                     values.suppDocs.map(file => 
                       addSuppDoc({
@@ -55,7 +54,11 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
                       })
                     )
                   );
-              }      
+              } 
+
+            }   
+
+          }  
         
     },
     onSuccess: () => {
