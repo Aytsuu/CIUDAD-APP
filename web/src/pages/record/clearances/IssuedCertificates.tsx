@@ -143,20 +143,205 @@ function IssuedCertificates() {
       cell: ({ row }) => {
         const value = row.getValue("purpose") as string;
         const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+        const lowerValue = value?.toLowerCase() || '';
+        
         let bg = "bg-[#eaf4ff]";
         let text = "text-[#2563eb]";
         let border = "border border-[#b6d6f7]";
-        if (capitalizedValue === "Employment") {
-          // blue
-        } else if (capitalizedValue === "Bir") {
+        
+        // Employment - Blue (default)
+        if (lowerValue === "employment") {
+          bg = "bg-[#eaf4ff]";
+          text = "text-[#2563eb]";
+          border = "border border-[#b6d6f7]";
+        }
+        // BIR - Yellow/Amber
+        else if (lowerValue === "bir") {
           bg = "bg-[#fffbe6]";
           text = "text-[#b59f00]";
           border = "border border-[#f7e7b6]";
-        } else {
+        }
+        // Burial - Gray
+        else if (lowerValue === "burial") {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
           border = "border border-[#e5e7eb]";
         }
+        // First Time Job Seeker - Green
+        else if (lowerValue === "first time job seeker") {
+          bg = "bg-[#f0fff4]";
+          text = "text-[#006400]";
+          border = "border border-[#c6eac6]";
+        }
+        // Identification - Purple
+        else if (lowerValue === "identification") {
+          bg = "bg-[#f3e8ff]";
+          text = "text-[#7c3aed]";
+          border = "border border-[#c4b5fd]";
+        }
+        // Loan - Orange
+        else if (lowerValue === "loan") {
+          bg = "bg-[#fff7ed]";
+          text = "text-[#c2410c]";
+          border = "border border-[#fdba74]";
+        }
+        // SSS - Teal
+        else if (lowerValue === "sss") {
+          bg = "bg-[#f0fdfa]";
+          text = "text-[#0d9488]";
+          border = "border border-[#5eead4]";
+        }
+        // Bank Requirement - Indigo
+        else if (lowerValue === "bank requirement") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#4338ca]";
+          border = "border border-[#a5b4fc]";
+        }
+        // Electrical Connection - Amber
+        else if (lowerValue === "electrical connection") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#d97706]";
+          border = "border border-[#fcd34d]";
+        }
+        // MCWD Requirements - Cyan
+        else if (lowerValue === "mcwd requirements") {
+          bg = "bg-[#e0f2fe]";
+          text = "text-[#0369a1]";
+          border = "border border-[#7dd3fc]";
+        }
+        // Scholarship - Emerald
+        else if (lowerValue === "scholarship") {
+          bg = "bg-[#d1fae5]";
+          text = "text-[#047857]";
+          border = "border border-[#6ee7b7]";
+        }
+        // Postal ID - Rose
+        else if (lowerValue === "postal id") {
+          bg = "bg-[#fff1f2]";
+          text = "text-[#be123c]";
+          border = "border border-[#fda4af]";
+        }
+        // NBI - Slate
+        else if (lowerValue === "nbi") {
+          bg = "bg-[#f1f5f9]";
+          text = "text-[#475569]";
+          border = "border border-[#cbd5e1]";
+        }
+        // Board Examination - Violet
+        else if (lowerValue === "board examination") {
+          bg = "bg-[#ede9fe]";
+          text = "text-[#6d28d9]";
+          border = "border border-[#a78bfa]";
+        }
+        // TESDA - Sky
+        else if (lowerValue === "tesda") {
+          bg = "bg-[#e0f2fe]";
+          text = "text-[#0c4a6e]";
+          border = "border border-[#7dd3fc]";
+        }
+        // PWD Identification - Pink
+        else if (lowerValue === "pwd identification") {
+          bg = "bg-[#fce7f3]";
+          text = "text-[#be185d]";
+          border = "border border-[#f9a8d4]";
+        }
+        // PWD Financial Assistance - Fuchsia
+        else if (lowerValue === "pwd financial assistance") {
+          bg = "bg-[#fdf4ff]";
+          text = "text-[#a21caf]";
+          border = "border border-[#f0abfc]";
+        }
+        // Senior Citizen Identification - Lime
+        else if (lowerValue === "senior citizen identification") {
+          bg = "bg-[#f7fee7]";
+          text = "text-[#365314]";
+          border = "border border-[#bef264]";
+        }
+        // Senior Citizen Financial Assistance - Green
+        else if (lowerValue === "senior citizen financial assistance") {
+          bg = "bg-[#dcfce7]";
+          text = "text-[#166534]";
+          border = "border border-[#86efac]";
+        }
+        // Bail Bond - Red
+        else if (lowerValue === "bail bond") {
+          bg = "bg-[#fee2e2]";
+          text = "text-[#991b1b]";
+          border = "border border-[#fca5a5]";
+        }
+        // Fire Victim - Orange
+        else if (lowerValue === "fire victim") {
+          bg = "bg-[#ffedd5]";
+          text = "text-[#9a3412]";
+          border = "border border-[#fdba74]";
+        }
+        // Cohabitation - Purple
+        else if (lowerValue === "cohabitation") {
+          bg = "bg-[#f3e8ff]";
+          text = "text-[#6b21a8]";
+          border = "border border-[#c4b5fd]";
+        }
+        // Marriage Certification - Rose
+        else if (lowerValue === "marriage certification") {
+          bg = "bg-[#fff1f2]";
+          text = "text-[#9f1239]";
+          border = "border border-[#fda4af]";
+        }
+        // DWUP - Stone
+        else if (lowerValue === "dwup") {
+          bg = "bg-[#fafaf9]";
+          text = "text-[#57534e]";
+          border = "border border-[#d6d3d1]";
+        }
+        // Probation - Zinc
+        else if (lowerValue === "probation") {
+          bg = "bg-[#fafafa]";
+          text = "text-[#3f3f46]";
+          border = "border border-[#d4d4d8]";
+        }
+        // Police Clearance - Blue
+        else if (lowerValue === "police clearance") {
+          bg = "bg-[#dbeafe]";
+          text = "text-[#1e40af]";
+          border = "border border-[#93c5fd]";
+        }
+        // Barangay Clearance - Emerald
+        else if (lowerValue === "barangay clearance") {
+          bg = "bg-[#d1fae5]";
+          text = "text-[#065f46]";
+          border = "border border-[#6ee7b7]";
+        }
+        // Proof of Custody - Indigo
+        else if (lowerValue === "proof of custody") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#3730a3]";
+          border = "border border-[#a5b4fc]";
+        }
+        // Good Moral - Teal
+        else if (lowerValue === "good moral") {
+          bg = "bg-[#ccfbf1]";
+          text = "text-[#134e4a]";
+          border = "border border-[#5eead4]";
+        }
+        // Indigency (for minors) - Amber
+        else if (lowerValue === "indigency (for minors)") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#92400e]";
+          border = "border border-[#fcd34d]";
+        }
+        // Indigency - Yellow
+        else if (lowerValue === "indigency") {
+          bg = "bg-[#fefce8]";
+          text = "text-[#713f12]";
+          border = "border border-[#fde047]";
+        }
+        // Default - Gray
+        else {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
+        }
+        
         return (
           <span
             className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
@@ -232,22 +417,39 @@ function IssuedCertificates() {
       cell: ({ row }) => {
         const value = row.getValue("purpose") as string;
         const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+        const lowerValue = value?.toLowerCase() || '';
+        
         let bg = "bg-[#eaf4ff]";
         let text = "text-[#2563eb]";
         let border = "border border-[#b6d6f7]";
-        if (capitalizedValue === "Commercial Building Permit") {
-          bg = "bg-[#fffbe6]";
-          text = "text-[#b59f00]";
-          border = "border border-[#f7e7b6]";
-        } else if (capitalizedValue === "Residential Permit") {
-          bg = "bg-[#eaffea]";
-          text = "text-[#15803d]";
-          border = "border border-[#b6e7c3]";
-        } else {
+        
+        if (lowerValue === "business clearance") {
+          // blue (default)
+          bg = "bg-[#eaf4ff]";
+          text = "text-[#2563eb]";
+          border = "border border-[#b6d6f7]";
+        } else if (lowerValue === "barangay sinulog permit") {
+          bg = "bg-[#f0fff4]";
+          text = "text-[#006400]";
+          border = "border border-[#c6eac6]";
+        } else if (lowerValue === "barangay fiesta permit") {
+          bg = "bg-[#fffaf0]";
+          text = "text-[#b45309]";
+          border = "border border-[#fcd34d]";
+        } else if (lowerValue === "electrical connection") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#d97706]";
+          border = "border border-[#fcd34d]";
+        } else if (lowerValue === "building permit") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#4338ca]";
+          border = "border border-[#a5b4fc]";
+        } else if (capitalizedValue) {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
           border = "border border-[#e5e7eb]";
         }
+        
         return (
           <span
             className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}

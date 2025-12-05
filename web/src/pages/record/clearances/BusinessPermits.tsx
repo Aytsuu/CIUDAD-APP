@@ -243,21 +243,33 @@ function BusinessDocumentPage() {
         const capitalizedValue = value
           ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
           : "";
+        const lowerValue = value.toLowerCase();
 
         let bg = "bg-[#eaf4ff]";
         let text = "text-[#2563eb]";
         let border = "border border-[#b6d6f7]";
 
-        if (capitalizedValue === "Business clearance") {
+        if (lowerValue === "business clearance") {
           // blue (default)
-        } else if (capitalizedValue === "Barangay sinulog permit") {
+          bg = "bg-[#eaf4ff]";
+          text = "text-[#2563eb]";
+          border = "border border-[#b6d6f7]";
+        } else if (lowerValue === "barangay sinulog permit") {
           bg = "bg-[#f0fff4]";
           text = "text-[#006400]";
           border = "border border-[#c6eac6]";
-        } else if (capitalizedValue === "Barangay Fiesta Permit") {
+        } else if (lowerValue === "barangay fiesta permit") {
           bg = "bg-[#fffaf0]";
           text = "text-[#b45309]";
           border = "border border-[#fcd34d]";
+        } else if (lowerValue === "electrical connection") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#d97706]";
+          border = "border border-[#fcd34d]";
+        } else if (lowerValue === "building permit") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#4338ca]";
+          border = "border border-[#a5b4fc]";
         } else if (capitalizedValue) {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
