@@ -47,7 +47,7 @@ const ArchiveTabActions = ({
     <div className="flex justify-center gap-2">
       <TooltipLayout
         trigger={
-          <div 
+          <div
             className="w-[50px] h-[35px] bg-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm cursor-pointer hover:bg-[#f3f2f2]"
             onClick={() => onView(row.original)}
           >
@@ -61,12 +61,16 @@ const ArchiveTabActions = ({
 };
 
 // Updated columns
-export const columns = (onViewRecord: (record: AttendanceRecord) => void): ColumnDef<AttendanceRecord>[] => [
+export const columns = (
+  onViewRecord: (record: AttendanceRecord) => void
+): ColumnDef<AttendanceRecord>[] => [
   {
     accessorKey: "attMeetingDate",
-    header: "Date",
+    header: ({}) => (
+      <div className="flex w-full justify-center items-center">Date</div>
+    ),
     cell: ({ row }) => (
-      <div className="whitespace-nowrap overflow-hidden text-ellipsis">
+      <div className="whitespace-nowrap overflow-hidden text-ellipsis text-center">
         <div>{formatTableDate(row.getValue("attMeetingDate"))}</div>
       </div>
     ),
@@ -74,14 +78,18 @@ export const columns = (onViewRecord: (record: AttendanceRecord) => void): Colum
   },
   {
     accessorKey: "attMettingTitle",
-    header: "Meeting Title",
+    header: ({}) => (
+      <div className="flex w-full justify-center items-center">
+        Meeting Title
+      </div>
+    ),
     cell: ({ row }) => {
       const title = row.getValue("attMettingTitle") as string;
       const lines = title.split("\n");
       const displayText =
         lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : title;
       return (
-        <div className="line-clamp-3 overflow-hidden text-ellipsis">
+        <div className="line-clamp-3 overflow-hidden text-ellipsis text-center">
           {displayText}
         </div>
       );
@@ -90,14 +98,16 @@ export const columns = (onViewRecord: (record: AttendanceRecord) => void): Colum
   },
   {
     accessorKey: "attMeetingDescription",
-    header: "Meeting Description",
+    header: ({}) => (
+      <div className="flex w-full justify-center items-center">Description</div>
+    ),
     cell: ({ row }) => {
       const desc = row.getValue("attMeetingDescription") as string;
       const lines = desc.split("\n");
       const displayText =
         lines.length > 3 ? `${lines.slice(0, 3).join("\n")}\n...` : desc;
       return (
-        <div className="line-clamp-3 overflow-hidden text-ellipsis">
+        <div className="line-clamp-3 overflow-hidden text-ellipsis text-center">
           {displayText}
         </div>
       );
@@ -106,22 +116,19 @@ export const columns = (onViewRecord: (record: AttendanceRecord) => void): Colum
   },
   {
     accessorKey: "action",
-    header: "Action",
+    header: ({}) => (
+      <div className="flex w-full justify-center items-center">Action</div>
+    ),
     cell: ({ row }) => {
       if (row.original.isArchived) {
-        return (
-          <ArchiveTabActions
-            row={row}
-            onView={onViewRecord}
-          />
-        );
+        return <ArchiveTabActions row={row} onView={onViewRecord} />;
       }
 
       return (
         <div className="flex justify-center gap-1">
           <TooltipLayout
             trigger={
-              <div 
+              <div
                 className="w-[50px] h-[35px] bg-white border border-gray flex justify-center items-center rounded-[5px] shadow-sm cursor-pointer hover:bg-[#f3f2f2]"
                 onClick={() => onViewRecord(row.original)}
               >
@@ -151,8 +158,14 @@ function AttendanceSheetsDialog({
   onOpenChange: (open: boolean) => void;
   viewMode: "active" | "archive";
 }) {
-  const [filesTab, setFilesTab] = useState<"active" | "archived">(viewMode === "archive" ? "archived" : "active");
-  const { data: attendanceSheets = [], isLoading: isSheetsLoading, refetch: refetchSheets } = useGetAttendanceSheets();
+  const [filesTab, setFilesTab] = useState<"active" | "archived">(
+    viewMode === "archive" ? "archived" : "active"
+  );
+  const {
+    data: attendanceSheets = [],
+    isLoading: isSheetsLoading,
+    refetch: refetchSheets,
+  } = useGetAttendanceSheets();
   const archiveSheet = useArchiveAttendanceSheet();
   const restoreSheet = useRestoreAttendanceSheet();
   const deleteSheet = useDeleteAttendanceSheet();
@@ -164,8 +177,8 @@ function AttendanceSheetsDialog({
     (sheet) => sheet.ce_id === attendanceRecord.ceId
   );
 
-  const activeSheets = sheets.filter(sheet => !sheet.att_is_archive);
-  const archivedSheets = sheets.filter(sheet => sheet.att_is_archive);
+  const activeSheets = sheets.filter((sheet) => !sheet.att_is_archive);
+  const archivedSheets = sheets.filter((sheet) => sheet.att_is_archive);
 
   const handleArchive = (attId: any) => {
     archiveSheet.mutate(attId, {
@@ -280,7 +293,9 @@ function AttendancePage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [filter, setFilter] = useState<string>("all");
   const [activeTab] = useState<"active" | "archive">("active");
-  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(
+    null
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { showLoading, hideLoading } = useLoading();
 
@@ -291,7 +306,13 @@ function AttendancePage() {
     data: councilEventsData,
     isLoading: isCouncilEventsLoading,
     error,
-  } = useGetCouncilEvents(currentPage, pageSize, debouncedSearchTerm, filter, false);
+  } = useGetCouncilEvents(
+    currentPage,
+    pageSize,
+    debouncedSearchTerm,
+    filter,
+    false
+  );
 
   const { data: attendanceSheets = [], isLoading: isSheetsLoading } =
     useGetAttendanceSheets(activeTab === "archive");
@@ -376,7 +397,6 @@ function AttendancePage() {
     setFilter(value);
     setCurrentPage(1);
   };
-
 
   // Create filter options
   const filterOptions = [
@@ -465,10 +485,16 @@ function AttendancePage() {
           <>
             <Tabs value={activeTab}>
               <TabsContent value="active">
-                <DataTable columns={columns(handleViewRecord)} data={tableData} />
+                <DataTable
+                  columns={columns(handleViewRecord)}
+                  data={tableData}
+                />
               </TabsContent>
               <TabsContent value="archive">
-                <HistoryTable columns={columns(handleViewRecord)} data={tableData} />
+                <HistoryTable
+                  columns={columns(handleViewRecord)}
+                  data={tableData}
+                />
               </TabsContent>
             </Tabs>
 

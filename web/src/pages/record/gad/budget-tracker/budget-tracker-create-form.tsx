@@ -104,8 +104,8 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   useEffect(() => {
     if (yearBudgets && !yearBudgetsLoading) {
       const currentYearBudget = yearBudgets.results?.find(
-      (b: BudgetYear) => b.gbudy_year === gbudy_year
-    );
+        (b: BudgetYear) => b.gbudy_year === gbudy_year
+      );
       if (currentYearBudget) {
         form.setValue("gbudy", currentYearBudget.gbudy_num);
         form.setValue("gbud_remaining_bal", calculateRemainingBalance());
@@ -275,9 +275,9 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   const currentYearBudget = yearBudgets?.results?.find(
-      (budget: BudgetYear) => budget.gbudy_year === gbudy_year
-    );
-  
+    (budget: BudgetYear) => budget.gbudy_year === gbudy_year
+  );
+
   const selectedProject = projectProposals?.find(
     (p) => p.gpr_title === projectWatch
   );
@@ -486,19 +486,19 @@ function GADAddEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                     <span>Remaining Balance:</span>
                     <span>₱{remainingBalance.toLocaleString()}</span>
                   </div> */}
-                  {actualExpenseWatch && actualExpenseWatch > 0 && (
+                  {(actualExpenseWatch ?? 0) > 0 && (
                     <div className="flex justify-between mt-2">
                       <span className="font-medium">After This Entry:</span>
                       <span
                         className={
-                          actualExpenseWatch > remainingBalance
+                          (actualExpenseWatch ?? 0) > remainingBalance
                             ? "text-red-500"
                             : ""
                         }
                       >
                         ₱
                         {(
-                          remainingBalance - actualExpenseWatch
+                          remainingBalance - (actualExpenseWatch ?? 0)
                         ).toLocaleString()}
                       </span>
                     </div>
