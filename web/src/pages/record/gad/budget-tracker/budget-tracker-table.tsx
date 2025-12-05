@@ -271,7 +271,7 @@ function BudgetTracker() {
                 View All Docs ({files.length})
               </div>
             ) : !hasReferenceNum || !hasFiles ? (
-              <span className="text-red-500">
+              <span className="text-red-500 text-center">
                 Missing
                 {!hasReferenceNum && " Reference Number"}
                 {!hasReferenceNum && !hasFiles && " and"}
