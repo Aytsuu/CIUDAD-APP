@@ -428,7 +428,11 @@ function IncomeandExpenseTracking() {
         ...commonColumns,
  {
             accessorKey: "action", 
-            header: "Action",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({ row }) => {
                 return (
                     <div className="flex justify-center gap-2">
