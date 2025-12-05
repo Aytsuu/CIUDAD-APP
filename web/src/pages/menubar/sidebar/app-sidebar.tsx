@@ -128,10 +128,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
             <span>{item.title}</span>
           </Link>
         ) : (
-          <div
-            className={baseStyles}
-            onClick={() => setActiveItem(item.title)}
-          >
+          <div className={baseStyles} onClick={() => setActiveItem(item.title)}>
             <span>{item.title}</span>
           </div>
         )}
@@ -144,12 +141,18 @@ export function AppSidebar() {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState<string>("");
 
-  const featureValidator = (requiredFeatures?: string[]) => {
-    if (!requiredFeatures || requiredFeatures.length == 0) return user?.staff?.pos.toLowerCase() == "admin";
-    
-    const hasFeature = requiredFeatures.some((feat) => 
-      user?.staff?.assignments?.includes(feat?.toUpperCase()) ||
-      user?.staff?.pos.toLowerCase() == "admin"
+  const featureValidator = (
+    requiredFeatures?: string[],
+    exclude?: string[]
+  ) => {
+    if (
+      !requiredFeatures || requiredFeatures.length == 0  
+    )
+      return user?.staff?.pos.toLowerCase() == "admin" && 
+              !exclude?.includes("admin");
+
+    const hasFeature = requiredFeatures.some((feat) =>
+      user?.staff?.assignments?.includes(feat?.toUpperCase())
     );
 
     return hasFeature;
@@ -161,12 +164,16 @@ export function AppSidebar() {
       title: "Calendar",
       url: "/calendar-page",
     },
-    ...(featureValidator(["report"])
+    ...(featureValidator(["report"], ["admin"])
       ? [
           {
             title: "Team",
             url: "/team",
           },
+        ]
+      : []),
+    ...(featureValidator(["report"])
+      ? [
           {
             title: "Report",
             url: "/",
@@ -250,7 +257,6 @@ export function AppSidebar() {
             title: "Council",
             url: "/",
             items: [
-              // { title: "Council Events", url: "/calendar-page" },
               { title: "Attendance", url: "/attendance-page" },
               { title: "Ordinance", url: "/ord-page" },
               { title: "Resolution", url: "/res-page" },
@@ -353,12 +359,14 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator(["waste", "gad", "council", "finance"]) ? [
-      {
-        title: "Activity Log",
-        url: "/record/activity-log",
-      }
-    ] : [])
+    ...(featureValidator(["waste", "gad", "council", "finance"])
+      ? [
+          {
+            title: "Activity Log",
+            url: "/record/activity-log",
+          },
+        ]
+      : []),
   ];
 
   // HEALTH FEATURES
@@ -452,7 +460,6 @@ export function AppSidebar() {
           {
             title: "Administration",
             url: "/administration",
-            
           },
         ]
       : []),

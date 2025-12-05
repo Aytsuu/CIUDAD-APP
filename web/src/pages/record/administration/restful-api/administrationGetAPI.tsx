@@ -5,7 +5,8 @@ export const getStaffs = async (
   page: number, 
   pageSize: number, 
   searchQuery: string, 
-  staffTypeFilter?: 'Barangay Staff' | 'Health Staff'
+  staffTypeFilter?: 'Barangay Staff' | 'Health Staff',
+  positionGroupFilter?: string
 ) => {
   try {
     const params: any = { 
@@ -15,9 +16,8 @@ export const getStaffs = async (
     };
     
     // Add staff type filter if provided
-    if (staffTypeFilter) {
-      params.staff_type = staffTypeFilter;
-    }
+    if (staffTypeFilter) params.staff_type = staffTypeFilter;
+    if (positionGroupFilter) params.pos_group = positionGroupFilter
     
     const res = await api.get("administration/staff/list/table/", { params });
     return res.data;

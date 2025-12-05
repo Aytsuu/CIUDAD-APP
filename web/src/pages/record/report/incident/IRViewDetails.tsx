@@ -10,7 +10,6 @@ import {
   ImageOff,
   User,
   FileText,
-  Activity,
   CheckCircle2,
   Map,
   UserRound,
@@ -18,9 +17,12 @@ import {
   Clock,
   CircleAlert,
   Eye,
-  RotateCcw,
-  Archive,
-  Lock,
+  PenLine,
+  Trash2,
+  Save,
+  Quote,
+  PackageOpen,
+  ArchiveRestore,
 } from "lucide-react";
 import React from "react";
 import { useLocation, useNavigate } from "react-router";
@@ -41,6 +43,7 @@ import ReportMapLocation from "../securado/ReportMapLocation";
 import { Separator } from "@/components/ui/separator";
 import TrackerIcon from "@/assets/images/tracker_icon.svg";
 import UserIcon from "@/assets/images/user_icon.svg";
+import { StatusStepper } from "./StatusStepper";
 
 // Styling constants
 const SEVERITY_LEVELS: Record<string, string> = {
@@ -98,14 +101,20 @@ export default function IRViewDetails() {
   const { showLoading, hideLoading } = useLoading();
   const [mediaFiles, setMediaFiles] = React.useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const [isClosing, setIsClosing] = React.useState<boolean>(false);
-  const [isReopening, setIsReopening] = React.useState<boolean>(false);
+  const [toArchive, setToArchive] = React.useState<boolean>(false);
+
+  // State for Remarks
+  const [isAddingRemark, setIsAddingRemark] = React.useState<boolean>(false);
+  const [remarkToAdd, setRemarkToAdd] = React.useState<string>("");
+  const [isRemoving, setIsRemoving] = React.useState<boolean>(false);
+
   const { data: IRInfo, isLoading } = useGetIRInfo(params?.ir_id);
   const isTracker = IRInfo?.ir_is_tracker;
   const images = IRInfo?.files || [];
 
   // Queries
   const { mutateAsync: updateIR } = useUpdateIR();
+
   const { data: userLocation, isLoading: isLoadingUserLoc } =
     useConvertCoordinatesToAddress(
       IRInfo?.ir_track_user_lat,
@@ -116,9 +125,9 @@ export default function IRViewDetails() {
     useConvertCoordinatesToAddress(IRInfo?.ir_track_lat, IRInfo?.ir_track_lng);
 
   const isResolved = IRInfo?.ir_status === "RESOLVED";
-  const isClosed = IRInfo?.ir_status === "CLOSED";
-  const isPending = IRInfo?.ir_status === "PENDING"
-  const isInProgress = IRInfo?.ir_status === "IN-PROGRESS"
+  const isInProgress = IRInfo?.ir_status === "IN-PROGRESS";
+  const hasRemark = !!IRInfo?.ir_remark && IRInfo?.ir_remark.trim() !== "";
+  const isArchive = IRInfo?.ir_is_archive;
 
   // ================ SIDE EFFECTS ================
   React.useEffect(() => {
@@ -140,7 +149,7 @@ export default function IRViewDetails() {
         data: {
           ir_is_verified: true,
         },
-        ir_id: params?.ir_id,
+        ir_id: IRInfo?.ir_id,
       });
       showSuccessToast("Incident Report Created");
       navigate(-1);
@@ -151,75 +160,132 @@ export default function IRViewDetails() {
     }
   };
 
-  const handleMarkInProgress = async () => {
+  const handleSaveRemark = async () => {
+    if (!hasRemark && !remarkToAdd.trim()) {
+      setIsAddingRemark(false);
+
+      if (toArchive) {
+        setToArchive(false);
+        showErrorToast("Cannot archive a report without remark");
+      }
+      return;
+    }
+    if (isArchive && !remarkToAdd.trim()) {
+      showErrorToast("Remark cannot be empty");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await updateIR({
         data: {
-          ir_status: "IN-PROGRESS",
+          ...(!hasRemark && { ir_remark: remarkToAdd }),
+          ...(toArchive && { ir_is_archive: true }),
         },
-        ir_id: params?.ir_id,
+        ir_id: IRInfo?.ir_id,
       });
-      showSuccessToast("Incident Report has been marked as In-Progress");
-      navigate(-1);
+      showSuccessToast(
+        toArchive
+          ? "Report has been moved archive"
+          : "Remark saved successfully"
+      );
+      setRemarkToAdd("");
+      setIsAddingRemark(false);
+      setToArchive(false);
     } catch (err) {
-      showErrorToast("Failed to change status. Please try again.");
+      showErrorToast(
+        toArchive
+          ? "Failed to archive report. Please try again."
+          : "Failed to save remark. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCloseIR = async () => {
+  const handleRemoveRemark = async () => {
+    if (isArchive) {
+      showErrorToast("Cannot remove remark for archived report");
+      return;
+    }
+
     try {
-      setIsClosing(true);
+      setIsRemoving(true);
       await updateIR({
         data: {
-          ir_status: "CLOSED",
+          ir_remark: null,
         },
-        ir_id: params?.ir_id,
+        ir_id: IRInfo?.ir_id,
       });
-      showSuccessToast("Incident Report has been closed");
-      navigate(-1);
+      setRemarkToAdd("");
+      setIsAddingRemark(false);
+      showSuccessToast("Remark removed successfully");
     } catch (err) {
-      showErrorToast("Failed to close incident report. Please try again.");
+      showErrorToast("Failed to remove remark. Please try again.");
     } finally {
-      setIsClosing(false);
+      setIsRemoving(false);
     }
   };
 
-  const handleReopenIR = async () => {
+  const handleArchive = async () => {
     try {
-      setIsReopening(true);
-      // Reopening usually sets it back to IN-PROGRESS or PENDING. 
-      // IN-PROGRESS implies active work is resuming.
+      setToArchive(true);
+      setIsSubmitting(true);
       await updateIR({
-        data: { ir_status: "IN-PROGRESS" },
-        ir_id: params?.ir_id,
+        data: {
+          ir_is_archive: true,
+        },
+        ir_id: IRInfo?.ir_id,
       });
-      showSuccessToast("Incident Report reopened successfully");
-      navigate(-1);
+      showSuccessToast("Report has been moved to archive");
+      setToArchive(true);
     } catch (err) {
-      showErrorToast("Failed to reopen report.");
+      showErrorToast("Failed to archive report. Please try again.");
     } finally {
-      setIsReopening(false);
+      setIsSubmitting(false);
     }
+  };
+
+  const handleRestore = async () => {
+    try {
+      setIsSubmitting(true);
+      await updateIR({
+        data: {
+          ir_is_archive: false,
+        },
+        ir_id: IRInfo?.ir_id,
+      });
+      showSuccessToast("Report restored successfully");
+    } catch (err) {
+      showErrorToast("Failed to restore report. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStartEdit = () => {
+    setRemarkToAdd(IRInfo?.ir_remark || "");
+    setIsAddingRemark(true);
+  };
+
+  const handleCancelEdit = () => {
+    setRemarkToAdd("");
+    setIsAddingRemark(false);
+    if (toArchive) setToArchive(false);
   };
 
   // ================ RENDER ================
-  // Helper to determine Card Styling based on status
   const getActionCardStyles = () => {
     if (isResolved) return "border-green-200 bg-green-50";
-    if (isClosed) return "border-slate-200 bg-slate-50"; // Gray theme for closed
     return "border-blue-100 bg-white";
   };
 
   const getActionHeaderStyles = () => {
     if (isResolved) return "text-green-800";
-    if (isClosed) return "text-slate-700";
     return "text-gray-900";
   };
 
-  if (isLoading || isLoadingDeviceLoc || isLoadingUserLoc)
+  if (isLoading || isLoadingUserLoc || isLoadingDeviceLoc)
     return <LoadingState />;
 
   return (
@@ -301,128 +367,99 @@ export default function IRViewDetails() {
           {/* RIGHT COLUMN: Sidebar (Actions + Metadata) */}
           <div className="lg:col-span-1 space-y-6">
             {/* Action Panel */}
-            <Card className={`shadow-md transition-all duration-300 ${getActionCardStyles()}`}>
+            <Card
+              className={`shadow-md transition-all duration-300 ${getActionCardStyles()}`}
+            >
               <CardHeader className="pb-2">
-                <CardTitle className={`text-base font-semibold flex items-center gap-2 ${getActionHeaderStyles()}`}>
+                <CardTitle
+                  className={`text-base font-semibold flex items-center gap-2 ${getActionHeaderStyles()}`}
+                >
                   {isResolved ? (
-                    <><CheckCircle2 className="w-5 h-5 text-green-600" /> Resolution Status</>
-                  ) : isClosed ? (
-                    <><Archive className="w-5 h-5 text-slate-500" /> Report Closed</>
+                    <>
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />{" "}
+                      Resolution Status
+                    </>
                   ) : (
                     <>Actions</>
                   )}
                 </CardTitle>
               </CardHeader>
-              
-              <CardContent className="grid gap-3">
+
+              <CardContent className="grid gap-2">
+                <StatusStepper
+                  isVerified={!!isVerified}
+                  isResolved={!!isResolved}
+                />
+                <Separator className="mb-3" />
+
                 {/* 1. NOT VERIFIED: Create Report */}
-                {!isVerified && (
-                  isSubmitting ? (
-                    <LoadButton className="w-full">Creating Report...</LoadButton>
+                {!isVerified &&
+                  !isArchive &&
+                  (isSubmitting && !isAddingRemark ? (
+                    <LoadButton className="w-full">
+                      Creating Report...
+                    </LoadButton>
                   ) : (
                     <ConfirmationModal
                       title="Generate Official Incident Report"
                       description="This will formally document the incident..."
                       trigger={
                         <Button className="w-full">
-                          <FileText className="w-4 h-4 mr-2" /> Create Incident Report
+                          <FileText className="w-4 h-4 mr-2" /> Create Incident
+                          Report
                         </Button>
                       }
                       onClick={handleCreateIR}
                     />
-                  )
-                )}
+                  ))}
 
-                {isVerified && (
+                {isVerified && !isArchive && (
                   <>
-                    {/* 2. PENDING: Mark In Progress */}
-                    {isPending && (
-                       isSubmitting ? (
-                        <LoadButton className="w-full">Changing Status...</LoadButton>
-                      ) : (
-                        <ConfirmationModal
-                          title="Begin Resolution Process"
-                          description="This will update status to 'In Progress'..."
-                          trigger={
-                            <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                              <Activity className="w-4 h-4 mr-2" /> Mark In Progress
-                            </Button>
-                          }
-                          onClick={handleMarkInProgress}
-                        />
-                      )
-                    )}
-
-                    {/* 3. IN PROGRESS: Resolve or Close */}
+                    {/* IN PROGRESS: Resolve or Close */}
                     {isInProgress && (
                       <>
                         <Button
                           className="w-full bg-green-600 hover:bg-green-700"
-                          onClick={() => navigate("/report/action/form", {
-                             state: { params: { ir_id: IRInfo?.ir_id, area: IRInfo?.ir_area } } 
-                          })}
+                          onClick={() =>
+                            navigate("/report/action/form", {
+                              state: {
+                                params: {
+                                  ir_id: IRInfo?.ir_id,
+                                  area: IRInfo?.ir_area,
+                                },
+                              },
+                            })
+                          }
                         >
-                          <CheckCircle2 className="w-4 h-4 mr-2" /> Resolve Incident
+                          <CheckCircle2 className="w-4 h-4 mr-2" /> Resolve
+                          Incident
                         </Button>
-
-                        {isClosing ? (
-                          <LoadButton className="w-full">Closing Report...</LoadButton>
-                        ) : (
-                          <ConfirmationModal
-                            title="Close Incident Report"
-                            description="This will close the report without resolution. It can be reopened later."
-                            trigger={
-                              <Button variant="secondary" className="w-full bg-white border border-gray-200 hover:bg-gray-100 text-gray-700">
-                                <Lock className="w-4 h-4 mr-2" /> Close Report
-                              </Button>
-                            }
-                            onClick={handleCloseIR}
-                          />
-                        )}
                       </>
                     )}
 
-                    {/* 4. CLOSED: Show Info & Reopen Button */}
-                    {isClosed && (
-                      <div className="space-y-4">
-                        <div className="bg-slate-100 p-3 rounded-lg border border-slate-200">
-                          <p className="text-xs text-slate-600 font-medium text-center mb-1">
-                            Archived
-                          </p>
-                          <p className="text-xs text-center text-slate-500">
-                            Closed: {getDateTimeFormat(IRInfo?.ir_updated_at)}
-                          </p>
-                        </div>
-                        
-                        {isReopening ? (
-                           <LoadButton className="w-full bg-slate-800 text-white">Reopening...</LoadButton>
-                        ) : (
-                          <ConfirmationModal
-                            title="Reopen Incident Report"
-                            description="This will move the report back to 'In Progress' for further action. Are you sure?"
-                            trigger={
-                              <Button variant="outline" className="w-full border-slate-300 hover:bg-white hover:text-slate-800 text-slate-600">
-                                <RotateCcw className="w-4 h-4 mr-2" /> Reopen Incident Report
-                              </Button>
-                            }
-                            onClick={handleReopenIR}
-                          />
-                        )}
-                      </div>
-                    )}
-
-                    {/* 5. RESOLVED: View Action Report */}
+                    {/* RESOLVED: View Action Report */}
                     {isResolved && (
                       <div className="space-y-3">
                         <div className="bg-white/60 p-3 rounded-lg border border-green-100">
-                          <p className="text-xs text-green-700 font-medium text-center mb-1">Report Resolved</p>
+                          <p className="text-xs text-green-700 font-medium text-center mb-1">
+                            Report Resolved
+                          </p>
                           <p className="text-xs text-center text-green-600">
                             Resolved: {getDateTimeFormat(IRInfo?.ir_updated_at)}
                           </p>
                         </div>
                         <Button
                           className="w-full bg-green-600 hover:bg-green-700"
-                          onClick={() => navigate("/report/action/document", { state: { params: { type: "AR", data: { id: IRInfo?.ar } } } })}
+                          onClick={() =>
+                            navigate("/report/action/document", {
+                              state: {
+                                params: {
+                                  type: "AR",
+                                  data: { id: IRInfo?.ar },
+                                },
+                              },
+                            })
+                          }
                         >
                           <Eye className="w-4 h-4 mr-2" /> View Action Report
                         </Button>
@@ -431,11 +468,212 @@ export default function IRViewDetails() {
                   </>
                 )}
 
-                {/* Received Date Footer (Common for non-resolved) */}
-                {!isResolved && !isClosed && (
-                  <p className="text-xs text-center text-gray-400 mt-2">
-                    Received: {getDateTimeFormat(IRInfo?.ir_created_at)}
-                  </p>
+                {isArchive &&
+                  (isSubmitting ? (
+                    <LoadButton className="w-full">
+                      Restoring Report...
+                    </LoadButton>
+                  ) : (
+                    <ConfirmationModal
+                      title="Generate Official Incident Report"
+                      description="This will formally document the incident..."
+                      trigger={
+                        <Button className="w-full">
+                          <ArchiveRestore className="w-4 h-4 mr-2" /> Restore
+                          Report
+                        </Button>
+                      }
+                      onClick={handleRestore}
+                    />
+                  ))}
+
+                {/* Received Date Footer */}
+                {!isResolved && (
+                  <>
+                    {/* ============ REMARK SECTION ============ */}
+                    <div className="w-full mt-2">
+                      {/* Case A: Editing or Adding Mode */}
+                      {isAddingRemark ? (
+                        <div className="animate-in fade-in zoom-in-95 duration-200 space-y-2">
+                          <Label className="text-xs text-gray-500 font-medium">
+                            Remark
+                          </Label>
+                          <Textarea
+                            value={remarkToAdd}
+                            onChange={(e) => setRemarkToAdd(e.target.value)}
+                            placeholder="Enter your remark here..."
+                            className="text-sm bg-white"
+                            rows={3}
+                            autoFocus
+                          />
+                          <div className="flex items-center gap-2 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs text-gray-500 hover:text-gray-700"
+                              onClick={handleCancelEdit}
+                              disabled={isSubmitting}
+                            >
+                              Cancel
+                            </Button>
+                            {!toArchive ? (
+                              <Button
+                                size="sm"
+                                className="h-8 text-xs gap-1"
+                                onClick={handleSaveRemark}
+                                disabled={isSubmitting}
+                              >
+                                {isSubmitting ? (
+                                  <Spinner size="sm" />
+                                ) : (
+                                  <>
+                                    <Save className="mr-2" /> Save
+                                  </>
+                                )}
+                              </Button>
+                            ) : (
+                              <ConfirmationModal
+                                trigger={
+                                  <Button
+                                    size="sm"
+                                    className="h-8 text-xs gap-1"
+                                    disabled={isSubmitting}
+                                  >
+                                    {isSubmitting ? (
+                                      <Spinner size="sm" />
+                                    ) : (
+                                      <>
+                                        <Save className="mr-2" /> Save
+                                      </>
+                                    )}
+                                  </Button>
+                                }
+                                title="Archive Report"
+                                description="Are you sure you want to archive this report? It will be moved to the archived list and removed from your active view."
+                                onClick={handleSaveRemark}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        /* Case B: Display Existing Remark OR Show Add Button */
+                        <>
+                          <div className="flex gap-3">
+                            {!hasRemark && (
+                              <Button
+                                variant="secondary"
+                                className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
+                                onClick={() => setIsAddingRemark(true)}
+                              >
+                                <PenLine className="w-4 h-4 mr-2" /> Add Remark
+                              </Button>
+                            )}
+
+                            {!isArchive &&
+                              !isAddingRemark &&
+                              (!hasRemark ? (
+                                <Button
+                                  variant="secondary"
+                                  className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
+                                  onClick={() => {
+                                    setToArchive(true);
+                                    setIsAddingRemark(true);
+                                  }}
+                                >
+                                  <PackageOpen className="w-4 h-4 mr-2" />{" "}
+                                  Archive
+                                </Button>
+                              ) : isSubmitting && toArchive ? (
+                                <LoadButton className="w-full">
+                                  Archiving Report...
+                                </LoadButton>
+                              ) : (
+                                <ConfirmationModal
+                                  trigger={
+                                    <Button
+                                      variant="secondary"
+                                      className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-gray-700"
+                                    >
+                                      <PackageOpen className="w-4 h-4 mr-2" />{" "}
+                                      Archive
+                                    </Button>
+                                  }
+                                  title="Archive Report"
+                                  description="Are you sure you want to archive this report? It will be moved to the archived list and removed from your active view."
+                                  onClick={handleArchive}
+                                />
+                              ))}
+                          </div>
+
+                          {hasRemark && (
+                            <div className="relative mt-3 space-y-2">
+                              <Label className="text-xs text-gray-500 font-medium">
+                                Remark
+                              </Label>
+                              <div className="relative bg-gray-50 border border-gray-200 rounded-md p-3 pr-8 shadow-sm transition-all hover:border-gray-300 group">
+                                <Quote className="absolute top-2 left-2 w-3 h-3 text-gray-300 transform scale-x-[-1]" />
+
+                                <p className="text-sm text-gray-700 leading-relaxed pl-4 font-medium">
+                                  {IRInfo?.ir_remark}
+                                </p>
+
+                                {/* MODIFIED SECTION STARTS HERE */}
+                                <div
+                                  className={`absolute bottom-1 right-1 flex gap-1 transition-opacity duration-200 bg-gray-50/80 backdrop-blur-sm rounded-md p-1 ${
+                                    isRemoving
+                                      ? "opacity-100"
+                                      : "opacity-0 group-hover:opacity-100"
+                                  }`}
+                                >
+                                  {/* Edit Button - Disable during submit */}
+                                  <button
+                                    onClick={handleStartEdit}
+                                    disabled={isRemoving}
+                                    className={`p-1.5 rounded-md transition-colors ${
+                                      isRemoving
+                                        ? "text-gray-300 cursor-not-allowed"
+                                        : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                                    }`}
+                                    title="Edit Remark"
+                                  >
+                                    <PenLine className="w-3.5 h-3.5" />
+                                  </button>
+
+                                  {/* Delete Button / Spinner Swap */}
+                                  {isRemoving ? (
+                                    <div className="p-1.5 flex items-center justify-center">
+                                      <Spinner
+                                        size="sm"
+                                        className="border-t-red-500"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <ConfirmationModal
+                                      title="Delete Remark"
+                                      description="Are you sure you want to remove this remark?"
+                                      trigger={
+                                        <button
+                                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                          title="Delete Remark"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      }
+                                      onClick={handleRemoveRemark}
+                                      variant="destructive"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs text-center text-gray-400 mt-3">
+                      Received: {getDateTimeFormat(IRInfo?.ir_created_at)}
+                    </p>
+                  </>
                 )}
               </CardContent>
             </Card>
