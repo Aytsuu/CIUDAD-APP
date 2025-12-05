@@ -29,8 +29,9 @@ class IncidentReport(AbstractModels):
   ir_created_at = models.DateTimeField(auto_now_add=True)
   ir_updated_at = models.DateTimeField(auto_now=True)
   ir_is_archive = models.BooleanField(default=False)
-  ir_status = models.CharField(max_length=50, default="PENDING")
+  ir_status = models.CharField(max_length=50, default="IN-PROGRESS")
   ir_is_verified = models.BooleanField(default=False)
+  ir_remark = models.TextField(null=True)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
   rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, null=True)
 

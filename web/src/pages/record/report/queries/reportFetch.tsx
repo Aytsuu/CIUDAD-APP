@@ -56,6 +56,7 @@ export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
     },
     staleTime: 5000,
     retry: false,
+    enabled: !!lat && !!lng
   });
 };
 
