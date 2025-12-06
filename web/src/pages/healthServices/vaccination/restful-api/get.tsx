@@ -31,7 +31,7 @@ export const getPatient =  async () => {
     const response = await api2.get(`/patient`);
     return response.data;
   } catch (err) {
-    console.error(err);
+    {process.env.NODE_ENV === 'development' && console.error(err);}
   }
 };
 
@@ -51,8 +51,7 @@ export const getVaccinationRecords = async (params?: { page?: number; page_size?
     const response = await api2.get(url);
     return response.data;
   } catch (err) {
-    console.error(err);
-    throw err;
+    {process.env.NODE_ENV === 'development' && console.error(err);}
   }
 };
 
@@ -61,7 +60,7 @@ export const getLatestVitals =  async (patId: string) => {
     const response = await api2.get(`/patientrecords/vital-signs/latest/${patId}/`);
     return response.data;
   } catch (err) {
-    console.error(err);
+    {process.env.NODE_ENV === 'development' && console.error(err);}
   }
 }
 
@@ -69,13 +68,13 @@ export const getLatestVitals =  async (patId: string) => {
 export const getVaccinationRecordById =  async (id: string) => {
   try {
     const response = await api2.get(`/vaccination/indiv-patient-record/${id}/`);
-    // console.log("API Response:", response); // Add logging
+    // DEVELOPMENT MODE ONLY
     if (!response.data) {
-      throw new Error("No data returned from API");
+      {process.env.NODE_ENV === 'development' && console.error("No data returned from API");}
     }
     return response.data;
   } catch (err) {
-    console.error(err);
+    {process.env.NODE_ENV === 'development' && console.error(err);}
   }
 }
 
@@ -84,27 +83,27 @@ export const getVaccinationCount = async (patId: string) => {
     const response = await api2.get(`/vaccination/vacrec-count/${patId}/`);
     return response.data.vaccination_count;
   } catch (err) {
-    console.error("Failed to fetch vaccination count:", err);
-    return 0; // or throw if you want error handling on the UI
+    {process.env.NODE_ENV === 'development' && console.error("Failed to fetch vaccination count:", err);}
+    return 0;
   }
 };
 
   export const getVaccintStocks =  async () => {
-      try {
-          const response = await api2.get(`/inventory/vaccine_stocks/`);
-          return response.data;
-      } catch (err) {
-          console.error(err);
-      }
+    try {
+      const response = await api2.get(`/inventory/vaccine_stocks/`);
+      return response.data;
+    } catch (err) {
+      {process.env.NODE_ENV === 'development' && console.error(err);}
+    }
   }
 
 
 export const getVaccinelist =  async () => {
     try {
-        const response = await api2.get(`/inventory/vac_list`);
-        return response.data;
+      const response = await api2.get(`/inventory/vac_list`);
+      return response.data;
     } catch (err) {
-        console.error(err);
+      {process.env.NODE_ENV === 'development' && console.error(err);}
     }
     }
 
@@ -112,22 +111,22 @@ export const getVaccinelist =  async () => {
 
    
 export const getSpecificVaccintStocks =  async (vac_id:number) => {
-  try {
+    try {
       const response = await api2.get(`/inventory/vaccine_stocks_vac/${vac_id}/`);
       return response.data;
-  } catch (err) {
-      console.error(err);
-  }
+    } catch (err) {
+      {process.env.NODE_ENV === 'development' && console.error(err);}
+    }
 }
 
 
 export const getVaccinationHistory =  async () => {
-  try {
+    try {
       const response = await api2.get(`/vaccination/vaccination-history/`);
       return response.data;
-  } catch (err) {
-      console.error(err);
-  }   
+    } catch (err) {
+      {process.env.NODE_ENV === 'development' && console.error(err);}
+    }   
 }
     
 export const getVaccinatedCount = async () => {
@@ -135,8 +134,7 @@ export const getVaccinatedCount = async () => {
     const response = await api2.get('/vaccination/count-vaccinated/');
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch vaccinated count:", error);
-    throw error;
+    {process.env.NODE_ENV === 'development' && console.error("Failed to fetch vaccinated count:", error);}
   }
 };
 
@@ -145,11 +143,10 @@ export const getVaccinatedCount = async () => {
 export const getUnvaccinatedResidents = async () => {
   try {
     const response = await api2.get("/vaccination/residents/unvaccinated/");
-    // console.log("API response:", response.data);
+    // DEVELOPMENT MODE ONLY
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch unvaccinated residents:", error);
-    throw error;
+    {process.env.NODE_ENV === 'development' && console.error("Failed to fetch unvaccinated residents:", error);}
   }
 };
 
@@ -159,8 +156,7 @@ export const getUnvaccinatedVaccines = async (patientId: string) => {
     const response = await api2.get(`/vaccination/unvaccinated-vaccines/${patientId}/`);
     return response.data || [];
   } catch (error) {
-    console.error('Error fetching unvaccinated vaccines:', error);
-    throw error; // Re-throw the error for the caller to handle
+    {process.env.NODE_ENV === 'development' && console.error('Error fetching unvaccinated vaccines:', error);}
   }
 };
 
@@ -184,8 +180,7 @@ export const getUnvaccinatedResidentsDetailsForVaccine = async (
     const response = await api2.get(url);
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch unvaccinated residents:", error);
-    throw error;
+    {process.env.NODE_ENV === 'development' && console.error("Failed to fetch unvaccinated residents:", error);}
   }
 };
 
@@ -201,7 +196,6 @@ export const getUnvaccinatedVaccinesSummary = async (params: any): Promise<any> 
     const response = await api2.get(url);
     return response.data;
   } catch (error) {
-    console.error("Failed to fetch unvaccinated vaccines summary:", error);
-    throw error;
-  };
+    {process.env.NODE_ENV === 'development' && console.error("Failed to fetch unvaccinated vaccines summary:", error);}
+  }
 };

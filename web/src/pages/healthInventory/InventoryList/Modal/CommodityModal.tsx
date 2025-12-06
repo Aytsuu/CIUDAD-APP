@@ -108,7 +108,9 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
 
       onClose();
     } catch (error) {
-      console.error("Error during submission:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error during submission:", error);
+      }
       showErrorToast("Failed to process commodity");
     } finally {
       setIsSubmitting(false);

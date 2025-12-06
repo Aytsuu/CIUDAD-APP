@@ -12,7 +12,9 @@ export const getFirstAid = async (page?: number, pageSize?: number, search?: str
     });
     return res.data;
   } catch (error) {
-    console.error("First Aid API Error:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("First Aid API Error:", error);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };

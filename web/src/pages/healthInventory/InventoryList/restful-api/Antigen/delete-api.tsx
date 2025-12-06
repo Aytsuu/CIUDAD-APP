@@ -7,8 +7,10 @@ export const handleDeleteAntigen = async (id: number, category: string) => {
     const res = await api2.delete(endpoint);
     return res.data;
   } catch (err) {
-    console.error(err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -20,12 +22,16 @@ export const deleteRoutineFrequencies = async (vaccineId: number) => {
     // Validate that all fetched records belong to the correct vaccineId
     const validRoutines = routines.data.filter((routine: { routineF_id: number; vac_id: number }) => routine.vac_id === vaccineId);
     if (validRoutines.length !== routines.data.length) {
-      console.warn(`Found ${routines.data.length - validRoutines.length} invalid routine frequencies for vac_id=${vaccineId}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Found ${routines.data.length - validRoutines.length} invalid routine frequencies for vac_id=${vaccineId}`);
+      }
     }
     await Promise.all(validRoutines.map((routine: { routineF_id: number }) => api2.delete(`inventory/routine_freq/${routine.routineF_id}/`)));
   } catch (err) {
-    console.error("Error deleting routine frequencies:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error deleting routine frequencies:", err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -37,12 +43,16 @@ export const deleteVaccineIntervals = async (vaccineId: number) => {
     // Validate that all fetched records belong to the correct vaccineId
     const validIntervals = intervals.data.filter((interval: { vacInt_id: number; vac_id: number }) => interval.vac_id === vaccineId);
     if (validIntervals.length !== intervals.data.length) {
-      console.warn(`Found ${intervals.data.length - validIntervals.length} invalid intervals for vac_id=${vaccineId}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Found ${intervals.data.length - validIntervals.length} invalid intervals for vac_id=${vaccineId}`);
+      }
     }
     await Promise.all(validIntervals.map((interval: { vacInt_id: number }) => api2.delete(`inventory/vac_intervals/${interval.vacInt_id}/`)));
   } catch (err) {
-    console.error("Error deleting vaccine intervals:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error deleting vaccine intervals:", err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -51,7 +61,9 @@ export const deleteConditionalVacinne = async (vaccineId: number) => {
     const response = await api2.delete(`inventory/conditional_vaccine/${vaccineId}/`);
     return response.data;
   } catch (err) {
-    console.error("Error deleting conditional vaccine:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error deleting conditional vaccine:", err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };

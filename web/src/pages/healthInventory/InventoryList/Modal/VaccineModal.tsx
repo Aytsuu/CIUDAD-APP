@@ -166,7 +166,9 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
     const dataToSubmit = formData || currentFormData;
 
     if (!dataToSubmit) {
-      console.error("No form data available for submission");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("No form data available for submission");
+      }
       toast.error("No form data available. Please try again.");
       return;
     }
@@ -219,7 +221,9 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
       form.reset();
       onClose();
     } catch (error) {
-      console.error("Error during submission:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error during submission:", error);
+      }
       toast.error("Failed to process vaccine", {
         description: error instanceof Error ? error.message : "An unknown error occurred",
       });

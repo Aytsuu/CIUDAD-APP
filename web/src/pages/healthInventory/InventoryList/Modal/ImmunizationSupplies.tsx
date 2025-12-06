@@ -127,7 +127,6 @@ export default function AddImmunizationSupplies({ mode = "add", initialData, onC
         navigate(-1);
       }
     } catch (err) {
-      console.error("Error during submission:", err);
       toast.error(`Failed to ${mode === "edit" ? "update" : "add"} immunization supply`);
     } finally {
       setIsSubmitting(false);

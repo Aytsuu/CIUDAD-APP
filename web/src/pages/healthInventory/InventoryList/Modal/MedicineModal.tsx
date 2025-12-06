@@ -121,14 +121,6 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
           throw new Error("Invalid API response - expected an array");
         }
 
-        // console.log("Checking for duplicates with:", {
-        //   existingMedicines,
-        //   newMedicine: formData.medicineName,
-        //   medDsg: formData.med_dsg,
-        //   medDsgUnit: formData.med_dsg_unit,
-        //   medForm: formData.med_form,
-        // });
-
         if (
           isDuplicateMedicine(
             existingMedicines,
@@ -157,7 +149,9 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
 
       onClose();
     } catch (err) {
-      console.error("Error during submission:", err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error during submission:", err);
+      }
       showErrorToast("Failed to submit medicine");
     } finally {
       setIsSubmitting(false);

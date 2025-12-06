@@ -29,8 +29,9 @@ export const getService = async (): Promise<Service[]> => {
     const res = await api2.get("servicescheduler/services/");
     return res.data as Service[];
   } catch (error) {
-    console.error("Error fetching services:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching services:", error);
+    }
   }
 }
 
@@ -39,8 +40,9 @@ export const getDays = async (): Promise<Day[]> => {
     const res = await api2.get("servicescheduler/days/");
     return res.data as Day[];
   } catch (error) {
-    console.error("Error fetching days:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching days:", error);
+    }
   }
 }
 
@@ -50,12 +52,13 @@ export const getScheduler = async (): Promise<SchedulerGetData[]> => {
     
     return res.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Services fetch error: ", error.response?.data || error.message);
-    } else {
-      console.error("Unexpected Error: ", error);
+    if (process.env.NODE_ENV === 'development') {
+      if (axios.isAxiosError(error)) {
+        console.error("Services fetch error: ", error.response?.data || error.message);
+      } else {
+        console.error("Unexpected Error: ", error);
+      }
     }
-    throw error;
   }
 };
 

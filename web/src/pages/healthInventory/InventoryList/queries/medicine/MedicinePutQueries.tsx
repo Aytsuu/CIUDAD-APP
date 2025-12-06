@@ -14,8 +14,7 @@ export const useUpdateMedicine = () => {
       showSuccessToast("Medicine updated successfully");
 
     },
-    onError: (error) => {
-      console.error("Error updating medicine:", error);
+    onError: () => {
       showErrorToast("Failed to update medicine");
     },
   });

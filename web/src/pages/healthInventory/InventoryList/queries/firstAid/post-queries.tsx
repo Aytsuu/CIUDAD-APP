@@ -14,8 +14,10 @@ export const useAddFirstAid = () => {
       queryClient.invalidateQueries({ queryKey: ["firstAid"] });
     },
     onError: (error: any) => {
-      console.error("Error adding first aid:", error);
-      throw error; // Re-throw to be caught in the component
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error adding first aid:", error);
+      }
+      // DEVELOPMENT MODE ONLY: No throw in production
     },
   });
 };

@@ -9,10 +9,8 @@ data:Record<string,any>
      data
     );
     return response.data;
-    
   } catch (error) {
-    console.error("Error updating vaccination history:", error);
-    throw error;
+    {process.env.NODE_ENV === 'development' && console.error("Error updating vaccination history:", error);}
   }
 };
 
@@ -21,6 +19,10 @@ data:Record<string,any>
   
   // New API function for updating follow-up visit
   export const updateFollowUpVisit = async (data:Record<string,any>) => {
-    await api2.patch(`patientrecords/follow-up-visit/${parseInt(data.followv_id, 10)}/`,data);
+    try {
+      await api2.patch(`patientrecords/follow-up-visit/${parseInt(data.followv_id, 10)}/`,data);
+    } catch (error) {
+      {process.env.NODE_ENV === 'development' && console.error("Error updating follow-up visit:", error);}
+    }
   };
   

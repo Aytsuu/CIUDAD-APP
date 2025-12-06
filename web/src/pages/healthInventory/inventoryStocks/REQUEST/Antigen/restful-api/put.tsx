@@ -24,17 +24,24 @@ export const updateImmunizationStock = async (
 
 export const updateVaccineStock = async (data: Record<string, any>) => {
   try {
-    console.log("Updating vaccine stock with data:", data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Updating vaccine stock with data:", data);
+    }
     const response = await api2.patch(
       `inventory/vaccine_stocks/${data.vacStck_id}/`,
       data
     );
     if (!response.data) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to update vaccine stock");
+      }
       throw new Error("Failed to update vaccine stock");
     }
     return response;
   } catch (error) {
-    console.error("Error updating vaccine stock:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error updating vaccine stock:", error);
+    }
     throw error;
   }
 };

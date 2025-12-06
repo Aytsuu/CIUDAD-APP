@@ -12,6 +12,8 @@ export const addFirstAid = async (data: Record<string, string>) => {
     });
     return res.data;
   } catch (err) {
-    // console.log(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(err);
+    }
   }
 };

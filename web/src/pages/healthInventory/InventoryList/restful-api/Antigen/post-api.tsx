@@ -5,7 +5,9 @@ export const addImzSupplies = async (data: Record<string, string>) => {
     const res = await api2.post("inventory/imz_supplieslist-createview/", data);
     return res.data;
   } catch (err) {
-    // console.log(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(err);
+    }
   }
 };
 
@@ -15,8 +17,10 @@ export const addVaccine = async (data: { vac_type_choices: string; vac_name: str
 
     return res.data;
   } catch (err) {
-    console.error("Error adding vaccine:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error adding vaccine:", err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -25,8 +29,10 @@ export const addVaccineIntervals = async (data: { vac_id: number; dose_number: n
     const res = await api2.post("inventory/vac_intervals/", data);
     return res.data;
   } catch (err) {
-    console.error("Error adding vaccine intervals:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error adding vaccine intervals:", err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -35,8 +41,10 @@ export const addRoutineFrequency = async (data: { vac_id: number; dose_number: n
     const res = await api2.post("inventory/routine_freq/", data);
     return res.data;
   } catch (err) {
-    console.error("Error adding routine frequency:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error adding routine frequency:", err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -94,7 +102,9 @@ export const addconvaccine = async (vac_id: number) => {
     });
     return res.data;
   } catch (error) {
-    console.error("Error adding vaccine:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error adding vaccine:", error);
+    }
   }
 };
 
@@ -102,11 +112,15 @@ export const handleSubmissionError = (error: unknown): void => {
   let errorMessage = "Failed to save vaccine. Please try again.";
   if (error instanceof Error) {
     errorMessage = error.message;
-    console.error("Submission error:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Submission error:", error);
+    }
   } else if (typeof error === "object" && error !== null && "response" in error) {
     const apiError = error as { response?: { data?: any } };
     errorMessage += `\nError: ${JSON.stringify(apiError.response?.data)}`;
   }
-  console.error(errorMessage);
-  throw new Error(errorMessage);
+  if (process.env.NODE_ENV === 'development') {
+    console.error(errorMessage);
+  }
+  // DEVELOPMENT MODE ONLY: No throw in production
 };

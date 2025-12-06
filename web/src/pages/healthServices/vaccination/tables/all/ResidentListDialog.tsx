@@ -190,12 +190,14 @@ export function ResidentListSection() {
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const formattedData = formatResidentData();
 
-  // Debug: Log the current filter and query params
+  // Debug: Log the current filter and query params (development only)
   React.useEffect(() => {
-    console.log('Current filter:', selectedVaccinationStatus);
-    console.log('Query params sent to API:', queryParams);
-    console.log('Total residents:', totalCount);
-    console.log('Filtered data count:', formattedData.length);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Current filter:', selectedVaccinationStatus);
+      console.log('Query params sent to API:', queryParams);
+      console.log('Total residents:', totalCount);
+      console.log('Filtered data count:', formattedData.length);
+    }
   }, [selectedVaccinationStatus, queryParams, totalCount, formattedData.length]);
 
   // Export functionality

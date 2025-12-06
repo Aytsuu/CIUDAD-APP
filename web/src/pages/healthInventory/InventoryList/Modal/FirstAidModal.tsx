@@ -114,7 +114,6 @@ export function FirstAidModal({ mode = "add", initialData, onClose }: FirstAidMo
 
       onClose();
     } catch (err) {
-      console.error("Error during submission:", err);
       showErrorToast("An error occurred during submission");
     } finally {
       setIsSubmitting(false);

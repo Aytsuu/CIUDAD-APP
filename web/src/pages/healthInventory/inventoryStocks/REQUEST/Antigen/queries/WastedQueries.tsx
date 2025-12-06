@@ -8,7 +8,10 @@ export const useHandleWaste = () => {
 
   const handleVaccineWaste = async (record: any, data: any) => {
     if (!record.vacStck_id) {
-      throw new Error("Missing vaccine stock ID");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Missing vaccine stock ID");
+      }
+      return;
     }
 
     const response = await handleVaccineWasteAPI(record.vacStck_id, data);
@@ -17,7 +20,10 @@ export const useHandleWaste = () => {
 
   const handleSupplyWaste = async (record: any, data: { wastedAmount: number; staff_id?: string; action_type: string }) => {
     if (!record.imzStck_id) {
-      throw new Error("Missing supply stock ID");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Missing supply stock ID");
+      }
+      return;
     }
     const response = await handleSupplyWasteAPI(record.imzStck_id, data);
     return response;
@@ -40,6 +46,9 @@ export const useHandleWaste = () => {
       showSuccessToast(message);
     },
     onError: (error: any) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.error(error);
+      }
       showErrorToast(error.message || "Failed to process vaccine");
     }
   });
@@ -61,6 +70,9 @@ export const useHandleWaste = () => {
       showSuccessToast(message);
     },
     onError: (error: any) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.error(error);
+      }
       const errorMessage = error?.response?.data?.message || "Failed to process supply";
       showErrorToast(errorMessage);
     }
