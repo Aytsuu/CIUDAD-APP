@@ -10,7 +10,7 @@ export const getCommodity = async () => {
     console.error(res.status);
     return [];
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return [];
   }
 };

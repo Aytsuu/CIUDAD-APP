@@ -97,7 +97,7 @@ export default function AnimalBiteOverallScreen() {
         params: { patientId: record.pat_id },
       });
     } catch (error) {
-      console.log("Navigation error:", error);
+      // console.log("Navigation error:", error);
     }
   };
 

@@ -212,7 +212,7 @@ export function PregnancyAccordion({
                                     onPress={() => {
                                         if (record.recordType === "Postpartum Care") {
                                             // Navigate to postpartum screen with postpartum record ID
-                                            console.log("To postpartum with pprId:", record.id)
+                                            // console.log("To postpartum with pprId:", record.id)
                                             router.push({
                                                 pathname: "/(health)/maternal/postpartum",
                                                 params: { 
@@ -221,7 +221,7 @@ export function PregnancyAccordion({
                                             })
                                         } else if (record.recordType === "Prenatal") {
                                             // Navigate to prenatal screen with prenatal form ID
-                                            console.log("To prenatal with pfId:", record.id)
+                                            // console.log("To prenatal with pfId:", record.id)
                                             router.push({
                                                 pathname: "/(health)/maternal/prenatal",
                                                 params: { 

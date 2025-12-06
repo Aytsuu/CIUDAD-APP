@@ -90,7 +90,7 @@ export const VitalSignsTable: React.FC<VitalSignsTableProps> = ({
                 <TouchableOpacity
                   key={record.chhist_id}
                   className={`flex-row px-3 py-2 border-b border-gray-100 ${isCurrentRecord ? 'bg-blue-50' : ''}`}
-                  onPress={() => console.log('Vital Signs:', { record })}
+                  // onPress={() => console.log('Vital Signs:', { record })}
                 >
                   <View className="min-w-[120px] flex-1">
                     <Text className={dataTextStyle} numberOfLines={1}>

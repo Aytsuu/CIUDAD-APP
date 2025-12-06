@@ -1,9 +1,4 @@
-
-
-
 import {api2} from "@/api/api";
-
-
 
 // Helper function to get vaccine stock info
 export const getVaccineStock = async (vaccineTypeId: string) => {

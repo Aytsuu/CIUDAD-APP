@@ -40,7 +40,7 @@ export default function InvMedicalConRecords() {
   const mode = typeof params.mode === "string" ? params.mode : null;
 
     useEffect(() => {
-    console.log("All incoming params:", params);
+    // console.log("All incoming ?params:", params);
     
     // Priority 1: Check if notification passed pat_id
     const notificationPatId = params.pat_id as string;
@@ -48,30 +48,30 @@ export default function InvMedicalConRecords() {
     const notificationFocusTab = params.focus_tab as string;
 
     if (notificationPatId) {
-      console.log("Notification navigation - Setting patId to:", notificationPatId);
+      // console.log("Notification navigation - Setting patId to:", notificationPatId);
       setPatientId(notificationPatId);
       
       // Optional: Auto-focus on consultations tab if specified
       if (notificationFocusTab === "consultations") {
         // You could add logic here to highlight or focus on consultations
-        console.log("Notification focus on consultations tab");
+        // console.log("Notification focus on consultations tab");
       }
       
       // Optional: If you want to show a specific appointment
       if (notificationAppointmentId) {
-        console.log("Notification for specific appointment:", notificationAppointmentId);
+        // console.log("Notification for specific appointment:", notificationAppointmentId);
         // You could add logic to highlight the specific appointment
       }
     } 
     else if (mode === "admin") {
       // Admin mode - get patient data from params
       const adminPatId = params.pat_id as string;
-      console.log("Admin mode - Setting patId to:", adminPatId);
+      // console.log("Admin mode - Setting patId to:", adminPatId);
       setPatientId(adminPatId || "");
     } 
     else {
       // Regular mode - use authenticated user's data
-      console.log("Regular mode - Setting patId to:", pat_id);
+      // console.log("Regular mode - Setting patId to:", pat_id);
       setPatientId(pat_id || "");
     }
   }, [mode, params.pat_id, params.appointment_id, params.focus_tab, params.patientData, pat_id]);
@@ -79,25 +79,22 @@ export default function InvMedicalConRecords() {
   
   // Handle patient ID setup
   useEffect(() => {
-    console.log("MODE:", mode);
-    console.log("Params patId:", params.patId);
-    console.log("Auth pat_id:", pat_id);
-
+   
     if (mode === "admin") {
       // Admin mode - get patient data from params
       const adminPatId = params.pat_id as string;
 
-      console.log("Admin mode - Setting patId to:", adminPatId);
+      // console.log("Admin mode - Setting patId to:", adminPatId);
       setPatientId(adminPatId || "");
 
       // Store admin patient data in state if needed
       if (patId) {
         // adminPatientData is available for use if needed
-        console.log("Admin patient data available:", patId);
+        // console.log("Admin patient data available:", patId);
       }
     } else {
       // Regular mode - use authenticated user's data
-      console.log("Regular mode - Setting patId to:", pat_id);
+      // console.log("Regular mode - Setting patId to:", pat_id);
       setPatientId(pat_id || "");
     }
   }, [mode, params.patId, params.patientData, pat_id]);

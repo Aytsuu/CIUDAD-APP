@@ -11,7 +11,7 @@ export const getImzSupTables = async (page: number, pageSize: number, search?: s
     });
     return res.data;
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return { results: [], pagination: { total_count: 0, total_pages: 0, current_page: 1 } };
   }
 };

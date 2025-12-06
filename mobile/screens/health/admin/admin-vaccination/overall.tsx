@@ -202,7 +202,7 @@ const debouncedSearchQuery = useDebounce(searchQuery, 500);
         params: { pat_id: patientData.pat_id, mode: "admin" }
       });
     } catch (error) {
-      console.log("Navigation error:", error);
+      // console.log("Navigation error:", error);
     }
   };
 

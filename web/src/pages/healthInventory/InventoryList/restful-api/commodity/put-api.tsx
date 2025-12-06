@@ -15,7 +15,7 @@ export const updateCommodity = async (com_id: string, data:Record<string,string>
   
       return res.data;
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       throw err; 
     }
   };

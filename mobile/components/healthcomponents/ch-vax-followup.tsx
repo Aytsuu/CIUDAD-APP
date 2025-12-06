@@ -159,7 +159,7 @@ export function FollowUpsCard({
   };
 
   // Debugging: Log the item to see its structure
-  console.log('FollowUpItem:', item);
+  // console.log('FollowUpItem:', item);
 
    return (
     <View className="bg-white rounded-lg p-3 border border-gray-200 mb-2">

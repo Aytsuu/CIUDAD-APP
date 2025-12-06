@@ -129,7 +129,7 @@ export default function ServiceScheduleForm({
     timeSlot: keyof ServiceTimeSlots,
     checked: boolean,
   ) => {
-    console.log("Toggling:", dayName, serviceName, timeSlot, checked);
+    // console.log("Toggling:", dayName, serviceName, timeSlot, checked);
     
     setCurrentWeeklySchedule((prevSchedule) => {
       const prevDailySchedule: DailySchedule = prevSchedule[dayName] || {}
@@ -193,7 +193,7 @@ export default function ServiceScheduleForm({
           return updatedSchedule
         })
         
-        console.log(`Removed service: ${service}`)
+        // console.log(`Removed service: ${service}`)
     } catch (error: any) {
       console.error("Error removing service:", error)
     }
@@ -219,7 +219,7 @@ export default function ServiceScheduleForm({
       setDayError("") // Clear any previous errors
       onAddDay(new Date()) // Call prop function to update parent state (SchedulerMain)
       setIsAddingDay(false) // Close the input field
-      console.log("Successfully added day: ", nextDay)
+      // console.log("Successfully added day: ", nextDay)
     } catch (error: any) {
       console.error("Error adding day: ", error)
       setDayError("Failed to add day. Please try again.")
@@ -250,7 +250,7 @@ export default function ServiceScheduleForm({
       return updatedSchedule
     })
     
-    console.log(`Removed day: ${day}`)
+    // console.log(`Removed day: ${day}`)
   } catch (error: any) {
     console.error("Error removing day:", error)
   }
@@ -259,7 +259,7 @@ export default function ServiceScheduleForm({
   // updated handleSave to create individual scheduler entries using your API
   const handleSave = async () => {
     try {
-      console.log("Saving weekly schedule: ", currentWeeklySchedule);
+      // console.log("Saving weekly schedule: ", currentWeeklySchedule);
 
       const schedulerEntries = [];
       for (const dayName of days) { // Iterate over the current 'days' state
@@ -282,7 +282,7 @@ export default function ServiceScheduleForm({
           }
         }
       }
-      console.log('Scheduler entries to create: ', schedulerEntries)
+      // console.log('Scheduler entries to create: ', schedulerEntries)
 
       // This part needs careful consideration for bulk creation vs individual.
       // The current mutation is for individual entries.
@@ -293,7 +293,7 @@ export default function ServiceScheduleForm({
         const result = await addSchedulerMutation.mutateAsync(entry)
         createdEntries.push(result)
       }
-      console.log("Created scheduler entries: ", createdEntries);
+      // console.log("Created scheduler entries: ", createdEntries);
 
       onSave(currentWeeklySchedule) // Call parent save handler
       onClose && onClose(); // Close modal after successful save

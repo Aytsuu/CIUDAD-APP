@@ -228,7 +228,7 @@ export function AntigenAlertsSidebar() {
                   className={`p-3 rounded-lg border ${getStatusColor(item.status)} transition-colors`}
                   onClick={() => {
                     // Optional: Add navigation to specific antigen detail
-                    console.log('Navigate to antigen:', item.id);
+                    // console.log('Navigate to antigen:', item.id);
                   }}
                 >
                   <div className="flex items-start justify-between mb-2">

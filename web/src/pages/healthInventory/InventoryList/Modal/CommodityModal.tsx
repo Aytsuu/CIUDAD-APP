@@ -129,7 +129,7 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
     const isValid = await form.trigger();
     
     if (!isValid) {
-      console.log("Form has validation errors, not showing confirmation");
+      // console.log("Form has validation errors, not showing confirmation");
       return;
     }
 

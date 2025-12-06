@@ -210,7 +210,7 @@ export default function AllFirstAidRecords() {
         params: { patientData: JSON.stringify(record) }
       });
     } catch (error) {
-      console.log("Navigation error:", error);
+      // console.log("Navigation error:", error);
     }
   };
 

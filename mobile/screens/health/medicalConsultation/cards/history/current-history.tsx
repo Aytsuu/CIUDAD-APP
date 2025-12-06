@@ -16,7 +16,7 @@ const { width: screenWidth } = Dimensions.get('window');
 // Patient Data Serializer for Consultation Records
 const serializeConsultationPatientData = (consultationRecord: any): any => {
   if (!consultationRecord?.patrec_details) {
-    console.log("No patrec_details found in consultation record");
+    // console.log("No patrec_details found in consultation record");
     return null;
   }
 
@@ -38,7 +38,7 @@ const serializeConsultationPatientData = (consultationRecord: any): any => {
     family_compositions: patientRecord.patient_details?.family_compositions || []
   };
 
-  console.log("Serialized consultation patient data:", serializedData);
+  // console.log("Serialized consultation patient data:", serializedData);
   return serializedData;
 };
 
@@ -273,8 +273,8 @@ export default function ConsultationDetailsScreen() {
   const patId = params.patId as string;
   const mode = params.mode as string;
 
-  console.log("Consultation Details - Current Record:", currentRecord);
-  console.log("Consultation Details - Patient ID:", patId);
+  // console.log("Consultation Details - Current Record:", currentRecord);
+  // console.log("Consultation Details - Patient ID:", patId);
 
   // Serialize patient data for PatientInfoCard
   const serializedPatientData = useMemo(() => {
@@ -311,7 +311,7 @@ export default function ConsultationDetailsScreen() {
       records.push(...previousRecords);
     }
 
-    console.log("Total consultation records for horizontal scroll:", records.length);
+    // console.log("Total consultation records for horizontal scroll:", records.length);
     return records;
   }, [allRecordsResponse, currentRecord]);
 

@@ -92,8 +92,8 @@ export default function MyFirstAidRecordsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   
-  console.log("[DEBUG] firstaid patIdFromParams:", patIdFromParams);
-  console.log("[DEBUG] rp_id from auth:", rp_id);
+  // console.log("[DEBUG] firstaid patIdFromParams:", patIdFromParams);
+  // console.log("[DEBUG] rp_id from auth:", rp_id);
 
 
    const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = useQuery({

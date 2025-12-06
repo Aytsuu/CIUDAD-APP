@@ -113,7 +113,7 @@ const Overall: React.FC = () => {
         setTotalCount(0);
       }
     } catch (err) {
-      console.error("Fetch error:", err);
+      // console.error("Fetch error:", err);
       setError("Failed to load animal bite records.");
       toast.error("Failed to load animal bite records.");
     } finally {

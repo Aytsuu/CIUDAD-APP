@@ -88,7 +88,7 @@ export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => 
       ? `/patientrecords/follow-up-visits-all/?${queryString}`
       : "/patientrecords/follow-up-visits-all/";
 
-    console.log('Fetching URL:', url);
+    // console.log('Fetching URL:', url);
     
     const res = await api2.get(url)
     return res.data || {count: 0, next: null, previous: null, results: []}

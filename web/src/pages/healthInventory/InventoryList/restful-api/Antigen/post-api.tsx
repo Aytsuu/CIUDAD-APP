@@ -5,7 +5,7 @@ export const addImzSupplies = async (data: Record<string, string>) => {
     const res = await api2.post("inventory/imz_supplieslist-createview/", data);
     return res.data;
   } catch (err) {
-    console.log(err);
+    // console.log(err);
   }
 };
 

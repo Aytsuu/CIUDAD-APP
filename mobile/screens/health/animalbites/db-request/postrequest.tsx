@@ -55,7 +55,7 @@ const handleApiError = (err: any, operation: string) => {
 // Submit a new animal bite referral
 export const submitAnimalBiteReferral = async (data: any) => {
   try {
-    console.log("📝 Submitting animal bite referral:", data)
+    // console.log("📝 Submitting animal bite referral:", data)
 
     // For custom exposure sites and biting animals, send the actual name
     const payload = { ...data }
@@ -76,10 +76,10 @@ export const submitAnimalBiteReferral = async (data: any) => {
       payload.biting_animal_name = bitingAnimalName
     }
 
-    console.log("📦 Prepared payload:", payload)
+    // console.log("📦 Prepared payload:", payload)
 
     const res = await api2.post("animalbites/create-record/", payload)
-    console.log("✅ Animal bite referral submitted successfully:", res.data)
+    // console.log("✅ Animal bite referral submitted successfully:", res.data)
     return res.data
   } catch (err: any) {
     console.error("❌ Failed to submit animal bite referral:", err)
@@ -90,9 +90,9 @@ export const submitAnimalBiteReferral = async (data: any) => {
 // Update an existing animal bite record
 export const updateAnimalBiteRecord = async (biteId: number, data: any) => {
   try {
-    console.log(`📝 Updating animal bite record ID: ${biteId}`, data)
+    // console.log(`📝 Updating animal bite record ID: ${biteId}`, data)
     const res = await api2.put(`animalbites/update-record/${biteId}/`, data)
-    console.log("✅ Animal bite record updated successfully:", res.data)
+    // console.log("✅ Animal bite record updated successfully:", res.data)
     return res.data
   } catch (err: any) {
     console.error("❌ Failed to update animal bite record:", err)
@@ -103,9 +103,9 @@ export const updateAnimalBiteRecord = async (biteId: number, data: any) => {
 // Delete an animal bite record by its bite_id
 export const deleteAnimalBiteRecord = async (biteId: number) => {
   try {
-    console.log(`🗑️ Deleting animal bite record ID: ${biteId}`)
+    // console.log(`🗑️ Deleting animal bite record ID: ${biteId}`)
     const res = await api2.delete(`animalbites/record/${biteId}/delete/`)
-    console.log("✅ Animal bite record deleted successfully:", res.data)
+    // console.log("✅ Animal bite record deleted successfully:", res.data)
 
     return res.data
   } catch (err: any) {
@@ -117,10 +117,10 @@ export const deleteAnimalBiteRecord = async (biteId: number) => {
 // Delete all animal bite records for a patient
 export const deleteAnimalBitePatient = async (patientId: string) => {
   try {
-    console.log(`🗑️ Deleting all animal bite records for patient ID: ${patientId}`)
+    // console.log(`🗑️ Deleting all animal bite records for patient ID: ${patientId}`)
 
     const res = await api2.delete(`animalbites/patient/${patientId}/delete/`)
-    console.log("✅ All animal bite records deleted successfully:", res.data)
+    // console.log("✅ All animal bite records deleted successfully:", res.data)
 
     return res.data
   } catch (err: any) {
@@ -132,10 +132,10 @@ export const deleteAnimalBitePatient = async (patientId: string) => {
 // Test function to fetch patients
 const testFetchPatients = async () => {
   try {
-    console.log("🧪 Testing patient fetching...")
+    // console.log("🧪 Testing patient fetching...")
     const patients = await getAllPatients()
-    console.log(`✅ Successfully fetched ${patients.length} patients`)
-    console.log("📊 Sample patient data:", patients.slice(0, 2))
+    // console.log(`✅ Successfully fetched ${patients.length} patients`)
+    // console.log("📊 Sample patient data:", patients.slice(0, 2))
     return patients
   } catch (error) {
     console.error("❌ Failed to fetch patients:", error)

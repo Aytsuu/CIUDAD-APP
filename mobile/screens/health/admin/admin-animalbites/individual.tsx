@@ -63,7 +63,7 @@ export default function AnimalBiteIndividualScreen() {
     try {
       return format(new Date(dateString), "MMM dd, yyyy")
     } catch (e) {
-      console.error("Error formatting date:", dateString, e)
+      // console.error("Error formatting date:", dateString, e)
       return "Invalid Date"
     }
   }

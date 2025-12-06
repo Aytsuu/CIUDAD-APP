@@ -121,13 +121,13 @@ export default function MedicineModal({ mode = "add", initialData, onClose }: Me
           throw new Error("Invalid API response - expected an array");
         }
 
-        console.log("Checking for duplicates with:", {
-          existingMedicines,
-          newMedicine: formData.medicineName,
-          medDsg: formData.med_dsg,
-          medDsgUnit: formData.med_dsg_unit,
-          medForm: formData.med_form,
-        });
+        // console.log("Checking for duplicates with:", {
+        //   existingMedicines,
+        //   newMedicine: formData.medicineName,
+        //   medDsg: formData.med_dsg,
+        //   medDsgUnit: formData.med_dsg_unit,
+        //   medForm: formData.med_form,
+        // });
 
         if (
           isDuplicateMedicine(

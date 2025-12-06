@@ -89,11 +89,11 @@ export default function CartScreen() {
       return;
     }
 
-    console.log("🛒 Cart Items Debug:", cartItems.map(item => ({
-      name: item.name,
-      minv_id: item.minv_id,
-      type: typeof item.minv_id
-    })));
+    // console.log("🛒 Cart Items Debug:", cartItems.map(item => ({
+    //   name: item.name,
+    //   minv_id: item.minv_id,
+    //   type: typeof item.minv_id
+    // })));
   
     const invalidItems = cartItems.filter(item => !item.minv_id || isNaN(item.minv_id));
     if (invalidItems.length > 0) {
@@ -132,7 +132,7 @@ export default function CartScreen() {
       }
       
       // FIX: Use rp_id since we're getting it from the user context
-      console.log("Submitting with rp_id:", rpId);
+      // console.log("Submitting with rp_id:", rpId);
       formData.append("rp_id", rpId);
       
       // Add files properly
@@ -174,11 +174,11 @@ export default function CartScreen() {
         Alert.alert("Error", response.error || "Failed to submit request");
       }
     } catch (error: any) {
-      console.log("Submission error:", {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-      });
+      // console.log("Submission error:", {
+      //   message: error.message,
+      //   status: error.response?.status,
+      //   data: error.response?.data,
+      // });
       Alert.alert("Error", error.response?.data?.error || "Failed to submit your request. Please try again.");
     } finally {
       setIsSubmitting(false);
