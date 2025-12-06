@@ -18,8 +18,15 @@ export const useUpdateIR = () => {
         throw err;
       }
     },
-    onSuccess: () => {
+    onSuccess: (newData, variables) => {
+      // Optimistic updates
+      const {ir_id} = variables
       queryClient.invalidateQueries({queryKey: ['incidentReports']})
+      queryClient.invalidateQueries({queryKey: ['IRInfo']})
+      queryClient.setQueryData(['IRInfo', ir_id], (old: any) => ({
+        ...old,
+        ...newData
+      }))
     }
   });
 };
@@ -42,6 +49,7 @@ export const useUpdateAR = () => {
       }
     },
     onSuccess: (updated) => {
+      // Optimistic updates
       queryClient.setQueryData(["ARInfo"], (old: any) => ({
         ...old,
         status: updated.ar_status,
@@ -69,6 +77,7 @@ export const useUpdateWAR = () => {
       }
     },
     onSuccess: (updated) => {
+      // Optimistic updates
       queryClient.setQueryData(["WARInfo"], (old: any) => ({
         ...old,
         status: updated.war_status,
@@ -96,6 +105,7 @@ export const useUpdateTemplate = () => {
       }
     },
     onSuccess: (updated) => {
+      // Optimistic updates
       queryClient.setQueryData(["reportTemplate"], (old: any[] = []) => {
         old.map((template) => {
           if (template.rte_id == updated.rte_id) {

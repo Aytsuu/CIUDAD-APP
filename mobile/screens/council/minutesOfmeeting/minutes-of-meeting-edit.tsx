@@ -66,6 +66,7 @@ export default function MOMEdit() {
         meetingDate,
         meetingAreaOfFocus: parsedAreaOfFocus,
         mom_id,
+        momf_id: meetingFile ? String(meetingFile.momf_id) : "",
         },
     });
 

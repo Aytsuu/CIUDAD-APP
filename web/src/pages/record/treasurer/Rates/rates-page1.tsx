@@ -221,7 +221,14 @@ function RatesPage1() {
         },
         {
             accessorKey: "staff_name",
-            header: "Updated By"
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Updated by
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.original.staff_name}</div>
+            )
         }
     ]
 

@@ -132,7 +132,7 @@ function IncomeCreateForm({ year, onSuccess }: IncomeCreateFormProps) {
                                     placeholder="Select a particular"
                                     label="Particulars"
                                     options={IncomeParticulars}
-                                    value={field.value}
+                                    value={field.value ?? ""}
                                     onChange={field.onChange}
                                     onAdd={(newParticular) => {
                                         handleAddParticular(newParticular, (newId) => {

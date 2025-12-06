@@ -38,7 +38,7 @@ export default function AccountRegistrationForm({
           <Button variant={"link"} disabled={!hasEmail}
             onClick={handleValidateEmail}
             type="button"
-            className="absolute shadow-none top-[-5px] left-[5.7rem]" 
+            className="absolute shadow-none text-blue-600 top-[-5px] left-[5.7rem]" 
           >
             Verify
           </Button>
@@ -73,7 +73,7 @@ export default function AccountRegistrationForm({
           <Button variant={"link"} disabled={!hasPhone}
             onClick={handleValidatePhone}
             type="button"
-            className="absolute shadow-none top-[-5px] left-[5.5rem]" 
+            className="absolute shadow-none text-blue-600 top-[-5px] left-[5.5rem]" 
           >
             Verify
           </Button>

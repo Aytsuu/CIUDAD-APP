@@ -42,7 +42,8 @@ export default function TeamRecords() {
     currentPage,
     debouncedPageSize,
     debouncedSearchQuery,
-    user?.staff?.staff_type
+    user?.staff?.staff_type,
+    user?.staff?.pos_group
   );
 
   const staffList = staffs?.results || [];

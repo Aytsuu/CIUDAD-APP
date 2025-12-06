@@ -16,8 +16,11 @@ class StaffTableView(generics.ListCreateAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
+    search_query = self.request.query_params.get('search', '').strip()
     staff_type = self.request.query_params.get('staff_type', None)
-    queryset = Staff.objects.filter(staff_type=staff_type).select_related(
+    pos_group = self.request.query_params.get('pos_group', None)
+
+    queryset = Staff.objects.filter(staff_type__iexact=staff_type).select_related(
       'rp',
       'pos',
     ).only(
@@ -31,7 +34,9 @@ class StaffTableView(generics.ListCreateAPIView):
       'pos__pos_title'
     )
 
-    search_query = self.request.query_params.get('search', '').strip()
+    if pos_group:
+      queryset = queryset.filter(pos__pos_group=pos_group)
+
     if search_query:
       queryset = queryset.filter(
         Q(staff_assign_date__icontains=search_query) |

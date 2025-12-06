@@ -14,15 +14,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Search, 
   FileText, 
-  Clock, 
   Activity, 
-  CheckCircle2, 
-  XCircle, 
+  CheckCircle2,
+  Archive, 
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { Button } from "@/components/ui/button/button";
+import { useNavigate } from "react-router";
 
 export default function IRRecords() {
   // ================ STATE INITIALIZATION ================
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [search, setSearch] = React.useState<string>("");
@@ -51,31 +54,20 @@ export default function IRRecords() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // 2. Analytics Data
-  const { data: pendingIR, isLoading: isLoadingPending } = useGetIncidentReport(
-    1, 1, '', false, undefined, 'all', true, 'pending'
-  );
   const { data: inProgressIR, isLoading: isLoadingInProgress } = useGetIncidentReport(
     1, 1, '', false, undefined, 'all', true, 'in-progress'
   );
   const { data: resolvedIR, isLoading: isLoadingResolved } = useGetIncidentReport(
     1, 1, '', false, undefined, 'all', true, 'resolved'
   );
-  const { data: closedIR, isLoading: isLoadingClosed } = useGetIncidentReport(
-    1, 1, '', false, undefined, 'all', true, 'closed'
-  );
+
+  const { data: archivedIR, isLoading: isLoadingArchived } = useGetIncidentReport(
+    1, 1, '', true
+  )
 
   // ================ CONFIGURATION ================
   
   const statCards = [
-    { 
-      label: "Pending", 
-      icon: Clock, 
-      color: "text-yellow-600", 
-      bg: "bg-yellow-50",
-      count: pendingIR?.count || 0,
-      isLoading: isLoadingPending,
-      trend: "Needs attention" 
-    },
     { 
       label: "In-Progress", 
       icon: Activity, 
@@ -95,13 +87,13 @@ export default function IRRecords() {
       trend: "Successful result"
     },
     { 
-      label: "Closed", 
-      icon: XCircle, 
+      label: "Archived", 
+      icon: Archive, 
       color: "text-gray-600", 
-      bg: "bg-gray-50",
-      count: closedIR?.count || 0,
-      isLoading: isLoadingClosed,
-      trend: "Archived"
+      bg: "bg-gray-100",
+      count: archivedIR?.count || 0,
+      isLoading: isLoadingArchived,
+      trend: "Historical record of unresolved reports"
     },
   ];
 
@@ -132,7 +124,7 @@ export default function IRRecords() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-primary">
                     {stat.isLoading ? (
                         <Skeleton className="h-8 w-16 bg-slate-200" />
                     ) : (
@@ -193,13 +185,24 @@ export default function IRRecords() {
                   placeholder=""
                   options={[
                     {id: "all", name: "All Statuses"},
-                    {id: "pending", name: "Pending"},
                     {id: "in-progress", name: "In-Progress"},
                     {id: "resolved", name: "Resolved"},
-                    {id: "closed", name: "Closed"}
                   ]}
                   withReset={false}
                   valueLabel="Status"
+                />
+
+                <TooltipLayout
+                  trigger={
+                    <Button variant={"outline"}
+                      onClick={() => {
+                        navigate('archive');
+                      }}
+                    >
+                      <Archive className="text-gray-700" />
+                    </Button>
+                  }
+                  content="Archive"
                 />
               </div>  
             </div>

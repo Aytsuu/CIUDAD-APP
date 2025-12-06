@@ -8,6 +8,7 @@ import CreateMissingWeeks from '@/pages/record/report/weekly/CreateMissingWeeks'
 import SecuradoReports from '@/pages/record/report/securado/SecuradoReports';
 import ResidentReports from '@/pages/record/report/resident/ResidentReports';
 import RRArchive from '@/pages/record/report/resident/RRArchive';
+import IRArchive from '@/pages/record/report/incident/IRArchive';
 
 // Creating routes
 export const report_router = [
@@ -16,8 +17,20 @@ export const report_router = [
     element: <IRRecords/>,
   },
   {
+    path: '/report/incident/archive',
+    element: <IRArchive/>,
+  },
+  {
+    path: '/report/incident/archive/view',
+    element: <IRViewDetails/>,
+  },
+  {
     path: '/report/resident/archive',
     element: <RRArchive/>,
+  },
+  {
+    path: '/report/resident/archive/view',
+    element: <IRViewDetails/>,
   },
   {
     path: '/report/resident/view',

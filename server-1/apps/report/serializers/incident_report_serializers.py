@@ -24,7 +24,7 @@ class IRTableSerializer(serializers.ModelSerializer):
              'ir_time', 'ir_date', 'ir_severity', 'ir_created_at', 'ir_reported_by',
              'files', 'ir_track_rep_id', 'ir_track_lat', 'ir_track_lng', 'ir_track_user_lat',
              'ir_track_user_lng', 'ir_track_user_contact', 'ir_track_user_name', 'ir_status',
-             'ir_is_tracker', 'ir_updated_at', 'ar']
+             'ir_is_tracker', 'ir_updated_at', 'ir_remark', 'ir_is_archive', 'ar']
   
   def get_ir_type(self, obj):
     if obj.rt:
@@ -88,7 +88,6 @@ class IRCreateSerializer(serializers.ModelSerializer):
         validated_data['rt'] = new_rep_type
     else: 
       existing_rep_type = ReportType.objects.filter(rt_label__iexact=report_type).first()
-      print(existing_rep_type)
       validated_data['rt'] = existing_rep_type
 
     incident_report = IncidentReport(**validated_data)

@@ -7,8 +7,9 @@ class AbstractModels(models.Model):
   def save(self, *args, **kwargs):
     for field in self._meta.fields:
       if(
-        isinstance(field, (models.CharField, models.TextField)) 
+        isinstance(field, (models.CharField)) 
         and not isinstance(field, (models.URLField))
+        and not isinstance(field, (models.TextField))
         and not field.primary_key
         and field.editable
       ) :
