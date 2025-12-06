@@ -1195,7 +1195,7 @@ class PermitClearanceView(ActivityLogMixin, generics.ListCreateAPIView):
         return BusinessPermitSerializer
     
     def get_queryset(self):
-        queryset = BusinessPermitRequest.objects.select_related('bus_id').all()
+        queryset = BusinessPermitRequest.objects.select_related('bus_id', 'pr_id').all()
         
         # Search functionality
         search = self.request.GET.get('search', None)

@@ -41,10 +41,13 @@ function IssuedCertificates() {
   const [pageSize, setPageSize] = useState(10);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBusinessPermitDialogOpen, setIsBusinessPermitDialogOpen] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState<IssuedCertificate | null>(null);
+  const [viewingBusinessPermit, setViewingBusinessPermit] = useState<IssuedBusinessPermit | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedIssuedCertificate | null>(null);
-  const [selectedBusinessPermit, setSelectedBusinessPermit] = useState<IssuedBusinessPermit | null>(null);
+  const [selectedBusinessPermit, setSelectedBusinessPermit] = useState<IssuedBusinessPermit & { signatory?: string } | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [selectedBusinessPermitStaffId, setSelectedBusinessPermitStaffId] = useState("");
   const [purposeInput, setPurposeInput] = useState("");
 
   
@@ -91,7 +94,27 @@ function IssuedCertificates() {
   };
 
   const handleViewBusinessFile = (permit: IssuedBusinessPermit) => {
-    setSelectedBusinessPermit(permit);
+    setSelectedBusinessPermit(null); // Clear previous selection
+    setViewingBusinessPermit(permit);
+    setSelectedBusinessPermitStaffId("");
+    setIsBusinessPermitDialogOpen(true);
+  };
+
+  const handleProceedBusinessPermit = () => {
+    setIsBusinessPermitDialogOpen(false);
+
+    if (viewingBusinessPermit && selectedBusinessPermitStaffId) {
+      const selectedStaff = staffOptions.find(staff => staff.id === selectedBusinessPermitStaffId);
+      
+      // Create permit details with staff data
+      const permitDetails: IssuedBusinessPermit & { signatory?: string } = {
+        ...viewingBusinessPermit,
+        signatory: selectedStaff?.name,
+      };
+      
+      setSelectedBusinessPermit(permitDetails);
+      setSelectedBusinessPermitStaffId("");
+    }
   };
 
   const certificateColumns: ColumnDef<IssuedCertificate>[] = [
@@ -121,12 +144,31 @@ function IssuedCertificates() {
     },
     {
       accessorKey: "requester",
-      header: () => <div className="text-center">Requester</div>,
-      cell: ({ row }) => <div className="text-center capitalize">{row.getValue("requester")}</div>,
+      header: ({ column }: { column: Column<IssuedCertificate> }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Requester
+          <ArrowUpDown size={14} />
+        </div>
+      ),
+      cell: ({ row }) => {
+        const requester = row.getValue("requester") as string;
+        return <div className="text-center">{requester?.toUpperCase() || 'N/A'}</div>;
+      },
     },
     {
       accessorKey: "dateIssued",
-      header: () => <div className="text-center">Date Issued</div>,
+      header: ({ column }: { column: Column<IssuedCertificate> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Issued
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const dateStr = row.getValue("dateIssued") as string;
         try {
@@ -139,7 +181,15 @@ function IssuedCertificates() {
     },
     {
       accessorKey: "purpose",
-      header: "Purpose",
+      header: ({ column }: { column: Column<IssuedCertificate> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Purpose
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const value = row.getValue("purpose") as string;
         const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
@@ -343,12 +393,14 @@ function IssuedCertificates() {
         }
         
         return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {capitalizedValue}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+              style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+            >
+              {capitalizedValue}
+            </span>
+          </div>
         );
       },
     },
@@ -395,25 +447,49 @@ function IssuedCertificates() {
     },
     {
       accessorKey: "business_name",
-      header: () => <div className="text-center">Business Name</div>,
+      header: ({ column }: { column: Column<IssuedBusinessPermit> }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Business Name
+          <ArrowUpDown size={14} />
+        </div>
+      ),
       cell: ({ row }) => <div className="text-center capitalize">{row.getValue("business_name")}</div>,
     },
     {
       accessorKey: "dateIssued",
-      header: () => <div className="text-center">Date Issued</div>,
+      header: ({ column }: { column: Column<IssuedBusinessPermit> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Issued
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const dateStr = row.getValue("dateIssued") as string;
         try {
           const date = parseISO(dateStr);
-          return <div>{format(date, "MM/dd/yyyy")}</div>;
+          return <div className="text-center">{format(date, "MM/dd/yyyy")}</div>;
         } catch (e) {
-          return <div>{dateStr || ""}</div>;
+          return <div className="text-center">{dateStr || ""}</div>;
         }
       },
     },
     {
       accessorKey: "purpose",
-      header: "Purpose",
+      header: ({ column }: { column: Column<IssuedBusinessPermit> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Purpose
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const value = row.getValue("purpose") as string;
         const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
@@ -451,12 +527,14 @@ function IssuedCertificates() {
         }
         
         return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {capitalizedValue}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+              style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+            >
+              {capitalizedValue}
+            </span>
+          </div>
         );
       },
     },
@@ -503,44 +581,52 @@ function IssuedCertificates() {
     },
     {
       accessorKey: "complainant_names",
-      header: "Complainant",
+      header: () => <div className="text-center">Complainant</div>,
       cell: ({ row }) => {
         const names = row.original.complainant_names || (row.original.complainant_name ? [row.original.complainant_name] : []);
-        if (!names.length) return <div>—</div>;
-        return <div className="text-sm">{names.join(', ')}</div>;
+        if (!names.length) return <div className="text-center">—</div>;
+        return <div className="text-sm text-center">{names.join(', ')}</div>;
       },
     },
     {
       id: "complainant_addresses",
-      header: "Complainant Address",
+      header: () => <div className="text-center">Complainant Address</div>,
       cell: ({ row }) => {
         const addrs = row.original.complainant_addresses || [];
-        if (!addrs.length) return <div>—</div>;
-        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+        if (!addrs.length) return <div className="text-center">—</div>;
+        return <div className="text-sm text-center">{addrs.filter(Boolean).join(', ')}</div>;
       },
     },
     {
       accessorKey: "accused_names",
-      header: "Respondent",
+      header: () => <div className="text-center">Respondent</div>,
       cell: ({ row }) => {
         const names = row.original.accused_names || [];
-        if (!names.length) return <div>—</div>;
-        return <div className="text-sm">{names.join(', ')}</div>;
+        if (!names.length) return <div className="text-center">—</div>;
+        return <div className="text-sm text-center">{names.join(', ')}</div>;
       },
     },
     {
       id: "accused_addresses",
-      header: "Respondent Address",
+      header: () => <div className="text-center">Respondent Address</div>,
       cell: ({ row }) => {
         const addrs = row.original.accused_addresses || [];
-        if (!addrs.length) return <div>—</div>;
-        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+        if (!addrs.length) return <div className="text-center">—</div>;
+        return <div className="text-sm text-center">{addrs.filter(Boolean).join(', ')}</div>;
       },
     },
     {
       accessorKey: "sr_req_date",
-      header: "Date Requested",
-      cell: ({ row }) => <div>{localDateFormatter(row.getValue("sr_req_date"))}</div>,
+      header: ({ column }: { column: Column<ServiceCharge> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Requested
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-center">{localDateFormatter(row.getValue("sr_req_date"))}</div>,
     },
     {
       id: "actions",
@@ -631,6 +717,8 @@ function IssuedCertificates() {
     // Clear selected certificate/permit when switching tabs
     setSelectedCertificate(null);
     setSelectedBusinessPermit(null);
+    setViewingBusinessPermit(null);
+    setIsBusinessPermitDialogOpen(false);
   }, [activeTab, filterValue, businessFilterValue, searchQuery, businessSearchQuery, pageSize]);
 
   const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
@@ -872,9 +960,56 @@ function IssuedCertificates() {
           address={(selectedBusinessPermit as any)?.original_permit?.business_address || ""}
           purpose={selectedBusinessPermit.purpose as any}
           issuedDate={selectedBusinessPermit.dateIssued || new Date().toISOString()}
+          Signatory={selectedBusinessPermit.signatory || ""}
           showAddDetails={false}
         />
       )}
+
+      {/* Dialog for business permit signatory selection */}
+      <DialogLayout
+        isOpen={isBusinessPermitDialogOpen}
+        onOpenChange={(open: boolean) => {
+          setIsBusinessPermitDialogOpen(open);
+          if (!open) {
+            setSelectedBusinessPermitStaffId("");
+          }
+        }}
+        className="max-w-[35%] max-h-[85vh] flex flex-col overflow-auto scrollbar-custom"
+        title="Additional Details"
+        description={`Please provide the needed details for the certificate.`}
+        mainContent={
+          <div>
+            {viewingBusinessPermit ? (
+              <div className="space-y-3">
+                <Label className="pb-1">Signatory</Label>
+                <div className="w-full pb-3">
+                  <Combobox
+                    options={staffOptions}
+                    value={selectedBusinessPermitStaffId}
+                    onChange={(value) => setSelectedBusinessPermitStaffId(value || "")}
+                    placeholder="Select signatory staff member"
+                    emptyMessage="No staff found"
+                    triggerClassName="w-full"
+                    contentClassName="w-full"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    className="bg-[#2563eb] hover:bg-[#1746a2] text-white"
+                    onClick={handleProceedBusinessPermit}
+                    disabled={!selectedBusinessPermitStaffId}
+                  >
+                    Proceed
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p>No permit selected</p>
+            )}
+          </div>
+        }
+      />
 
       <DialogLayout
         isOpen={isDialogOpen}

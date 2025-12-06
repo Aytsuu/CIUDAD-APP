@@ -9,7 +9,7 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { ArrowUpDown } from "lucide-react";
 import PermitClearanceForm from "./treasurer-permitClearance-form";
 import ReceiptForm from "@/pages/record/treasurer/treasurer-clearance-requests/treasurer-permit-create-receipt-form";
-import { useGetPermitClearances,useGetAnnualGrossSalesForPermit,useGetPurposesAndRates } from "./queries/permitClearanceFetchQueries";
+import { useGetPermitClearances,useGetAnnualGrossSalesForPermit } from "./queries/permitClearanceFetchQueries";
 import { Spinner } from "@/components/ui/spinner";
 import { ImageModal } from "@/components/ui/image-modal";
 import { ZoomIn } from "lucide-react";
@@ -224,10 +224,9 @@ const createColumns = (activeTab: "paid" | "unpaid" | "declined"): ColumnDef<Per
         accessorKey: "purpose",
         header: () => <div className="text-center">Purpose</div>,
         cell: ({ row }) => {
-            const prId = row.original.pr_id;
             const purposeData = row.original.purposeData;
             
-            if (purposeData && prId) {
+            if (purposeData && purposeData.pr_purpose) {
                 return (
                     <div className="text-center">
                         {purposeData.pr_purpose}
@@ -477,24 +476,20 @@ function PermitClearance(){
         getPaymentStatusFilter()
     );
     const { data: annualGrossSalesResponse, isLoading: grossSalesLoading } = useGetAnnualGrossSalesForPermit();
-    const { data: purposesResponse, isLoading: purposesLoading } = useGetPurposesAndRates();
 
     // Handle loading state
     React.useEffect(() => {
-        if (isLoading || grossSalesLoading || purposesLoading) {
+        if (isLoading || grossSalesLoading) {
             showLoading();
         } else {
             hideLoading();
         }
-    }, [isLoading, grossSalesLoading, purposesLoading, showLoading, hideLoading]);
+    }, [isLoading, grossSalesLoading, showLoading, hideLoading]);
 
     // Extract arrays from paginated responses (handle both paginated and direct array responses)
     const annualGrossSales = Array.isArray(annualGrossSalesResponse) 
         ? annualGrossSalesResponse 
         : (annualGrossSalesResponse as any)?.results || [];
-    const purposes = Array.isArray(purposesResponse) 
-        ? purposesResponse 
-        : (purposesResponse as any)?.results || [];
 
 
     // Handle paginated response
@@ -532,42 +527,47 @@ function PermitClearance(){
         });
     }, [permitClearancesData, activeTab]);
 
-    // Map backend data to frontend columns
-    const mappedData = (filteredData || []).map((item: any) => {
-        // Calculate date to claim (7 days from request date)
-        const requestDate = new Date(item.req_request_date);
-        const claimDate = new Date(requestDate);
-        claimDate.setDate(requestDate.getDate() + 7);
+    // Map backend data to frontend columns - useMemo to recalculate when grossSales load
+    const mappedData = React.useMemo(() => {
+        if (!filteredData || filteredData.length === 0) return [];
         
-        // Find related data
-        const grossSalesData = annualGrossSales.find((ags: any) => ags.ags_id === item.ags_id);
-        const purposeData = purposes.find((purpose: any) => purpose.pr_id === item.pr_id);
-        
-        
-        return {
-            businessName: item.business_name || item.bus_permit_name || "No Business Linked",
-            address: item.business_address || item.bus_permit_address || "No Address",
-            grossSales: item.business_gross_sales || "Not Set", 
-            purposes: item.purposes || [],
-            requestor: item.requestor || "Unknown",
-            reqDate: item.req_request_date,
-            claimDate: claimDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
-            paymentStat: item.req_payment_status,
-            // req_sales_proof field removed
-            amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
-            req_amount: item.req_amount || 0, // Include req_amount field
-            bpr_id: item.bpr_id || "", // Include bpr_id field
-            has_files: item.has_files || false, // Include has_files field from API
-            bus_reason: item.bus_reason || "", // Include declined reason
-            ags_id: item.ags_id, // Include ags_id
-            pr_id: item.pr_id, // Include pr_id
-            grossSalesData: grossSalesData, // Include gross sales data
-            purposeData: purposeData, // Include purpose data
-            businessGrossSales: item.business_gross_sales || item.gross_sales, // Include business gross sales for existing businesses
-            bus_clearance_gross_sales: item.bus_clearance_gross_sales, // Include inputted gross sales for new businesses
-            ...item
-        };
-    });
+        return filteredData.map((item: any) => {
+            // Calculate date to claim (7 days from request date)
+            const requestDate = new Date(item.req_request_date);
+            const claimDate = new Date(requestDate);
+            claimDate.setDate(requestDate.getDate() + 7);
+            
+            // Find related data - purpose is now included directly in API response
+            const grossSalesData = annualGrossSales.find((ags: any) => ags.ags_id === item.ags_id);
+            // Purpose data is now included directly in the API response as item.purpose
+            const purposeData = item.purpose || null;
+            
+            
+            return {
+                businessName: item.business_name || item.bus_permit_name || "No Business Linked",
+                address: item.business_address || item.bus_permit_address || "No Address",
+                grossSales: item.business_gross_sales || "Not Set", 
+                purposes: item.purposes || [],
+                requestor: item.requestor || "Unknown",
+                reqDate: item.req_request_date,
+                claimDate: claimDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
+                paymentStat: item.req_payment_status,
+                // req_sales_proof field removed
+                amount: item.amount_to_pay || 0, // Use amount_to_pay for amount column
+                req_amount: item.req_amount || 0, // Include req_amount field
+                bpr_id: item.bpr_id || "", // Include bpr_id
+                has_files: item.has_files || false, // Include has_files field from API
+                bus_reason: item.bus_reason || "", // Include declined reason
+                ags_id: item.ags_id, // Include ags_id
+                pr_id: item.pr_id, // Include pr_id
+                grossSalesData: grossSalesData, // Include gross sales data
+                purposeData: purposeData, // Include purpose data from API response
+                businessGrossSales: item.business_gross_sales || item.gross_sales, // Include business gross sales for existing businesses
+                bus_clearance_gross_sales: item.bus_clearance_gross_sales, // Include inputted gross sales for new businesses
+                ...item
+            };
+        });
+    }, [filteredData, annualGrossSales]);
 
     return(
         <div className="w-full h-full">
