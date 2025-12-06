@@ -18,7 +18,7 @@ export const useAddService = () => {
 			})
 
 			toast.success("New service created successfully");
-			console.log("Successfully added service ID: ", service)
+			// console.log("Successfully added service ID: ", service)
 		},
 		onError: (error: Error) => {
 			console.error('Service error: ', error.message)
@@ -37,10 +37,10 @@ export const useAddDay = () => {
 				queryKey: ['days']
 			}),
 				toast.success("New day created successfully");
-			console.log("Successfully added day ID: ", day)
+			// console.log("Successfully added day ID: ", day)
 		},
 		onError: (error: Error) => {
-			console.error('Day error: ', error.message)
+			// console.error('Day error: ', error.message)
 			toast.error("Failed to create day. Please try again.")
 		}
 	})
@@ -57,7 +57,7 @@ export const useAddScheduler = () => {
 			})
 
 			toast.success("New schedule created successfully");
-			console.log("Successfully added scheduler ID: ", ss_id)
+			// console.log("Successfully added scheduler ID: ", ss_id)
 		},
 		onError: (error: Error) => {
 			console.error('Scheduler error: ', error.message)

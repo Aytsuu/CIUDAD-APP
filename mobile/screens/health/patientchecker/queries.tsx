@@ -6,7 +6,7 @@ export const getPatientByResidentId = async (rpId: string) => {
     const res = await api2.get(`patientrecords/patient/by-resident/${rpId}/`);
     return res.data;
   } catch (error) {
-    console.error("❌ Error fetching patient by resident ID:", error);
+    // console.error("❌ Error fetching patient by resident ID:", error);
     return null;
   }
 };

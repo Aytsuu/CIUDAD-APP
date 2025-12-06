@@ -40,7 +40,7 @@ export default function InvMedicalConRecords() {
   const mode = typeof params.mode === "string" ? params.mode : null;
 
     useEffect(() => {
-    console.log("All incoming params:", params);
+    // console.log("All incoming ?params:", params);
     
     // Priority 1: Check if notification passed pat_id
     const notificationPatId = params.pat_id as string;
@@ -48,30 +48,30 @@ export default function InvMedicalConRecords() {
     const notificationFocusTab = params.focus_tab as string;
 
     if (notificationPatId) {
-      console.log("Notification navigation - Setting patId to:", notificationPatId);
+      // console.log("Notification navigation - Setting patId to:", notificationPatId);
       setPatientId(notificationPatId);
       
       // Optional: Auto-focus on consultations tab if specified
       if (notificationFocusTab === "consultations") {
         // You could add logic here to highlight or focus on consultations
-        console.log("Notification focus on consultations tab");
+        // console.log("Notification focus on consultations tab");
       }
       
       // Optional: If you want to show a specific appointment
       if (notificationAppointmentId) {
-        console.log("Notification for specific appointment:", notificationAppointmentId);
+        // console.log("Notification for specific appointment:", notificationAppointmentId);
         // You could add logic to highlight the specific appointment
       }
     } 
     else if (mode === "admin") {
       // Admin mode - get patient data from params
       const adminPatId = params.pat_id as string;
-      console.log("Admin mode - Setting patId to:", adminPatId);
+      // console.log("Admin mode - Setting patId to:", adminPatId);
       setPatientId(adminPatId || "");
     } 
     else {
       // Regular mode - use authenticated user's data
-      console.log("Regular mode - Setting patId to:", pat_id);
+      // console.log("Regular mode - Setting patId to:", pat_id);
       setPatientId(pat_id || "");
     }
   }, [mode, params.pat_id, params.appointment_id, params.focus_tab, params.patientData, pat_id]);
@@ -79,25 +79,22 @@ export default function InvMedicalConRecords() {
   
   // Handle patient ID setup
   useEffect(() => {
-    console.log("MODE:", mode);
-    console.log("Params patId:", params.patId);
-    console.log("Auth pat_id:", pat_id);
-
+   
     if (mode === "admin") {
       // Admin mode - get patient data from params
       const adminPatId = params.pat_id as string;
 
-      console.log("Admin mode - Setting patId to:", adminPatId);
+      // console.log("Admin mode - Setting patId to:", adminPatId);
       setPatientId(adminPatId || "");
 
       // Store admin patient data in state if needed
       if (patId) {
         // adminPatientData is available for use if needed
-        console.log("Admin patient data available:", patId);
+        // console.log("Admin patient data available:", patId);
       }
     } else {
       // Regular mode - use authenticated user's data
-      console.log("Regular mode - Setting patId to:", pat_id);
+      // console.log("Regular mode - Setting patId to:", pat_id);
       setPatientId(pat_id || "");
     }
   }, [mode, params.patId, params.patientData, pat_id]);
@@ -113,16 +110,16 @@ export default function InvMedicalConRecords() {
 
   // Extract medical records from API response
   const medicalRecords = useMemo(() => {
-    console.log("Raw API Response:", medicalRecordsResponse);
+    // console.log("Raw API Response:", medicalRecordsResponse);
 
     if (medicalRecordsResponse?.results) {
-      console.log("Using paginated results");
+      // console.log("Using paginated results");
       return medicalRecordsResponse.results;
     } else if (Array.isArray(medicalRecordsResponse)) {
-      console.log("Using direct array");
+      // console.log("Using direct array");
       return medicalRecordsResponse;
     } else {
-      console.log("No records found, using empty array");
+      // console.log("No records found, using empty array");
       return [];
     }
   }, [medicalRecordsResponse]);
@@ -130,24 +127,24 @@ export default function InvMedicalConRecords() {
   // Extract and serialize patient data from consultation records
   const patientData = useMemo(() => {
     if (!medicalRecords || medicalRecords.length === 0) {
-      console.log("No consultation records found for patient data");
+      // console.log("No consultation records found for patient data");
       return null;
     }
 
     // Get patient data from the first record
     const firstRecord = medicalRecords[0];
-    console.log("First consultation record for patient data:", firstRecord?.patrec_details);
+    // console.log("First consultation record for patient data:", firstRecord?.patrec_details);
 
     // Extract the patient_details which matches what serializePatientData expects
     const patientDetails = firstRecord.patrec_details?.patient_details;
 
     if (!patientDetails) {
-      console.log("No patient_details found in consultation record");
+      // console.log("No patient_details found in consultation record");
       return null;
     }
 
     const serialized = serializePatientData(patientDetails);
-    console.log("Final patient data for display:", serialized);
+    // console.log("Final patient data for display:", serialized);
     return serialized;
   }, [medicalRecords]);
 
@@ -157,8 +154,8 @@ export default function InvMedicalConRecords() {
   const startEntry = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0;
   const endEntry = Math.min(currentPage * pageSize, totalCount);
 
-  console.log("Processed - Total count:", totalCount, "Records:", medicalRecords.length);
-  console.log("Patient Data Available:", !!patientData);
+  // console.log("Processed - Total count:", totalCount, "Records:", medicalRecords.length);
+  // console.log("Patient Data Available:", !!patientData);
 
   // Handle consultation search
   const handleSearchChange = useCallback((text: string) => {

@@ -21,7 +21,7 @@ export default function MedicineDetailsScreen() {
      if (params.medicineData) {
       try {
         const parsed = JSON.parse(params.medicineData as string);
-        console.log("🔍 Parsed Medicine Data:", parsed); // Debug log
+        // console.log("🔍 Parsed Medicine Data:", parsed); // Debug log
         return parsed;
       } catch (e) {
         console.error("Failed to parse medicineData param:", e);
@@ -64,7 +64,7 @@ export default function MedicineDetailsScreen() {
     };
 
     addToCart(itemToAdd);
-    console.log("Adding to cart:", itemToAdd);
+    // console.log("Adding to cart:", itemToAdd);
     
     Alert.alert("Success", "Medicine added to your request", [
       { text: "Continue Browsing", onPress: () => router.back() },

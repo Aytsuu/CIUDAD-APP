@@ -95,7 +95,7 @@ export default function SchedulerMain() {
 
   const handleSaveSchedule = (newSchedule: WeeklySchedule) => {
     setWeeklySchedule(newSchedule);
-    console.log("Weekly schedule saved:", newSchedule);
+    // console.log("Weekly schedule saved:", newSchedule);
     // Invalidate queries if using react-query
   };
 
@@ -116,7 +116,7 @@ export default function SchedulerMain() {
   };
 
   const handleAddDay = (newDay: Date) => {
-    console.log("New day added (handled by data refetch):", newDay);
+    // console.log("New day added (handled by data refetch):", newDay);
   };
 
   if (isLoadingServices || isLoadingSchedulers || isLoadingDays || !hasCheckedAuth) {

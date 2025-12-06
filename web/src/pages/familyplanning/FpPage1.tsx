@@ -446,7 +446,7 @@ const { setValue, getValues } = form
         setCommodities(formattedCommodities);
 
       } catch (error) {
-        console.error("Error fetching commodities:", error);
+        // console.error("Error fetching commodities:", error);
         toast.error("Failed to load commodity data");
       } finally {
         setLoadingCommodities(false);

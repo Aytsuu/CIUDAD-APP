@@ -13,7 +13,7 @@ export const processMedicineRequest = async (
       staff_id: staffId
     };
 
-    console.log('Submitting medicine request with data:', requestData);
+    // console.log('Submitting medicine request with data:', requestData);
     // Send everything to the backend in one API call
     const response = await api2.post('medicine/create-medicine/request/', requestData);
     

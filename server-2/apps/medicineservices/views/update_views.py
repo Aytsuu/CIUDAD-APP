@@ -43,15 +43,15 @@ def send_medicine_status_notification(medicine_request_item, new_status, reason=
         status_messages = {
             'rejected': {
                 'title': 'Medicine Request Rejected',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form} was rejected. Reason: {reason or ""}'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} was rejected. Reason: {reason or ""}'
             },
             'referred': {
                 'title': 'Medicine Request Referred',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form}has been referred. Reason: {reason or ""}'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} has been referred. Reason: {reason or ""}'
             },
             'confirmed': {
                 'title': 'Medicine Request Confirmed',
-                'message': f'Your medicine request for {medicine_request_item.med.med_name} {medicine_request_item.med.med_dsg} {medicine_request_item.med.med_dsg_unit} {medicine_request_item.med.med_form} has been confirmed. Please proceed to the health center to pick up your medicine.'
+                'message': f'Your medicine request for {medicine_request_item.med.med_name} has been confirmed. Please proceed to the health center to pick up your medicine.'
             }
         }
                 

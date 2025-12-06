@@ -42,7 +42,7 @@ export const getUserAppointments = async (
   
   const response = await api2.get(`/medical-consultation/user-appointments/?${params.toString()}`);
   
-  console.log('API Response (Filtered Appointments):', response.data);
+  // console.log('API Response (Filtered Appointments):', response.data);
   
   return {
     results: response.data.results || [],
@@ -81,16 +81,16 @@ export const getConsultationHistory = async (patientId?: string, page?: number, 
       // FIX: Add leading slash AND timeout
       const url = `/medical-consultation/view-medcon-record/${patientId ?? ""}/?${params.toString()}`;
       
-      console.log("Fetching consultation history from:", url);
+      // console.log("Fetching consultation history from:", url);
       
       const response = await api2.get(url, { 
         timeout: 30000 // 30 seconds
       });
       
-      console.log("Consultation history response:", response.data);
+      // console.log("Consultation history response:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Error fetching consultation history:", error);
+      // console.error("Error fetching consultation history:", error);
       
       // Better error logging
       if (error.code === 'ECONNABORTED') {
@@ -106,7 +106,7 @@ export const getConsultationHistory = async (patientId?: string, page?: number, 
   };
 
 export const useConsultationHistory = (patientId?: string, page?: number, pageSize?: number, searchQuery?: string) => {
-    console.log("useConsultationHistory hook initialized with:", { patientId, page, pageSize, searchQuery });
+    // console.log("useConsultationHistory hook initialized with:", { patientId, page, pageSize, searchQuery });
     return useQuery<any>({
         queryKey: ["consultationHistory", patientId, page, pageSize, searchQuery],
         queryFn: () => getConsultationHistory(patientId, page, pageSize, searchQuery),
@@ -115,7 +115,7 @@ export const useConsultationHistory = (patientId?: string, page?: number, pageSi
 };
 
 export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
-    console.log("getFamHistory called with:", { pat_id, searchQuery });
+    // console.log("getFamHistory called with:", { pat_id, searchQuery });
     try {
         const params = new URLSearchParams();
         if (searchQuery) {
@@ -124,7 +124,7 @@ export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
 
         const url = `/medical-consultation/family-medhistory/${pat_id}/${searchQuery ? `?${params.toString()}` : ""}`;
         const response = await api2.get(url);
-        console.log("-------------------------jnsdjsndjsdnjsd----",response.data);
+        // console.log("-------------------------jnsdjsndjsdnjsd----",response.data);
 
         return response.data;
     } catch (error: any) {
@@ -140,7 +140,7 @@ export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
 };
 
 export const useFamHistory = (pat_id: string, searchQuery?: string) => {
-    console.log("useFamHistory hook initialized with:", { pat_id, searchQuery });
+    // console.log("useFamHistory hook initialized with:", { pat_id, searchQuery });
     return useQuery({
         queryKey: ["familyHistory", pat_id, searchQuery],
         queryFn: () => getFamHistory(pat_id, searchQuery),
@@ -150,7 +150,7 @@ export const useFamHistory = (pat_id: string, searchQuery?: string) => {
 };
 
 export const getPrenatalPatientMedHistory = async (patientId: string, search?: string) => {
-    console.log("getPrenatalPatientMedHistory called with:", { patientId, search });
+    // console.log("getPrenatalPatientMedHistory called with:", { patientId, search });
     try {
         const params: any = {};
         if (search) {
@@ -158,7 +158,7 @@ export const getPrenatalPatientMedHistory = async (patientId: string, search?: s
         }
 
         const res = await api2.get(`maternal/patient/${patientId}/medicalhistory/`, { params });
-        console.log("--------------------MRDICSL VON---------",res.data);
+        // console.log("--------------------MRDICSL VON---------",res.data);
         return res.data || [];
     } catch (error: any) {
         if (error.response) {
@@ -173,7 +173,7 @@ export const getPrenatalPatientMedHistory = async (patientId: string, search?: s
 };
 
 export const usePrenatalPatientMedHistory = (patientId: string, search?: string) => {
-    console.log("usePrenatalPatientMedHistory hook initialized with:", { patientId, search });
+    // console.log("usePrenatalPatientMedHistory hook initialized with:", { patientId, search });
     return useQuery({
         queryKey: ["prenatalPatientMedHistory", patientId, search],
         queryFn: () => getPrenatalPatientMedHistory(patientId, search),
@@ -187,7 +187,7 @@ export const usePrenatalPatientMedHistory = (patientId: string, search?: string)
 
 export const cancelAppointment = async (appointment_id: number, reason: string): Promise<void> => {
   try {
-    console.log(`Cancelling appointment ${appointment_id} with reason:`, reason);
+    // console.log(`Cancelling appointment ${appointment_id} with reason:`, reason);
     
     const response = await api2.patch(
       `/medical-consultation/cancel-appointment/${appointment_id}/`, 
@@ -200,7 +200,7 @@ export const cancelAppointment = async (appointment_id: number, reason: string):
       }
     );
     
-    console.log('Cancel appointment response:', response.data);
+    // console.log('Cancel appointment response:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('Error cancelling appointment:', error);

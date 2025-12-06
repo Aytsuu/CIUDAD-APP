@@ -1,9 +1,4 @@
-
-
-
 import {api2} from "@/api/api";
-
-
 
 // Helper function to get vaccine stock info
 export const getVaccineStock = async (vaccineTypeId: string) => {
@@ -54,7 +49,7 @@ export const getVaccinationRecords =  async () => {
 export const getVaccinationRecordById =  async (id: string) => {
   try {
     const response = await api2.get(`/vaccination/indiv-patient-record/${id}/`);
-    console.log("API Response:", response); // Add logging
+    // console.log("API Response:", response); // Add logging
     if (!response.data) {
       throw new Error("No data returned from API");
     }
@@ -130,7 +125,7 @@ export const getVaccinatedCount = async () => {
 export const getUnvaccinatedResidents = async () => {
   try {
     const response = await api2.get("/vaccination/residents/unvaccinated/");
-    console.log("API response:", response.data);
+    // console.log("API response:", response.data);
     return response.data;
   } catch (error) {
     console.error("Failed to fetch unvaccinated residents:", error);

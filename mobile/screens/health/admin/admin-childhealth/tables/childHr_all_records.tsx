@@ -11,41 +11,6 @@ import { calculateAge } from '@/helpers/ageCalculator';
 import { TabBar, TabType } from '../../components/tab-bar';
 import { StatusBadge } from '../../components/status-badge';
 
-// Components (keep your existing StatusBadge, TabBar, ChildHealthCard components the same)
-// const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
-//   const getTypeConfig = (type: string) => {
-//     switch (type.toLowerCase()) {
-//       case 'resident':
-//         return {
-//           color: 'text-green-700',
-//           bgColor: 'bg-green-100',
-//           borderColor: 'border-green-200',
-//         };
-//       case 'transient':
-//         return {
-//           color: 'text-amber-700',
-//           bgColor: 'bg-amber-100',
-//           borderColor: 'border-amber-200',
-//         };
-//       default:
-//         return {
-//           color: 'text-gray-700',
-//           bgColor: 'bg-gray-100',
-//           borderColor: 'border-gray-200',
-//         };
-//     }
-//   };
-
-//   const typeConfig = getTypeConfig(type);
-//   return (
-//     <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-//       <UIText className={`text-xs font-semibold ${typeConfig.color}`}>
-//         {type}
-//       </UIText>
-//     </View>
-//   );
-// };
-
 const ChildHealthCard: React.FC<{
   child: ChildHealthRecord;
   onPress: () => void;
@@ -151,27 +116,27 @@ const pageSize = 1;
 
   // FIXED: Proper error handling for childHealthRecords
   const formatChildHealthData = useCallback((): ChildHealthRecord[] => {
-    console.log("Raw childHealthRecords:", childHealthRecords);
+    // console.log("Raw childHealthRecords:", childHealthRecords);
     
     // Add comprehensive checks
     if (!childHealthRecords) {
-      console.log("No childHealthRecords data");
+      // console.log("No childHealthRecords data");
       return [];
     }
 
     if (!Array.isArray(childHealthRecords)) {
-      console.log("childHealthRecords is not an array:", typeof childHealthRecords);
+      // console.log("childHealthRecords is not an array:", typeof childHealthRecords);
       
       // Try to handle if it's an object with a data property
       if (childHealthRecords && typeof childHealthRecords === 'object') {
         if (Array.isArray(childHealthRecords.data)) {
-          console.log("Using childHealthRecords.data array");
+          // console.log("Using childHealthRecords.data array");
           return childHealthRecords.data.map((record: any) => formatRecord(record));
         } else if (Array.isArray(childHealthRecords.children)) {
-          console.log("Using childHealthRecords.children array");
+          // console.log("Using childHealthRecords.children array");
           return childHealthRecords.children.map((record: any) => formatRecord(record));
         } else if (Array.isArray(childHealthRecords.results)) {
-          console.log("Using childHealthRecords.results array");
+          // console.log("Using childHealthRecords.results array");
           return childHealthRecords.results.map((record: any) => formatRecord(record));
         }
       }

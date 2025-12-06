@@ -12,6 +12,6 @@ export const addFirstAid = async (data: Record<string, string>) => {
     });
     return res.data;
   } catch (err) {
-    console.log(err);
+    // console.log(err);
   }
 };

@@ -37,8 +37,8 @@ export const DocumentModal: React.FC<{
 
     const encodedUrl = currentFile.medf_url;
 
-    console.log('Original URL:', currentFile.medf_url);
-    console.log('Encoded URL:', encodedUrl);
+    // console.log('Original URL:', currentFile.medf_url);
+    // console.log('Encoded URL:', encodedUrl);
 
     return (
         <Modal visible={isVisible} transparent={true} animationType="fade">
@@ -77,7 +77,7 @@ export const DocumentModal: React.FC<{
                             className="w-full h-80" 
                             resizeMode="contain"
                             onError={() => {
-                                console.log('Image failed to load in React Native');
+                                // console.log('Image failed to load in React Native');
                                 setImageError(true);
                             }}
                             onLoad={() => console.log('Image loaded successfully in React Native')}

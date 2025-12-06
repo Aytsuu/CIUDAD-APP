@@ -20,8 +20,8 @@ import { useChildHealthHistory } from "../queries/fetchQueries";
 export default function InvChildHealthRecords() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  console.log('InvChildHealthRecords: Received params via useLocalSearchParams:', params);
-  console.log('InvChildHealthRecords: Expected route prop:', arguments[0]?.route);
+  // console.log('InvChildHealthRecords: Received params via useLocalSearchParams:', params);
+  // console.log('InvChildHealthRecords: Expected route prop:', arguments[0]?.route);
 
 //   let ChildHealthRecord = null;
 //   try {
@@ -339,3 +339,4 @@ export default function InvChildHealthRecords() {
 //     </ScrollView>
 //   );
 // }
+}

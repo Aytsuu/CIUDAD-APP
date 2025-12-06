@@ -2,17 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, TextInput } from "react-native";
-import {
-  Calendar,
-  User,
-  GitCompare,
-  AlertCircle,
-  Stethoscope,
-  ChevronRight,
-  ChevronLeft,
-  Heart,
-  Search,
-} from "lucide-react-native";
+import { Calendar,User,AlertCircle,ChevronRight,ChevronLeft,Heart,Search,} from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +10,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePatientByResidentId, useFPRecordsByPatientId } from "./get-query";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
-import { UpcomingFollowUps } from "../admin/components/followup-cards";
 
 // ... (Interface and InfoRow component remain the same) ...
 interface FPRecord {
@@ -101,40 +90,6 @@ export default function MyFpRecordsScreen() {
   const error = patientError || recordsError;
   const isFetching = isPatientFetching || isRecordsFetching;
 
-  // ... (Event Handlers: handleCheckboxChange, handleCompareRecords, handleRefresh remain the same) ...
-  // const handleCheckboxChange = (record: FPRecord, isChecked: boolean) => {
-  //   setSelectedRecords((prevSelected) => {
-  //     if (isChecked) {
-  //       if (prevSelected.length >= 2) return prevSelected;
-  //       return [...prevSelected, record];
-  //     } else {
-  //       return prevSelected.filter((r) => r.fprecord !== record.fprecord);
-  //     }
-  //   });
-  // };
-
-  // const handleCompareRecords = async () => {
-  //   if (selectedRecords.length !== 2) {
-  //     alert("Please select exactly two records to compare.");
-  //     return;
-  //   }
-  //   setIsComparing(true);
-  //   try {
-  //     router.push({
-  //       pathname: "/(health)/admin/familyplanning/comparison", 
-  //       params: { 
-  //         record1: JSON.stringify(selectedRecords[0]),
-  //         record2: JSON.stringify(selectedRecords[1])
-  //       }
-  //     });
-  //   } catch (error) {
-  //     console.error("Error preparing records for comparison:", error);
-  //     alert("Failed to prepare records for comparison. Please try again.");
-  //   } finally {
-  //     setIsComparing(false);
-  //   }
-  // };
-
   const handleRefresh = () => {
     refetchPatient();
     refetchRecords();
@@ -210,38 +165,6 @@ export default function MyFpRecordsScreen() {
     );
   };
 
-  // --- MODIFIED: `renderHeader` no longer contains PageLayout ---
-  // It only contains the components that scroll WITH the list.
-  const renderHeader = () => (
-    <View>
-      {/* Summary Cards */}
-      <View className="px-4 pt-4"> {/* Added pt-4 for spacing */}
-        <UpcomingFollowUps records={filteredRecords} />
-      </View>
-
-      {/* Search Bar */}
-      <View className="px-4 my-4">
-        <View className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex-row items-center">
-          <Search size={20} color="#9CA3AF" />
-          <TextInput
-            className="flex-1 text-gray-900 ml-3 text-base"
-            placeholder="Search records, methods..."
-            placeholderTextColor="#9CA3AF"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            accessibilityLabel="Search your family planning records"
-          />
-        </View>
-      </View>
-
-      {/* Results Header */}
-      <View className="px-4 mb-3">
-        <Text className="text-lg font-semibold text-gray-900">
-          {patIdFromParams ? 'Records' : 'Your Records'} ({filteredRecords.length})
-        </Text>
-      </View>
-    </View>
-  );
 
   // ... (renderEmpty, isLoading, isError remain the same) ...
   const renderEmpty = () => (
@@ -312,11 +235,6 @@ export default function MyFpRecordsScreen() {
         keyExtractor={(item) => item.fprecord ? item.fprecord.toString() : Math.random().toString()}
         ListHeaderComponent={() => (
           <View>
-            {/* Summary Cards */}
-            <View className="px-4 pt-4">
-              <UpcomingFollowUps records={filteredRecords} />
-            </View>
-
             {/* Results Header */}
             <View className="px-4 mb-3">
               <Text className="text-lg font-semibold text-gray-900">
@@ -338,24 +256,6 @@ export default function MyFpRecordsScreen() {
         }
         keyboardShouldPersistTaps="handled"
       />
-
-        {/* Compare Button */}
-        {/* {filteredRecords.length > 0 && (
-          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4">
-            <Button
-              onPress={handleCompareRecords}
-              disabled={selectedRecords.length !== 2 || isComparing}
-              className={`flex-row items-center justify-center ${
-                selectedRecords.length !== 2 || isComparing ? 'bg-slate-400' : 'bg-blue-600'
-              }`}
-            >
-              <GitCompare size={20} color="white" />
-              <Text className="text-white font-semibold ml-2">
-                {isComparing ? 'Comparing...' : `Compare Records (${selectedRecords.length}/2)`}
-              </Text>
-            </Button>
-          </View>
-        )} */}
       </View>
     </PageLayout>
   );

@@ -10,12 +10,12 @@ import { getFPCompleteRecord } from "../admin/admin-familyplanning/GetRequest"
 import { LoadingState } from "@/components/ui/loading-state"
 
 export default function MyFpRecordDetailScreen() {
-    const params = useLocalSearchParams<{ fprecordId: string; pat_id?: string }>();
+    // const params = useLocalSearchParams<{ fprecordId: string; pat_id?: string }>();
     const { fprecordId } = useLocalSearchParams()
-    const windowWidth = Dimensions.get("window").width
-    const patIdFromParams = params.pat_id;
+    // const windowWidth = Dimensions.get("window").width
+    // const patIdFromParams = params.pat_id;
 
-    console.log("[DEBUG] fp-details patIdFromParams:", patIdFromParams);
+    // console.log("[DEBUG] fp-details patIdFromParams:", patIdFromParams);
 
     const {
         data: recordData,
@@ -25,10 +25,10 @@ export default function MyFpRecordDetailScreen() {
     } = useQuery<FPRecordData | null>({
         queryKey: ["myFpCompleteRecordView", fprecordId],
         queryFn: () => {
-            console.log("🔍 [fp-details] Query function called with fprecordId:", fprecordId)
+            // console.log("🔍 [fp-details] Query function called with fprecordId:", fprecordId)
             // Convert string param back to number for the API call
             const idToUse = Number(fprecordId)
-            console.log("🔍 [fp-details] Using numeric id:", idToUse, "Type:", typeof idToUse)
+            // console.log("🔍 [fp-details] Using numeric id:", idToUse, "Type:", typeof idToUse)
             return getFPCompleteRecord(idToUse)
 
         },
@@ -55,7 +55,7 @@ export default function MyFpRecordDetailScreen() {
     }
 
     if (isError) {
-        console.log("❌ [fp-details] Error loading record:", error)
+        // console.log("❌ [fp-details] Error loading record:", error)
         return (
             <View className="flex-1 bg-gray-50 items-center justify-center p-6">
                 <AlertCircle size={32} color="#EF4444" />
@@ -67,7 +67,7 @@ export default function MyFpRecordDetailScreen() {
     }
 
     if (!recordData) {
-        console.log("❌ [fp-details] No record data found for ID:", fprecordId)
+        // console.log("❌ [fp-details] No record data found for ID:", fprecordId)
         return (
             <View className="flex-1 bg-gray-50 items-center justify-center p-6">
                 <FileText size={32} color="#6B7280" />
@@ -657,7 +657,7 @@ export default function MyFpRecordDetailScreen() {
                                         }}
                                         className="w-48 h-24 rounded-md"
                                         resizeMode="contain"
-                                        onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
+                                        // onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
                                     />
                                 </View>
                             ) : (
@@ -771,7 +771,7 @@ export default function MyFpRecordDetailScreen() {
                                                 }}
                                                 className="w-48 h-24 rounded-md"
                                                 resizeMode="contain"
-                                                onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
+                                                // onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
                                             />
                                         </View>
                                     ) : (
@@ -852,7 +852,7 @@ export default function MyFpRecordDetailScreen() {
                         <ArrowLeft size={20} color="white" />
                     </TouchableOpacity>
                     <View className="flex-1">
-                        <Text className="text-2xl font-bold text-white">My Family Planning Record</Text>
+                        <Text className="text-2xl font-bold text-white">Family Planning Record</Text>
                         <Text className="text-blue-100 mr-2">Complete Medical Profile</Text>
                     </View>
                 </View>

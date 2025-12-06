@@ -226,7 +226,7 @@ export function CommodityAlertsSidebar() {
                   className={`p-3 rounded-lg border ${getStatusColor(item.status)} transition-colors`}
                   onClick={() => {
                     // Optional: Add navigation to specific commodity detail
-                    console.log('Navigate to commodity:', item.id);
+                    // console.log('Navigate to commodity:', item.id);
                   }}
                 >
                   <div className="flex items-start justify-between mb-2">

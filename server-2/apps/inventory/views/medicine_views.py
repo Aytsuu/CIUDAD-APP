@@ -137,7 +137,7 @@ class MedicineListAvailableTable(APIView):
         
         if paginated_medicines is not None:
             response = paginator.get_paginated_response(medicine_data)
-            print("🔍 Backend Response:", response.data)
+            # print("🔍 Backend Response:", response.data)
             return response
         
         return Response({

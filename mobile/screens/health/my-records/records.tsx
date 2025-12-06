@@ -112,8 +112,8 @@ export default function Records() {
     });
   }, [childrenData]);
 
-  console.log("Children Data:", childrenData);
-  console.log("Formatted Children:", formattedChildren);
+  // console.log("Children Data:", childrenData);
+  // console.log("Formatted Children:", formattedChildren);
  const services: Service[] = [
    {
          id: 1,
@@ -218,7 +218,7 @@ export default function Records() {
                 <TouchableOpacity
                   key={service.id}
                   onPress={() => {
-                    console.log("[DEBUG] Navigating to:", service.route, "with pat_id:", patId);
+                    // console.log("[DEBUG] Navigating to:", service.route, "with pat_id:", patId);
                     router.push({
                       pathname: service.route as any,
                       params: { pat_id: patId, mode: mode }

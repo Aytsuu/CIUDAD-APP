@@ -90,7 +90,7 @@ export const addReceipt = async (data: Record<string, any>) => {
         // console.log('Making API call to: treasurer/invoice/');
         
         const res = await api.post('treasurer/invoice/', payload);
-        // console.log('API Response:', res.data);
+        console.log('API Response:', res.data);
         return res.data;
         
     }catch(err: any){

@@ -52,7 +52,7 @@ export function VaccinationHistoryRecord({
 }: VaccinationHistoryProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const recordsPerPage = 4;
-console.log("patientDob", patientDob);
+// console.log("patientDob", patientDob);
   const hasHistory = useMemo(() => {
     return relevantHistory.length > 0;
   }, [relevantHistory]);

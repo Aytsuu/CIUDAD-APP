@@ -211,7 +211,7 @@ export const fetchIllnesses = async (): Promise<Illness[]> => {
     const response = await api2.get("/familyplanning/illnesses/")
     return response.data
   } catch (error) {
-    console.error("Error fetching illnesses:", error);
+    // console.error("Error fetching illnesses:", error);
     throw error;
   }
 }
@@ -228,7 +228,7 @@ export const createMedicalHistoryRecords = async (
     })
     return response.data
   } catch (error) {
-    console.error("Error creating medical history records:", error);
+    // console.error("Error creating medical history records:", error);
     throw error;
   }
 }
@@ -239,7 +239,7 @@ export const fetchPatientMedicalHistory = async (patrec_id: number): Promise<Med
     const response = await api2.get(`/familyplanning/medical-history/${patrec_id}/`)
     return response.data
   } catch (error) {
-    console.error("Error fetching patient medical history:", error);
+    // console.error("Error fetching patient medical history:", error);
     throw error;
   }
 }
@@ -260,7 +260,7 @@ export const getPatients = async () => {
     const response = await api2.get("patientrecords/patient")
     return response.data
   } catch (err) {
-    console.error("Error fetching patients:", err);
+    // console.error("Error fetching patients:", err);
     return [];
   }
 }
@@ -270,7 +270,7 @@ export const getFPRecordsForPatient = async (patientId: string | number): Promis
     const response = await api2.get(`familyplanning/fp-records-by-patient/${patientId}/`)
     return response.data
   } catch (err) {
-    console.error(`❌ Error fetching all FP records for patient ${patientId}:`, err);
+    // console.error(`❌ Error fetching all FP records for patient ${patientId}:`, err);
     return [];
   }
 }
@@ -278,25 +278,25 @@ export const getFPRecordsForPatient = async (patientId: string | number): Promis
 // NEW: Function to get the LATEST complete FP record for a patient (for pre-filling form)
 export const getLatestCompleteFPRecordForPatient = async (patientId: string): Promise<any | null> => {
   try {
-    console.log("🔍 Fetching latest FP record for patient:", patientId);
+    // console.log("🔍 Fetching latest FP record for patient:", patientId);
     const response = await api2.get(`familyplanning/latest-fp-record-by-patient/${patientId}/`);
-    console.log("✅ Latest FP record response:", response.data);
+    // console.log("✅ Latest FP record response:", response.data);
     return response.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      console.log("❌ Axios error details:", {
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data,
-        url: err.config?.url
-      });
+      // console.log("❌ Axios error details:", {
+      //   status: err.response?.status,
+      //   statusText: err.response?.statusText,
+      //   data: err.response?.data,
+      //   url: err.config?.url
+      // });
       
       if (err.response?.status === 404) {
-        console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
+        // console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
         return null;
       }
     }
-    console.error(`❌ Error fetching latest complete FP record for patient ${patientId}:`, err);
+    // console.error(`❌ Error fetching latest complete FP record for patient ${patientId}:`, err);
     throw err;
   }
 }
@@ -307,7 +307,7 @@ export const getFPCompleteRecord = async (fprecord_id: any): Promise<any> => {
     const response = await api2.get(`familyplanning/complete-fp-record/${fprecord_id}/`)
     return response.data
   } catch (err) {
-    console.error(`❌ Error fetching complete FP record ${fprecord_id}:`, err);
+    // console.error(`❌ Error fetching complete FP record ${fprecord_id}:`, err);
     throw err;
   }
 }
