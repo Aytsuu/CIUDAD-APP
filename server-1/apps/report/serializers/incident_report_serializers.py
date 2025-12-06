@@ -16,13 +16,15 @@ class IRTableSerializer(serializers.ModelSerializer):
   ir_time = serializers.SerializerMethodField()
   ir_type = serializers.SerializerMethodField()
   files = serializers.SerializerMethodField()
+  ar = serializers.SerializerMethodField()
 
   class Meta: 
     model = IncidentReport
     fields = ['ir_id', 'ir_area', 'ir_involved', 'ir_add_details', 'ir_type',
              'ir_time', 'ir_date', 'ir_severity', 'ir_created_at', 'ir_reported_by',
              'files', 'ir_track_rep_id', 'ir_track_lat', 'ir_track_lng', 'ir_track_user_lat',
-             'ir_track_user_lng', 'ir_track_user_contact', 'ir_track_user_name']
+             'ir_track_user_lng', 'ir_track_user_contact', 'ir_track_user_name', 'ir_status',
+             'ir_is_tracker', 'ir_updated_at', 'ir_remark', 'ir_is_archive', 'ar']
   
   def get_ir_type(self, obj):
     if obj.rt:
@@ -50,6 +52,9 @@ class IRTableSerializer(serializers.ModelSerializer):
       for file in obj.report_files.filter(ir=obj.ir_id)]
     
     return files
+  
+  def get_ar(self, obj):
+    return obj.action_report.first().ar_id if obj.action_report.first() else None
 
 class IRCreateSerializer(serializers.ModelSerializer):
   ir_type = serializers.CharField(write_only=True, required=False)
@@ -83,7 +88,6 @@ class IRCreateSerializer(serializers.ModelSerializer):
         validated_data['rt'] = new_rep_type
     else: 
       existing_rep_type = ReportType.objects.filter(rt_label__iexact=report_type).first()
-      print(existing_rep_type)
       validated_data['rt'] = existing_rep_type
 
     incident_report = IncidentReport(**validated_data)

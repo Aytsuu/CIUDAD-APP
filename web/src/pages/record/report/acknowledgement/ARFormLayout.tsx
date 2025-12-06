@@ -26,7 +26,8 @@ export default function ARFormLayout() {
   const { user } = useAuth();
   const location = useLocation();
   const params = React.useMemo(() => location.state?.params, [location.state]);
-  const data = React.useMemo(() => params?.data, [params]);
+  const ir_id = React.useMemo(() => params?.ir_id, [params]);
+  const area = React.useMemo(() => params?.area, [params]);
   const ARInfo = React.useMemo(() => params?.ARInfo, [params]);
   const [mediaFiles, setMediaFiles] = React.useState<MediaUploadType>([]);
   const [activeVideoId, setActiveVideoId] = React.useState<string>("");
@@ -63,6 +64,12 @@ export default function ARFormLayout() {
     }
   }, [ARInfo]);
 
+  React.useEffect(() => {
+    if(area) {
+      form.setValue("ar_area", area)
+    }
+  }, [area])
+
   // ============= HANDLERS =============
   const create = async (
     values: Record<string, any>,
@@ -71,7 +78,7 @@ export default function ARFormLayout() {
     try {
       await addAR({
         ...values,
-        ...(data?.ir_id && { ir: data.ir_id }),
+        ...(ir_id && { ir: ir_id }),
         files: files,
         staff: user?.staff?.staff_id,
       });
@@ -79,7 +86,7 @@ export default function ARFormLayout() {
       showSuccessToast("Report added successfully!");
       setMediaFiles([]);
       form.reset(defaultValues);
-      if (data?.ir_id) {
+      if (ir_id) {
         navigate("/report/incident");
       }
     } catch (err) {
@@ -153,11 +160,11 @@ export default function ARFormLayout() {
   // ============= RENDER =============
   return (
     <LayoutWithBack
-      title={`${ARInfo ? "Edit" : "Create"} Acknowledgement Report`}
+      title={`${ARInfo ? "Edit" : "Create"} Action Report`}
       description={
         ARInfo
-          ? "Update acknowledgement report and make any changes as needed, review before saving."
-          : "Create an acknowledgement report to confirm completion of services or tasks. Upload supporting files, add descriptions, and submit for records."
+          ? "Update action report and make any changes as needed, review before saving."
+          : "Confirm completion of services or tasks. Upload supporting files, add descriptions, and submit for records."
       }
     >
       <Card className="w-full p-10">

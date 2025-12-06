@@ -18,8 +18,10 @@ export const getMedicineRequestProcessing = async (page:number, pageSize: number
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching processing medicine requests:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching processing medicine requests:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -39,8 +41,10 @@ export const getMedicineRequestPending = async (page?: number, pageSize?: number
     const response = await api2.get(`/medicine/pending-medicine-request-table/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching pending medicine requests:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching pending medicine requests:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -53,8 +57,10 @@ export const getMedicineRequestPendingItems = async (id: string, page?: number, 
     const response = await api2.get(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching pending medicine requests:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching pending medicine requests:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -76,8 +82,10 @@ export const getMedicineRequestStatuses = async (page?: number , pageSize?: numb
     const response = await api2.get(`/medicine/medicine-requests-statuses/table/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching pending medicine requests:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching pending medicine requests:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -94,7 +102,9 @@ export const getMedicineRequestStatusesDetails = async (medreq_id?:string ,page?
     const response = await api2.get(`/medicine/medicine-requests-statuses/details/${medreq_id}?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching pending medicine requests:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching pending medicine requests:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

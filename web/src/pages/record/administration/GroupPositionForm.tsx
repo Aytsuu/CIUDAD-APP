@@ -24,7 +24,6 @@ import { useAddPositionBulk } from "./queries/administrationAddQueries";
 import { renderActionButton } from "./AdministrationActionConfig";
 import type { z } from "zod";
 import { Button } from "@/components/ui/button/button";
-import { capitalizeAllFields } from "@/helpers/capitalize";
 import {
   showErrorToast,
   showPlainToast,
@@ -154,7 +153,7 @@ export default function GroupPositionForm() {
 
     const values = form.getValues();
     const data = positions.map((pos: any) =>
-      capitalizeAllFields({
+      ({
         pos_title: pos.pos_title,
         pos_max: parseInt(pos.pos_max),
         pos_group: values.pos_group,

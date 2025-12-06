@@ -11,8 +11,10 @@ export const getMonthlyData = async (page: number, pageSize: number, year?: stri
     const response = await api2.get<any>(`/reports/fhis/monthly/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly data:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly data:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -36,8 +38,10 @@ export const getVaccinationStatistics = async (month: string): Promise<Vaccinati
     const response = await api2.get<VaccinationStatisticsResponse>(`/reports/fhischildhealth-page4/monthly/${month}/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching vaccination statistics:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching vaccination statistics:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -67,8 +71,10 @@ export const getNutritionStatistics = async (month: string): Promise<NutritionSt
     const response = await api2.get<NutritionStatisticsResponse>(`/reports/fhischildhealth-page5/monthly/${month}/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching nutrition statistics:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching nutrition statistics:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -114,8 +120,10 @@ export const getDewormingStatistics = async (month: string): Promise<DewormingSt
     const response = await api2.get<DewormingStatisticsResponse>(`/reports/deworming-statistics/monthly/${month}/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching deworming statistics:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching deworming statistics:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -131,7 +139,9 @@ export const getMonthlyMorbidityDetails = async (month: string, page?: number, p
     const response = await api2.get<any>(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly morbidity details:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly morbidity details:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

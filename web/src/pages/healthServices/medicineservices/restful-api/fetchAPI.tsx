@@ -71,8 +71,10 @@ export const fetchMedicinesWithStock = (params: MedicineSearchParams = {}) => {
   return useQuery({
     queryKey: ["medicineStocks", page, pageSize, search, is_temp, includeZeroAvail],
     queryFn: async () => {
-      console.log("=== fetchMedicinesWithStock called ===");
-      console.log("Parameters:", { page, pageSize, search, is_temp });
+      if (process.env.NODE_ENV === 'development') {
+        console.log("=== fetchMedicinesWithStock called ===");
+        console.log("Parameters:", { page, pageSize, search, is_temp });
+      }
 
       // Build query parameters
       const queryParams = new URLSearchParams();
@@ -104,15 +106,19 @@ export const fetchMedicinesWithStock = (params: MedicineSearchParams = {}) => {
         return { medicines: [], pagination: paginationInfo };
       }
 
-      console.log(`Total stocks from API: ${stocks.length}`);
-      if (stocks.length > 0) {
-        console.log("Sample stock structure:", JSON.stringify(stocks[0], null, 2));
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Total stocks from API: ${stocks.length}`);
+        if (stocks.length > 0) {
+          console.log("Sample stock structure:", JSON.stringify(stocks[0], null, 2));
+        }
       }
 
       let transformedData: any[] = [];
 
       if (is_temp) {
-        console.log("=== is_temp is TRUE - Applying temporary deductions ===");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("=== is_temp is TRUE - Applying temporary deductions ===");
+        }
 
         transformedData = stocks.map((stock: any) => {
           const originalAvail = Number(stock.minv_qty_avail) || 0;
@@ -120,7 +126,7 @@ export const fetchMedicinesWithStock = (params: MedicineSearchParams = {}) => {
           const finalAvail = originalAvail - tempDeduction;
 
           // Log each stock's calculation
-          if (tempDeduction > 0) {
+          if (tempDeduction > 0 && process.env.NODE_ENV === 'development') {
             console.log(`Stock ${stock.minv_id} (${stock.med_detail?.med_name}):`, {
               original: originalAvail,
               deduction: tempDeduction,
@@ -149,9 +155,13 @@ export const fetchMedicinesWithStock = (params: MedicineSearchParams = {}) => {
           };
         });
 
-        console.log(`Transformed ${transformedData.length} stocks with temp deductions`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Transformed ${transformedData.length} stocks with temp deductions`);
+        }
       } else {
-        console.log("=== is_temp is FALSE - Using raw availability ===");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("=== is_temp is FALSE - Using raw availability ===");
+        }
 
         transformedData = stocks.map((stock: any) => ({
           id: String(stock.minv_id),
@@ -167,25 +177,29 @@ export const fetchMedicinesWithStock = (params: MedicineSearchParams = {}) => {
           expiry: stock.inv_detail?.expiry_date || null,
         }));
 
-        console.log(`Transformed ${transformedData.length} stocks without temp deductions`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Transformed ${transformedData.length} stocks without temp deductions`);
+        }
       }
 
       // Filter logic: always remove expired; optionally keep zero availability
       const filteredMedicines = transformedData.filter((med) => {
         const isExpired = med.expiry ? new Date(med.expiry) < new Date() : false;
-        if (isExpired) {
+        if (isExpired && process.env.NODE_ENV === 'development') {
           console.log(`Filtered out (expired): ${med.name} exp ${med.expiry}`);
-          return false;
         }
-        if (!includeZeroAvail && med.avail <= 0) {
+        if (isExpired) return false;
+        if (!includeZeroAvail && med.avail <= 0 && process.env.NODE_ENV === 'development') {
           console.log(`Filtered out (no stock): ${med.name} avail ${med.avail}`);
-          return false;
         }
+        if (!includeZeroAvail && med.avail <= 0) return false;
         return true;
       });
 
-      console.log(`Final filtered medicines: ${filteredMedicines.length}`);
-      console.log("=== fetchMedicinesWithStock completed ===\n");
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Final filtered medicines: ${filteredMedicines.length}`);
+        console.log("=== fetchMedicinesWithStock completed ===\n");
+      }
 
       // If including zero availability, tag them so UI can disable selection
       const finalMedicines = filteredMedicines.map(m => {

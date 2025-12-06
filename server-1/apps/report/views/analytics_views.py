@@ -8,18 +8,18 @@ from dateutil.relativedelta import relativedelta
 from ..serializers.incident_report_serializers import IRTableSerializer
 
 class CardAnalyticsView(APIView):
-    def get(self, request, *args, **kwargs):
-        total_ir = IncidentReport.objects.count()
-        total_ar = AcknowledgementReport.objects.count()
-        total_war = WeeklyAccomplishmentReport.objects.count()
-        
-        card_data = {
-            "incidentReports": total_ir,
-            "acknowledgementReports": total_ar,
-            "weeklyARs": total_war
-        }
+  def get(self, request, *args, **kwargs):
+      total_ir = IncidentReport.objects.count()
+      total_ar = ActionReport.objects.count()
+      total_war = WeeklyAccomplishmentReport.objects.count()
+      
+      card_data = {
+          "incidentReports": total_ir,
+          "actionReports": total_ar,
+          "weeklyARs": total_war
+      }
 
-        return Response(card_data)
+      return Response(card_data)
   
 class SidebarAnalyticsView(APIView):
   def get(self, request, *args, **kwargs):

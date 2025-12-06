@@ -133,7 +133,9 @@ export default function MedicineRequestDetail() {
       toast.success("Successfully registered");
     } catch (error) {
       toast.error("Failed to register patient");
-      console.error("Registration error:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Registration error:", error);
+      }
     } finally {
       setIsRegistering(false);
     }

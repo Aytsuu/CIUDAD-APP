@@ -15,12 +15,12 @@ class StaffBaseSerializer(serializers.ModelSerializer):
   
 class StaffAccountSerializer(serializers.ModelSerializer):
   pos = serializers.CharField(source="pos.pos_title")
+  pos_group = serializers.CharField(source="pos.pos_group")
   assignments = serializers.SerializerMethodField()
-
 
   class Meta:
     model = Staff
-    fields = ['staff_id', 'staff_type', 'pos', 'assignments']
+    fields = ['staff_id', 'staff_type', 'pos', 'pos_group', 'assignments']
   
   def get_assignments(self, obj):
     assigned = [feat.feat_name for feat in Feature.objects.all()] \

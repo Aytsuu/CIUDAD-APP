@@ -138,7 +138,9 @@ export default function MedicalConsultationForm() {
   const isPhilhealthRecord = watch("is_phrecord"); // Watch the checkbox value
 
   useEffect(() => {
-    console.log("Current Patient Data:", currentPatientData);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Current Patient Data:", currentPatientData);
+    }
     if (latestVitals) {
       form.setValue("vital_pulse", latestVitals.pulse?.toString() ?? "");
       form.setValue("vital_temp", latestVitals.temperature?.toString() ?? "");
@@ -180,9 +182,11 @@ export default function MedicalConsultationForm() {
 
   // Add this to your component to see real-time validation errors
   useEffect(() => {
-    console.log("Form Errors:", form.formState.errors);
-    console.log("Is Form Valid:", form.formState.isValid);
-    console.log("Form Values:", form.getValues());
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Form Errors:", form.formState.errors);
+      console.log("Is Form Valid:", form.formState.isValid);
+      console.log("Form Values:", form.getValues());
+    }
   }, [form.formState.errors, form.formState.isValid]);
 
   const handlePatientSelect = async (patient: any, patientId: string) => {
@@ -191,16 +195,20 @@ export default function MedicalConsultationForm() {
     form.setValue("pat_id", patient?.pat_id || "");
 
     // Debug logs
-    console.log("Patient selected:", patient);
-    console.log("PhilHealth ID from patient:", patient?.additional_info?.philhealth_id);
-    console.log("TT Status from patient:", patient?.additional_info?.mother_tt_status);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Patient selected:", patient);
+      console.log("PhilHealth ID from patient:", patient?.additional_info?.philhealth_id);
+      console.log("TT Status from patient:", patient?.additional_info?.mother_tt_status);
+    }
   };
 
   const handleFamIllnessSelectionChange = useCallback(
     (ids: number[]) => {
       form.setValue("famselectedIllnesses", ids);
       form.trigger("famselectedIllnesses");
-      console.log("Selected Illness IDs:", ids);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Selected Illness IDs:", ids);
+      }
     },
     [form]
   );
@@ -209,7 +217,9 @@ export default function MedicalConsultationForm() {
     (ids: number[]) => {
       form.setValue("myselectedIllnesses", ids);
       form.trigger("myselectedIllnesses");
-      console.log("My Selected Illness IDs:", ids);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("My Selected Illness IDs:", ids);
+      }
     },
     [form]
   );
@@ -224,7 +234,9 @@ export default function MedicalConsultationForm() {
       return;
     }
     if (!form.formState.isValid) {
-      console.log("🔴 Form is invalid, cannot submit");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("🔴 Form is invalid, cannot submit");
+      }
       showErrorToast("Please fix form errors before submitting");
       return;
     }
@@ -248,7 +260,9 @@ export default function MedicalConsultationForm() {
         return;
       }
     }
-    console.log(data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(data);
+    }
     non_membersubmit.mutate({ data: data });
   };
 
@@ -542,13 +556,15 @@ export default function MedicalConsultationForm() {
                           options={staffOptions?.formatted || []}
                           value={selectedStaffDisplay}
                           onChange={(value) => {
-                            console.log("Combobox selected value:", value);
-
+                            if (process.env.NODE_ENV === 'development') {
+                              console.log("Combobox selected value:", value);
+                            }
                             if (value) {
                               // Extract just the ID part (first part before first hyphen)
                               const staffId = value.split("-")[0];
-                              console.log("Extracted staff ID:", staffId);
-
+                              if (process.env.NODE_ENV === 'development') {
+                                console.log("Extracted staff ID:", staffId);
+                              }
                               setSelectedStaffDisplay(value); // Full display value for combobox
                               setSelectedStaffId(staffId); // Just the ID for submission
                               setValue("selectedDoctorStaffId", staffId); // Set form value with trimmed ID

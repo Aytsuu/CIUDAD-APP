@@ -21,7 +21,9 @@ export const getIndividualMedicineRecords = async (
     });
     return response.data;
   } catch (err) {
-    console.log(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(err);
+    }
     return {
       results: [],
       count: 0,
@@ -46,8 +48,10 @@ export const getMedicineRecords = async (params?: { page?: number; page_size?: n
     const response = await api2.get(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching medicine records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching medicine records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -86,8 +90,10 @@ export const getMedicineStocks = async () => {
     const response = await api2.get("/inventory/medicineinventorylist/");
     return response.data;
   } catch (error) {
-    console.error("Error fetching medicine stocks:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching medicine stocks:", error);
+    }
+    // Do not throw in production; only log in development
   }
 }
 

@@ -5,7 +5,8 @@ export const getStaffs = async (
   page: number, 
   pageSize: number, 
   searchQuery: string, 
-  staffTypeFilter?: 'Barangay Staff' | 'Health Staff'
+  staffTypeFilter?: 'Barangay Staff' | 'Health Staff',
+  positionGroupFilter?: string
 ) => {
   try {
     const params: any = { 
@@ -15,14 +16,12 @@ export const getStaffs = async (
     };
     
     // Add staff type filter if provided
-    if (staffTypeFilter) {
-      params.staff_type = staffTypeFilter;
-    }
+    if (staffTypeFilter) params.staff_type = staffTypeFilter;
+    if (positionGroupFilter) params.pos_group = positionGroupFilter
     
     const res = await api.get("administration/staff/list/table/", { params });
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -37,7 +36,6 @@ export const getPositions = async (staff_type?: string) => {
     });
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -51,7 +49,6 @@ export const getFeatures = async (category: string) => {
     });
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -62,7 +59,6 @@ export const getAssignedFeatures = async (selectedPosition: string) => {
     const res = await api.get(path);
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -72,7 +68,6 @@ export const getAllAssignedFeatures = async () => {
     const res = await api.get("administration/assignment/list/");
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };

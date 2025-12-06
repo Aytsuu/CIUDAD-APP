@@ -17,8 +17,10 @@ export const getVaccineMonths = async (
     const response = await api2.get<VaccineMonthsResponse>(`/inventory/vaccine/summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching vaccine months:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching vaccine months:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -38,7 +40,9 @@ export const getMonthlyVaccineRecords = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly vaccine records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly vaccine records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

@@ -17,7 +17,9 @@ export const fetchHealthProfilingSummary = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching health profiling summary:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching health profiling summary:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

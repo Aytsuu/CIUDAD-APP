@@ -12,8 +12,10 @@ export const getFirstaidRecords = async (page: number, pageSize: number, searchQ
     const response = await api2.get<any>(`/firstaid/firstaid-records/monthly/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching First Aid records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching First Aid records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -30,8 +32,10 @@ export const getFirstaidReports = async (month: string, page: number, pageSize: 
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching First Aid records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching First Aid records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -39,11 +43,15 @@ export const getFirstAidChart = async (month: string) => {
   try {
     const url = `/firstaid/firstaid-records/monthly/chart/${month}/`;
     const response = await api2.get<any>(url);
-    console.log("Chart Response:", response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Chart Response:", response.data);
+    }
     return response.data;
   } catch (error) {
-    console.error("Error fetching Vaccination Chart:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching Vaccination Chart:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -52,8 +60,10 @@ export const getStaffList = async () => {
     const response = await api2.get("/administration/healthstaff/");
     return response.data;
   } catch (error) {
-    console.error("Error fetching staff list:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching staff list:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -62,8 +72,10 @@ export const getDoctorList = async () => {
     const response = await api2.get("/administration/doctorlist/");
     return response.data;
   } catch (error) {
-    console.error("Error fetching staff list:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching staff list:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -73,8 +85,10 @@ export const getMidwifeList = async () => {
     const response = await api2.get("/administration/midwife/");
     return response.data;
   } catch (error) {
-    console.error("Error fetching staff list:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching staff list:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 

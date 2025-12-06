@@ -25,8 +25,10 @@ export const getChildHealthSupplementsReport = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching child health supplements report:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching child health supplements report:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 

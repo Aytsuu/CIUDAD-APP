@@ -2,6 +2,7 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { FileText, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { ArchivedReportColumns } from "../ReportColumns";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import React from "react";
@@ -17,14 +18,12 @@ import { useGetIncidentReport } from "../queries/reportFetch";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { ArchivedIRColumns } from "../ReportColumns";
 
-export default function IRArchive() {
+export default function RRArchive() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [severity, setSeverity] = React.useState<string>("all");
-  const [status, setStatus] = React.useState<string>("all");
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
@@ -35,10 +34,8 @@ export default function IRArchive() {
     debouncedPageSize,
     debouncedSearchQuery,
     true,
-    undefined,
-    severity,
-    true,
-    status
+    false,
+    severity
   );
 
   const IRList = IncidentReport?.results || [];
@@ -49,10 +46,10 @@ export default function IRArchive() {
     <LayoutWithBack
       title={
         <>
-          Archive / <span className="text-gray-400">Incident Reports</span>
+          Archive / <span className="text-gray-400">Resident Reports</span>
         </>
       }
-      description="View all archived incident reports in your system"
+      description="View all archived resident reports in your system"
     >
       <div className="flex w-full h-full gap-4">
         <Card className="w-full">
@@ -69,6 +66,7 @@ export default function IRArchive() {
                   />
                 </div>
               </div>
+
               <div className="flex items-center gap-2">
                 <SelectLayout
                   value={severity}
@@ -77,32 +75,15 @@ export default function IRArchive() {
                     setCurrentPage(1);
                     setSeverity(value);
                   }}
-                  placeholder=""
+                  placeholder="Severity"
                   options={[
-                    { id: "all", name: "All Severities" },
+                    { id: "all", name: "All" },
                     { id: "low", name: "Low" },
                     { id: "medium", name: "Medium" },
                     { id: "high", name: "High" },
                   ]}
                   withReset={false}
                   valueLabel="Severity"
-                />
-
-                <SelectLayout
-                  value={status}
-                  className="gap-4"
-                  onChange={(value) => {
-                    setCurrentPage(1);
-                    setStatus(value);
-                  }}
-                  placeholder=""
-                  options={[
-                    { id: "all", name: "All Statuses" },
-                    { id: "in-progress", name: "In-Progress" },
-                    { id: "resolved", name: "Resolved" },
-                  ]}
-                  withReset={false}
-                  valueLabel="Status"
                 />
               </div>
             </div>
@@ -157,7 +138,7 @@ export default function IRArchive() {
 
             {!isLoadingIR && IRList.length > 0 && (
               <DataTable
-                columns={ArchivedIRColumns()}
+                columns={ArchivedReportColumns()}
                 data={IRList}
                 isLoading={isLoadingIR}
               />

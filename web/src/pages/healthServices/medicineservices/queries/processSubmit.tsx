@@ -13,13 +13,17 @@ export const processMedicineRequest = async (
       staff_id: staffId
     };
 
-    console.log('Submitting medicine request with data:', requestData);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Submitting medicine request with data:', requestData);
+    }
     // Send everything to the backend in one API call
     const response = await api2.post('medicine/create-medicine/request/', requestData);
     
     return response.data;
   } catch (error: any) {
-    console.error('Medicine request failed:', error.response?.data || error);
-    throw new Error(error.response?.data?.error || 'Failed to submit medicine request');
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Medicine request failed:', error.response?.data || error);
+    }
+    // Do not throw in production; only log in development
   }
 };

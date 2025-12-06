@@ -279,7 +279,9 @@ export default function AppointmentForm() {
       toast.success("Successfully registered patient");
     } catch (error) {
       toast.error("Failed to register patient");
-      console.error("Registration error:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Registration error:", error);
+      }
     } finally {
       setIsRegistering(false);
     }
@@ -322,7 +324,9 @@ export default function AppointmentForm() {
         return;
       }
     }
-    console.log(data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(data);
+    }
     non_membersubmit.mutate({ data: data });
   };
 

@@ -3,17 +3,19 @@ import { Navigate, useLocation } from "react-router";
 import React from "react";
 
 interface ProtectedRouteProps {
-  requiredFeature?: string;
+  requiredFeatures?: string[];
   staffType?: string;
   exclude?: string[]
   children: React.ReactNode;
+  adminOnly?: boolean;
 }
 
 export const ProtectedRoute = ({
-  requiredFeature,
+  requiredFeatures = [],
   staffType,
   exclude = [],
   children,
+  adminOnly = false
 }: ProtectedRouteProps) => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
@@ -26,7 +28,11 @@ export const ProtectedRoute = ({
     );
   }
 
-  if ((!requiredFeature && isAuthenticated && staffType && staffType?.toLowerCase() != user?.staff?.staff_type.toLowerCase()) ||
+  if (adminOnly && user?.staff?.pos.toLowerCase() !== "admin") {
+    return <Navigate to="/page_not_found" replace />;
+  }
+
+  if ((requiredFeatures.length != 0 && isAuthenticated && staffType && staffType?.toLowerCase() != user?.staff?.staff_type.toLowerCase()) ||
     exclude.includes(user?.staff?.pos)
   ) {
     return <Navigate to="/page_not_found" replace />;
@@ -36,14 +42,11 @@ export const ProtectedRoute = ({
     return <Navigate to="/" state={{ from: location }} replace />;
   }
   
-  const hasAccess = user?.staff?.assignments?.includes(requiredFeature) || 
-                    user?.staff?.pos.toLowerCase() == "admin" || 
-                    (!requiredFeature && isAuthenticated && user?.staff?.assignments?.length > 0)
+  const hasAccess = requiredFeatures.every((feat) => user?.staff?.assignments?.includes(feat)) || 
+                    (user?.staff?.pos.toLowerCase() == "admin" && !exclude.includes("ADMIN")) || 
+                    (requiredFeatures.length != 0 && isAuthenticated && user?.staff?.assignments?.length > 0)
   
   if (!hasAccess) {
-    console.warn(
-      `Position access denied Required: ${requiredFeature}, User has: ${user?.staff?.pos.pos_title}`
-    );
     return <Navigate to="/page_not_found" replace />;
   }
 

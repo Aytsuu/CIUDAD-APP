@@ -1,4 +1,5 @@
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
 from django.db.models import Q
 from ..serializers.incident_report_serializers import *
 from ..models import IncidentReport
@@ -19,6 +20,19 @@ class IRInfoView(generics.RetrieveAPIView):
   serializer_class = IRTableSerializer
   queryset = IncidentReport.objects.all()
   lookup_field = 'ir_id'
+
+class IRUpdateView(generics.UpdateAPIView):
+  serializer_class = IRBaseSerializer
+  queryset = IncidentReport.objects.all()
+  lookup_field = 'ir_id'
+
+  def update(self, request, *args, **kwargs):
+    instance = self.get_object()
+    serializer = self.get_serializer(instance, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    
+    return Response(serializer.data, status=status.HTTP_200_OK)  
   
 class IRTableView(generics.ListAPIView):
   permission_classes = [AllowAny]
@@ -26,14 +40,16 @@ class IRTableView(generics.ListAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
+    search = self.request.query_params.get('search', '').strip()
     rp_id = self.request.query_params.get("rp_id", None)
-    is_get_tracker = self.request.query_params.get('get_tracker', 'false') == 'true'
+    is_get_tracker = self.request.query_params.get('get_tracker', None)
     is_archive = self.request.query_params.get('is_archive', 'false') == 'true'
     severity = self.request.query_params.get("severity", None)
+    verified = self.request.query_params.get("verified", 'false') == 'true'
+    status = self.request.query_params.get("status", None)
 
     queryset = IncidentReport.objects.filter(
       ir_is_archive=is_archive,
-      ir_is_tracker=is_get_tracker
     ).select_related(
       'rt',
       'rp',
@@ -53,19 +69,35 @@ class IRTableView(generics.ListAPIView):
       'ir_track_user_lng',
       'ir_track_user_contact',
       'ir_track_user_name',
+      'ir_status',
       'rt__rt_label',
       'rp__per__per_lname',
       'rp__per__per_fname',
       'rp__per__per_mname'
     )
 
+    if is_get_tracker:
+      queryset = queryset.filter(ir_is_tracker=True) if is_get_tracker == "true" \
+        else queryset.filter(ir_is_tracker=False)
+
+    """ Applying filters """
+    # Filter by verified status
+    queryset = queryset.filter(ir_is_verified=True) if verified  \
+      else queryset.filter(ir_is_verified=False) 
+    
+    # Filter by resolution status
+    if status and status != "all":
+      queryset = queryset.filter(ir_status__iexact=status)
+
+    # Filter by resident id
     if rp_id:
       queryset = queryset.filter(rp=rp_id)
     
+    # Filter by severity
     if severity and severity != "all":
       queryset = queryset.filter(ir_severity__iexact=severity)
 
-    search = self.request.query_params.get('search', '').strip()
+    # Filter by search query
     if search:
       queryset = queryset.filter(
         Q(ir_id__icontains=search) |
@@ -79,4 +111,5 @@ class IRTableView(generics.ListAPIView):
         Q(rp__per__per_mname__icontains=search) 
       ).distinct()
 
-    return queryset.order_by('-ir_created_at')
+    return queryset.order_by('-ir_updated_at') if verified \
+      else queryset.order_by('-ir_created_at')

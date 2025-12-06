@@ -124,7 +124,9 @@ export function EditHeaderDialog({ isOpen, onClose, headerData }: EditHeaderDial
     }
     // If hasLogoChanged is false, no logo data is sent to the backend
 
-    console.log("Submitting payload:", payload); // Debug log
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Submitting payload:", payload); // Debug log
+    }
 
     updateHeaderReport(
       {

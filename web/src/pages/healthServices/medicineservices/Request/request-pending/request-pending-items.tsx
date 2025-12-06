@@ -219,7 +219,9 @@ export default function MedicineRequestPendingItems() {
 
   // Handle medicine selection
   const handleSelectedMedicinesChange = (updatedSelectedMedicines: any[]) => {
-    console.log("Updated Selected Medicines:", updatedSelectedMedicines);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Updated Selected Medicines:", updatedSelectedMedicines);
+    }
 
     // Auto-fill reasons and quantities for newly selected medicines
     const enhancedSelectedMedicines = updatedSelectedMedicines.map((selectedMed: any) => {
@@ -246,7 +248,9 @@ export default function MedicineRequestPendingItems() {
         };
       }
 
-      console.warn("Could not find medicine data for selected medicine:", selectedMed);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("Could not find medicine data for selected medicine:", selectedMed);
+      }
       return selectedMed;
     });
 
@@ -293,7 +297,9 @@ export default function MedicineRequestPendingItems() {
       pat_id: finalPatId
     };
 
-    console.log("Sending payload to backend:", payload);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Sending payload to backend:", payload);
+    }
     confirmAllPendingItems(payload);
   };
 

@@ -35,7 +35,7 @@ import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
-import { team_router } from "./team_router";
+import { team_router } from "./team-router";
 import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
 import { healthreports_router } from "./health-reports-router";
@@ -43,6 +43,7 @@ import { medicalConsultation } from "./med-consultation";
 import { NotificationRouter } from "./notification-router";
 import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 
+// Initializing routes with protection
 export const main_router: RouteObject[] = [
   {
     path: "/",
@@ -69,7 +70,7 @@ export const main_router: RouteObject[] = [
       ...administration_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute adminOnly>
             {route.element}
           </ProtectedRoute>
         )
@@ -78,7 +79,7 @@ export const main_router: RouteObject[] = [
         ...route,
         element: (
           <ProtectedRoute
-            requiredFeature="PROFILING"
+            requiredFeatures={["PROFILING"]}
           >
             {route.element}
           </ProtectedRoute>
@@ -88,7 +89,7 @@ export const main_router: RouteObject[] = [
         ...route,
         element: (
           <ProtectedRoute
-            requiredFeature="REPORT"
+            requiredFeatures={["REPORT"]}
           >
             {route.element}
           </ProtectedRoute>
@@ -98,7 +99,7 @@ export const main_router: RouteObject[] = [
         ...route,
         element: (
           <ProtectedRoute
-            requiredFeature="COMPLAINT"
+            requiredFeatures={["COMPLAINT"]}
           >
             {route.element}
           </ProtectedRoute>
@@ -107,7 +108,10 @@ export const main_router: RouteObject[] = [
       ...team_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute 
+            requiredFeatures={["REPORT"]}   
+            exclude={["ADMIN"]}
+          >
             {route.element}
           </ProtectedRoute>
         ),
@@ -115,7 +119,7 @@ export const main_router: RouteObject[] = [
       ...ord_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute requiredFeatures={["COUNCIL"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -123,7 +127,7 @@ export const main_router: RouteObject[] = [
       ...res_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute requiredFeatures={["COUNCIL"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -131,7 +135,7 @@ export const main_router: RouteObject[] = [
       ...attendance_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute requiredFeatures={["COUNCIL"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -139,23 +143,16 @@ export const main_router: RouteObject[] = [
       ...mom_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute requiredFeatures={["COUNCIL"]}>
             {route.element}
           </ProtectedRoute>
         ),
       })),
-      ...council_calendar_router.map((route) => ({
-        ...route,
-        element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
-            {route.element}
-          </ProtectedRoute>
-        ),
-      })),
+      ...council_calendar_router,
       ...donation_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="DONATION">
+          <ProtectedRoute requiredFeatures={["DONATION"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -163,7 +160,7 @@ export const main_router: RouteObject[] = [
       ...treasurer_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="FINANCE">
+          <ProtectedRoute requiredFeatures={["FINANCE"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -171,7 +168,7 @@ export const main_router: RouteObject[] = [
       ...waste_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="WASTE">
+          <ProtectedRoute requiredFeatures={["WASTE"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -189,7 +186,7 @@ export const main_router: RouteObject[] = [
         children: route.children.map((route) => ({
           ...route,
           element: (
-            <ProtectedRoute requiredFeature="CERTIFICATION & CLEARANCES">
+            <ProtectedRoute requiredFeatures={["CERTIFICATION & CLEARANCES"]}>
               {route.element}
             </ProtectedRoute>
           ),
@@ -198,7 +195,7 @@ export const main_router: RouteObject[] = [
       ...maternal_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="SERVICES">
+          <ProtectedRoute requiredFeatures={["SERVICES"]}>
             {route.element}
           </ProtectedRoute>
         ),

@@ -61,7 +61,9 @@ export default function PhysicalExamTable({ consultation, patientData, examSecti
       window.open(pdfUrl, "_blank");
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error generating PDF:", error);
+      }
     } finally {
       setIsGeneratingPDF(false);
     }
