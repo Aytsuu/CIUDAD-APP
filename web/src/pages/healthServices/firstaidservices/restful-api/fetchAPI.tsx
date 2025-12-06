@@ -24,14 +24,14 @@ export const fetchFirstaidsWithStock = () => {
       setIsLoading(true);
       try {
         const stocks = await getFirstaidStocks();
-        
         // Skip if no stocks or empty array
         if (!stocks || !Array.isArray(stocks) || stocks.length === 0) {
-          console.log("No Firstaid stocks available.");
+          if (process.env.NODE_ENV === 'development') {
+            console.error("No Firstaid stocks available.");
+          }
           setFirstaids([]);
           return;
         }
-
         // Transform data with proper error handling
         const transformedData = stocks.map((stock: any) => ({
           id: String(stock.finv_id),
@@ -46,15 +46,15 @@ export const fetchFirstaidsWithStock = () => {
           available: stock.finv_qty_avail || 0,
           // batch_number: stock.inv_detail?.batch_number // Optional field
         }));
-
         // Filter out Firstaids with zero available stock
         const availableFirstaids = transformedData.filter(
           fa => fa.available > 0
         );
-
         setFirstaids(availableFirstaids);
       } catch (error) {
-        console.error("Error fetching Firstaid stocks:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error fetching Firstaid stocks:", error);
+        }
         setFirstaids([]);
       } finally {
         setIsLoading(false);
