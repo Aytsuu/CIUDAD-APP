@@ -209,7 +209,7 @@ export default function MaternalAllRecords() {
   const columns: ColumnDef<maternalRecords>[] = [
     {
       accessorKey: "pat_id",
-      header: "Patient ID",
+      header: () => <div className="flex justify-center">Patient ID</div>,
       cell: ({ row }) => (
         <div className="flex w-full justify-center">
           <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
@@ -238,7 +238,7 @@ export default function MaternalAllRecords() {
           <div className="flex justify-center w-full">
             <div className="flex flex-col">
               <div className="font-medium truncate">{capitalize(fullName)}</div>
-              <div className="text-sm text-darkGray">
+              <div className="text-sm text-center text-darkGray">
                 {capitalize(patient.per_sex)}, {age} {patient.ageTime} old
               </div>
             </div>
@@ -270,8 +270,8 @@ export default function MaternalAllRecords() {
               .join(", ") || "Unknown"
           : "Unknown";
         return (
-          <div className="flex justify-center min-w-full px-">
-            <div className="w-full truncate">{capitalize(fullAddress)}</div>
+          <div className="flex justify-center">
+            <div className="">{capitalize(fullAddress)}</div>
           </div>
         );
       },
@@ -280,7 +280,7 @@ export default function MaternalAllRecords() {
     {
       accessorKey: "sitio",
       size: 80,
-      header: "Sitio",
+      header: () => <div className="flex justify-center">Sitio</div>,
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">
@@ -292,7 +292,7 @@ export default function MaternalAllRecords() {
     {
       accessorKey: "type",
       size: 80,
-      header: "Type",
+      header: () => <div className="flex justify-center">Type</div>,
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className={getPatType(row.original.pat_type)}>{row.original.pat_type}</div>
@@ -301,7 +301,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "pregnancy_status",
-      header: "Current Pregnancy Status",
+      header: () => <div className="flex justify-center">Current Pregnancy Status</div>,
       cell: ({ row }) => {
         const status = row.original.additional_info?.latest_pregnancy?.pregnancy_status || "N/A";
         const normalizedStatus = status?.toLowerCase() || "";
@@ -327,7 +327,7 @@ export default function MaternalAllRecords() {
     {
       accessorKey: "action",
       size: 100,
-      header: "Action",
+      header: () => <div className="flex justify-center">Action</div>,
       cell: ({ row }) => (
         <>
           <div className="flex justify-center gap-2 ">

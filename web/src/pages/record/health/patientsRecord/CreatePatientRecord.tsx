@@ -306,11 +306,11 @@ export default function CreatePatientRecord() {
     }
 
     if (formData.patientType === "transient") {
-      const requiredFields = ["lastName", "firstName", "dateOfBirth", "sex", "contact"];
+      const requiredFields = ["lastName", "firstName", "dateOfBirth", "sex", "contact",];
       const missingFields = requiredFields.filter((field) => !formData[field as keyof typeof formData]);
 
       if (missingFields.length > 0) {
-        toast.error(`Please fill in the following required fields: ${missingFields.join(", ")}`);
+        showErrorToast(`Please fill in the following required fields. ${missingFields.join(", ")}`);
         return;
       }
     }
@@ -433,7 +433,7 @@ export default function CreatePatientRecord() {
                         <FormSelect
                           control={form.control}
                           name="patientType"
-                          label="Patient Type"
+                          label="Patient Type *"
                           options={[
                             { id: "resident", name: "Resident" },
                             { id: "transient", name: "Transient" },
@@ -510,9 +510,9 @@ export default function CreatePatientRecord() {
                               <Label className="text-sm text-black/70 italic"> Please provide the previous sitio, barangay, and city of the patient.</Label>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
-                              <FormInput control={form.control} name="location.sitio" label="Sitio" placeholder="Enter sitio name"/>
-                              <FormInput control={form.control} name="location.brgy" label="Barangay" placeholder="Enter barangay name"/>
-                              <FormInput control={form.control} name="location.city" label="City" placeholder="Enter city name"/>
+                              <FormInput control={form.control} name="location.sitio" label="Sitio *" placeholder="Enter sitio name"/>
+                              <FormInput control={form.control} name="location.brgy" label="Barangay *" placeholder="Enter barangay name"/>
+                              <FormInput control={form.control} name="location.city" label="City *" placeholder="Enter city name"/>
                             </div>
                             
                           </div>
@@ -523,9 +523,9 @@ export default function CreatePatientRecord() {
                       
                     {/* personal information section - read Only if RESIDENT */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-5">
-                      <FormInput upper={true} control={form.control} name="lastName" label="Last Name" placeholder="Enter last name" readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="lastName" label="Last Name *" placeholder="Enter last name" readOnly={isResident() ? true : false} />
                       
-                      <FormInput upper={true} control={form.control} name="firstName" label="First Name" placeholder="Enter first name" readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="firstName" label="First Name *" placeholder="Enter first name" readOnly={isResident() ? true : false} />
                       
                       <FormInput upper={true} control={form.control} name="middleName" label="Middle Name" placeholder="Enter middle name" readOnly={isResident() ? true : false} />
                       
@@ -536,7 +536,7 @@ export default function CreatePatientRecord() {
                       <FormSelect
                         control={form.control}
                         name="sex"
-                        label="Sex"
+                        label="Sex *"
                         options={[
                           { id: "female", name: "Female" },
                           { id: "male", name: "Male" },
@@ -544,9 +544,9 @@ export default function CreatePatientRecord() {
                         readOnly={isResident() ? true : false}
                       />
 
-                      <FormInput control={form.control} name="contact" label="Contact" placeholder="Enter contact" readOnly={isResident() ? true : false} />
+                      <FormInput control={form.control} name="contact" label="Contact *" placeholder="Enter contact" readOnly={isResident() ? true : false} />
                       
-                      <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth" type="date" readOnly={isResident() ? true : false} />
+                      <FormDateTimeInput control={form.control} name="dateOfBirth" label="Date of Birth *" type="date" readOnly={isResident() ? true : false} />
                     </div>
 
                     {/* address section - read Only if RESIDENT */}
@@ -573,13 +573,13 @@ export default function CreatePatientRecord() {
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                       <FormInput upper={true} control={form.control} name="address.street" label="Street" placeholder="Enter street" readOnly={isResident() ? true : false} />
                       
-                      <FormInput upper={true} control={form.control} name="address.sitio" label="Sitio" placeholder="Enter sitio " readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="address.sitio" label="Sitio *" placeholder="Enter sitio " readOnly={isResident() ? true : false} />
 
-                      <FormInput upper={true} control={form.control} name="address.barangay" label="Barangay" placeholder="Enter barangay " readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="address.barangay" label="Barangay *" placeholder="Enter barangay " readOnly={isResident() ? true : false} />
                       
-                      <FormInput upper={true} control={form.control} name="address.city" label="City" placeholder="Enter city " readOnly={isResident() ? true : false} />
-
-                      <FormInput upper={true} control={form.control} name="address.province" label="Province" placeholder="Enter province " readOnly={isResident() ? true : false} />
+                      <FormInput upper={true} control={form.control} name="address.city" label="City *" placeholder="Enter city " readOnly={isResident() ? true : false} />
+                      
+                      <FormInput upper={true} control={form.control} name="address.province" label="Province *" placeholder="Enter province " readOnly={isResident() ? true : false} />
                     </div>
 
                     {/* Form Actions */}

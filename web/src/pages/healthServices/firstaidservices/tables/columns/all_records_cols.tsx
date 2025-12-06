@@ -8,8 +8,14 @@ import { getPatType } from "@/pages/record/health/patientsRecord/PatientsRecordM
 export const firstAidColumns: ColumnDef<any>[] = [
   {
     accessorKey: "pat_id",
-    header: "Patient ID",
-    cell: ({ row }) => <div className="flex justify-center">{row.original.pat_id}</div>
+    header: () => <div className="flex justify-center">Patient ID</div>,
+    cell: ({ row }) => (
+      <div className="flex w-full justify-center">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+          {row.original.pat_id}
+        </div>
+      </div>
+    )
   },
   {
     accessorKey: "patient",

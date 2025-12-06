@@ -15,7 +15,7 @@ export const medicineColumns: ColumnDef<any>[] = [
     ),
     cell: ({ row }) => (
       <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">{row.original.pat_id}</div>
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.pat_id}</div>
       </div>
     )
   },

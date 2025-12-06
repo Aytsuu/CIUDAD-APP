@@ -3,6 +3,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { Plus, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "react-router";
+import { useAuth } from "@/context/AuthContext";
+
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -75,9 +77,9 @@ interface Patients {
 export const getPatType = (type: string) => {
   switch (type.toLowerCase()) {
     case "resident":
-      return 'bg-blue-600 py-1 w-20 rounded-xl font-semibold text-white'
+      return 'bg-blue-600 py-1 w-20 rounded-xl font-semibold text-white text-center'
     case "transient":
-      return 'border border-black/40 py-1 w-20 rounded-xl font-semibold text-black'
+      return 'border border-black/40 py-1 w-20 rounded-xl font-semibold text-black text-center'
     default:
       return "bg-gray-500 text-white";
   }
@@ -114,7 +116,7 @@ export const columns: ColumnDef<Report>[] = [
     cell: ({ row }) => {
       const fullNameObj = row.getValue("fullName") as { lastName: string; firstName: string; mi: string } | undefined;
       return (
-        <div className="hidden lg:block max-w-xs truncate">
+        <div className="flex justify-center">
           {`${(fullNameObj?.lastName)}, ${(fullNameObj?.firstName)} ${fullNameObj?.mi}`}
         </div>
       )
@@ -129,7 +131,7 @@ export const columns: ColumnDef<Report>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate uppercase">
+      <div className="flex justify-center uppercase">
         {row.getValue("sitio")}
       </div>
     ),
@@ -137,23 +139,24 @@ export const columns: ColumnDef<Report>[] = [
   
   {
     accessorKey: "age",
-    header:"Age",
+    header: () => <div className="flex justify-center">Age</div>,
     cell: ({ row }) => {
       const ageObj = row.getValue("age") as { ageNumber: number; ageUnit: string };
-      return <div className="hidden xl:flex justify-center">{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
+      return <div className="flex justify-center">{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
     }
   },
   {
     accessorKey: "type",
-    header: () => <div className="">Type</div>,
+    header: () => <div className="flex justify-center">Type</div>,
     cell: ({ row }) => (
-      <div className="flex  items-center justify-center">
+      <div className="flex items-center justify-center">
         <div className={getPatType(row.getValue("type"))}>{row.getValue("type")}</div>
       </div>
     )
   },
   {
     accessorKey: "noOfRecords",
+    size: 100,
     header: () => <div className="flex justify-center">No. of Records</div>,
     cell: ({ row }) => <div className="flex justify-center"><PatientRecordCount patientId={row.getValue("id")} /></div>
   },
@@ -174,7 +177,7 @@ export const columns: ColumnDef<Report>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
+      <div className="flex justify-center">
         {formatDate(row.getValue("dateRegistered"), 'short')}
       </div>
     ),
@@ -183,22 +186,25 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "action",
     header: () => <div className="flex justify-center">Action</div>,
     cell: ({ row }) => (
-      <Link
-        to="/patientrecords/view"
-        state={
-          { patientId: row.getValue("id"), 
-            patientData: {
-              id: row.original.id,
-              sitio: row.original.sitio,
-              fullName: row.original.fullName,
-              type: row.original.type,
-              noOfRecords: row.original.noOfRecords,
-              philhealthId: row.original.philhealthId 
-            }
-          }}
-      >
-        <ViewButton onClick={() => {}} />
-      </Link>
+      <div className="flex justify-center">
+        <Link
+          to="/patientrecords/view"
+          state={
+            { patientId: row.getValue("id"), 
+              patientData: {
+                id: row.original.id,
+                sitio: row.original.sitio,
+                fullName: row.original.fullName,
+                type: row.original.type,
+                noOfRecords: row.original.noOfRecords,
+                philhealthId: row.original.philhealthId 
+              }
+            }}
+        >
+          <ViewButton onClick={() => {}} />
+        </Link>
+      </div>
+      
     ),
     enableSorting: false,
     enableHiding: false
@@ -229,6 +235,7 @@ export default function PatientsRecord() {
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const user = useAuth();
 
   // Fetch sitio data
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
@@ -370,6 +377,18 @@ export default function PatientsRecord() {
   const residentPercentage = totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
   const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
 
+  if(user.user == null){
+    return (
+      <MainLayoutComponent 
+        title="Patient Records"
+        description="Manage and view patients information"
+      >
+        <div>No user logged in</div>
+      </MainLayoutComponent>
+    )
+  }
+  console.log("User Role:", user);
+
   return (
     <MainLayoutComponent
       title="Patient Records"
@@ -484,7 +503,7 @@ export default function PatientsRecord() {
             <ProtectedComponent exclude={["DOCTOR"]}>
               <div className="w-full sm:w-auto">
                 <Link to="/patientrecords/form">
-                  <Button className="w-full sm:w-auto flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+                  <Button variant="default">
                     <Plus size={15} /> Create
                   </Button>
                 </Link>

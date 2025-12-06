@@ -40,7 +40,6 @@ export default function MaternalMain() {
                   : selectedTab === "appointments" ? <MaternalAppointmentsMain /> 
                   : null
                }
-
             </div>
          </div>
          

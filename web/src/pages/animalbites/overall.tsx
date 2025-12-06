@@ -3,13 +3,12 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, Home, UserCog, Users, FileInput, ArrowUpDown } from "lucide-react";
+import { Search, Home, UserCog, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { ExportButton } from "@/components/ui/export";
 import { useDebounce } from "@/hooks/use-debounce";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import ReferralFormModal from "./referralform";
@@ -187,7 +186,7 @@ const Overall: React.FC = () => {
       ),
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.id}</div>
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
         </div>
       )
     },

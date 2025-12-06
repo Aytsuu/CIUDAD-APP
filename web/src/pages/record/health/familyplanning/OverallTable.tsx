@@ -176,7 +176,13 @@ export default function FamPlanningTable() {
       {
         accessorKey: "patient_id",
         header: "Patient ID",
-        cell: ({ row }) => `${row.original.patient_id}`
+        cell: ({ row }) => (
+          <div className="flex w-full">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+            {row.original.patient_id}
+          </div>
+        </div>
+        )
       },
       {
         accessorKey: "patient_info",
