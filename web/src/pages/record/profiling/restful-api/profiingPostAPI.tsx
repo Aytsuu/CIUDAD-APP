@@ -103,6 +103,18 @@ export const addFamily = async (
   }
 };
 
+export const getFamilyMembersHealth = async (famId: string) => {
+  try {
+    const res = await api.get(`profiling/family/${famId}/members/`);
+    // Some list endpoints may wrap in pagination; normalize to array
+    const data = res.data?.results || res.data || [];
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    throw err;
+  }
+};
+
+
 // POST request for family_composition model 
 export const addFamilyComposition = async (data: Record<string, any>[]) => {
   try {
@@ -149,3 +161,4 @@ export const addBusinessFile = async (data: Record<string, any>[]) => {
     throw err;
   }
 }
+

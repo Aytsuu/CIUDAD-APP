@@ -141,7 +141,7 @@ export default function ResidentRegistration() {
         router.back();
       }, 2000);
     } catch (error) {
-      console.error("Registration failed:", error);
+      // console.error("Registration failed:", error);
       setIsSubmitting(false);
     }
   };

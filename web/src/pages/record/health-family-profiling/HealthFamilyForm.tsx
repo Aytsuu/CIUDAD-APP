@@ -15,7 +15,7 @@ import { formatResidentsWithBadge } from "./family-profling/utils/formatResident
 import { DependentRecord } from "../../record/profiling/ProfilingTypes";
 import { FaHome, FaUsers, FaBriefcaseMedical, FaHouseUser, FaClipboardList } from "react-icons/fa";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
-import { useHouseholdsListHealth, useResidentsListHealth, useFamilyMembersWithResidentDetails, useFamilyDataHealth } from "./family-profling/queries/profilingFetchQueries";
+import { useHouseholdsList, useResidentsList, useFamilyData, useFamilyMembersWithResidentDetails } from "../profiling/queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { submitEnvironmentalForm, submitSurveyIdentificationForm, createNCDRecord, createTBRecord } from "./family-profling/restful-api/profiingPostAPI";
@@ -50,8 +50,8 @@ import {
 export default function HealthFamilyForm() {
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
-  const { data: householdsListHealth, isLoading: isLoadingHouseholds } = useHouseholdsListHealth();
-  const { data: residentsListHealth, isLoading: isLoadingResidents } = useResidentsListHealth(); 
+  const { data: householdsListHealth, isLoading: isLoadingHouseholds } = useHouseholdsList();
+  const { data: residentsListHealth, isLoading: isLoadingResidents } = useResidentsList(); 
   const [currentStep, setCurrentStep] = React.useState<number>(1);
   const defaultValues = React.useRef(generateDefaultValues(familyFormSchema));
   const [selectedMotherId, setSelectedMotherId] = React.useState<string>("");
@@ -59,7 +59,7 @@ export default function HealthFamilyForm() {
   // const [selectedGuardianId, setSelectedGuardianId] = React.useState<string>("");
   const [selectedResidentId, setSelectedResidentId] = React.useState<string>("");
   const [selectedRespondentId, setSelectedRespondentId] = React.useState<string>(""); 
-  const [famId, setFamId] = React.useState<string>("251111000018-R"); 
+  const [famId, setFamId] = React.useState<string>(""); 
   const [dependentsList, setDependentsList] = React.useState<DependentRecord[]>(
     []
   );
@@ -158,8 +158,8 @@ export default function HealthFamilyForm() {
   const familyMembersHealth = useFamilyMembersWithResidentDetails(shouldFetchFamilyData ? famId : null);
   
   // Fetch family data to get household information - only when needed
-  const { data: familyDataHealth, isLoading: isLoadingFamilyData } = useFamilyDataHealth(shouldFetchFamilyData ? famId : null);
-  const householdId = familyDataHealth?.household_no;
+  const { data: familyData, isLoading: isLoadingFamilyData } = useFamilyData(famId || "");
+  const householdId = familyData?.hh?.hh_id;
 
   // Optimize: Memoize formatted family members to avoid recalculation
   const formattedFamilyMembers = React.useMemo(() => {
@@ -241,7 +241,7 @@ export default function HealthFamilyForm() {
       // console.log('Setting household ID in form:', householdId);
       form.setValue('demographicInfo.householdNo', householdId);
     }
-  }, [famId, familyMembersHealth, familyDataHealth, householdId, currentStep, form]);
+  }, [famId, familyMembersHealth, familyData, householdId, currentStep, form]);
 
   // Optimize: Only show loading for relevant queries based on current step
   React.useEffect(() => {

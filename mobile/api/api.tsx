@@ -34,24 +34,24 @@ export const api = axios.create({
 //   },
 // });
 
-export const api2 = axios.create({
-  baseURL: "http://192.168.1.15:8001",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-  timeout: 10000,
-});
-
 // export const api2 = axios.create({
-//   baseURL: Constants.expoConfig?.extra?.apiUrl2,
+//   baseURL: "http://192.168.1.3:8001",
 //   withCredentials: true,
 //   headers: {
 //     "Content-Type": "application/json",
 //     "Accept": "application/json",
 //   },
+//   timeout: 10000,
 // });
+
+export const api2 = axios.create({
+  baseURL: Constants.expoConfig?.extra?.apiUrl2,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+});
 
 setupApiInterceptor(api)
 

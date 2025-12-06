@@ -245,9 +245,9 @@ export default function ResidentRegistration() {
       }, 1500);
 
     } catch (error: any) {
-      console.error("Registration failed:", error);
-      console.error("Error response:", error.response);
-      console.error("Error response data:", error.response?.data);
+      // console.error("Registration failed:", error);
+      // console.error("Error response:", error.response);
+      // console.error("Error response data:", error.response?.data);
       
       // Extract error message
       let errorMessage = "Failed to register. Please try again.";

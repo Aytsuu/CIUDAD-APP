@@ -3,6 +3,7 @@ from ..models import *
 from django.utils import timezone
 from datetime import datetime
 from django.db import transaction
+from ..utils import generate_fam_no
 
 class FamilyBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -82,28 +83,13 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
   @transaction.atomic
   def create(self, validated_data):
     return Family.objects.create(
-      fam_id = self.generate_fam_no(validated_data['fam_building']),
+      fam_id = generate_fam_no(validated_data['fam_building']),
       fam_indigenous = validated_data['fam_indigenous'],
       fam_building = validated_data['fam_building'],
       fam_date_registered = timezone.now().date(),
       hh = validated_data['hh'],
       staff = validated_data['staff']
     )
-  
-  def generate_fam_no(self, building_type):
-
-    type = {'Owner' : 'O', 'Renter' : 'R', 'Sharer' : 'S'}
-
-    next_val = Family.objects.count() + 1
-    date = datetime.now()
-    year = str(date.year - 2000)
-    month = str(date.month).zfill(2)
-    day = str(date.day).zfill(2)
-    
-    formatted = f"{next_val:04d}"
-    family_id = f"{year}{month}{day}00{formatted}-{type[building_type]}"
-    
-    return family_id
 
 # class FamilyListSerializer(serializers.ModelSerializer):
 #   total_members = serializers.SerializerMethodField()

@@ -6,7 +6,7 @@ import { UsersRound, ArrowDownUp, Search } from "lucide-react-native";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { SubmitButton } from "@/components/ui/button/submit-button";
 import { useQuery } from "@tanstack/react-query";
-import { api2 } from "@/api/api";
+import { api, api2 } from "@/api/api";
 import { ResponsiveFormContainer, useResponsiveForm, FormContentWrapper } from "../../../../../../components/healthcomponents/ResponsiveFormContainer";
 
 interface FamilyFormProps {
@@ -40,20 +40,22 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
   const familyValues = watch("familySchema");
   const ownedHouses = watch("houseSchema.list") || [];
 
-  // Fetch households from API
+  // Fetch households from API (using api - server-1)
   const { data: householdsData, isLoading: isLoadingHouseholds } = useQuery({
     queryKey: ["householdsList", householdSearch],
     queryFn: async () => {
       try {
-        const res = await api2.get("health-profiling/household/list/", {
+        const res = await api.get("profiling/household/list/table/", {
           params: {
-            is_search: 'true',
-            search: householdSearch || ""
+            search: householdSearch || "",
+            page: 1,
+            page_size: 50
           }
         });
-        return res.data;
+        // The table endpoint returns { results: [...], count: number }
+        return res.data.results || res.data;
       } catch (err) {
-        console.error("Error fetching households:", err);
+        // console.error("Error fetching households:", err);
         return [];
       }
     },
@@ -66,7 +68,7 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
     queryKey: ["familiesList", familySearch],
     queryFn: async () => {
       try {
-        const res = await api2.get("health-profiling/family/list/table/", {
+        const res = await api.get("profiling/family/list/table/", {
           params: {
             search: familySearch || "",
             page: 1,
@@ -76,7 +78,7 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
         // The table endpoint returns { results: [...], count: number }
         return res.data.results || res.data;
       } catch (err) {
-        console.error("Error fetching families:", err);
+        // console.error("Error fetching families:", err);
         return [];
       }
     },
@@ -323,11 +325,11 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                     {/* Household Search Input */}
                     <TouchableOpacity
                       onPress={() => setShowHouseholdDropdown(true)}
-                      className="border border-gray-300 rounded-xl bg-white"
-                      style={{ paddingHorizontal: cardPadding, paddingVertical: cardPadding - 4 }}
+                      className="border border-gray-300 rounded-xl bg-white flex-row items-center px-3"
+                      style={{ height: 45 }}
                     >
                       <Text 
-                        className={livingSoloValues?.householdNo ? "font-PoppinsRegular text-gray-900" : "font-PoppinsRegular text-gray-400"} 
+                        className={livingSoloValues?.householdNo ? "font-PoppinsRegular text-gray-900 flex-1" : "font-PoppinsRegular text-gray-400 flex-1"} 
                         style={{ fontSize: bodyTextSize }}
                       >
                         {livingSoloValues?.householdNo || "Select a household"}
@@ -375,7 +377,7 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                                   </View>
                                   <View className="flex-1">
                                     <Text className="text-gray-900 font-PoppinsMedium">
-                                      {household.head?.split("-")[1] || "N/A"}
+                                      {household.head || "N/A"}
                                     </Text>
                                     <Text className="text-gray-500 font-PoppinsRegular text-xs mt-0.5">
                                       {household.sitio}, {household.street}
@@ -460,9 +462,10 @@ export default function FamilyForm({ form, onNext }: FamilyFormProps) {
                 <Text className="text-sm font-PoppinsMedium text-gray-700 mb-2">Family</Text>
                 <TouchableOpacity
                   onPress={() => setShowFamilyDropdown(true)}
-                  className="border border-gray-300 rounded-xl px-4 py-3 bg-white"
+                  className="border border-gray-300 rounded-xl bg-white flex-row items-center px-3"
+                  style={{ height: 45 }}
                 >
-                  <Text className={familyValues?.familyId ? "text-gray-900 font-PoppinsRegular" : "text-gray-400 font-PoppinsRegular"}>
+                  <Text className={familyValues?.familyId ? "text-gray-900 font-PoppinsRegular flex-1" : "text-gray-400 font-PoppinsRegular flex-1"}>
                     {familyValues?.familyId || "Select a family"}
                   </Text>
                 </TouchableOpacity>
