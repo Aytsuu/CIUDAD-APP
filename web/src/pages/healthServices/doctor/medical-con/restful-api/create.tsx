@@ -4,11 +4,15 @@ import { api2 } from "@/api/api";
 export const createMedicalConsultationSoapForm = async (data: Record<string, any>) => {
   try {
     const response = await api2.post("medical-consultation/create-soap-form/", data);
-    console.log("Medical consultation SOAP form created successfully:", response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Medical consultation SOAP form created successfully:", response.data);
+    }
     return response.data;
   } catch (error) {
-    console.error("Error creating medical consultation SOAP form:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error creating medical consultation SOAP form:", error);
+    }
+    return null;
   }
 };
 
@@ -17,13 +21,20 @@ export const createFindings = async (data: Record<string, any>) => {
   try {
     const response = await api2.post("patientrecords/findings/", data);
     if (!response.data?.find_id) {
-      throw new Error("Failed to retrieve the finding ID from the response");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to retrieve the finding ID from the response");
+      }
+      return null;
     }
-    console.log("Finding created successfully:", response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Finding created successfully:", response.data);
+    }
     return response.data;
   } catch (error) {
-    console.error("Error creating findings:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error creating findings:", error);
+    }
+    return null;
   }
 };
 
@@ -31,11 +42,15 @@ export const createFindings = async (data: Record<string, any>) => {
 export const createMedicalHistory = async (data: Array<{ [key: string]: any }>) => {
   try {
     await api2.post("patientrecords/medical-history/", data);
-    console.log("Medical history created successfully");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Medical history created successfully");
+    }
     return true;
   } catch (error) {
-    console.error("Error creating medical history:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error creating medical history:", error);
+    }
+    return null;
   }
 };
 
@@ -43,13 +58,20 @@ export const createFollowUpVisit = async (data: Record<string, any>) => {
   try {
     const response = await api2.post("patientrecords/follow-up-visit/", data);
     if (!response.data?.followv_id) {
-      throw new Error("Failed to retrieve the follow-up visit ID from the response");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to retrieve the follow-up visit ID from the response");
+      }
+      return null;
     }
-    console.log("Follow-up visit created successfully:", response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Follow-up visit created successfully:", response.data);
+    }
     return response.data;
   } catch (error) {
-    console.error(error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error(error);
+    }
+    return null;
   }
 };
 
@@ -57,13 +79,20 @@ export const createFindingPlantreatment = async (data: Record<string, any>) => {
   try {
     const res = await api2.post("medicine/findings-plan-treatment/", data);
     if (!res.data?.fpt_id) {
-      throw new Error("Failed to retrieve the finding plantreatment ID from the response");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to retrieve the finding plantreatment ID from the response");
+      }
+      return null;
     }
-    console.log("Finding plantreatment created successfully:", res.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Finding plantreatment created successfully:", res.data);
+    }
     return res.data;
   } catch (error) {
-    console.error("Error creating finding plantreatment:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error creating finding plantreatment:", error);
+    }
+    return null;
   }
 };
 
@@ -76,12 +105,18 @@ export const createMedicineRequest = async (data: Record<string, any>) => {
   try {
     // Validate at least one ID is provided
     if (!data.pat_id) {
-      throw new Error("Patient ID must be provided");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Patient ID must be provided");
+      }
+      return null;
     }
 
     // Validate medicines exist
     if (!data.medicines || !Array.isArray(data.medicines) || data.medicines.length === 0) {
-      throw new Error("At least one medicine is required");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("At least one medicine is required");
+      }
+      return null;
     }
 
     const response = await api2.post("medicine/medicine-request/", {
@@ -95,13 +130,20 @@ export const createMedicineRequest = async (data: Record<string, any>) => {
     });
 
     if (!response.data?.medreq_id) {
-      throw new Error("Failed to retrieve the medicine request ID from the response");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to retrieve the medicine request ID from the response");
+      }
+      return null;
     }
-    console.log("Medicine request created successfully:", response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Medicine request created successfully:", response.data);
+    }
     return response.data;
   } catch (error) {
-    console.error("Error creating medicine request:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error creating medicine request:", error);
+    }
+    return null;
   }
 };
 
@@ -113,13 +155,20 @@ export const createPEResults = async (selectedOptionIds: number[], find: number)
       find: find
     });
     if (res.data.error) {
-      throw new Error(res.data.error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(res.data.error);
+      }
+      return null;
     }
-    console.log("Physical exam results saved successfully:", res.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Physical exam results saved successfully:", res.data);
+    }
     return res.data;
   } catch (err) {
-    console.error("Error saving physical exam results:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error saving physical exam results:", err);
+    }
+    return null;
   }
 };
 
@@ -130,12 +179,19 @@ export const createPEOption = async (pe_section_id: number, text: string) => {
       text
     });
     if (res.data.error) {
-      throw new Error(res.data.error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(res.data.error);
+      }
+      return null;
     }
-    console.log("PE option created successfully:", res.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("PE option created successfully:", res.data);
+    }
     return res.data;
   } catch (err) {
-    console.error("Error creating PE option:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error creating PE option:", err);
+    }
+    return null;
   }
 };

@@ -16,11 +16,10 @@ export type MedicineDisplay = {
   med_name: string;
   med_type: string;
   total_qty_available: number;
-    dosage: string;
-    form: string;
+  dosage: string;
+  form: string;
   inventory_items: {
     minv_id: number;
-  
     quantity_available: number;
     quantity_unit: string;
     expiry_date: string;
@@ -40,22 +39,27 @@ export default function MedicineRequestScreen() {
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>("available");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const { cartItems } = useGlobalCartState();
-  const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const { user } = useAuth();
   const userId = user?.rp;
   
-  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines( currentPage, pageSize, debouncedSearchQuery, selectedCategory);
+  // Dynamic page size: use large number when filtering, normal pagination for "all"
+  const pageSize = selectedFilter === "all" ? 10 : 1000;
+  
+  const { data: fetchedMedicines, isLoading, isError, error } = useMedicines(
+    currentPage, 
+    pageSize, 
+    debouncedSearchQuery, 
+    selectedCategory
+  );
   
   const position = user?.staff?.pos;
-  console.log("Position:",position)
-  console.log("RP_ID:", userId);
 
-   const handlePageChange = useCallback((page: number) => {
-      setCurrentPage(page);
-    }, []);
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
     
- useEffect(() => {
+  useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
       setCurrentPage(1);
@@ -66,11 +70,10 @@ export default function MedicineRequestScreen() {
     };
   }, [searchQuery]);
 
+  // Reset to page 1 when filter changes
   useEffect(() => {
-  console.log("🔍 API Response:", fetchedMedicines);
-  console.log("🔍 Medicines array:", fetchedMedicines?.medicines);
-  console.log("🔍 Total count:", fetchedMedicines?.count);
-}, [fetchedMedicines]);
+    setCurrentPage(1);
+  }, [selectedFilter]);
 
   useEffect(() => {
     const checkPendingRequests = async () => {
@@ -137,54 +140,45 @@ export default function MedicineRequestScreen() {
     });
   }, [fetchedMedicines, pendingRequests, selectedFilter]);
 
-const totalPages = Math.ceil((fetchedMedicines?.count || 0) / pageSize);
+  // Calculate total pages based on filtered results
+  const totalPages = selectedFilter === "all" 
+    ? Math.ceil((fetchedMedicines?.count || 0) / pageSize)
+    : 1; // Only 1 page when filtering (all results shown)
   
-const categories = useMemo(() => {
+  const categories = useMemo(() => {
     return ["All"];
   }, []);
-  
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
 
   const handleMedicinePress = (medicine: MedicineDisplay) => {
-  const isOutOfStock = medicine.total_qty_available <= 0;
-  const hasPendingRequest = pendingRequests.has(medicine.med_id);
+    const isOutOfStock = medicine.total_qty_available <= 0;
+    const hasPendingRequest = pendingRequests.has(medicine.med_id);
 
-  if (isOutOfStock || hasPendingRequest) {
-    return;
-  }
+    if (isOutOfStock || hasPendingRequest) {
+      return;
+    }
 
-  const firstInventory = medicine.inventory_items[0];
-  
-  // Add validation for minv_id
-  if (!firstInventory?.minv_id) {
-    Alert.alert("Error", "This medicine is not available in inventory. Please select another medicine.");
-    return;
-  }
+    const firstInventory = medicine.inventory_items[0];
+    
+    // Add validation for minv_id
+    if (!firstInventory?.minv_id) {
+      Alert.alert("Error", "This medicine is not available in inventory. Please select another medicine.");
+      return;
+    }
 
-  const medicineString = JSON.stringify({
-    minv_id: firstInventory.minv_id,
-    med_id: medicine.med_id,
-    name: medicine.med_name,
-    med_type: medicine.med_type,
-    dosage: medicine.dosage || "",
-    availableStock: medicine.total_qty_available,
-  });
+    const medicineString = JSON.stringify({
+      minv_id: firstInventory.minv_id,
+      med_id: medicine.med_id,
+      name: medicine.med_name,
+      med_type: medicine.med_type,
+      dosage: medicine.dosage || "",
+      availableStock: medicine.total_qty_available,
+    });
 
-  router.push({
-    pathname: "/medicine-request/details",
-    params: { medicineData: medicineString },
-  });
-};
+    router.push({
+      pathname: "/medicine-request/details",
+      params: { medicineData: medicineString },
+    });
+  };
 
   const filterOptions = [
     { value: "all", label: "All", icon: Pill },
@@ -237,11 +231,11 @@ const categories = useMemo(() => {
       <View className="flex-1 bg-white">
         {/* Search Section */}
         <View className="px-4 pt-3 pb-4 bg-white">
-          <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 py-3 active:bg-gray-200">
+          <View className="flex-row items-center bg-gray-100 rounded-2xl px-4 py-3">
             <Search size={18} color="#6B7280" />
             <TextInput
               className="flex-1 ml-3 text-gray-900 font-medium"
-              placeholder="Search medicines"
+              placeholder="Search medicines..."
               placeholderTextColor="#9CA3AF"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -306,6 +300,15 @@ const categories = useMemo(() => {
               </View>
             )}
           </View>
+
+          {/* Results Summary */}
+          {selectedFilter !== "all" && medicines.length > 0 && (
+            <View className="mt-3 px-2">
+              <Text className="text-sm text-gray-600">
+                Found {medicines.length} {currentFilterLabel.toLowerCase()}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Medicines List */}
@@ -323,8 +326,8 @@ const categories = useMemo(() => {
                       key={medicine.med_id}
                       onPress={() => handleMedicinePress(medicine)}
                       disabled={isDisabled}
-                      className={`flex-row items-center justify-between p-4 rounded-2xl active:bg-blue-50 ${
-                        isDisabled ? "bg-gray-50" : "bg-blue-50"
+                      className={`flex-row items-center justify-between p-4 rounded-2xl ${
+                        isDisabled ? "bg-gray-50" : "bg-blue-50 active:bg-blue-100"
                       }`}
                     >
                       <View className="flex-row items-center flex-1">
@@ -335,33 +338,38 @@ const categories = useMemo(() => {
                         </View>
 
                         <View className="flex-1 ml-4">
-  <View className="flex-row items-center justify-between gap-2">
-    <Text className={`text-base font-semibold flex-1 ${
-      isDisabled ? "text-gray-400" : "text-gray-900"
-    }`}>
-      {medicine.med_name || "Unknown Medicine"}
-    </Text>
-    {isOutOfStock && (
-      <View className="bg-red-100 px-2 py-1 rounded-lg flex-row items-center gap-1">
-        <Ban size={12} color="#DC2626" />
-        <Text className="text-red-600 text-xs font-semibold">Out of stock</Text>
-      </View>
-    )}
-    {hasPendingRequest && !isOutOfStock && (
-      <View className="bg-amber-100 px-2 py-1 rounded-lg flex-row items-center gap-1">
-        <Clock size={12} color="#B45309" />
-        <Text className="text-amber-700 text-xs font-semibold">Pending</Text>
-      </View>
-    )}
-  </View>
+                          <View className="flex-row items-center justify-between gap-2">
+                            <Text className={`text-base font-semibold flex-1 ${
+                              isDisabled ? "text-gray-400" : "text-gray-900"
+                            }`}>
+                              {medicine.med_name || "Unknown Medicine"}
+                            </Text>
+                            {isOutOfStock && (
+                              <View className="bg-red-100 px-2 py-1 rounded-lg flex-row items-center gap-1">
+                                <Ban size={12} color="#DC2626" />
+                                <Text className="text-red-600 text-xs font-semibold">Out of stock</Text>
+                              </View>
+                            )}
+                            {hasPendingRequest && !isOutOfStock && (
+                              <View className="bg-amber-100 px-2 py-1 rounded-lg flex-row items-center gap-1">
+                                <Clock size={12} color="#B45309" />
+                                <Text className="text-amber-700 text-xs font-semibold">Pending</Text>
+                              </View>
+                            )}
+                          </View>
 
-  {/* This is the correct way now */}
-  {(medicine.dosage || medicine.form) && (
-    <Text className={`text-xs mt-1 ${isDisabled ? "text-gray-400" : "text-gray-600"}`}>
-      {[medicine.dosage, medicine.form].filter(Boolean).join(" • ")}
-    </Text>
-  )}
-</View>
+                          {(medicine.dosage || medicine.form) && (
+                            <Text className={`text-xs mt-1 ${isDisabled ? "text-gray-400" : "text-gray-600"}`}>
+                              {[medicine.dosage, medicine.form].filter(Boolean).join(" • ")}
+                            </Text>
+                          )}
+
+                          {/* {!isOutOfStock && (
+                            <Text className={`text-xs mt-1 ${isDisabled ? "text-gray-400" : "text-blue-600"}`}>
+                              {medicine.total_qty_available} available
+                            </Text>
+                          )} */}
+                        </View>
                       </View>
 
                       {!isDisabled && (
@@ -392,10 +400,12 @@ const categories = useMemo(() => {
             )}
           </ScrollView>
 
-          {/* Pagination */}
-          <View className="px-4 pb-4">
-            <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-          </View>
+          {/* Pagination - Only show for "All" filter */}
+          {selectedFilter === "all" && totalPages > 1 && (
+            <View className="px-4 pb-4">
+              <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </View>
+          )}
         </View>
       </View>
     </PageLayout>

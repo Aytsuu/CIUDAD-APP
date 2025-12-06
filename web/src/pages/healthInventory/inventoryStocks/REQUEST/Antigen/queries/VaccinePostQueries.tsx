@@ -11,7 +11,10 @@ export const useSubmitVaccineStock = () => {
     mutationFn: async ({ data }: { data: any }) => {
       const vac_id = Number(data.vac_id);
       if (isNaN(vac_id)) {
-        throw new Error("Invalid vaccine selection");
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Invalid vaccine selection");
+        }
+        return;
       }
       const atomicData = { ...data, vac_id };
       const result = await createVaccineStock(atomicData);
@@ -24,9 +27,11 @@ export const useSubmitVaccineStock = () => {
       queryClient.invalidateQueries({ queryKey: ["antigen_transactions"] });
       navigate(-1);
       showSuccessToast("Added successfully");
-
     },
     onError: (error) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.error(error);
+      }
       showErrorToast(error.message || "Failed to Add");
     }
   });

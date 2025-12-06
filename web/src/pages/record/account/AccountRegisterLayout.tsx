@@ -180,70 +180,8 @@ export default function AccountRegistrationLayout({
     tab_params?.form.setValue("accountSchema.isVerifiedPhone", true);
   };
 
-  // const handleVerify = async () => {
-  //   console.log(tab_params?.form.getValues().accountSchema);
-  //   if (!(await tab_params?.form.trigger(["accountSchema"]))) {
-  //     showErrorToast("Please fill out all required fields.");
-  //     return;
-  //   }
-
-  //   const phone = tab_params?.form.getValues("accountSchema.phone");
-  //   const email = tab_params?.form.getValues("accountSchema.email");
-  //   const promises = [];
-
-  //   if (email?.length > 0) {
-  //     setIsVerifyingEmail(true);
-  //     const emailPromise = verifyAccountReg({ email })
-  //       .then(() => {
-  //         setValidEmail(true);
-  //       })
-  //       .catch((err) => {
-  //         if (axios.isAxiosError(err) && err.response) {
-  //           tab_params?.form.setError("accountSchema.email", {
-  //             type: "server",
-  //             message: err.response.data.error,
-  //           });
-  //         }
-  //         setValidEmail(false);
-  //       })
-  //       .finally(() => {
-  //         setIsVerifyingEmail(false);
-  //       });
-  //     promises.push(emailPromise);
-  //   }
-
-  //   if (phone) {
-  //     setIsVerifyingPhone(true);
-  //     const phonePromise = verifyAccountReg({ phone })
-  //       .then(() => {
-  //         setValidPhone(true);
-  //       })
-  //       .catch((err) => {
-  //         if (axios.isAxiosError(err) && err.response) {
-  //           tab_params?.form.setError("accountSchema.phone", {
-  //             type: "server",
-  //             message: err.response.data.error,
-  //           });
-  //         }
-  //         setIsVerifiedPhone(false);
-  //       })
-  //       .finally(() => {
-  //         setIsVerifyingPhone(false);
-  //       });
-  //     promises.push(phonePromise);
-  //   }
-
-  //   await Promise.allSettled(promises);
-
-  //   // await delay(500);
-  //   // tab_params?.next(true);
-  // };
 
   const handleContinue = async () => {
-    // if (!(await tab_params?.form.trigger(["accountSchema"]))) {
-    //   showErrorToast("Please fill out all required fields.");
-    //   return;
-    // }
     tab_params?.next(true);
   };
 
@@ -251,18 +189,14 @@ export default function AccountRegistrationLayout({
     setIsSubmitting(true);
 
     try {
-      const formIsValid = await form.trigger(["email", "phone"]);
-
-      if (!formIsValid) {
-        showErrorToast("Please fill out all required fields.");
-        return;
-      }
-
       const account = form.getValues();
-      // const { confirm_password, ...account } = accountInfo;
+      const {email, isVerifiedEmail, isVerifiedPhone, ...restData} = account;
 
       await addAccount({
-        accountInfo: account,
+        accountInfo: {
+          ...restData,
+          ...(email != "" && {email: email})
+        },
         residentId: residentId,
       });
 

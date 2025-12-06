@@ -89,7 +89,9 @@ export default function MedicineRequestForm() {
       const hasPrescription = selectedMedicines.some((selectedMed) => {
         const medicine = medicineStocksOptions.find((m) => m.id === selectedMed.minv_id);
         setmed_type(medicine && medicine.med_type);
-        console.log("med_type", med_type);
+        if (process.env.NODE_ENV === 'development') {
+          console.log("med_type", med_type);
+        }
         return medicine && medicine.med_type === "Prescription";
       });
       setHasPrescriptionMedicine(hasPrescription);

@@ -15,8 +15,9 @@ export const getOPTYears = async (
     const response = await api2.get<OPTYearsResponse>(`/reports/opt-tracking/yearly-summaries-semi-annual/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching OPT years:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching OPT years:", error);
+    }
   }
 };
 
@@ -35,12 +36,12 @@ export const getSemiAnnualOPTRecords = async (
         page_size: pageSize,
         sitio,
         nutritional_status,
-    
       },
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching semi-annual OPT records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching semi-annual OPT records:", error);
+    }
   }
 };

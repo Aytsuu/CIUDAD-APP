@@ -67,7 +67,6 @@ export default function SemiAnnualOPTDetails() {
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch semi-annual OPT records");
-      console.error("API Error:", error);
     }
   }, [error]);
 

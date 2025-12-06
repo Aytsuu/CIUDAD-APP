@@ -40,20 +40,14 @@ export default function MyAnimalBiteRecordsScreen() {
   const { user } = useAuth()
   const rp_id = user?.rp
 
-  // ... (Debug logs remain the same)
-  console.log("[DEBUG] patIdFromParams:", patIdFromParams)
-  console.log("[DEBUG] rp_id from auth:", rp_id)
-  console.log("[DEBUG] user:", user)
-
-  // ... (Data fetching queries remain the same)
   const { data: patientData, isLoading: isLoadingPatient } = useQuery({
     queryKey: ["patientDetails", patIdFromParams || rp_id],
     queryFn: async () => {
       if (patIdFromParams) {
-        console.log("[DEBUG] Fetching patient with pat_id:", patIdFromParams)
+        // console.log("[DEBUG] Fetching patient with pat_id:", patIdFromParams)
         return await getPatientById(patIdFromParams)
       } else if (rp_id) {
-        console.log("[DEBUG] Fetching patient with rp_id:", rp_id)
+        // console.log("[DEBUG] Fetching patient with rp_id:", rp_id)
         return await getPatientByResidentId(rp_id)
       }
       return null
@@ -62,7 +56,7 @@ export default function MyAnimalBiteRecordsScreen() {
   })
 
   const patient_id = patIdFromParams || patientData?.pat_id
-  console.log("[DEBUG] patient_id used for records:", patient_id)
+  // console.log("[DEBUG] patient_id used for records:", patient_id)
 
   const { data: records = [], isLoading: isLoadingRecords, refetch } = useQuery<PatientRecordDetail[], Error>({
     queryKey: ["myAnimalbiteRecord", patient_id],
@@ -316,7 +310,7 @@ export default function MyAnimalBiteRecordsScreen() {
                         className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full"
                         onPress={() => {
                           // Navigate to detailed view if needed
-                          console.log("[v0] Record pressed:", record.bite_id)
+                          // console.log("[v0] Record pressed:", record.bite_id)
                         }}
                       >
                         {/* Record Header */}

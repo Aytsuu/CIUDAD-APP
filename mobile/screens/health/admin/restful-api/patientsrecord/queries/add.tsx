@@ -21,9 +21,9 @@ export const useAddPatient = () => {
 			if (data && data.pat_id) {
 				queryClient.invalidateQueries({ queryKey: patientQueryKey.lists() });
 				queryClient.setQueryData(patientQueryKey.detail(data.pat_id), data);
-				console.log("Patient created successfully:", data.pat_id);
+				// console.log("Patient created successfully:", data.pat_id);
 			} else {
-				console.error("Invalid response data:", data);
+				// console.error("Invalid response data:", data);
 			}
 		},
 		onError: (error: unknown) => {
@@ -31,7 +31,7 @@ export const useAddPatient = () => {
 			if (typeof error === "object" && error !== null && "response" in error) {
 				const err = error as { response?: { status?: number } };
 				if (err.response?.status === 500) {
-					console.log("Refreshing patient list due to potential creation despite error");
+					// console.log("Refreshing patient list due to potential creation despite error");
 					queryClient.invalidateQueries({ queryKey: patientQueryKey.lists() });
 				}
 			}

@@ -24,13 +24,15 @@ export const useVaccinationMutation = () => {
 
   const mutation = useMutation({
     mutationFn: async ({ vaccination, previousVaccination, followUpData, patientId, patrec_id,imzStck_id}: VaccinationMutationParams) => {
-      console.log("Mutation called with:", {
-        vaccinationId: vaccination?.vachist_id,
-        previousVaccinationId: previousVaccination?.vachist_id,
-        hasFollowUpData: !!followUpData,
-        patientId,
-        patrec_id
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Mutation called with:", {
+          vaccinationId: vaccination?.vachist_id,
+          previousVaccinationId: previousVaccination?.vachist_id,
+          hasFollowUpData: !!followUpData,
+          patientId,
+          patrec_id
+        });
+      }
 
       // Prepare the request data - DO NOT include followUpData at all if not needed
       const requestData: any = {
@@ -50,25 +52,33 @@ export const useVaccinationMutation = () => {
             followv_description: followUpData.followv_description || "No description provided"
           };
         } catch (error) {
-          console.error("Error formatting date:", error);
+          if (process.env.NODE_ENV === 'development') {
+            console.error("Error formatting date:", error);
+          }
           // If date formatting fails, don't include followUpData at all
         }
       }
 
-      console.log("Sending request data:", requestData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Sending request data:", requestData);
+      }
 
       try {
         const response = await api2.post("vaccination/vaccination-completion/", requestData);
         return response.data;
       } catch (error) {
-        console.error("Error during vaccination mutation:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error during vaccination mutation:", error);
+        }
         throw new Error("Failed to complete vaccination request.");
       }
     },
     onSuccess: (result) => {
       // Invalidate relevant queries
       const { patientId } = result;
-      console.log("Invalidating queries for patient:", patientId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Invalidating queries for patient:", patientId);
+      }
 
       queryClient.invalidateQueries({ queryKey: ["patientVaccinationRecords", patientId] });
       queryClient.invalidateQueries({ queryKey: ["vaccinationRecords"] });
@@ -81,7 +91,9 @@ export const useVaccinationMutation = () => {
       showSuccessToast("Vaccination status updated successfully.");
     },
     onError: (error: Error) => {
-      console.error("Error updating vaccination:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error updating vaccination:", error);
+      }
       toast.error(error.message || "Failed to update vaccination status.");
     }
   });

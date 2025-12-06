@@ -30,11 +30,11 @@ export default function IndividualVaccinationRecords() {
   const mode = typeof params.mode === "string" ? params.mode : null;
 
   useEffect(() => {
-    console.log("MODE:", mode);
+    // console.log("MODE:", mode);
     if (mode == "admin") {
       const adminPatId = params.pat_id as string;
       if (adminPatId) {
-        console.log("Admin viewing patient ID:", adminPatId);
+        // console.log("Admin viewing patient ID:", adminPatId);
         setPatientId(adminPatId);
       }
     } else {
@@ -48,20 +48,20 @@ export default function IndividualVaccinationRecords() {
   // Extract and serialize patient data from vaccination records
   const patientData = useMemo((): SerializedPatientData | null => {
     if (!vaccinationRecords || vaccinationRecords.length === 0) {
-      console.log("No vaccination records found");
+      // console.log("No vaccination records found");
       return null;
     }
     // Get patient data from the first record (all records should have the same patient)
     const firstRecord = vaccinationRecords[0];
-    console.log("First record patient data:", firstRecord?.patient);
+    // console.log("First record patient data:", firstRecord?.patient);
 
     if (!firstRecord?.patient) {
-      console.log("No patient data in first record");
+      // console.log("No patient data in first record");
       return null;
     }
 
     const serialized = serializePatientData(firstRecord.patient) || null;
-    console.log("Serialized patient data:", serialized);
+    // console.log("Serialized patient data:", serialized);
     return serialized;
   }, [vaccinationRecords]);
 

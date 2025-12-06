@@ -18,8 +18,10 @@ export const getMedicineMonths = async (
     const response = await api2.get<MedicineMonthsResponse>(`/reports/medicine/summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching medicine months:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching medicine months:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -39,7 +41,9 @@ export const getMonthlyMedicineRecords = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly medicine records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly medicine records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

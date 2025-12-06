@@ -107,18 +107,12 @@ export async function addChildHealthRecord({ submittedData, staff, todaysHistori
         pat_id: requestData.submittedData.pat_id
       };
     } else {
-      throw new Error(`Unexpected response status: ${response.status}`);
+      if (process.env.NODE_ENV === 'development') console.error(`Unexpected response status: ${response.status}`, response);
+      return null;
     }
   } catch (error: any) {
-
-    // Handle different types of errors
-    if (error.response?.data?.error) {
-      throw new Error(error.response.data.error);
-    } else if (error instanceof Error) {
-      throw new Error(`Failed to process child health record: ${error.message}`);
-    } else {
-      throw new Error("Failed to process child health record: Unknown error occurred");
-    }
+    if (process.env.NODE_ENV === 'development') console.error(error);
+    return null;
   }
 }
 

@@ -17,8 +17,10 @@ export const useAddCommodity = () => {
 
     },
     onError: (error: any) => {
-      console.error("Error adding commodity:", error);
-      throw error; // Re-throw to be caught in the component
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error adding commodity:", error);
+      }
+      // DEVELOPMENT MODE ONLY: No throw in production
     },
   });
 };

@@ -35,7 +35,9 @@ export default function ChildMedicalConsultation() {
   const [currentStep, setCurrentStep] = useState(1);
   const { patientData, checkupData } = location.state || {};
 
-  console.log("Checkup Data:", checkupData);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Checkup Data:", checkupData);
+  }
   // Initialize form data with proper default values
   const [formData, setFormData] = useState<FormData>(() => {
     const initialMedicines = checkupData?.find_details?.prescribed_medicines || [];
@@ -82,7 +84,9 @@ export default function ChildMedicalConsultation() {
             };
           }
 
-          console.log("Saving form data to parent:", updatedData);
+          if (process.env.NODE_ENV === 'development') {
+            console.log("Saving form data to parent:", updatedData);
+          }
           return updatedData;
         });
       }

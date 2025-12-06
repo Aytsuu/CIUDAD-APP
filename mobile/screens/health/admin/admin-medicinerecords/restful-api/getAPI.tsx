@@ -14,8 +14,8 @@ export const getIndividualMedicineRecords = async (
   try {
 
 
-    console.log("🔍--------------------------------FUCK Fetching Individual Medicine Records-------------------------------------------------------------------------------------:", { id, page, pageSize, search });
-    console.log(id)
+    // console.log("🔍--------------------------------FUCK Fetching Individual Medicine Records-------------------------------------------------------------------------------------:", { id, page, pageSize, search });
+    // console.log(id)
     const response = await api2.get(`medicine/medicine-records-table-2/${id}/`, {
       params: {
         page,
@@ -23,12 +23,13 @@ export const getIndividualMedicineRecords = async (
         search: search?.trim() || undefined
       }
     });
-    console.log("✅-------------------------------- API Response received-------------------------------------------------------------------------------------:", {
-      success: response.data.success,
-      count: response.data.count,
-      resultsLength: response.data.results?.length,
-      data: response.data
-    });
+  //   console.log("✅-------------------------------- API Response received-------------------------------------------------------------------------------------:")
+  //    {
+  //     success: response.data.success,
+  //     count: response.data.count,
+  //     resultsLength: response.data.results?.length,
+  //     data: response.data
+  // });
     
     if (!response.data.success) {
       throw new Error(response.data.error || 'API returned unsuccessful response');
@@ -36,7 +37,7 @@ export const getIndividualMedicineRecords = async (
     
     return response.data;
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     throw err;
   }
 };

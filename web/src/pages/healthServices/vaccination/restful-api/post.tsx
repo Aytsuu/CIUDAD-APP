@@ -3,21 +3,16 @@ import { api2 } from "@/api/api";
 
 
 
-export const createVaccinationRecord = async (
-  data:Record<string,any>
- 
-) => {
-  const response = await api2.post("vaccination/vaccination-record/", data);
-  return response.data;
-};
-
-
-
 export const createVaccinationHistory = async (
- 
-  data:Record<string,any>
-  
+  data: Record<string, any>
 ) => {
+  try {
+    const response = await api2.post("vaccination/vaccination-history/", data);
+    return response.data;
+  } catch (error) {
+    {process.env.NODE_ENV === 'development' && console.error("Error creating vaccination history:", error);}
+  }
+};
   try {
     const response = await api2.post("vaccination/vaccination-history/", data
     
@@ -35,16 +30,11 @@ export const createVitalSigns = async (data: Record<string, any>) => {
   
   try {
     const response = await api2.post("patientrecords/vital-signs/", data);
-    console.log("Vital sign created", response.data)
-
+    {process.env.NODE_ENV === 'development' && console.log("Vital sign created", response.data);}
     return response.data;
   } catch (error) {
-    console.log(error)
-    throw error
-    
+    {process.env.NODE_ENV === 'development' && console.error(error);}
   }
-    
-  
 };
 
 
@@ -61,13 +51,11 @@ export const createFollowUpVisit = async (
       followv_status:  followv_status || "pending",
       followv_description,
       created_at: new Date().toISOString(),
-
     });
-    console.log("Parsed patrec_id:", parseInt(patrec_id, 10)); // Logs parsed value for debugging
+    {process.env.NODE_ENV === 'development' && console.log("Parsed patrec_id:", parseInt(patrec_id, 10));}
     return response.data;
   } catch (error) {
-    console.error("Error creating follow-up visit:", error);
-    throw error;
+    {process.env.NODE_ENV === 'development' && console.error("Error creating follow-up visit:", error);}
   }
 };
 
@@ -89,7 +77,6 @@ export const createAntigenStockTransaction = async (
   try {
     await api2.post("inventory/antigens_stocks/transaction/", transactionPayload);
   } catch (error) {
-    console.error("Error occurred while creating antigen stock transaction:", error);
-    throw error;
+    {process.env.NODE_ENV === 'development' && console.error("Error occurred while creating antigen stock transaction:", error);}
   }
 };

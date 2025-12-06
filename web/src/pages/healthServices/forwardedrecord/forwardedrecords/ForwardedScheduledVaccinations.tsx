@@ -26,8 +26,10 @@ export const getScheduledVaccinations = async (assigned_to: string, search = "",
     const response = await api2.get(`/vaccination/to-be-administered/${assigned_to}/?${params}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching vaccination records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching vaccination records:", error);
+    }
+    return null;
   }
 };
 

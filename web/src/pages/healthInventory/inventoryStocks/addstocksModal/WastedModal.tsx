@@ -128,7 +128,9 @@ export default function WastedModal({ isOpen, onClose, record, mode }: WastedMod
       }
       onClose(); // Only close after successful submission
     } catch (error) {
-      console.error("Error submitting:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error submitting:", error);
+      }
     }
   };
 

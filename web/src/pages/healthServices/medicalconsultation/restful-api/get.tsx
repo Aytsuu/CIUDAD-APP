@@ -6,12 +6,13 @@ export const getPreviousBMI = async (id: string) => {
 
     return res.data;
   } catch (err: any) {
-    console.error("Error fetching previous BMI:", err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching previous BMI:", err);
+    }
     if (err.response?.status === 404) {
       return null; // Return null instead of throwing error
     }
-
-    throw err;
+    // Do not throw in production; only log in development
   }
 };
 
@@ -20,7 +21,9 @@ export const getPatient = async () => {
     const response = await api2.get(`/patient`);
     return response.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
   }
 };
 
@@ -40,8 +43,10 @@ export const getMedicalRecord = async (params?: { page?: number; page_size?: num
     const response = await api2.get(url);
     return response.data;
   } catch (err) {
-    console.error(err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -58,8 +63,10 @@ export const getConsultationHistory = async (patientId?: string, page?: number, 
     const response = await api2.get(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching consultation history:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching consultation history:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -68,8 +75,10 @@ export const getMedConPHHistory = async (pat_id: string) => {
     const response = await api2.get(`patientrecords/patientPHIllnessCheck/${pat_id}/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching consultation history:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching consultation history:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -84,8 +93,10 @@ export const getFamHistory = async (pat_id: string, searchQuery?: string) => {
     const response = await api2.get(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching family history:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching family history:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -104,8 +115,10 @@ export const getpendingAppointments = async (page: number, pageSize: number, sea
     const response = await api2.get("/medical-consultation/pending-medicalcon-appointments/", { params: params });
     return response.data;
   } catch (error) {
-    console.error("Error fetching processing medicine requests:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching processing medicine requests:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -124,8 +137,10 @@ export const getconfirmedAppointments = async (page: number, pageSize: number, s
     const response = await api2.get("/medical-consultation/confirmed-medicalcon-appointments/", { params: params });
     return response.data;
   } catch (error) {
-    console.error("Error fetching processing medicine requests:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching processing medicine requests:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 export const getAppointments = async (params: {
@@ -174,7 +189,9 @@ export const getAppointments = async (params: {
     const response = await api2.get("/medical-consultation/medical-consultation-stats/", { params: queryParams });
     return response.data;
   } catch (error) {
-    console.error("Error fetching appointments:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching appointments:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

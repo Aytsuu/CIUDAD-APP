@@ -17,6 +17,7 @@ import { ProtectedComponent } from "@/ProtectedComponent";
 import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFiltersChipsProps ";
 import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
 import { useSitioList } from "../../profiling/queries/profilingFetchQueries";
+import { ExportButton } from "@/components/ui/export";
 
 interface FPRecord {
   fprecord_id: number;
@@ -53,7 +54,7 @@ export default function FamPlanningTable() {
   const [selectedClientType, setSelectedClientType] = useState("all");
   const [selectedPatientType, setSelectedPatientType] = useState("all"); 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
   
   // --- FETCH SITIO DATA ---
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
@@ -158,13 +159,24 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
     { id: "transient", name: "Transient" },
   ];
 
+  // 2. DEFINE EXPORT COLUMNS
+  const exportColumns = [
+    { key: "patient_id", header: "Patient ID" },
+    { key: "patient_name", header: "Patient Name" },
+    { key: "patient_age", header: "Age" },
+    { key: "sex", header: "Sex" },
+    { key: "patient_type", header: "Patient Type" },
+    { key: "client_type", header: "Client Type" },
+    { key: "method_used", header: "Method Used" },
+    { key: "created_at", header: "Date Created" },
+  ];
 
   const columns = useMemo<ColumnDef<FPRecord>[]>(
     () => [
       {
-        accessorKey: "fprecord_id",
-        header: "Record ID",
-        cell: ({ row }) => `${row.original.fprecord_id}`
+        accessorKey: "patient_id",
+        header: "Patient ID",
+        cell: ({ row }) => `${row.original.patient_id}`
       },
       {
         accessorKey: "patient_info",
@@ -199,23 +211,6 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
           );
         }
       },
-      // {
-      //   accessorKey: "client_type",
-      //   header: "Client Type",
-      //   cell: ({ row }) => {
-      //     const clientType = row.original.client_type;
-      //     const displayName = getClientTypeDisplayName(clientType);
-      //     const isNewAcceptor = clientType === "newacceptor";
-      //     return (
-      //       <span
-      //         className={`px-2 py-1 rounded-full text-sm font-medium 
-      //                     ${isNewAcceptor ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}`}
-      //       >
-      //         {displayName}
-      //       </span>
-      //     );
-      //   }
-      // },
       {
         accessorKey: "method_used",
         header: "Method",
@@ -235,15 +230,6 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
             day: "numeric"
           })
       },
-      // {
-      //   accessorKey: "record_count",
-      //   header: "Records",
-      //   cell: ({ row }) => (
-      //     <span className="font-semibold text-gray-700">
-      //       {row.original.record_count || 0} records
-      //     </span>
-      //   )
-      // },
       {
         id: "action",
         header: "Action",
@@ -296,7 +282,7 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />
 
-      {/* Stats Cards for Family Planning Patients */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <CardLayout
           title="Total Patients"
@@ -453,6 +439,7 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
           </div>
       )}
      
+      {/* 3. ADDED EXPORT BUTTON TO CONTROLS */}
       <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 rounded-t-lg">
         <div className="flex gap-x-2 items-center">
           <p className="text-xs sm:text-sm">Show</p>
@@ -465,6 +452,15 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
             max="100"
           />
           <p className="text-xs sm:text-sm">Entries</p>
+        </div>
+
+        {/* Export Button Placed Here */}
+        <div>
+           <ExportButton 
+             data={fpRecords} 
+             filename="family-planning-records" 
+             columns={exportColumns} 
+           />
         </div>
       </div>
 

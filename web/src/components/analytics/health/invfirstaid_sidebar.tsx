@@ -226,7 +226,7 @@ export function FirstAidAlertsSidebar() {
                   className={`p-3 rounded-lg border ${getStatusColor(item.status)} transition-colors`}
                   onClick={() => {
                     // Optional: Add navigation to specific first aid detail
-                    console.log('Navigate to first aid:', item.id);
+                    // console.log('Navigate to first aid:', item.id);
                   }}
                 >
                   <div className="flex items-start justify-between mb-2">

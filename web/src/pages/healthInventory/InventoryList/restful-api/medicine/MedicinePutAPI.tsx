@@ -17,7 +17,9 @@ export const updateMedicine = async (med_id: string, data : Record<string,any>) 
   
       return res.data;
     } catch (err) {
-      console.log(err);
-      throw err; // Re-throw the error to handle it in the calling function
+      if (process.env.NODE_ENV === 'development') {
+        console.log(err);
+      }
+      // DEVELOPMENT MODE ONLY: No throw in production
     }
   };

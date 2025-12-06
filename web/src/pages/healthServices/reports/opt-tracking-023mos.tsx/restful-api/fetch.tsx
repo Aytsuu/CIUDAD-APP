@@ -17,8 +17,9 @@ export const getOPTYears = async (
       );
       return response.data;
     } catch (error) {
-      console.error("Error fetching OPT years:", error);
-      throw error;
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error fetching OPT years:", error);
+      }
     }
   };
 
@@ -44,7 +45,8 @@ export const getYearlyOPTRecords = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching yearly OPT records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching yearly OPT records:", error);
+    }
   }
 };

@@ -33,23 +33,31 @@ export default function EditMonthlyRecipientList() {
 
   // Safe access with optional chaining and fallbacks
   const passedStaffId = reports?.staff_details?.staff_id || "";
-  console.log("Passed Staff ID:", passedStaffId);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Passed Staff ID:", passedStaffId);
+  }
   const signatureBase64 = reports?.signature || null;
 
   useEffect(() => {
     if (passedStaffId && staffOptions?.formatted) {
-      console.log("Searching for staff with ID:", passedStaffId);
-      console.log("Available staff options:", staffOptions.formatted);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Searching for staff with ID:", passedStaffId);
+        console.log("Available staff options:", staffOptions.formatted);
+      }
       
       // Find the staff member in the options
       const staffMember = staffOptions.formatted.find((staff) => {
         // Extract ID from the concatenated id string (format: "staff_id-firstname-lastname-position")
         const staffIdFromValue = staff.id.split("-")[0];
-        console.log("Comparing:", staffIdFromValue, "with", passedStaffId);
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Comparing:", staffIdFromValue, "with", passedStaffId);
+        }
         return staffIdFromValue === passedStaffId.toString();
       });
 
-      console.log("Found staff member:", staffMember);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Found staff member:", staffMember);
+      }
 
       if (staffMember) {
         // Set both the display value and the actual ID
@@ -326,12 +334,16 @@ export default function EditMonthlyRecipientList() {
                   options={staffOptions?.formatted || []}
                   value={selectedStaffDisplay}
                   onChange={(value) => {
-                    console.log("Combobox selected value:", value);
+                    if (process.env.NODE_ENV === 'development') {
+                      console.log("Combobox selected value:", value);
+                    }
 
                     if (value) {
                       // Extract just the ID part (first part before first hyphen)
                       const staffId = value.split("-")[0];
-                      console.log("Extracted staff ID:", staffId);
+                      if (process.env.NODE_ENV === 'development') {
+                        console.log("Extracted staff ID:", staffId);
+                      }
 
                       setSelectedStaffDisplay(value); // Full display value for combobox
                       setSelectedStaffId(staffId); // Just the ID for submission

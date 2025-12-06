@@ -12,7 +12,7 @@ export const calculateAgeFromDateString = (dateString?: string | Date | null): n
     }
     return age;
   } catch (e) {
-    console.error("Error calculating age:", e);
+    // console.error("Error calculating age:", e);
     return 0;
   }
 };

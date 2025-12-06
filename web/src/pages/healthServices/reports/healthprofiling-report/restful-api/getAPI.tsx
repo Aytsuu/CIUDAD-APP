@@ -17,8 +17,10 @@ export const fetchPopulationStructureReport = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching population structure report:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching population structure report:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -28,8 +30,10 @@ export const fetchSitios = async () => {
     const response = await api2.get(`/health-profiling/sitio/list/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching sitios:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching sitios:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -39,8 +43,10 @@ export const fetchPopulationYearlyRecords = async () => {
     const response = await api2.get(`/health-profiling/population-yearly-records/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching yearly population records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching yearly population records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -53,7 +59,9 @@ export const fetchPopulationBySitio = async (year?: string) => {
     const response = await api2.get(`/health-profiling/population-by-sitio/`, { params });
     return response.data;
   } catch (error) {
-    console.error("Error fetching population by sitio:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching population by sitio:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

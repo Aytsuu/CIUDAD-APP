@@ -7,7 +7,7 @@ from ..serializers.position_serializers import *
 from ..double_queries import *
 
 
-class PositionView(generics.ListCreateAPIView):
+class PositionView(generics.ListAPIView):
     serializer_class = PositionListSerializer
 
     def get_queryset(self):
@@ -24,6 +24,7 @@ class PositionDeleteView(generics.DestroyAPIView):
     queryset = Position.objects.all()
     lookup_field = 'pos_id'
 
+    @transaction.atomic
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         pos_id = instance.pos_id
@@ -48,30 +49,28 @@ class PositionBulkCreateView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
-        instances = [
-            Position(**item)
-            for item in serializer.validated_data
-        ]
-        created_instances = Position.objects.bulk_create(instances)
+        for item in serializer.validated_data:
+            instance = Position(**item)
+            instance.save()
 
-        if len(created_instances) > 0:
-            # Perform double query
-            double_queries = PostQueries()
-            response = double_queries.position(request.data)
-            if not response.ok:
-                try:
-                    error_detail = response.json()
-                except ValueError:
-                    error_detail = response.text
-                raise serializers.ValidationError({"error": error_detail})
-            return Response(status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        # Perform double query
+        double_queries = PostQueries()
+        response = double_queries.position(request.data)
+        if not response.ok:
+            try:
+                error_detail = response.json()
+            except ValueError:
+                error_detail = response.text
+            raise serializers.ValidationError({"error": error_detail})
+        
+        return Response(status=status.HTTP_201_CREATED)
 
 class PositionUpdateView(generics.RetrieveUpdateAPIView):
     serializer_class = PositionBaseSerializer
     queryset = Position.objects.all()
     lookup_field = 'pos_id'
 
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
         max_holders = request.data['pos_max']
         pos = kwargs.get('pos_id')

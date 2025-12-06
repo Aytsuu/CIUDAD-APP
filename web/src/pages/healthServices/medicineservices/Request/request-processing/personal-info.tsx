@@ -131,7 +131,9 @@ export function PersonalInfoCard({ personalInfo, address, currentPatId, rp_id, m
       toast.success("Successfully registered");
     } catch (error) {
       toast.error("Failed to register patient");
-      console.error("Registration error:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Registration error:", error);
+      }
     } finally {
       setIsRegistering(false);
     }

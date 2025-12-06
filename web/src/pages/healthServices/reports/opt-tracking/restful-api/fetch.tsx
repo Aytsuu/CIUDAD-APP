@@ -17,8 +17,9 @@ export const getOPTMonths = async (
     const response = await api2.get<OPTMonthsResponse>(`/reports/opt-tracking/monthly/summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching OPT months:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching OPT months:", error);
+    }
   }
 };
 
@@ -45,8 +46,9 @@ export const getMonthlyOPTRecords = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly OPT records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly OPT records:", error);
+    }
   }
 };
 

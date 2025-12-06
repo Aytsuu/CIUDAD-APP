@@ -275,9 +275,6 @@ export const getItemsConfig = (
       },
       {
         dashboard: "DONATION",
-      },
-      {
-        dashboard: "WASTE",
         card: [cashDonations],
       },
       {

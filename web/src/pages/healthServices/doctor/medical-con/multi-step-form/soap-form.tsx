@@ -118,7 +118,9 @@ export default function SoapForm({
   useEffect(() => {
     const errors = form.formState.errors;
     if (Object.keys(errors).length > 0) {
-      console.log("❌ Form Validation Errors:", errors);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("❌ Form Validation Errors:", errors);
+      }
     }
   }, [form.formState.errors]);
 
@@ -340,7 +342,9 @@ export default function SoapForm({
 
   // CRITICAL: Add error handler to see why form is not submitting
   const onError = (errors: any) => {
-    console.log("❌ Form submission failed with errors:", errors);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("❌ Form submission failed with errors:", errors);
+    }
     
     // Show specific error messages
     const errorMessages = Object.entries(errors).map(([field, error]: [string, any]) => {
@@ -353,7 +357,9 @@ export default function SoapForm({
   // UPDATED onSubmit WITH VALIDATION
   const onSubmit = useCallback(
     (data: SoapFormType) => {
-      console.log("✅ Form validation passed! Submitting data:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("✅ Form validation passed! Submitting data:", data);
+      }
       
       // Validate required fields are not empty
       if (!validateRequiredFields(data)) {
@@ -397,7 +403,9 @@ export default function SoapForm({
         pat_id: patientData?.pat_id || "",
       };
 
-      console.log("📤 Submitting to API:", submissionData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("📤 Submitting to API:", submissionData);
+      }
 
       submitSoapForm({
         formData: submissionData,

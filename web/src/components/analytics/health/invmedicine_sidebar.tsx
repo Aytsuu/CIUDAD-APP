@@ -226,7 +226,7 @@ export function MedicineAlertsSidebar() {
                   className={`p-3 rounded-lg border ${getStatusColor(item.status)} transition-colors`}
                   onClick={() => {
                     // Optional: Add navigation to specific medicine detail
-                    console.log('Navigate to medicine:', item.id);
+                    // console.log('Navigate to medicine:', item.id);
                   }}
                 >
                   <div className="flex items-start justify-between mb-2">

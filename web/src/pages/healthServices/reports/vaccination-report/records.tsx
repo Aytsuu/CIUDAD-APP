@@ -121,7 +121,6 @@ export default function MonthlyVaccinationDetails() {
       toast.success("CSV exported successfully");
     } catch (error) {
       toast.error("Failed to export CSV");
-      console.error("CSV export error:", error);
     } finally {
       setIsExporting(false);
     }
@@ -174,9 +173,8 @@ export default function MonthlyVaccinationDetails() {
 
       // Generate Excel file and download
       XLSX.writeFile(wb, `vaccination_records_${monthName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    } catch (error) {
+    } catch  {
       toast.error("Failed to export Excel");
-      console.error("Excel export error:", error);
     } finally {
       setIsExporting(false);
     }

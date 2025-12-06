@@ -32,7 +32,9 @@ export default function CompletedRequestDetail() {
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  console.log("Completed Request Data:", patientData);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Completed Request Data:", patientData);
+  }
 
   if (completedRequestError) {
     return (

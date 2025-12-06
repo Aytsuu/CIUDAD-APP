@@ -1,16 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, JSX } from "react";
 import { api2 } from "@/api/api";
 import {
   getVaccintStocks,
 } from "./get";
 import { useQuery } from "@tanstack/react-query";
-import { toast
-
- } from "sonner";
-
-
-
-
 
 
 export const fetchVaccinesWithStock = () => {
@@ -56,7 +49,7 @@ export const fetchVaccinesWithStock = () => {
           })),
         };
       } catch (error) {
-        toast.error("Failed to fetch vaccine stocks");
+        // console.error("Failed to fetch vaccine stocks");
         throw error;
       }
     },

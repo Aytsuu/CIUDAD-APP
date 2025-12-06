@@ -41,7 +41,9 @@ export const useSubmitSoapForm = () => {
     },
 
     onError: (error: any) => {
-      console.error("Error in SOAP form submission:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error in SOAP form submission:", error);
+      }
       showErrorToast("Error submitting SOAP form");
     }
   });

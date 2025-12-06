@@ -57,7 +57,6 @@ export default function OPTTrackingDetails() {
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch OPT records");
-      console.error("API Error:", error);
     }
   }, [error]);
 

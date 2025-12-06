@@ -22,7 +22,9 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
 
       return response
         .map((record: any) => {
-          console.log("Vaccine Type Choice:", record?.vaccine_stock?.vaccinelist?.vac_type_choices);
+          if (process.env.NODE_ENV === 'development') {
+            console.log("Vaccine Type Choice:", record?.vaccine_stock?.vaccinelist?.vac_type_choices);
+          }
 
           return {
             patrec_id: record.vacrec_details?.patrec_id,
@@ -157,7 +159,9 @@ export const useUnvaccinatedVaccines = (patientId?: string, patientDob?: string)
             : null
         }));
       } catch (error) {
-        console.error("Error fetching unvaccinated vaccines:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error fetching unvaccinated vaccines:", error);
+        }
         return [];
       }
     },
@@ -284,7 +288,9 @@ export const filterVaccinesByAge = (vaccines: any[], dob: string) => {
       return patientAgeInVaccineUnits >= minAge && patientAgeInVaccineUnits <= maxAge;
     });
   } catch (error) {
-    console.error("Error filtering vaccines by age:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error filtering vaccines by age:", error);
+    }
     return vaccines; // Return all vaccines if there's an error calculating age
   }
 };

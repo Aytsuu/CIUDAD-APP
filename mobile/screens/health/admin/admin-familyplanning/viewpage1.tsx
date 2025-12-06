@@ -658,7 +658,7 @@ export default function FpRecordViewPage1() {
                     }}
                     className="w-48 h-24 rounded-md"
                     resizeMode="contain"
-                    onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
+                    // onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
                   />
                 </View>
               ) : (
@@ -772,7 +772,7 @@ export default function FpRecordViewPage1() {
                         }}
                         className="w-48 h-24 rounded-md"
                         resizeMode="contain"
-                        onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
+                        // onError={(e) => console.log("Failed to load signature:", e.nativeEvent.error)}
                       />
                     </View>
                   ) : (

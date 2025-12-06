@@ -92,18 +92,18 @@ export default function MyFirstAidRecordsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   
-  console.log("[DEBUG] firstaid patIdFromParams:", patIdFromParams);
-  console.log("[DEBUG] rp_id from auth:", rp_id);
+  // console.log("[DEBUG] firstaid patIdFromParams:", patIdFromParams);
+  // console.log("[DEBUG] rp_id from auth:", rp_id);
 
 
    const { data: patientData, isLoading: isLoadingPatient, isError: isErrorPatient, error: errorPatient } = useQuery({
       queryKey: ["patientDetails", patIdFromParams || rp_id],
       queryFn: async () => {
         if (patIdFromParams) {
-          console.log("[DEBUG] Fetching patient with pat_id:", patIdFromParams);
+          // console.log("[DEBUG] Fetching patient with pat_id:", patIdFromParams);
           return await getPatientById(patIdFromParams);
         } else if (rp_id) {
-          console.log("[DEBUG] Fetching patient with rp_id:", rp_id);
+          // console.log("[DEBUG] Fetching patient with rp_id:", rp_id);
           return await getPatientByResidentId(rp_id);
         }
         return null;

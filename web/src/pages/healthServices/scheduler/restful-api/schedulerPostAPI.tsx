@@ -25,44 +25,47 @@ export interface SchedulerUpdateData extends SchedulerPostData {
 }
 
 export const  addService = async (data: ServicePostData) => {
-	try {
-		const res = await api2.post("servicescheduler/services/", data);
-		return res.data;
-	} catch (error) {
-		if (axios.isAxiosError(error)) {
-			console.error("Service Creation Error: ", error.response?.data || error.message);
-		} else {
-			console.error("Unexpected Error: ", error);
-		}
-		throw error;
-	}
+	   try {
+		   const res = await api2.post("servicescheduler/services/", data);
+		   return res.data;
+	   } catch (error) {
+		   if (process.env.NODE_ENV === 'development') {
+			   if (axios.isAxiosError(error)) {
+				   console.error("Service Creation Error: ", error.response?.data || error.message);
+			   } else {
+				   console.error("Unexpected Error: ", error);
+			   }
+		   }
+	   }
 }
 
 export const addDay = async (data: DayPostData) => {
-	try {
-		const res = await api2.post("servicescheduler/days/", data);
-		return res.data;
-	} catch (error) {
-		if (axios.isAxiosError(error)) {
-			console.error("Day Creation Error: ", error.response?.data || error.message);
-		} else {
-			console.error("Unexpected Error: ", error);
-		}
-		throw error;
-	}
+	   try {
+		   const res = await api2.post("servicescheduler/days/", data);
+		   return res.data;
+	   } catch (error) {
+		   if (process.env.NODE_ENV === 'development') {
+			   if (axios.isAxiosError(error)) {
+				   console.error("Day Creation Error: ", error.response?.data || error.message);
+			   } else {
+				   console.error("Unexpected Error: ", error);
+			   }
+		   }
+	   }
 }
 
 export const addScheduler= async (data: SchedulerPostData) => {
-	try {
-		const res = await api2.post("servicescheduler/service-scheduler/create/", data);
+	   try {
+		   const res = await api2.post("servicescheduler/service-scheduler/create/", data);
 
-		return res.data.ss_id
-	} catch (error) {
-		if(axios.isAxiosError(error)) {
-			console.error("Scheduler Error: ", error.response?.data || error.message);
-		} else {
-			console.error("Unexpected Error: ", error);
-		}
-		throw error;
-	}
+		   return res.data.ss_id
+	   } catch (error) {
+		   if (process.env.NODE_ENV === 'development') {
+			   if(axios.isAxiosError(error)) {
+				   console.error("Scheduler Error: ", error.response?.data || error.message);
+			   } else {
+				   console.error("Unexpected Error: ", error);
+			   }
+		   }
+	   }
 }

@@ -43,8 +43,8 @@ export default function InvChildHealthRecords() {
 
   // Get patient ID from route params with safe access
   useEffect(() => {
-    console.log("CHILD ID:", passed_pat_id);
-    console.log("MODE:", mode);
+    // console.log("CHILD ID:", passed_pat_id);
+    // console.log("MODE:", mode);
     if (mode === "admin" || mode === "parents") {
       setPatientId(passed_pat_id || "");
     } else if (pat_id) {
@@ -58,32 +58,32 @@ export default function InvChildHealthRecords() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5); // Show 5 records per page
 
-  useEffect(() => {
-    console.log("-----RAW CHILD DATA:", childData);
-    console.log("----Is Loading:", isChildDataLoading);
-    console.log("-----Is Error:", isChildDataError);
-  }, [childData, isChildDataLoading, isChildDataError]);
+  // useEffect(() => {
+  //   console.log("-----RAW CHILD DATA:", childData);
+  //   console.log("----Is Loading:", isChildDataLoading);
+  //   console.log("-----Is Error:", isChildDataError);
+  // }, [childData, isChildDataLoading, isChildDataError]);
 
   // FIXED: Transform child data based on actual API response structure
   const transformChildData = useMemo(() => {
     if (!childData) {
-      console.log("------No child data available for transformation");
+      // console.log("------No child data available for transformation");
       return null;
     }
 
-    console.log("-----TRANSFORMING CHILD DATA STRUCTURE:", childData);
+    // console.log("-----TRANSFORMING CHILD DATA STRUCTURE:", childData);
 
     // Based on your API response, the main data is an object with chrec_id and child_health_histories
     const mainData = childData;
     if (!mainData) {
-      console.log("-----No main data found in response");
+      // console.log("-----No main data found in response");
       return null;
     }
 
     // Extract patient details from the first child_health_history's chrec_details
     const firstHistory = mainData.child_health_histories?.[0];
     if (!firstHistory) {
-      console.log("❌ No child health histories found");
+      // console.log("❌ No child health histories found");
       return null;
     }
 
@@ -92,7 +92,7 @@ export default function InvChildHealthRecords() {
     const patDetails = patrecDetails?.pat_details;
 
     if (!patDetails) {
-      console.log("❌ No patient details found");
+      // console.log("❌ No patient details found");
       return null;
     }
 
@@ -103,12 +103,12 @@ export default function InvChildHealthRecords() {
     const motherInfo = familyHeadInfo.mother?.personal_info || {};
     const fatherInfo = familyHeadInfo.father?.personal_info || {};
 
-    console.log("👨‍👩‍👧‍👦 EXTRACTED PATIENT DATA:", {
-      personalInfo,
-      address,
-      motherInfo,
-      fatherInfo
-    });
+    // console.log("👨‍👩‍👧‍👦 EXTRACTED PATIENT DATA:", {
+    //   personalInfo,
+    //   address,
+    //   motherInfo,
+    //   fatherInfo
+    // });
 
     const transformedData = {
       // Patient basic info
@@ -150,7 +150,8 @@ export default function InvChildHealthRecords() {
       birth_order: chrecDetails?.birth_order?.toString() || ""
     };
 
-    console.log("✅ TRANSFORMED CHILD DATA:", transformedData);
+    // console.log("✅ TRANSFORMED CHILD DATA:", transformedData);
+
     return transformedData;
   }, [childData, patId]);
 
@@ -166,17 +167,17 @@ export default function InvChildHealthRecords() {
   // FIXED: Process history data based on actual API structure (matching web version)
   const processedHistoryData = useMemo(() => {
     if (!childData || !childData.child_health_histories) {
-      console.log("❌ No child health histories found in data");
+      // console.log("❌ No child health histories found in data");
       return [];
     }
 
-    console.log("🔄 RAW HISTORY DATA:", childData.child_health_histories);
+    // console.log("🔄 RAW HISTORY DATA:", childData.child_health_histories);
 
     // Extract histories array (matching web version structure)
     const histories = childData.child_health_histories;
 
     if (!Array.isArray(histories) || histories.length === 0) {
-      console.log("❌ No valid histories array found");
+      // console.log("❌ No valid histories array found");
       return [];
     }
 
@@ -184,7 +185,7 @@ export default function InvChildHealthRecords() {
     const sortedHistories = [...histories].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     return sortedHistories.map((record, index) => {
-      console.log(`📝 PROCESSING RECORD ${index}:`, record);
+      // console.log(`📝 PROCESSING RECORD ${index}:`, record);
 
       // Calculate BMI (matching web version logic)
       let bmi = "N/A";
@@ -290,14 +291,14 @@ export default function InvChildHealthRecords() {
         vaccineStat: record.tt_status || "N/A"
       };
 
-      console.log(`✅ PROCESSED RECORD ${index}:`, {
-        id: processedRecord.id,
-        temp: processedRecord.temp,
-        wt: processedRecord.wt,
-        ht: processedRecord.ht,
-        bmi: processedRecord.bmi,
-        hasData: !!(processedRecord.temp || processedRecord.wt || processedRecord.ht)
-      });
+      // console.log(`✅ PROCESSED RECORD ${index}:`, {
+      //   id: processedRecord.id,
+      //   temp: processedRecord.temp,
+      //   wt: processedRecord.wt,
+      //   ht: processedRecord.ht,
+      //   bmi: processedRecord.bmi,
+      //   hasData: !!(processedRecord.temp || processedRecord.wt || processedRecord.ht)
+      // });
 
       return processedRecord;
     });
@@ -336,11 +337,11 @@ export default function InvChildHealthRecords() {
 
   // UPDATED: Render health record card - COMPACT DESIGN WITH ALL DETAILS
   const renderHealthRecordCard = (record: any) => {
-    console.log(`🎨 RENDERING CARD ${record.id}:`, {
-      temp: record.temp,
-      wt: record.wt,
-      ht: record.ht
-    });
+    // console.log(`🎨 RENDERING CARD ${record.id}:`, {
+    //   temp: record.temp,
+    //   wt: record.wt,
+    //   ht: record.ht
+    // });
 
     return (
       <View key={record.chhist_id} className="bg-white border border-gray-200 rounded-xl p-4 mb-3 shadow-sm  mr-4">

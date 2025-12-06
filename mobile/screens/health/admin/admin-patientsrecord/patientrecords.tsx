@@ -36,72 +36,6 @@ interface PatientRecord {
   medical_condition?: string
 }
 
-// type TabType = "all" | "resident" | "transient"
-
-// const StatusBadge: React.FC<{ type: string }> = ({ type }) => {
-//   const getTypeConfig = (type: string) => {
-//     switch (type.toLowerCase()) {
-//       case "resident":
-//         return {
-//           color: "text-green-700",
-//           bgColor: "bg-green-100",
-//           borderColor: "border-green-200",
-//         }
-//       case "transient":
-//         return {
-//           color: "text-amber-700",
-//           bgColor: "bg-amber-100",
-//           borderColor: "border-amber-200",
-//         }
-//       default:
-//         return {
-//           color: "text-gray-700",
-//           bgColor: "bg-gray-100",
-//           borderColor: "border-gray-200",
-//         }
-//     }
-//   }
-
-//   const typeConfig = getTypeConfig(type)
-//   return (
-//     <View className={`px-3 py-1 rounded-full border ${typeConfig.bgColor} ${typeConfig.borderColor}`}>
-//       <Text className={`text-xs font-semibold ${typeConfig.color}`}>{type}</Text>
-//     </View>
-//   )
-// }
-
-// const TabBar: React.FC<{
-//   activeTab: TabType
-//   setActiveTab: (tab: TabType) => void
-// }> = ({ activeTab, setActiveTab}) => (
-//   <View className="flex-row justify-around bg-white p-2 border-b border-gray-200">
-//     <TouchableOpacity
-//       onPress={() => setActiveTab("all")}
-//       className={`flex-1 items-center py-3 ${activeTab === "all" ? "border-b-2 border-blue-600" : ""}`}
-//     >
-//       <Text className={`text-sm font-medium ${activeTab === "all" ? "text-blue-600" : "text-gray-600"}`}>
-//         All
-//       </Text>
-//     </TouchableOpacity>
-//     <TouchableOpacity
-//       onPress={() => setActiveTab("resident")}
-//       className={`flex-1 items-center py-3 ${activeTab === "resident" ? "border-b-2 border-blue-600" : ""}`}
-//     >
-//       <Text className={`text-sm font-medium ${activeTab === "resident" ? "text-blue-600" : "text-gray-600"}`}>
-//         Residents 
-//       </Text>
-//     </TouchableOpacity>
-//     <TouchableOpacity
-//       onPress={() => setActiveTab("transient")}
-//       className={`flex-1 items-center py-3 ${activeTab === "transient" ? "border-b-2 border-blue-600" : ""}`}
-//     >
-//       <Text className={`text-sm font-medium ${activeTab === "transient" ? "text-blue-600" : "text-gray-600"}`}>
-//         Transients  
-//       </Text>
-//     </TouchableOpacity>
-//   </View>
-// )
-
 const PatientRecordCard: React.FC<{
   record: PatientRecord
   onPress: () => void
@@ -226,7 +160,7 @@ export default function PatientsRecord() {
   }, [refetch]);
 
   const handleRecordPress = (pat_id: string) => {
-    console.log("[DEBUG] Navigating to /records with pat_id:", pat_id);
+    // console.log("[DEBUG] Navigating to /records with pat_id:", pat_id);
     router.push({ pathname: "/my-records/all-records", params: { pat_id: pat_id, mode: "admin" } });
   };
 

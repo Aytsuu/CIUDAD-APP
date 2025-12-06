@@ -2,21 +2,21 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
-from ..models import AcknowledgementReport
+from ..models import ActionReport
 from ..serializers.ar_serializers import *
 from apps.pagination import StandardResultsPagination
 from utils.supabase_client import upload_to_storage, remove_from_storage
 
 class ARCreateView(generics.CreateAPIView):
   serializer_class = ARCreateSerializer
-  queryset = AcknowledgementReport.objects.all()
+  queryset = ActionReport.objects.all()
 
 class ARTableView(generics.ListAPIView):
   serializer_class = ARTableSerializer
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = AcknowledgementReport.objects.all()
+    queryset = ActionReport.objects.all()
     search = self.request.query_params.get('search', '').strip()
     status = self.request.query_params.get('status', None)
 
@@ -45,7 +45,7 @@ class ARFileCreateView(generics.CreateAPIView):
       arf_is_supp = request.data.get('arf_is_supp', False)
 
       if ar_id:
-        ar = AcknowledgementReport.objects.filter(ar_id=ar_id).first()
+        ar = ActionReport.objects.filter(ar_id=ar_id).first()
 
       if files and ar:
         instances = []
@@ -71,7 +71,7 @@ class ARFileCreateView(generics.CreateAPIView):
 
 class ARInfoView(generics.RetrieveAPIView):
    serializer_class = ARTableSerializer
-   queryset = AcknowledgementReport.objects.all()
+   queryset = ActionReport.objects.all()
    lookup_field = 'ar_id'
 
 class ARByDateView(APIView):
@@ -80,7 +80,7 @@ class ARByDateView(APIView):
     month = request.query_params.get('month')
     start_day = request.query_params.get('start_day')
     end_day = request.query_params.get('end_day')
-    ar_reports = AcknowledgementReport.objects.filter(ar_status='Signed')
+    ar_reports = ActionReport.objects.filter(ar_status='Signed')
 
     if year and month:
         ar_reports = ar_reports.filter(
@@ -99,7 +99,7 @@ class ARFileDeleteView(generics.DestroyAPIView):
 
 class ARUpdateView(generics.UpdateAPIView):
   serializer_class = ARBaseSerializer
-  queryset = AcknowledgementReport.objects.all()
+  queryset = ActionReport.objects.all()
   lookup_field = 'ar_id'
 
   def update(self, request, *args, **kwargs):

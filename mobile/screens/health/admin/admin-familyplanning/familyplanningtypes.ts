@@ -267,6 +267,5 @@ export type FPRecordDisplay = {
   patient_name: string;
   date_of_visit: string;
   method_used?: string;
-  // Add other relevant fields for display in the table
 };
 

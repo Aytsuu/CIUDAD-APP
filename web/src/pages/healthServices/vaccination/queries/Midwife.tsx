@@ -54,7 +54,9 @@ export const useSubmitStep1 = () => {
 
           vacrec_id = vaccinationRecord.vacrec_id;
           const age = data.age;
-          console.log("age", data.age);
+          if (process.env.NODE_ENV === 'development') {
+            console.log("age", data.age);
+          }
           if (vacrec_id) {
             await createVaccinationHistory({ vacrec: vacrec_id, assigned_to: data.assignto ? parseInt(data.assignto, 10) : null, vacStck_id, vachist_doseNo: 1, vachist_status: "forwarded", vachist_age: age, staff: staff_id, date_administered: new Date().toISOString().split("T")[0] });
           } else {
@@ -175,7 +177,9 @@ export const useSubmitStep2 = () => {
           }
         }
 
-        console.log("age", form.getValues("age"));
+        if (process.env.NODE_ENV === 'development') {
+          console.log("age", form.getValues("age"));
+        }
         const historyStatus = maxDoses === 1 ? "completed" : "partially vaccinated";
         await createVaccinationHistory({
           vacrec: vacrec_id ?? "",

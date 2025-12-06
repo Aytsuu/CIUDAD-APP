@@ -35,7 +35,9 @@ export default function ScheduledVaccine() {
   const location = useLocation();
   const { Vaccination, patientData } = location.state || {};
   const patientId = patientData?.pat_id;
-  console.log("patrec_id",patientData.patrec_id)
+  if (process.env.NODE_ENV === 'development') {
+    console.log("patrec_id", patientData.patrec_id);
+  }
 
   const { data: unvaccinatedVaccines = [], isLoading: isUnvaccinatedLoading } = useUnvaccinatedVaccines(patientId, patientData.personal_info.per_dob);
   const { data: followupVaccines = [], isLoading: isFollowVaccineLoading } = useFollowupVaccines(patientId);
@@ -53,9 +55,11 @@ export default function ScheduledVaccine() {
 
   // Debug immunization supplies
   useEffect(() => {
-    console.log("Immunization Supplies Data:", immunizationSupplies);
-    console.log("Is Loading:", isSuppliesLoading);
-    console.log("Formatted supplies:", immunizationSupplies?.formatted);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Immunization Supplies Data:", immunizationSupplies);
+      console.log("Is Loading:", isSuppliesLoading);
+      console.log("Formatted supplies:", immunizationSupplies?.formatted);
+    }
   }, [immunizationSupplies, isSuppliesLoading]);
 
   // Use the mutation hook
@@ -81,7 +85,9 @@ export default function ScheduledVaccine() {
         history.vachist_id === Vaccination.vachist_id
       );
       if (foundVaccination) {
-        console.log("Found vaccination in history:", foundVaccination);
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Found vaccination in history:", foundVaccination);
+        }
         setCurrentVaccination(foundVaccination);
       }
     }
@@ -90,11 +96,15 @@ export default function ScheduledVaccine() {
   // Update form with follow-up data when vaccination data is available
   useEffect(() => {
     const vaccination = activeVaccination;
-    console.log("Updating form with vaccination data:", vaccination);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Updating form with vaccination data:", vaccination);
+    }
     
     if (vaccination?.follow_up_visit) {
       const followUp = vaccination.follow_up_visit;
-      console.log("Follow-up data found:", followUp);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Follow-up data found:", followUp);
+      }
       
       // Reset form with new values
       form.reset({
@@ -103,13 +113,17 @@ export default function ScheduledVaccine() {
         followv_description: followUp.followv_description || ""
       });
       
-      console.log("Form updated with values:", {
-        followv_date: followUp.followv_date,
-        followv_status: followUp.followv_status,
-        followv_description: followUp.followv_description
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Form updated with values:", {
+          followv_date: followUp.followv_date,
+          followv_status: followUp.followv_status,
+          followv_description: followUp.followv_description
+        });
+      }
     } else {
-      console.log("No follow-up visit found for vaccination");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("No follow-up visit found for vaccination");
+      }
     }
   }, [activeVaccination, form]);
   
@@ -129,7 +143,9 @@ export default function ScheduledVaccine() {
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
     
-    console.log("Most recent previous vaccination with same vacrec:", sorted[0] || null);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Most recent previous vaccination with same vacrec:", sorted[0] || null);
+    }
     return sorted[0] || null;
   }, [vaccinationHistory, Vaccination]);
 
@@ -141,10 +157,12 @@ export default function ScheduledVaccine() {
   }, [vaccinationHistory, Vaccination]);
 
   useEffect(() => {
-    console.log("Prev:", previousVaccination);
-    console.log("Current:", currentVaccination);
-    console.log("Active vaccination:", activeVaccination);
-    console.log("Form values:", form.getValues());
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Prev:", previousVaccination);
+      console.log("Current:", currentVaccination);
+      console.log("Active vaccination:", activeVaccination);
+      console.log("Form values:", form.getValues());
+    }
     
   }, [previousVaccination, currentVaccination, activeVaccination, form]);
 
@@ -158,12 +176,14 @@ export default function ScheduledVaccine() {
 
   const handleSubmit = () => {
     const formData = form.getValues();
-    console.log("Submitting vaccination with:", {
-      vaccination: activeVaccination,
-      previousVaccination,
-      followUpData: activeVaccination?.follow_up_visit ? formData : undefined,
-      patientId,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Submitting vaccination with:", {
+        vaccination: activeVaccination,
+        previousVaccination,
+        followUpData: activeVaccination?.follow_up_visit ? formData : undefined,
+        patientId,
+      });
+    }
 
     if(selectedSupplyData=="" || !selectedSupplyData){
       showErrorToast("Please select an immunization supply from the list.");
@@ -253,7 +273,9 @@ export default function ScheduledVaccine() {
                         options={immunizationSupplies?.formatted || []}
                         value={selectedSupplyDisplay}
                         onChange={(value) => {
-                          console.log("Selected immunization supply:", value);
+                          if (process.env.NODE_ENV === 'development') {
+                            console.log("Selected immunization supply:", value);
+                          }
                           if (value) {
                             // Find the selected supply to get all its data
                             const selectedSupply = immunizationSupplies?.formatted?.find(
@@ -261,11 +283,13 @@ export default function ScheduledVaccine() {
                             );
                             
                             if (selectedSupply) {
-                              console.log("Selected supply data:", selectedSupply);
-                              console.log("Extracted imzStck_id:", selectedSupply.imzStck_id);
-                              console.log("Extracted inv_id:", selectedSupply.inv_id);
-                              console.log("Available qty:", selectedSupply.availableQty);
-                              console.log("Batch number:", selectedSupply.batchNumber);
+                              if (process.env.NODE_ENV === 'development') {
+                                console.log("Selected supply data:", selectedSupply);
+                                console.log("Extracted imzStck_id:", selectedSupply.imzStck_id);
+                                console.log("Extracted inv_id:", selectedSupply.inv_id);
+                                console.log("Available qty:", selectedSupply.availableQty);
+                                console.log("Batch number:", selectedSupply.batchNumber);
+                              }
 
                               setSelectedSupplyDisplay(value);
                               setSelectedSupplyId(selectedSupply.imzStck_id);

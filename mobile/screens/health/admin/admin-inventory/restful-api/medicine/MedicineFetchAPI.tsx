@@ -16,7 +16,7 @@ export const getMedicinesTable = async (
       }
     });
 
-    console.log("🔍 RAW API Response:", res.data);
+    // console.log("🔍 RAW API Response:", res.data);
 
     // Handle the nested structure
     let medicines = [];
@@ -36,8 +36,8 @@ export const getMedicinesTable = async (
       count = res.data.length;
     }
 
-    console.log("🔍 Processed medicines:", medicines);
-    console.log("🔍 Processed count:", count);
+    // console.log("🔍 Processed medicines:", medicines);
+    // console.log("🔍 Processed count:", count);
 
     return {
       medicines,
