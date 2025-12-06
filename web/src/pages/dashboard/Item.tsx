@@ -271,11 +271,11 @@ export const getItemsConfig = (
         ],
         sidebar: [
           {
-            title: "Recent Certificate Requests",
+            title: "Certificate Requests",
             element: <CertificateSidebar />,
           },
           {
-            title: "Recent Business Permit Requests",
+            title: "Business Permit Requests",
             element: <BusinessSidebar />,
           },
         ],

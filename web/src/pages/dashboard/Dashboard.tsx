@@ -256,7 +256,24 @@ export default function Dashboard() {
                         <div>{component.element}</div>
                       </div>
                     </ProtectedComponent>
-                  ) : (<div>{component.element}</div>)}
+                  ) : component.title === "Certificate Requests" || component.title === "Business Permit Requests" ? (
+                    <div className="bg-white rounded-lg border overflow-hidden shadow-sm flex-shrink-0 mb-4">
+                      {/* Sidebar Header */}
+                      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900">{component.title}</h3>
+                            <p className="text-xs text-gray-600 mt-1">Latest updates and activity</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sidebar Content */}
+                      <div>{component.element}</div>
+                    </div>
+                  ) : (
+                    <div>{component.element}</div>
+                  )}
                 </React.Fragment>
               ))
             )}
