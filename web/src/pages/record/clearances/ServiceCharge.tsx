@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Eye, CheckCircle } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
@@ -25,12 +24,11 @@ function ServiceChargePage() {
   const queryClient = useQueryClient();
   const { showLoading, hideLoading } = useLoading();
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSC, setSelectedSC] = useState<ExtendedServiceCharge | null>(null);
 
   const { data: serviceChargesData, isLoading, error } = useQuery({
-    queryKey: ["paidServiceCharges", currentPage, searchTerm, filterStatus],
+    queryKey: ["paidServiceCharges", currentPage, searchTerm],
     queryFn: () => getPaidServiceCharges(searchTerm, currentPage, 10),
   });
 

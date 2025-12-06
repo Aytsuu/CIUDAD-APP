@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { Search, CheckCircle , Eye, Plus, SquarePen } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -52,7 +51,6 @@ interface ExtendedCertificate extends Certificate {
 }
 
 function CertificatePage() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
