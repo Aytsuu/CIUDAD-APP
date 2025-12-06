@@ -23,7 +23,7 @@ export function PatientSummarySection({
     fullHistoryData,
     chhistId,
 }: PatientSummarySectionProps) {
-    console.log('PatientSummarySection: recordsToDisplay:', recordsToDisplay);
+    // console.log('PatientSummarySection: recordsToDisplay:', recordsToDisplay);
     const [activeTab, setActiveTab] = useState<TableTab>('immunization');
     
     const renderTable = () => {

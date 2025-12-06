@@ -274,7 +274,7 @@ export default function MyMaternalRecordScreen() {
   const nextFollowVisit = [...latestFollowupVisit]
     .filter((visit) => visit.followv_status === "pending") // Only show pending visits
     .sort((a, b) => new Date(a.followv_date).getTime() - new Date(b.followv_date).getTime())[0]
-  console.log("Next Follow-up Visit:", nextFollowVisit)
+  // console.log("Next Follow-up Visit:", nextFollowVisit)
 
   const dateWords = () => {
     return new Date(nextFollowVisit?.followv_date).toLocaleDateString("en-PH", {
@@ -292,7 +292,7 @@ export default function MyMaternalRecordScreen() {
     const grouped: Record<string, PregnancyGroup> = {}
 
     if (!pregnancies || !Array.isArray(pregnancies) || pregnancies.length === 0) {
-      console.log("No valid pregnancies data:", pregnancies)
+      // console.log("No valid pregnancies data:", pregnancies)
       return []
     }
 

@@ -25,10 +25,10 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
       }
 
       return response.map((record: any) => {
-        console.log(
-          "Vaccine Type Choice:",
-          record?.vaccine_stock?.vaccinelist?.vac_type_choices
-        );
+        // console.log(
+        //   "Vaccine Type Choice:",
+        //   record?.vaccine_stock?.vaccinelist?.vac_type_choices
+        // );
         
         return {
           per_dob: record.patient?.personal_info?.per_dob,

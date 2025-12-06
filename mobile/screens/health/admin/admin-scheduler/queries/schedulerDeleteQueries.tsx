@@ -15,7 +15,7 @@ export const useDeleteService = () => {
 			toast.success("Service deleted successfully");
 		},
 		onError: (error) => {
-			console.log("Error deleting service:", error);
+			// console.log("Error deleting service:", error);
 			toast.error('Failed to delete service. ')
 			}});
 		}
@@ -34,7 +34,7 @@ export const useDeleteDay = () => {
 			toast.success("Day deleted successfully");
 		},
 		onError: (error) => {
-			console.log("Error deleteing day:", error);
+			// console.log("Error deleteing day:", error);
 			toast.error('Failed to delete day.');
 		}
 	})

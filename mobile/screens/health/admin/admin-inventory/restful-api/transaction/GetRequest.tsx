@@ -22,7 +22,7 @@ export const getMedicineTransactions = async (page: number, pageSize: number, se
       previous: null
     };
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return {
       results: [],
       count: 0,
@@ -54,7 +54,7 @@ export const getCommodityTransactions = async (page: number, pageSize: number, s
       previous: null
     };
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return {
       results: [],
       count: 0,
@@ -86,7 +86,7 @@ export const getFirstAidTransactions = async (page: number, pageSize: number, se
       previous: null
     };
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return {
       results: [],
       count: 0,
@@ -118,7 +118,7 @@ export const getAntigenTransactions = async (page: number, pageSize: number, sea
       previous: null
     };
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return {
       results: [],
       count: 0,

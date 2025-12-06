@@ -53,14 +53,14 @@ export default function ChildHealthRecordDetails() {
   // Process child data to extract and transform history records
   const processedRecords = useMemo(() => {
     if (!parsedChildData || !parsedChildData.child_health_histories) {
-      console.log("❌ No child health histories found in data");
+      // console.log("❌ No child health histories found in data");
       return [];
     }
 
     const histories = parsedChildData.child_health_histories;
 
     if (!Array.isArray(histories) || histories.length === 0) {
-      console.log("❌ No valid histories array found");
+      // console.log("❌ No valid histories array found");
       return [];
     }
 

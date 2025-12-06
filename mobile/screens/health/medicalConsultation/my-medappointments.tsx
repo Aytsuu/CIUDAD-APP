@@ -387,7 +387,7 @@ const AppointmentTracker = () => {
     mutationFn: ({ appointment_id, reason }: { appointment_id: number; reason: string }) => 
       cancelAppointment(appointment_id, reason),
     onSuccess: () => {
-      console.log('Appointment cancelled successfully');
+      // console.log('Appointment cancelled successfully');
       queryClient.invalidateQueries({ queryKey: ['userAppointments'] });
       setShowCancelModal(false);
       setCancellationReason('');
@@ -404,7 +404,7 @@ const AppointmentTracker = () => {
         const status = error.response.status;
         const data = error.response.data;
         
-        console.log('Error details:', { status, data });
+        // console.log('Error details:', { status, data });
         
         if (status === 400) {
           errorMessage = data.detail || data.error || 'Invalid request. Please check your input.';

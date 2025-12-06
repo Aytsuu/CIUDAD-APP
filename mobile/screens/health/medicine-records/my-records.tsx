@@ -32,7 +32,7 @@ const serializeMedicinePatientData = (medicineRecord: any): SerializedPatientDat
     pat_status: "Active" // Default value
   };
 
-  console.log("Data for serializer:", dataForSerializer);
+  // console.log("Data for serializer:", dataForSerializer);
   const serializedData = serializePatientData(dataForSerializer);
   return serializedData === "" ? null : serializedData;
 };
@@ -51,7 +51,7 @@ export default function IndividualMedicineRecords() {
   const mode = typeof params.mode === "string" ? params.mode : null;
 
   useEffect(() => {
-    console.log("MODE:", mode);
+    // console.log("MODE:", mode);
     if (mode === "admin") {
       const adminPatId = params.pat_id as string;
       if (adminPatId) {
@@ -67,16 +67,16 @@ export default function IndividualMedicineRecords() {
   // Extract and serialize patient data from medicine records
   const patientData = useMemo((): SerializedPatientData | null => {
     if (!apiResponse?.results || apiResponse.results.length === 0) {
-      console.log("No medicine records found");
+      // console.log("No medicine records found");
       return null;
     }
 
     // Get patient data from the first record
     const firstRecord = apiResponse.results[0];
-    console.log("First record patient data:", firstRecord?.pat_details);
+    // console.log("First record patient data:", firstRecord?.pat_details);
 
     const serialized = serializeMedicinePatientData(firstRecord);
-    console.log("Serialized patient data:", serialized);
+    // console.log("Serialized patient data:", serialized);
     return serialized;
   }, [apiResponse?.results]);
 

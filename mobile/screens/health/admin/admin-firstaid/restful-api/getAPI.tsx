@@ -61,7 +61,7 @@ export const getFirstAidCounts = async (search: string = '') => {
 export const getFirstaidStocks = async () => {
   try {
     const response = await api2.get("/inventory/firstaidinventorylist/");
-    console.log(response.data)
+    // console.log(response.data)
 
     return response.data;
   } catch (error) {

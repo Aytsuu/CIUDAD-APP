@@ -13,6 +13,6 @@ export const addCommodity = async (data: Record<string, string>) => {
     });
     return res.data;
   } catch (err) {
-    console.log(err);
+    // console.log(err);
   }
 };

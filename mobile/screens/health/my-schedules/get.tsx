@@ -88,7 +88,7 @@ export const getAllFollowUpVisits = async (filters: AppointmentFilters = {}) => 
       ? `/patientrecords/follow-up-visits-all/?${queryString}`
       : "/patientrecords/follow-up-visits-all/";
 
-    console.log('Fetching URL:', url);
+    // console.log('Fetching URL:', url);
     
     const res = await api2.get(url)
     return res.data || {count: 0, next: null, previous: null, results: []}
@@ -130,7 +130,7 @@ export const getAllTransientAddresses = async () => {
         if (res.status !== 200) {
             throw new Error("Failed to check patient existence");
         }
-        console.log(res);
+        // console.log(res);
         return res.data; // Returns true or false
     } catch (error) {
         console.error("Error checking patient existence:", error);
@@ -145,7 +145,7 @@ export const getChildData = async (id: any): Promise<any> => {
 		if (res.status !== 200) {
 			throw new Error("Failed to fetch child data");
 		}
-		console.log(res);
+		// console.log(res);
 		return res.data; // Returns child data
 	} catch (error) {
 		console.error("Error fetching child data:", error);
@@ -172,10 +172,10 @@ export const getAllAppointments = async (filters: AppointmentFilters = {}) => {
       ? `/patientrecords/all-appointments/?${queryString}`
       : "/patientrecords/all-appointments/";
 
-    console.log('Fetching all appointments URL:', url);
+    // console.log('Fetching all appointments URL:', url);
     
     const res = await api2.get(url);
-     console.log('API Response:', res.data); 
+    //  console.log('API Response:', res.data); 
     return res.data || {count: 0, next: null, previous: null, results: []};
   } catch (error) {
     console.error("Error fetching all appointments:", error);

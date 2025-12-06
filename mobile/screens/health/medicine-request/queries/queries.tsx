@@ -34,7 +34,7 @@ export const getPendingMedicineRequests = async (
     });
     return response.data;
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     return {
       results: [],
       count: 0,

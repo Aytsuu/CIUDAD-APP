@@ -10,7 +10,6 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { formatDate } from '@/helpers/dateHelpers';
 import { useDebounce } from '@/hooks/use-debounce';
 import { PaginationControls } from '../admin/components/pagination-layout';
-import { StatusBadge } from '../admin/components/status-badge';
 import { MedStatusBadge, MedTabBar, MedTabType, TabBar } from '../admin/components/tab-bar';
 
 // Types

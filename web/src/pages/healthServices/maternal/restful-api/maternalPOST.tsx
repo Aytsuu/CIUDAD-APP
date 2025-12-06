@@ -133,15 +133,15 @@ export interface PrenatalRecord {
 
 export const addPrenatalRecord = async (data: PrenatalRecord) => {
   try {
-    console.log("Sending Prenatal Record Data: ", data)
+    // console.log("Sending Prenatal Record Data: ", data)
     const res = await api2.post("maternal/prenatal-record/", data)
 
     return res.data.pf_id
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("Prenatal Records Error: ", error.response?.data || error.message)
+      // console.error("Prenatal Records Error: ", error.response?.data || error.message)
     } else {
-      console.error("Unexpected Error: ", error)
+      // console.error("Unexpected Error: ", error)
     }
     throw error
   }
@@ -231,7 +231,7 @@ export const addPostpartumRecord = async (data: PostpartumCompleteData): Promise
 
     const res = await api2.post("maternal/postpartum_record/", data)
 
-    console.log("Postpartum record created successfully:", res.data)
+    // console.log("Postpartum record created successfully:", res.data)
 
     return res.data
   } catch (error) {

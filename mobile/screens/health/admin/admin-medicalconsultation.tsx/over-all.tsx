@@ -155,7 +155,7 @@ export default function AllMedicalRecord() {
         }
       });
     } catch (error) {
-      console.log("Navigation error:", error);
+      // console.log("Navigation error:", error);
     }
   };
 

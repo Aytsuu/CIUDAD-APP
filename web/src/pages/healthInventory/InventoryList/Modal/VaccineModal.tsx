@@ -138,26 +138,26 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
   }, [noOfDoses, type, setValue, watch]);
 
   const handleFormSubmit = async (data: VaccineType) => {
-    console.log("Form submitted with data:", data); // Debug log
-    console.log("FormData state before update:", formData); // Debug log
+    // console.log("Form submitted with data:", data); // Debug log
+    // console.log("FormData state before update:", formData); // Debug log
     setFormData(data);
-    console.log("FormData state after update:", data); // Debug log
+    // console.log("FormData state after update:", data); // Debug log
   };
 
   const handleConfirmAction = async () => {
-    console.log("Confirm action called"); // Debug log
-    console.log("FormData state:", formData); // Debug log
+    // console.log("Confirm action called"); // Debug log
+    // console.log("FormData state:", formData); // Debug log
 
     // Get fresh data from form instead of relying on state
     const currentFormData = form.getValues();
-    console.log("Current form data from getValues:", currentFormData); // Debug log
+    // console.log("Current form data from getValues:", currentFormData); // Debug log
 
     // Validate the form first
     const isValid = await form.trigger();
-    console.log("Form validation result:", isValid); // Debug log
+    // console.log("Form validation result:", isValid); // Debug log
 
     if (!isValid) {
-      console.log("Form validation failed:", form.formState.errors);
+      // console.log("Form validation failed:", form.formState.errors);
       toast.error("Please fix form errors before submitting");
       return;
     }
@@ -171,13 +171,13 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
       return;
     }
 
-    console.log("Data to submit:", dataToSubmit); // Debug log
+    // console.log("Data to submit:", dataToSubmit); // Debug log
     setIsCheckingDuplicate(true);
 
     try {
-      console.log("Fetching existing vaccine list..."); // Debug log
+      // console.log("Fetching existing vaccine list..."); // Debug log
       const existingVaccineList = await getVaccineList();
-      console.log("Existing vaccine list:", existingVaccineList); // Debug log
+      // console.log("Existing vaccine list:", existingVaccineList); // Debug log
 
       if (!Array.isArray(existingVaccineList)) {
         throw new Error("Invalid API response - expected an array");
@@ -185,7 +185,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
 
       const isDuplicate = isEditMode ? isDuplicateVaccine(existingVaccineList, dataToSubmit.vaccineName, vaccineData?.id) : isDuplicateVaccineList(existingVaccineList, dataToSubmit.vaccineName);
 
-      console.log("Duplicate check result:", isDuplicate); // Debug log
+      // console.log("Duplicate check result:", isDuplicate); // Debug log
 
       if (isDuplicate) {
         form.setError("vaccineName", {
@@ -196,10 +196,10 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
         return;
       }
 
-      console.log("Submitting vaccine data...");
+      // console.log("Submitting vaccine data...");
 
       if (isEditMode) {
-        console.log("Updating vaccine...");
+        // console.log("Updating vaccine...");
         await updateVaccine({
           formData: {
             ...dataToSubmit,
@@ -211,11 +211,11 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
           },
         });
       } else {
-        console.log("Adding new vaccine...");
+        // console.log("Adding new vaccine...");
         await submitVaccine(dataToSubmit);
       }
 
-      console.log("Submission completed, closing modal...");
+      // console.log("Submission completed, closing modal...");
       form.reset();
       onClose();
     } catch (error) {
@@ -395,7 +395,7 @@ export function VaccineModal({ mode, initialData, onClose }: VaccineModalProps) 
             <Button
               type="button"
               onClick={() => {
-                console.log("Submit button clicked"); // Debug log
+                // console.log("Submit button clicked"); // Debug log
                 // Trigger form submission first
                 handleSubmit(handleFormSubmit)();
               }}

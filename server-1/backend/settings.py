@@ -214,6 +214,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'ciudad-app-server-1.onrender.com',
+    '192.168.1.15'
 ]
 
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool) # disable in production
