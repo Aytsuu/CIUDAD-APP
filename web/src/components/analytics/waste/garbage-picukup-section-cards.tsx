@@ -51,24 +51,9 @@ GarbagePickupCard.displayName = "GarbagePickupCard";
 // Card configurations
 const garbagePickupCards = [
   {
-    title: "Pending Pickup",
+    title: "Pickup Requests",
     description: "",
-    dataKey: "pending" as const,
-  },
-  {
-    title: "Accepted Pickup",    
-    description: "",
-    dataKey: "accepted" as const,
-  },
-  {
-    title: "Completed Pickup",
-    description: "",
-    dataKey: "completed" as const,
-  },
-  {
-    title: "Rejected Pickup",
-    description: "",
-    dataKey: "rejected" as const,
+    dataKey: "totalPickup" as const,
   },
 ];
 
@@ -94,11 +79,7 @@ export const useGarbagePickupSectionCards = () => {
   ));
 
   return {
-    pending: cards[0],
-    accepted: cards[1],
-    completed: cards[2],
-    rejected: cards[3],
-    allCards: cards
+    totalPickup: cards[0]
   };
 };
 
