@@ -236,14 +236,60 @@ export const getCertificationRequestsByStatus = async (residentId: string, statu
     }
 };
 
-// Business API - fetch business by resident profile ID
-export const getBusinessByResidentId = async (rpId: string) => {
+// Business API - fetch business by resident profile ID or business respondent ID
+export const getBusinessByResidentId = async (rpId: string, brId?: string) => {
     try {
-        // Fetch business with address details using the correct endpoint
-        const response = await api.get(`/profiling/business/specific/ownership/?rp=${rpId}`);
-        return response.data;
+        // Build query parameters in the same way as the working business module
+        const params: Record<string, any> = {};
+        if (rpId) {
+            params.rp = rpId;
+        }
+        if (brId) {
+            params.br = brId;
+        }
+
+        // Fetch business with address details using the same endpoint
+        const response = await api.get('profiling/business/specific/ownership', {
+            params,
+        });
+
+        const data = response.data;
+
+        // Normalize response so callers can always read from .results
+        if (Array.isArray(data)) {
+            return {
+                count: data.length,
+                next: null,
+                previous: null,
+                results: data,
+            };
+        }
+
+        if (data && Array.isArray(data.results)) {
+            return data;
+        }
+
+        // Fallback: wrap single-object or unexpected shapes
+        return {
+            count: Array.isArray(data?.results) ? data.results.length : (data ? 1 : 0),
+            next: null,
+            previous: null,
+            results: Array.isArray(data?.results)
+                ? data.results
+                : (data ? [data] : []),
+        };
     } catch (error) {
         throw new Error("Failed to fetch business details");
+    }
+};
+
+// Business Respondent API - fetch business respondent by br_id
+export const getBusinessRespondentById = async (brId: string) => {
+    try {
+        const response = await api.get(`/profiling/business/respondent/${brId}/info/`);
+        return response.data;
+    } catch (error) {
+        throw new Error("Failed to fetch business respondent details");
     }
 };
 

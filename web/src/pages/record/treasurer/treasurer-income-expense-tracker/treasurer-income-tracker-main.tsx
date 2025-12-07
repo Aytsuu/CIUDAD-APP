@@ -189,18 +189,47 @@ function IncomeTracking() {
         },        
         { 
             accessorKey: "incp_item", 
-            header: "Particulars",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Particulars
+                </div>
+            ),
+            cell: ({row}) => (
+                <div className="justify-center items-center text-center">{row.getValue("incp_item")}</div>
+            )            
         },
         { 
             accessorKey: "inc_amount", 
-            header: "Amount" },
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Amount
+                </div>
+            ),
+            cell: ({row}) => (
+                <div className="justify-center items-center text-center">{row.getValue("inc_amount")}</div>
+            )              
+        },
         { 
             accessorKey: "inc_additional_notes", 
-            header: "Additional Notes",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Additonal Notes
+                </div>
+            ),
+            cell: ({row}) => (
+                <div className="justify-center items-center text-center">{row.getValue("inc_additional_notes")}</div>
+            )  
         },
         {
             accessorKey: "staff_name",
-            header: "Assigned Staff",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Assigned Staff
+                </div>
+            ),
+            cell: ({row}) => (
+                <div className="justify-center items-center text-center">{row.getValue("staff_name")}</div>
+            )              
         },        
     ];
 
@@ -209,7 +238,11 @@ function IncomeTracking() {
         ...commonColumns,
         { 
             accessorKey: "actions", 
-            header: "Action", 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({row}) => (
                 <div className="flex justify-center gap-2">
                     <TooltipLayout

@@ -11,10 +11,16 @@ export const useGetDisbursementVouchers = (
   archive?: boolean,
   options = {}
 ) => {
-  return useQuery<{ results: DisbursementVoucher[]; count: number }, Error>({
+  return useQuery<{ 
+    results: DisbursementVoucher[]; 
+    count: number; 
+    next: string | null; 
+    previous: string | null 
+  }, Error>({
     queryKey: ["disbursementVouchers", page, pageSize, searchQuery, year, archive],
     queryFn: () => getDisbursementVouchers(page, pageSize, searchQuery, year, archive),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (previous) => previous,
     ...options,
   });
 };

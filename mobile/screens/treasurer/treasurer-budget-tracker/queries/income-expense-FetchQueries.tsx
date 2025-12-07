@@ -21,10 +21,12 @@ export const useIncomeExpenseMainCard = (
     page: number = 1,
     pageSize: number = 10
 ) => {
-    return useQuery<{ results: IncomeExpenseCard[]; count: number }>({
+    return useQuery({
         queryKey: ["income_expense_card", page, pageSize, searchQuery],
         queryFn: () => getIncomeExpenseMainCard(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
@@ -62,10 +64,12 @@ export const useIncomeExpense = (
     selectedMonth?: string,
     isArchive?: boolean 
 ) => {
-    return useQuery<{ results: IncomeExpense[]; count: number }>({
+    return useQuery({
         queryKey: ["incomeExpense", page, pageSize, year, searchQuery, selectedMonth, isArchive],
         queryFn: () => getIncomeExpense(page, pageSize, year, searchQuery, selectedMonth, isArchive),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous, // Add this
+        retry: false, // Add this
     });
 };
 
@@ -121,10 +125,12 @@ export const useExpenseLog = (
     searchQuery?: string, 
     selectedMonth?: string
 ) => {
-    return useQuery<{ results: ExpenseLog[]; count: number }>({
+    return useQuery({
         queryKey: ["expense_log", page, pageSize, year, searchQuery, selectedMonth],
         queryFn: () => getExpenseLog(page, pageSize, year, searchQuery, selectedMonth),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
@@ -147,7 +153,6 @@ export type Income = {
     staff_name: string;
 };
 
-
 export const useIncomeData = (
     page: number = 1,
     pageSize: number = 10,
@@ -156,13 +161,14 @@ export const useIncomeData = (
     selectedMonth?: string,
     isArchive?: boolean
 ) => {
-    return useQuery<{ results: Income[]; count: number }>({
+    return useQuery({
         queryKey: ["income", page, pageSize, year, searchQuery, selectedMonth, isArchive],
         queryFn: () => getIncomeData(page, pageSize, year, searchQuery, selectedMonth, isArchive),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous, // Add this
+        retry: false, // Add this
     });
 };
-
 
 
 

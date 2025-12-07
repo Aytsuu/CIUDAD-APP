@@ -8,7 +8,7 @@ export const useDeleteAnnualGrossSales = (onSuccess?: () => void) => {
     const {toast} = useToastContext();
 
     return useMutation({
-      mutationFn: (ags_id: number) => deleteAnnualGrossSales(ags_id),
+      mutationFn: (values: {ags_id: number, staff_id: string}) => deleteAnnualGrossSales(values.ags_id, values.staff_id),
       onSuccess: () => {
 
         toast.success('Record deleted successfully')

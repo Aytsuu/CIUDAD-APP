@@ -39,7 +39,7 @@ urlpatterns = [
     path('update-minutes-of-meeting/<int:mom_id>/', UpdateMinutesOfMeetingView.as_view(), name='update-minutes-of-meeting'),
     path('delete-minutes-of-meeting/<int:mom_id>/', DeleteMinutesOfMeetingView.as_view(), name='delete-minutes-of-meeting'),
     path('mom-file/', MOMFileView.as_view(), name='mom-file'),
-    path('delete-mom-file/<int:mom_id>/', DeleteMOMFileView.as_view(), name="delete-mom-file"),
+    path('delete-mom-file/<str:momf_id>/', DeleteMOMFileView.as_view(), name="delete-mom-file"),
     # mobile
     path('mom-details-view/<int:mom_id>/', MinutesOfMeetingDetailView.as_view(), name='mom-detail-view' ),
     path('mom-supp-doc/', MOMSuppDocView.as_view(), name='mom-supp-doc',),

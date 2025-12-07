@@ -6,19 +6,23 @@ import { getBudgetPlanActive, getBudgetPlanInactive, getBudgetDetails, getBudget
 export type BudgetPlanType = BudgetPlan
 
 export const usegetBudgetPlanActive = (page: number, pageSize: number, searchQuery: string,) => {
-    return useQuery<{results: BudgetPlanType[], count: number}>({
+    return useQuery({
         queryKey: ["activeBudgetPlan", page, pageSize, searchQuery], 
         queryFn:() => getBudgetPlanActive(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
 
 export const usegetBudgetPlanInactive = (page: number, pageSize: number, searchQuery: string,) => {
-      return useQuery<{results: BudgetPlanType[], count: number}>({
+      return useQuery({
         queryKey: ["inactiveBudgetPlan", page, pageSize, searchQuery], 
         queryFn:() => getBudgetPlanInactive(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
@@ -44,11 +48,13 @@ export type BudgetPlanHistory = {
   bph_transfer_amount: number;
 }
 
-export const useGetBudgetPlanHistory = (planId: string) => {
-  return useQuery<BudgetPlanHistory[]>({
-    queryKey: ['budgetPlanHistory', planId],
-    queryFn: () => getBudgetPlanHistory(planId),
-    staleTime: 1000 * 60 * 30
+export const useGetBudgetPlanHistory = (planId: string, page: number, pageSize: number) => {
+    return useQuery({
+    queryKey: ['budgetPlanHistory', planId, page, pageSize],
+    queryFn: () => getBudgetPlanHistory(planId, page, pageSize),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
   })
 }
 

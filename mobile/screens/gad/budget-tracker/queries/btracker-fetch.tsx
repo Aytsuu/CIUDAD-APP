@@ -35,9 +35,12 @@ export const useGADBudgets = (
     enabled: !!year,
     select: (data) => ({
       results: data.results.map(transformBudgetEntry),
-      count: data.count
+      count: data.count,
+      next: data.next, 
+      previous: data.previous 
     }),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (previous) => previous, 
   });
 };
 

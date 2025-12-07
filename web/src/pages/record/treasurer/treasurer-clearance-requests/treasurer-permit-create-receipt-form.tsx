@@ -274,28 +274,7 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                         {certificateRequest.req_payment_status}
                                     </p>
                                 </div>
-                                
-                                {/* Show Gross Sales Range for Business Clearance */}
-                                {isBusinessClearance && matchingGrossSalesRate && (
-                                    <>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-600">Gross Sales Range</label>
-                                            <p className="text-base text-gray-900 font-medium mt-1">
-                                                ₱{parseFloat(matchingGrossSalesRate.ags_minimum).toLocaleString('en-US', { minimumFractionDigits: 2 })} - ₱{parseFloat(matchingGrossSalesRate.ags_maximum).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                            </p>
-                                        </div>
-                                        {certificateRequest.gross_sales_amount && (
-                                            <div>
-                                                <label className="text-sm font-medium text-gray-600">Actual Gross Sales</label>
-                                                <p className="text-base text-gray-900 font-medium mt-1">
-                                                    ₱{certificateRequest.gross_sales_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                                </p>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                                
-                                <div className={isBusinessClearance && matchingGrossSalesRate ? "md:col-span-2" : ""}>
+                                <div>
                                     <label className="text-sm font-medium text-gray-600">Amount to Pay</label>
                                     <p className="text-base text-blue-600 font-semibold mt-1">
                                         {calculatedAmount > 0 
@@ -304,9 +283,7 @@ function ReceiptForm({ certificateRequest, onSuccess }: ReceiptFormProps){
                                                 ? `₱${certificateRequest.req_amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
                                                 : "No amount calculated"
                                         }
-                                        {isBusinessClearance && matchingGrossSalesRate && (
-                                            <span className="text-xs text-gray-500 ml-2">(Based on gross sales range rate)</span>
-                                        )}
+                                        
                                     </p>
                                 </div>
                             </div>

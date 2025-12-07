@@ -12,13 +12,13 @@ const CertChoices = () => {
     {
       title: "Personal",
       route: "/(request)/certification-request/cert-personal",
-      icon: "person-outline",
+      icon: "",
       gradient: ['#3b82f6', '#2563eb'],
     },
     {
       title: "Business Permit and Business Clearance",
       route: "/(request)/certification-request/cert-business-request",
-      icon: "document-text-outline",
+      icon: "",
       gradient: ['#60a5fa', '#3b82f6'],
     },
   ];

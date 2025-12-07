@@ -123,33 +123,51 @@ function ExpenseLogMain() {
         },
         { 
             accessorKey: "el_particular", 
-            header: "Particulars",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Particulars
+                </div>
+            ),
             cell: ({row}) => (
-                <div>{row.getValue("el_particular")}</div>
+                <div className="text-center">{row.getValue("el_particular")}</div>
             )
         },
         { 
             accessorKey: "el_proposed_budget", 
-            header: "Proposed Budget" ,
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Proposed Budget
+                </div>
+            ),
             cell: ({row}) => (
-                <div>₱{row.getValue("el_proposed_budget")}</div>
+                <div className="text-center">₱{row.getValue("el_proposed_budget")}</div>
             )
         },
         { 
             accessorKey: "el_actual_expense", 
-            header: "Actual Expense" ,
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Actual Expense
+                </div>
+            ),
             cell: ({row}) => (
-                <div>₱{row.getValue("el_actual_expense")}</div>
+                <div className="text-center">₱{row.getValue("el_actual_expense")}</div>
             )
         },              
         { 
             accessorKey: "el_return_amount", 
-            header: "Return/Excess",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Return/Excess
+                </div>
+            ),
             cell: ({ row }) => (
                 <div className={
-                    parseFloat(row.getValue("el_proposed_budget")) > parseFloat(row.getValue("el_actual_expense"))
-                        ? "text-green-600 font-medium"
-                        : "text-red-600 font-medium"
+                    `${
+                        parseFloat(row.getValue("el_proposed_budget")) > parseFloat(row.getValue("el_actual_expense"))
+                        ? "text-green-600"
+                        : "text-red-600"
+                    } font-medium text-center w-full`
                 }>
                     {parseFloat(row.getValue("el_proposed_budget")) > parseFloat(row.getValue("el_actual_expense"))
                         ? `+ ₱${row.getValue("el_return_amount")}`
@@ -159,7 +177,11 @@ function ExpenseLogMain() {
         },  
         {
             accessorKey: "staff_name",
-            header: "Assigned Staff",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Assigned Staff
+                </div>
+            ),
         },   
     ];
 

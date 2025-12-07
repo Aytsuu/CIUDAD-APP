@@ -7,7 +7,12 @@ export const getdonationreq = async (
   searchQuery?: string,
   category?: string,
   status?: string
-): Promise<{ results: any[]; count: number }> => {
+): Promise<{ 
+  results: any[]; 
+  count: number; 
+  next: string | null; 
+  previous: string | null 
+}> => {
   try {
     const params: any = {
       page,
@@ -24,7 +29,9 @@ export const getdonationreq = async (
     if (res.data.results !== undefined) {
       return {
         results: res.data.results || [],
-        count: res.data.count || 0
+        count: res.data.count || 0,
+        next: res.data.next || null,
+        previous: res.data.previous || null
       };
     }
     
@@ -32,12 +39,20 @@ export const getdonationreq = async (
     const data = res.data?.data ?? res.data ?? [];
     return {
       results: Array.isArray(data) ? data : [],
-      count: Array.isArray(data) ? data.length : 0
+      count: Array.isArray(data) ? data.length : 0,
+      next: null,
+      previous: null
     };
   } catch (err) {
-    return { results: [], count: 0 };
+    return { 
+      results: [], 
+      count: 0,
+      next: null,
+      previous: null
+    };
   }
 };
+
 
 export const getPersonalList = async () => {
   try {

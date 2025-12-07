@@ -93,10 +93,12 @@ export type GarbageRequestPending = {
 }  
 
 export const useGetGarbagePendingRequest = (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results:GarbageRequestPending[], count: number}>({
+    return useQuery({
         queryKey: ["garbageRequest", page, pageSize, searchQuery],
         queryFn:() =>  getGarbagePendingRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 }
 
@@ -127,10 +129,12 @@ export type GarbageRequestReject = {
 
 
 export const useGetGarbageRejectRequest = (page: number, pageSize: number, searchQuery: string) => {
-return useQuery<{results: GarbageRequestReject[], count: number}>({
+    return useQuery({
         queryKey: ["garbageRejectedRequest", page, pageSize, searchQuery], 
         queryFn:() => getGarbageRejectedRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 }
 
@@ -170,10 +174,12 @@ export type GarbageRequestAccept = {
 
 
 export const useGetGarbageAcceptRequest = (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results:GarbageRequestAccept[], count: number}>({
+    return useQuery({
         queryKey: ["garbageAcceptedRequest", page, pageSize, searchQuery], 
         queryFn:() => getGarbageAcceptedRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 }
 
@@ -241,10 +247,12 @@ export type GarbageRequestComplete = {
 }
 
 export const useGetGarbageCompleteRequest = (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results:GarbageRequestComplete[], count: number}>({
+    return useQuery({
         queryKey: ["garbageCompletedRequest", page, pageSize, searchQuery], 
         queryFn:() => getGarbageCompletedRequest(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 }
 

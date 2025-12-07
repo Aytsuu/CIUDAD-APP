@@ -273,6 +273,39 @@ class ActivityLogMixin:
                     return 'Payment'
         return 'Updated'
 
+    def _get_field_label(self, field_name: str) -> str:
+        """Convert field names to human-readable labels."""
+        # Field name to label mapping
+        field_labels = {
+            # Income_Expense_Tracking fields
+            'iet_datetime': 'Date and Time',
+            'iet_amount': 'Amount',
+            'iet_actual_amount': 'Actual Amount',
+            'iet_additional_notes': 'Additional Notes',
+            'iet_serial_num': 'Serial Number',
+            'iet_check_num': 'Check Number',
+            'iet_entryType': 'Entry Type',
+            'iet_receipt_image': 'Receipt Image',
+            'iet_is_archive': 'Archive Status',
+            # Add more field mappings as needed
+        }
+        
+        # If exact match found, return it
+        if field_name in field_labels:
+            return field_labels[field_name]
+        
+        # Try to convert common patterns
+        # Remove common prefixes (iet_, el_, etc.)
+        cleaned = field_name
+        for prefix in ['iet_', 'el_', 'exp_', 'inc_', 'dis_', 'plan_', 'inv_', 'cr_', 'bpr_']:
+            if cleaned.startswith(prefix):
+                cleaned = cleaned[len(prefix):]
+                break
+        
+        # Convert snake_case to Title Case
+        words = cleaned.split('_')
+        return ' '.join(word.capitalize() for word in words)
+
     def _build_diff_description(self, model_instance, old_values: dict, new_values: dict) -> str:
         model_name = model_instance.__class__.__name__
         changes = []
@@ -285,7 +318,9 @@ class ActivityLogMixin:
             def _short(v):
                 s = str(v)
                 return (s[:60] + '…') if len(s) > 60 else s
-            changes.append(f"{key}: '{_short(old)}' → '{_short(new)}'")
+            # Use human-readable field label instead of raw field name
+            field_label = self._get_field_label(key)
+            changes.append(f"{field_label}: '{_short(old)}' → '{_short(new)}'")
         changes_str = "; ".join(changes) if changes else "No field-level changes recorded"
         return f"{model_name} changes: {changes_str}"
 

@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
+import React, { useRef } from "react";
+import { View, Text, TouchableOpacity, FlatList, RefreshControl, ActivityIndicator } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import PageLayout from '@/screens/_PageLayout';
 import { useRouter } from "expo-router";
@@ -12,6 +12,8 @@ import { LoadingModal } from "@/components/ui/loading-modal";
 import { ConfirmationModal } from "@/components/ui/confirmationModal";
 import { SelectLayout } from "@/components/ui/select-layout";
 import { useToastContext } from "@/components/ui/toast";
+
+const INITIAL_PAGE_SIZE = 10;
 
 export default function CertTrackingMain() {
   const router = useRouter();
@@ -30,6 +32,10 @@ export default function CertTrackingMain() {
   const [showSearch, setShowSearch] = React.useState(false);
   const [cancellingItemId, setCancellingItemId] = React.useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [pageSize, setPageSize] = React.useState<number>(INITIAL_PAGE_SIZE);
+  const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
+  const [isLoadMore, setIsLoadMore] = React.useState<boolean>(false);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   
   // Check if any cancellation is in progress
   const isCancellingAny = isCancelling || isCancellingBusiness || isCancellingService;
@@ -247,13 +253,216 @@ export default function CertTrackingMain() {
   const handleSearch = () => {
     setSearchQuery(searchInputVal);
     setShowSearch(false);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    setPageSize(INITIAL_PAGE_SIZE);
     await refetch();
     setIsRefreshing(false);
   };
+
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  const handleLoadMore = () => {
+    if (isScrolling && filteredItems.length > pageSize) {
+      setIsLoadMore(true);
+      setTimeout(() => {
+        setPageSize((prev) => prev + 5);
+        setIsLoadMore(false);
+      }, 300);
+    }
+  };
+
+  // Compute filtered, sorted, and paginated items for current tab
+  const { filteredItems, paginatedItems } = React.useMemo(() => {
+    const items = activeTab === 'personal' ? data?.personal || []
+      : activeTab === 'business' ? data?.business || []
+      : data?.serviceCharge || [];
+    
+    // Filter items
+    const filtered = items.filter((i: any) => {
+      const normalizedStatus = getNormalizedStatus(extractStatus(i));
+      const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
+      
+      const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
+      let paymentMatch = true;
+      if (paymentFilter !== 'all') {
+        if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
+          paymentMatch = false;
+        } else if (paymentFilter === 'unpaid') {
+          paymentMatch = paymentStatus === 'unpaid';
+        } else if (paymentFilter === 'paid') {
+          paymentMatch = paymentStatus === 'paid';
+        }
+      }
+      
+      // Search matching based on tab type
+      let searchMatch = true;
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        if (activeTab === 'personal') {
+          searchMatch = (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchLower);
+        } else if (activeTab === 'business') {
+          searchMatch = (i?.purpose ?? "Business Permit").toLowerCase().includes(searchLower);
+        } else {
+          searchMatch = (i?.purpose ?? "Service Charge").toLowerCase().includes(searchLower);
+        }
+      }
+      
+      return statusMatch && paymentMatch && searchMatch;
+    });
+    
+    // Sort items
+    const sorted = filtered.sort((a: any, b: any) => {
+      const statusOrder: Record<string, number> = { 
+        'in_progress': 1, 
+        'completed': 2, 
+        'cancelled': 3,
+        'declined': 4,
+        'pending': 1
+      };
+      const statusA = getNormalizedStatus(extractStatus(a));
+      const statusB = getNormalizedStatus(extractStatus(b));
+      
+      const orderA = statusOrder[statusA] || 1;
+      const orderB = statusOrder[statusB] || 1;
+      
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      
+      // If same status, sort by date (newest first)
+      const dateA = new Date(a?.req_request_date || a?.req_date || a?.cr_req_request_date || 0);
+      const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    // Paginate items
+    const paginated = sorted.slice(0, pageSize);
+    
+    return { filteredItems: sorted, paginatedItems: paginated };
+  }, [data, activeTab, statusFilter, paymentFilter, searchQuery, pageSize]);
+
+  // Reset pageSize when filters/tabs change
+  React.useEffect(() => {
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [statusFilter, paymentFilter, activeTab, searchQuery]);
+
+  // Unified render function for items
+  const renderItem = React.useCallback(({ item }: { item: any }) => {
+    const paymentStatus = (getPaymentStatus(item) || "").toLowerCase();
+    
+    // Get purpose based on tab type
+    let purpose = "Request";
+    if (activeTab === 'personal') {
+      purpose = item?.purpose?.pr_purpose ?? item?.purpose ?? "Certification";
+    } else if (activeTab === 'business') {
+      purpose = item?.purpose ?? "Business Permit";
+    } else {
+      purpose = item?.purpose ?? "Service Charge";
+    }
+    
+    // Get request date
+    const requestDate = item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req;
+    
+    // Get completion date based on tab type
+    let completionDate = null;
+    if (activeTab === 'personal') {
+      completionDate = item?.cr_date_completed || item?.date_completed || item?.ic_date_of_issuance;
+    } else if (activeTab === 'business') {
+      completionDate = item?.cr_date_completed || item?.date_completed || item?.issued_business_permit?.ibp_date_of_issuance || item?.req_date_completed;
+    } else {
+      completionDate = item?.cr_date_completed || item?.date_completed || item?.issued_serviceCharge?.isc_date_of_issuance || item?.req_date_completed;
+    }
+    
+    // Get paid date
+    const paidDate = item?.cr_pay_date || item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid;
+    
+    return (
+      <View className="px-6 pt-4">
+        <View className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+          <View className="flex-row justify-between items-center mb-2">
+            <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(purpose)}</Text>
+            <View className="flex-row gap-2">
+              {getStatusBadge(extractStatus(item))}
+            </View>
+          </View>
+          <View className="flex-row justify-between items-center mb-1">
+            <Text className="text-gray-500 text-xs">Payment Status:</Text>
+            {getPaymentBadge(getPaymentStatus(item))}
+          </View>
+          <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(requestDate)}</Text>
+          {paymentStatus === 'unpaid' && (() => {
+            const dueDateStatus = getDueDateStatus(requestDate);
+            const dueDateText = formatDueDate(requestDate);
+            return (
+              <Text className={`text-xs mt-1 ${
+                dueDateStatus === 'warning' 
+                  ? 'text-orange-600 font-medium' 
+                  : 'text-gray-500'
+              }`}>
+                Due Date: {dueDateText}
+                {dueDateStatus === 'warning' && ' (Due Soon)'}
+              </Text>
+            );
+          })()}
+          {paymentStatus === 'paid' && paidDate && (
+            <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(paidDate)}</Text>
+          )}
+          {getNormalizedStatus(extractStatus(item)) === 'completed' && completionDate && (
+            <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(completionDate)}</Text>
+          )}
+          {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
+            <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_cancelled)}</Text>
+          )}
+          {getNormalizedStatus(extractStatus(item)) === 'declined' && (
+            <>
+              <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_declined)}</Text>
+              {getDeclineReason(item) && (
+                <Text className="text-gray-500 text-xs mt-1">Decline Reason: {getDeclineReason(item)}</Text>
+              )}
+            </>
+          )}
+          {canShowCancelButton(item) && (
+            <View className="mt-3">
+              <ConfirmationModal
+                trigger={
+                  <TouchableOpacity
+                    disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
+                    className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
+                    activeOpacity={0.8}
+                  >
+                    <Text className="text-red-700 text-xs font-medium">
+                      {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)
+                        ? 'Cancelling…'
+                        : 'Cancel Request'}
+                    </Text>
+                  </TouchableOpacity>
+                }
+                title="Cancel Request"
+                description="Are you sure you want to cancel this request? This action cannot be undone."
+                actionLabel="Yes, Cancel"
+                variant="destructive"
+                onPress={() => handleCancel(item)}
+                loading={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
+                loadingMessage="Cancelling request..."
+              />
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  }, [activeTab, cancellingItemId, handleCancel]);
 
   if (authLoading) {
     return (
@@ -419,505 +628,78 @@ export default function CertTrackingMain() {
             </View>
 
             {/* Tab Content */}
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              className="p-6"
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={handleRefresh}
-                  colors={['#00a8f0']}
-                  tintColor="#00a8f0"
-                />
-              }
-              contentContainerStyle={{ flexGrow: 1, minHeight: '100%' }}
-              nestedScrollEnabled={true}
-            >
-              {activeTab === 'personal' ? (
-                <>
-                  {data?.personal?.filter((i: any) => {
-                    const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                    const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
-                    
-                    const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                    // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
-                    // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
-                    let paymentMatch = true;
-                    if (paymentFilter !== 'all') {
-                      // If payment status is declined or cancelled, it should not match unpaid or paid filters
-                      if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
-                        paymentMatch = false;
-                      } else if (paymentFilter === 'unpaid') {
-                        paymentMatch = paymentStatus === 'unpaid';
-                      } else if (paymentFilter === 'paid') {
-                        paymentMatch = paymentStatus === 'paid';
-                      }
-                    }
-                    const searchMatch = !searchQuery || 
-                      (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
-                    
-                    
-                    return statusMatch && paymentMatch && searchMatch;
-                  }).length ? (
-                    data.personal
-                      .filter((i: any) => {
-                        const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                        const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
-                        
-                        const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                        // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
-                        // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
-                        let paymentMatch = true;
-                        if (paymentFilter !== 'all') {
-                          // If payment status is declined or cancelled, it should not match unpaid or paid filters
-                          if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
-                            paymentMatch = false;
-                          } else if (paymentFilter === 'unpaid') {
-                            paymentMatch = paymentStatus === 'unpaid';
-                          } else if (paymentFilter === 'paid') {
-                            paymentMatch = paymentStatus === 'paid';
-                          }
-                        }
-                        const searchMatch = !searchQuery || 
-                          (i?.purpose?.pr_purpose ?? i?.purpose ?? "Certification").toLowerCase().includes(searchQuery.toLowerCase());
-                        
-                        return statusMatch && paymentMatch && searchMatch;
-                      })
-                      .sort((a: any, b: any) => {
-                        // Sort by status: In Progress first, then Completed, then Cancelled, then Declined
-                        const statusOrder: Record<string, number> = { 
-                          'in_progress': 1, 
-                          'completed': 2, 
-                          'cancelled': 3,
-                          'declined': 4,
-                          'pending': 1 // Treat pending as in_progress
-                        };
-                        const statusA = getNormalizedStatus(extractStatus(a));
-                        const statusB = getNormalizedStatus(extractStatus(b));
-                        
-                        const orderA = statusOrder[statusA] || 1;
-                        const orderB = statusOrder[statusB] || 1;
-                        
-                        if (orderA !== orderB) {
-                          return orderA - orderB;
-                        }
-                        
-                        // If same status, sort by date (newest first)
-                        const dateA = new Date(a?.req_request_date || a?.req_date || a?.cr_req_request_date || 0);
-                        const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
-                        return dateB.getTime() - dateA.getTime();
-                      })
-                      .map((item: any, idx: number) => {
-                        const paymentStatus = (getPaymentStatus(item) || "").toLowerCase();
-                        return (
-                      <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                        <View className="flex-row justify-between items-center mb-2">
-                          <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(item?.purpose?.pr_purpose ?? item?.purpose ?? "Certification")}</Text>
-                          <View className="flex-row gap-2">
-                            {getStatusBadge(extractStatus(item))}
-                          </View>
-                        </View>
-                        <View className="flex-row justify-between items-center mb-1">
-                          <Text className="text-gray-500 text-xs">Payment Status:</Text>
-                          {getPaymentBadge(getPaymentStatus(item))}
-                        </View>
-                        <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        {paymentStatus === 'unpaid' && (() => {
-                          const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
-                          const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
-                          return (
-                            <Text className={`text-xs mt-1 ${
-                              dueDateStatus === 'warning' 
-                                ? 'text-orange-600 font-medium' 
-                                : 'text-gray-500'
-                            }`}>
-                              Due Date: {dueDateText}
-                              {dueDateStatus === 'warning' && ' (Due Soon)'}
-                            </Text>
-                          );
-                        })()}
-                        {paymentStatus === 'paid' && (item?.cr_pay_date || item?.invoice?.inv_date) && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.cr_pay_date || item?.invoice?.inv_date)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'completed' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.ic_date_of_issuance)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_cancelled)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'declined' && (
-                          <>
-                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_declined)}</Text>
-                            {getDeclineReason(item) && (
-                              <Text className="text-gray-500 text-xs mt-1">Decline Reason: {getDeclineReason(item)}</Text>
-                            )}
-                          </>
-                        )}
-                       {canShowCancelButton(item) && (
-                          <View className="mt-3">
-                            <ConfirmationModal
-                              trigger={
-                                <TouchableOpacity
-                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
-                                  className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
-                                  activeOpacity={0.8}
-                                >
-                                  <Text className="text-red-700 text-xs font-medium">
-                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)
-                                      ? 'Cancelling…'
-                                      : 'Cancel Request'}
-                                  </Text>
-                                </TouchableOpacity>
-                              }
-                              title="Cancel Request"
-                              description="Are you sure you want to cancel this request? This action cannot be undone."
-                              actionLabel="Yes, Cancel"
-                              variant="destructive"
-                              onPress={() => handleCancel(item)}
-                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
-                              loadingMessage="Cancelling request..."
-                            />
-                          </View>
-                        )}
-
-                      </View>
-                      )})
-                  ) : (
-                    <View className="flex-1 items-center justify-center py-12">
-                      <View className="items-center">
-                        <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-                          {searchQuery ? `No ${formatTabName(activeTab)} requests found for "${searchQuery}"` : `No ${formatTabName(activeTab)} requests yet`}
-                        </Text>
-                        <Text className="text-gray-500 text-sm text-center">
-                          {searchQuery ? 'Try a different search term' : `Your ${formatTabName(activeTab)} requests will appear here`}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </>
-              ) : activeTab === 'business' ? (
-                <>
-                  {data?.business?.filter((i: any) => {
-                    const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                    const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
-                    
-                    const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                    // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
-                    // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
-                    let paymentMatch = true;
-                    if (paymentFilter !== 'all') {
-                      // If payment status is declined or cancelled, it should not match unpaid or paid filters
-                      if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
-                        paymentMatch = false;
-                      } else if (paymentFilter === 'unpaid') {
-                        paymentMatch = paymentStatus === 'unpaid';
-                      } else if (paymentFilter === 'paid') {
-                        paymentMatch = paymentStatus === 'paid';
-                      }
-                    }
-                    const searchMatch = !searchQuery || 
-                      (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
-                    
-                    return statusMatch && paymentMatch && searchMatch;
-                  }).length ? (
-                    data.business
-                      .filter((i: any) => {
-                        const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                        const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
-                        
-                        const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                        // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
-                        // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
-                        let paymentMatch = true;
-                        if (paymentFilter !== 'all') {
-                          // If payment status is declined or cancelled, it should not match unpaid or paid filters
-                          if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
-                            paymentMatch = false;
-                          } else if (paymentFilter === 'unpaid') {
-                            paymentMatch = paymentStatus === 'unpaid';
-                          } else if (paymentFilter === 'paid') {
-                            paymentMatch = paymentStatus === 'paid';
-                          }
-                        }
-                        const searchMatch = !searchQuery || 
-                          (i?.purpose ?? "Business Permit").toLowerCase().includes(searchQuery.toLowerCase());
-                        
-                        return statusMatch && paymentMatch && searchMatch;
-                      })
-                      .sort((a: any, b: any) => {
-                        // Sort by status: In Progress first, then Completed, then Cancelled, then Declined
-                        const statusOrder: Record<string, number> = { 
-                          'in_progress': 1, 
-                          'completed': 2, 
-                          'cancelled': 3,
-                          'declined': 4,
-                          'pending': 1 // Treat pending as in_progress
-                        };
-                        const statusA = getNormalizedStatus(extractStatus(a));
-                        const statusB = getNormalizedStatus(extractStatus(b));
-                        
-                        const orderA = statusOrder[statusA] || 1;
-                        const orderB = statusOrder[statusB] || 1;
-                        
-                        if (orderA !== orderB) {
-                          return orderA - orderB;
-                        }
-                        
-                        // If same status, sort by date (newest first)
-                        const dateA = new Date(a?.req_request_date || a?.req_date || a?.cr_req_request_date || 0);
-                        const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
-                        return dateB.getTime() - dateA.getTime();
-                      })
-                      .map((item: any, idx: number) => {
-                        const paymentStatus = (getPaymentStatus(item) || "").toLowerCase();
-                        return (
-                      <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                        <View className="flex-row justify-between items-center mb-2">
-                          <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(item?.purpose ?? "Business Permit")}</Text>
-                          <View className="flex-row gap-2">
-                            {getStatusBadge(extractStatus(item))}
-                          </View>
-                        </View>
-                        <View className="flex-row justify-between items-center mb-1">
-                          <Text className="text-gray-500 text-xs">Payment Status:</Text>
-                          {getPaymentBadge(getPaymentStatus(item))}
-                        </View>
-                        <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date)}</Text>
-                        {paymentStatus === 'unpaid' && (() => {
-                          const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
-                          const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date);
-                          return (
-                            <Text className={`text-xs mt-1 ${
-                              dueDateStatus === 'warning' 
-                                ? 'text-orange-600 font-medium' 
-                                : 'text-gray-500'
-                            }`}>
-                              Due Date: {dueDateText}
-                              {dueDateStatus === 'warning' && ' (Due Soon)'}
-                            </Text>
-                          );
-                        })()}
-                        {paymentStatus === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date) && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'completed' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.issued_business_permit?.ibp_date_of_issuance || item?.req_date_completed)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_cancelled)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'declined' && (
-                          <>
-                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_declined)}</Text>
-                            {getDeclineReason(item) && (
-                              <Text className="text-gray-500 text-xs mt-1">Decline Reason: {getDeclineReason(item)}</Text>
-                            )}
-                          </>
-                        )}
-                        {canShowCancelButton(item) && (
-                          <View className="mt-3">
-                            <ConfirmationModal
-                              trigger={
-                                <TouchableOpacity
-                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
-                                  className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
-                                  activeOpacity={0.8}
-                                >
-                                  <Text className="text-red-700 text-xs font-medium">
-                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id) ? 'Cancelling…' : 'Cancel Request'}
-                                  </Text>
-                                </TouchableOpacity>
-                              }
-                              title="Cancel Request"
-                              description="Are you sure you want to cancel this request? This action cannot be undone."
-                              actionLabel="Yes, Cancel"
-                              variant="destructive"
-                              onPress={() => handleCancel(item)}
-                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
-                              loadingMessage="Cancelling request..."
-                            />
-                          </View>
-                        )}
-                      </View>
-                      )})
-                  ) : (
-                    <View className="flex-1 items-center justify-center py-12">
-                      <View className="items-center">
-                        <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-                          {searchQuery ? `No ${formatTabName(activeTab)} requests found for "${searchQuery}"` : `No ${formatTabName(activeTab)} requests yet`}
-                        </Text>
-                        <Text className="text-gray-500 text-sm text-center">
-                          {searchQuery ? 'Try a different search term' : `Your ${formatTabName(activeTab)} requests will appear here`}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </>
-              ) : (
-                <>
-                  {(data as any)?.serviceCharge?.filter((i: any) => {
-                    const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                    const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
-                    
-                    const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                    // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
-                    // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
-                    let paymentMatch = true;
-                    if (paymentFilter !== 'all') {
-                      // If payment status is declined or cancelled, it should not match unpaid or paid filters
-                      if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
-                        paymentMatch = false;
-                      } else if (paymentFilter === 'unpaid') {
-                        paymentMatch = paymentStatus === 'unpaid';
-                      } else if (paymentFilter === 'paid') {
-                        paymentMatch = paymentStatus === 'paid';
-                      }
-                    }
-                    const searchMatch = !searchQuery || 
-                      (i?.purpose ?? "Service Charge").toLowerCase().includes(searchQuery.toLowerCase());
-                    
-                    return statusMatch && paymentMatch && searchMatch;
-                  }).length ? (
-                    (data as any).serviceCharge
-                      .filter((i: any) => {
-                        const normalizedStatus = getNormalizedStatus(extractStatus(i));
-                        const paymentStatus = (getPaymentStatus(i) || "").toLowerCase();
-                        
-                        const statusMatch = statusFilter === 'all' || normalizedStatus === statusFilter;
-                        // For payment filter: 'unpaid' matches 'unpaid', 'paid' matches 'paid', 
-                        // but 'declined' and 'cancelled' payment statuses should not match 'unpaid' or 'paid'
-                        let paymentMatch = true;
-                        if (paymentFilter !== 'all') {
-                          // If payment status is declined or cancelled, it should not match unpaid or paid filters
-                          if (paymentStatus === 'declined' || paymentStatus === 'cancelled') {
-                            paymentMatch = false;
-                          } else if (paymentFilter === 'unpaid') {
-                            paymentMatch = paymentStatus === 'unpaid';
-                          } else if (paymentFilter === 'paid') {
-                            paymentMatch = paymentStatus === 'paid';
-                          }
-                        }
-                        const searchMatch = !searchQuery || 
-                          (i?.purpose ?? "serviceCharge").toLowerCase().includes(searchQuery.toLowerCase());
-                        
-                        return statusMatch && paymentMatch && searchMatch;
-                      })
-                      .sort((a: any, b: any) => {
-                        // Sort by status: In Progress first, then Completed, then Cancelled, then Declined
-                        const statusOrder: Record<string, number> = { 
-                          'in_progress': 1, 
-                          'completed': 2, 
-                          'cancelled': 3,
-                          'declined': 4,
-                          'pending': 1 // Treat pending as in_progress
-                        };
-                        const statusA = getNormalizedStatus(extractStatus(a));
-                        const statusB = getNormalizedStatus(extractStatus(b));
-                        
-                        const orderA = statusOrder[statusA] || 1;
-                        const orderB = statusOrder[statusB] || 1;
-                        
-                        if (orderA !== orderB) {
-                          return orderA - orderB;
-                        }
-                        
-                        // If same status, sort by date (newest first)
-                        const dateA = new Date(a?.req_request_date || a?.req_date || a?.cr_req_request_date || 0);
-                        const dateB = new Date(b?.req_request_date || b?.req_date || b?.cr_req_request_date || 0);
-                        return dateB.getTime() - dateA.getTime();
-                      })
-                      .map((item: any, idx: number) => {
-                        const paymentStatus = (getPaymentStatus(item) || "").toLowerCase();
-                        return (
-                      <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                        <View className="flex-row justify-between items-center mb-2">
-                          <Text className="text-gray-900 font-medium flex-1">{wrapPurpose(item?.purpose ?? "Service Charge")}</Text>
-                          <View className="flex-row gap-2">
-                            {getStatusBadge(extractStatus(item))}
-                          </View>
-                        </View>
-                        <View className="flex-row justify-between items-center mb-1">
-                          <Text className="text-gray-500 text-xs">Payment Status:</Text>
-                          {getPaymentBadge(getPaymentStatus(item))}
-                        </View>
-                        <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req)}</Text>
-                        {paymentStatus === 'unpaid' && (() => {
-                          const dueDateStatus = getDueDateStatus(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req);
-                          const dueDateText = formatDueDate(item?.req_request_date || item?.req_date || item?.cr_req_request_date || item?.pay_date_req);
-                          return (
-                            <Text className={`text-xs mt-1 ${
-                              dueDateStatus === 'warning' 
-                                ? 'text-orange-600 font-medium' 
-                                : 'text-gray-500'
-                            }`}>
-                              Due Date: {dueDateText}
-                              {dueDateStatus === 'warning' && ' (Due Soon)'}
-                            </Text>
-                          );
-                        })()}
-                        {paymentStatus === 'paid' && (item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid) && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Paid: {formatDate(item?.req_pay_date || item?.invoice?.inv_date || item?.pay_date_paid)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'completed' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Completed: {formatDate(item?.cr_date_completed || item?.date_completed || item?.issued_serviceCharge?.isc_date_of_issuance || item?.req_date_completed)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'cancelled' && (
-                          <Text className="text-gray-500 text-xs mt-1">Date Cancelled: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_cancelled)}</Text>
-                        )}
-                        {getNormalizedStatus(extractStatus(item)) === 'declined' && (
-                          <>
-                            <Text className="text-gray-500 text-xs mt-1">Date Declined: {formatDate(item?.req_date_completed || item?.cr_date_rejected || item?.date_declined)}</Text>
-                            {getDeclineReason(item) && (
-                              <Text className="text-gray-500 text-xs mt-1">Decline Reason: {getDeclineReason(item)}</Text>
-                            )}
-                          </>
-                        )}
-                        {canShowCancelButton(item) && (
-                          <View className="mt-3">
-                            <ConfirmationModal
-                              trigger={
-                                <TouchableOpacity
-                                  disabled={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
-                                  className="self-start bg-red-50 border border-red-200 px-3 py-2 rounded-lg"
-                                  activeOpacity={0.8}
-                                >
-                                  <Text className="text-red-700 text-xs font-medium">
-                                    {cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id) ? 'Cancelling…' : 'Cancel Request'}
-                                  </Text>
-                                </TouchableOpacity>
-                              }
-                              title="Cancel Request"
-                              description="Are you sure you want to cancel this request? This action cannot be undone."
-                              actionLabel="Yes, Cancel"
-                              variant="destructive"
-                              onPress={() => handleCancel(item)}
-                              loading={cancellingItemId === String(item?.cr_id || item?.bpr_id || item?.pay_id)}
-                              loadingMessage="Cancelling request..."
-                            />
-                          </View>
-                        )}
-                      </View>
-                      )})
-                  ) : (
-                    <View className="flex-1 items-center justify-center py-12">
-                      <View className="items-center">
-                        <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-                          {searchQuery ? `No ${formatTabName(activeTab)} requests found for "${searchQuery}"` : `No ${formatTabName(activeTab)} requests yet`}
-                        </Text>
-                        <Text className="text-gray-500 text-sm text-center">
-                          {searchQuery ? 'Try a different search term' : `Your ${formatTabName(activeTab)} requests will appear here`}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </>
+            <>
+              {paginatedItems.length > 0 && (
+                <View className="px-6 pt-4">
+                  <Text className="text-xs text-gray-500">{`Showing ${paginatedItems.length} of ${filteredItems.length} requests`}</Text>
+                </View>
               )}
-            </ScrollView>
+              <FlatList
+                maxToRenderPerBatch={5}
+                overScrollMode="never"
+                data={paginatedItems}
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
+                initialNumToRender={5}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                onScroll={handleScroll}
+                windowSize={11}
+                renderItem={renderItem}
+                keyExtractor={(item, idx) => String(item?.cr_id || item?.bpr_id || item?.pay_id || idx)}
+                removeClippedSubviews
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#00a8f0']}
+                    tintColor="#00a8f0"
+                  />
+                }
+                contentContainerStyle={{
+                  paddingTop: 0,
+                  paddingBottom: 20,
+                  gap: 15,
+                }}
+                ListEmptyComponent={
+                  !isLoading ? (
+                    <View className="flex-1 items-center justify-center py-12 px-6">
+                      <View className="items-center">
+                        <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                          {searchQuery ? `No ${formatTabName(activeTab)} requests found for "${searchQuery}"` : `No ${formatTabName(activeTab)} requests yet`}
+                        </Text>
+                        <Text className="text-gray-500 text-sm text-center">
+                          {searchQuery ? 'Try a different search term' : `Your ${formatTabName(activeTab)} requests will appear here`}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : null
+                }
+                ListFooterComponent={() =>
+                  isLoadMore ? (
+                    <View className="py-4 items-center">
+                      <ActivityIndicator size="small" color="#3B82F6" />
+                      <Text className="text-xs text-gray-500 mt-2">
+                        Loading more requests...
+                      </Text>
+                    </View>
+                  ) : (
+                    filteredItems.length > pageSize &&
+                    paginatedItems.length > 0 && (
+                      <View className="py-4 items-center">
+                        <Text className="text-xs text-gray-400">
+                          Scroll to load more
+                        </Text>
+                      </View>
+                    )
+                  )
+                }
+              />
+            </>
           </>
         )}
       </View>
     </PageLayout>
   );
 }
-
-
+ 

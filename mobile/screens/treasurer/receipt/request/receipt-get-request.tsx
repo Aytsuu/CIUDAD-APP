@@ -7,7 +7,7 @@ export const getInvoice = async (
     pageSize: number = 10,
     searchQuery?: string, 
     natureFilter?: string
-): Promise<{ results: Receipt[]; count: number }> => {
+): Promise<any> => {
     try {
         const params: any = { page, page_size: pageSize };
         if (searchQuery) params.search = searchQuery;
@@ -15,21 +15,13 @@ export const getInvoice = async (
         
         const res = await api.get('treasurer/invoice/', { params });
         
-        // Handle paginated response
-        if (res.data.results !== undefined) {
-            return {
-                results: res.data.results || [],
-                count: res.data.count || 0
-            };
-        }
-        
-        // Fallback for non-paginated response
-        return {
-            results: Array.isArray(res.data) ? res.data : [],
-            count: Array.isArray(res.data) ? res.data.length : 0
-        };
+        return res.data;
     } catch (_err) {
-        // console.error(err);
-        return { results: [], count: 0 };
+        return { 
+            results: [], 
+            count: 0,
+            next: null,
+            previous: null
+        };
     }
 };

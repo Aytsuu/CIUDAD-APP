@@ -555,107 +555,141 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                     />
 
 
-                    {/* Manual Gross Sales Input - Only for Business Clearance (Barangay Clearance category) */}
-                    {isBusinessClearance() && (
-                        <FormField
-                            control={form.control}
-                            name="manualGrossSales"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Annual Gross Sales Amount</FormLabel>
-                                    <FormControl>
-                                        <Input 
-                                            {...field} 
-                                            type="number"
-                                            placeholder="Enter annual gross sales amount" 
-                                            className="w-full" 
-                                            onChange={(e) => {
-                                                field.onChange(e.target.value);
-                                                // Auto-calculate and set the matching rate
-                                                const matchingRate = findMatchingGrossSalesRateFromInput(e.target.value);
-                                                if (matchingRate) {
-                                                    form.setValue("grossSales", matchingRate.id);
-                                                }
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Enter the annual gross sales amount to calculate the applicable rate
-                                    </p>
-                                </FormItem>
-                            )}
-                        />
-                    )}
-
-                    {/* Gross Sales Range and Amount - Only for Business Clearance (Barangay Clearance category) */}
-                    {isBusinessClearance() && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
-                            <FormField
-                                control={form.control}
-                                name="grossSales"
-                                render={({ field }) => {
-                                    const businessId = form.watch("businessName");
-                                    const manualGrossSales = form.watch("manualGrossSales");
-                                    
-                                    // For Business Clearance with manual input, use manual calculation
-                                    // Otherwise, use business-based calculation
-                                    const matchingRate = manualGrossSales
-                                        ? findMatchingGrossSalesRateFromInput(manualGrossSales)
-                                        : getMatchingGrossSalesRate(businessId);
-                                    
-                                    return (
-                                        <FormItem>
-                                            <FormLabel>Annual Gross Sales Range</FormLabel>
-                                            <FormControl>
-                                                <Input 
-                                                    {...field} 
-                                                    value={matchingRate?.name || ''}
-                                                    placeholder="Enter gross sales amount above"
-                                                    className="w-full bg-gray-50" 
-                                                    readOnly
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    );
-                                }}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="grossSales"
-                                render={({ field }) => {
-                                    const businessId = form.watch("businessName");
-                                    const manualGrossSales = form.watch("manualGrossSales");
-                                    
-                                    // For Business Clearance with manual input, use manual calculation
-                                    // Otherwise, use business-based calculation
-                                    const matchingRate = manualGrossSales
-                                        ? findMatchingGrossSalesRateFromInput(manualGrossSales)
-                                        : getMatchingGrossSalesRate(businessId);
-                                    
-                                    return (
-                                        <FormItem>
-                                            <FormLabel>Amount to be Paid</FormLabel>
-                                            <FormControl>
-                                                <Input 
-                                                    {...field} 
-                                                    value={matchingRate?.rate ? 
-                                                        `₱${Number(matchingRate.rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
-                                                        ''
-                                                    }
-                                                    placeholder="Enter gross sales amount above"
-                                                    className="w-full bg-gray-50" 
-                                                    readOnly
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    );
-                                }}
-                            />
-                        </div>
-                    )}
+                    {/* Annual Gross Sales - Only for Business Clearance (Barangay Clearance category) */}
+                    {isBusinessClearance() && (() => {
+                        const businessName = form.watch("businessName") || "";
+                        const isRegisteredBusiness = businessName && getBusinessById(businessName) !== undefined;
+                        
+                        return (
+                            <>
+                                {/* Dropdown - Only show for non-residents (manual business entry) */}
+                                {!isRegisteredBusiness && (
+                                    <FormField
+                                        control={form.control}
+                                        name="grossSales"
+                                        render={({ field }) => {
+                                            const grossSalesOptions = grossSalesArray
+                                                .filter((rate: AnnualGrossSales) => !rate.ags_is_archive)
+                                                .sort((a, b) => Number(a.ags_minimum) - Number(b.ags_minimum))
+                                                .map((rate: AnnualGrossSales) => ({
+                                                    id: rate.ags_id.toString(),
+                                                    name: `₱${Number(rate.ags_minimum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - ₱${Number(rate.ags_maximum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                }));
+                                            
+                                            const selectedRate = grossSalesArray.find((rate: AnnualGrossSales) => 
+                                                rate.ags_id.toString() === field.value
+                                            );
+                                            
+                                            return (
+                                                <FormItem>
+                                                    <FormLabel>Annual Gross Sales Range</FormLabel>
+                                                    <FormControl>
+                                                        <ComboboxInput
+                                                            value={selectedRate ? 
+                                                                `₱${Number(selectedRate.ags_minimum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - ₱${Number(selectedRate.ags_maximum).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
+                                                                ''
+                                                            }
+                                                            options={grossSalesOptions}
+                                                            isLoading={_grossSalesLoading}
+                                                            label=""
+                                                            placeholder="Select annual gross sales range"
+                                                            emptyText="No gross sales ranges found"
+                                                            onSelect={(_value: string, selectedOption: any) => {
+                                                                const rateId = selectedOption?.id || '';
+                                                                field.onChange(rateId);
+                                                            }}
+                                                            displayKey="name"
+                                                            valueKey="id"
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            );
+                                        }}
+                                    />
+                                )}
+                                
+                                {/* Input field - Only show for residents (registered businesses) */}
+                                {isRegisteredBusiness && (
+                                    <FormField
+                                        control={form.control}
+                                        name="manualGrossSales"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Annual Gross Sales Amount</FormLabel>
+                                                <FormControl>
+                                                    <Input 
+                                                        {...field} 
+                                                        type="number"
+                                                        placeholder="Enter annual gross sales amount" 
+                                                        className="w-full" 
+                                                        onChange={(e) => {
+                                                            field.onChange(e.target.value);
+                                                            // Auto-calculate and set the matching rate
+                                                            const matchingRate = findMatchingGrossSalesRateFromInput(e.target.value);
+                                                            if (matchingRate) {
+                                                                form.setValue("grossSales", matchingRate.id);
+                                                            }
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    Enter the annual gross sales amount to calculate the applicable rate
+                                                </p>
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
+                                
+                                {/* Amount to be Paid - Show for both cases */}
+                                <FormField
+                                    control={form.control}
+                                    name="grossSales"
+                                    render={({ field }) => {
+                                        const businessId = form.watch("businessName") || "";
+                                        const manualGrossSales = form.watch("manualGrossSales");
+                                        
+                                        // For registered business with manual input, use manual calculation
+                                        // For non-registered business, use selected dropdown value
+                                        const matchingRate = isRegisteredBusiness && manualGrossSales
+                                            ? findMatchingGrossSalesRateFromInput(manualGrossSales)
+                                            : (isRegisteredBusiness 
+                                                ? getMatchingGrossSalesRate(businessId)
+                                                : (() => {
+                                                    const selectedRate = grossSalesArray.find((rate: AnnualGrossSales) => 
+                                                        rate.ags_id.toString() === field.value && !rate.ags_is_archive
+                                                    );
+                                                    return selectedRate ? {
+                                                        id: selectedRate.ags_id.toString(),
+                                                        name: `₱${Number(selectedRate.ags_minimum).toLocaleString()} - ₱${Number(selectedRate.ags_maximum).toLocaleString()}`,
+                                                        rate: selectedRate.ags_rate
+                                                    } : null;
+                                                })());
+                                        
+                                        return (
+                                            <FormItem>
+                                                <FormLabel>Amount to be Paid</FormLabel>
+                                                <FormControl>
+                                                    <Input 
+                                                        {...field} 
+                                                        value={matchingRate?.rate ? 
+                                                            `₱${Number(matchingRate.rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
+                                                            ''
+                                                        }
+                                                        placeholder={isRegisteredBusiness ? "Enter gross sales amount above" : "Select gross sales range above"}
+                                                        className="w-full bg-gray-50" 
+                                                        readOnly
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        );
+                                    }}
+                                />
+                            </>
+                        );
+                    })()}
 
                     {/* Amount to be Paid - Only for Barangay Permit (uses pr_rate directly) */}
                     {isBarangayPermit() && (
@@ -704,7 +738,7 @@ function PermitClearanceForm({ onSuccess }: PermitClearanceFormProps) {
                                     <FormControl>
                                         <div className="space-y-2">
                                             <ComboboxInput
-                                                value={field.value}
+                                                value={field.value || ""}
                                                 options={residents}
                                                 isLoading={residentLoading}
                                                 label=""

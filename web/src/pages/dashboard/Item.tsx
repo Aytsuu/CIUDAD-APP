@@ -42,6 +42,8 @@ import { CertificatePurposeChart } from "@/components/analytics/certificate/cert
 import { CertificateSidebar } from "@/components/analytics/certificate/certificate-sidebar";
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import { useGADUpcomingActivities } from "@/components/analytics/gad/gad-activity-bar";
+import { useWasteUpcomingEvents } from "@/components/analytics/waste/waste-event-bar";
 import ComplaintSidebar from "@/components/analytics/complaint/complaint-sidebar";
 import { useComplaintSectionCards } from "@/components/analytics/complaint/complaint-card";
 import { ReactElement } from "react";
@@ -84,11 +86,15 @@ export const getItemsConfig = (
   remarkCard: ReturnType<typeof useNoRemarksSectionCard>,
   councilEvents: ReturnType<typeof useCouncilUpcomingEvents>,
   complaintCards: ReturnType<typeof useComplaintSectionCards>,
+  gadActivities: ReturnType<typeof useGADUpcomingActivities>,
+  wasteEvents: ReturnType<typeof useWasteUpcomingEvents>,
 ): DashboardItem[] => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
   const currentYear = format(new Date(), "yyyy");
   const { upcomingEvents: councilUpcomingEvents } = councilEvents;
+  const { upcomingEvents: gadUpcomingActivities } = gadActivities;
+  const { upcomingEvents: wasteUpcomingEvents } = wasteEvents;
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
@@ -209,6 +215,7 @@ export const getItemsConfig = (
             element: <ProjectProposalSidebar />,
           },
         ],
+        upcomingEvents: gadUpcomingActivities,
       },
       {
         dashboard: "COUNCIL",
@@ -264,11 +271,11 @@ export const getItemsConfig = (
         ],
         sidebar: [
           {
-            title: "Recent Certificate Requests",
+            title: "Certificate Requests",
             element: <CertificateSidebar />,
           },
           {
-            title: "Recent Business Permit Requests",
+            title: "Business Permit Requests",
             element: <BusinessSidebar />,
           },
         ],
@@ -280,6 +287,7 @@ export const getItemsConfig = (
       {
         dashboard: "WASTE",
         card: [driverLoaders, wasteLoaders, collectionVehicles, garbPending, garbRejected, accepted, completed],
+        upcomingEvents: wasteUpcomingEvents,
       },
     ]
   }
