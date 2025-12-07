@@ -126,20 +126,26 @@ function WasteEventSched() {
             const selectedStaff = staffOptions.find((o: { id: string; name: string }) => String(o.id) === String(values.organizer));
             const organizerName = selectedStaff?.name || '';
 
-            // Format eventSubject to include location, date, and time
-            let formattedEventSubject = values.eventSubject || '';
+            // Format eventSubject with clean format: Location, Date, Time, Organizer
+            let formattedEventSubject = '';
             if (values.selectedAnnouncements && values.selectedAnnouncements.length > 0) {
                 const eventDetails: string[] = [];
                 
-                // Always include location, date, and time in the announcement
+                // Add user's custom message first if provided
+                if (values.eventSubject && values.eventSubject.trim()) {
+                    eventDetails.push(values.eventSubject.trim());
+                    eventDetails.push(''); // Empty line for spacing
+                }
+                
+                // Add Location
                 if (sitioName) {
                     eventDetails.push(`Location: ${sitioName}`);
                 }
                 
+                // Add Date
                 if (formattedDate) {
-                    // Format date to be more readable (e.g., "January 15, 2024")
                     try {
-                        const dateObj = new Date(formattedDate + 'T00:00:00'); // Add time to avoid timezone issues
+                        const dateObj = new Date(formattedDate + 'T00:00:00');
                         const formattedDateStr = dateObj.toLocaleDateString('en-US', { 
                             year: 'numeric', 
                             month: 'long', 
@@ -147,13 +153,12 @@ function WasteEventSched() {
                         });
                         eventDetails.push(`Date: ${formattedDateStr}`);
                     } catch (e) {
-                        // Fallback to original date format if formatting fails
                         eventDetails.push(`Date: ${formattedDate}`);
                     }
                 }
                 
+                // Add Time
                 if (formattedTime) {
-                    // Format time to be more readable (e.g., "2:30 PM")
                     try {
                         const [hours, minutes] = formattedTime.split(':');
                         const hour = parseInt(hours, 10);
@@ -166,18 +171,16 @@ function WasteEventSched() {
                             eventDetails.push(`Time: ${formattedTime}`);
                         }
                     } catch (e) {
-                        // Fallback to original time format if formatting fails
                         eventDetails.push(`Time: ${formattedTime}`);
                     }
                 }
                 
-                // Combine user's subject with event details
-                // Always include location, date, and time even if user provided a subject
-                if (formattedEventSubject.trim()) {
-                    formattedEventSubject = `${formattedEventSubject}\n\n${eventDetails.join('\n')}`;
-                } else {
-                    formattedEventSubject = eventDetails.join('\n');
+                // Add Organizer
+                if (organizerName) {
+                    eventDetails.push(`Organizer: ${organizerName}`);
                 }
+                
+                formattedEventSubject = eventDetails.join('\n');
             }
 
             const eventData: Omit<WasteEvent, 'we_num'> & { selectedAnnouncements?: string[]; eventSubject?: string } = {
@@ -397,9 +400,6 @@ function WasteEventSched() {
                                                 />
                                             </FormControl>
                                             <FormMessage />
-                                            <p className="text-xs text-muted-foreground mt-1">
-                                                This message will appear at the top of the announcement. Event location, date, time, and organizer will be automatically added below.
-                                            </p>
                                         </FormItem>
                                     )}
                                 />
@@ -412,7 +412,7 @@ function WasteEventSched() {
                                     disabled={isSubmitting}
                                     className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isSubmitting ? "Schedule event... Creating..." : "Schedule Event"}
+                                    {isSubmitting ? "Creating..." : "Schedule Event"}
                                 </Button>
                             </div>
                         </CardContent>
