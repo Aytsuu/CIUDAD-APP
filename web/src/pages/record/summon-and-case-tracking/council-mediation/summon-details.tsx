@@ -174,7 +174,7 @@ export default function SummonDetails() {
       accessorKey: "hs_level",
        header: ({}) => (
           <div className="flex w-full justify-center items-center">
-              Level
+              Hearing Level
           </div>
       ),
       cell: ({ row }) => (
@@ -228,7 +228,7 @@ export default function SummonDetails() {
       accessorKey: "hearing_minutes",
       header: ({}) => (
           <div className="flex w-full justify-center items-center">
-              Minutes
+              Hearing Minutes
           </div>
       ),
       cell: ({ row }) => {
@@ -241,7 +241,7 @@ export default function SummonDetails() {
         if (hasMinutesWithUrl) {
           return (
             <div 
-              className={`cursor-pointer text-[12px] underline ${
+              className={`cursor-pointer text-[12px] underline text-center${
                 isDisabled 
                   ? "text-gray-400 cursor-not-allowed" 
                   : "text-[#1273B8] hover:text-[#0e5a97]"
@@ -255,7 +255,7 @@ export default function SummonDetails() {
           // If disabled, show non-clickable version
           if (isDisabled) {
             return (
-              <div className="text-gray-400 flex items-center gap-1 justify-center cursor-not-allowed">
+              <div className="text-gray-400 flex items-center gap-1 justify-center cursor-not-allowed ">
                 <CircleAlert size={16} />
                 <span className="text-xs">No minutes available</span>
               </div>
