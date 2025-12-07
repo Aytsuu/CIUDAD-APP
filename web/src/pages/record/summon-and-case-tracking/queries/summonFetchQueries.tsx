@@ -2,13 +2,28 @@ import { useQuery } from "@tanstack/react-query";
 import { getSummonCaseList, getSummonScheduleList, getSummonCaseDetail, getSummonDates, 
     getSummonTimeSlots, getComplaintDetails, getLuponCaseList, getCouncilCaseList, getCouncilCaseDetail, getLuponCaseDetail, getFileActionPaymentLogs} from "../requestAPI/summonGetAPI";
 import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList, ScheduleList, PaymentRequest } from "../summon-types";
-
+import api from "@/api/api";
 
 export const useGetSummonCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
     return useQuery<{results: SummonCaseList[], count: number}>({
         queryKey: ['summonCases', page, pageSize, searchQuery, statusFilter],
         queryFn:() => getSummonCaseList(page, pageSize, searchQuery, statusFilter),
         staleTime: 5000,
+    })
+}
+
+export const useGetMediationCardAnalytics = () => {
+    return useQuery({
+        queryKey: ['mediationAnalytics'],
+        queryFn: async () => {
+            try {
+                const res = await api.get('clerk/mediation-analytics/');
+                return res.data;
+            } catch (err) {
+                throw err;
+            }
+        },
+        staleTime: 5000
     })
 }
 

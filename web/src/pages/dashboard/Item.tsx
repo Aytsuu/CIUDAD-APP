@@ -111,7 +111,7 @@ export const getItemsConfig = (
   } = complaintCards;
   const { totalPickup} = garbCards;
   const { waiting, ongoing, escalated, resolved } = conciliationCards;
-  const { waiting: mediationWaiting, ongoing: mediationOngoing, forwarded, resolved: mediationResolved } = mediationCards;
+  const { mediationcases } = mediationCards;
   const { cashDonations } = donationCards;
   const { noRemark } = remarkCard;
   const { 
@@ -192,7 +192,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "COUNCIL MEDIATION",
-        card: [mediationWaiting, mediationOngoing, forwarded, mediationResolved], 
+        card: [mediationcases], 
       },
       {
         dashboard: "SUMMON REMARKS",

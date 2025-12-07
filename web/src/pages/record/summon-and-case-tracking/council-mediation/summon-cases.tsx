@@ -1,11 +1,11 @@
 import CardLayout from "@/components/ui/card/card-layout";
 import { Link } from "react-router-dom";
-import { Search } from 'lucide-react';
+import { Search, Clock, AlertTriangle, ArrowRightLeft, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState, useEffect } from "react";
-import { useGetCouncilCaseList } from "../queries/summonFetchQueries";
+import { useGetCouncilCaseList, useGetMediationCardAnalytics } from "../queries/summonFetchQueries";
 import type { SummonCaseList } from "../summon-types";
 import { useLoading } from "@/context/LoadingContext";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
@@ -37,6 +37,42 @@ function getStatusColor(status: string) {
             return "";
     }
 }
+
+// Analytics cards configuration
+const mediationCards = [
+    {
+        title: "Waiting for Schedule",
+        dataKey: "waiting" as const,
+        icon: Clock,
+        iconColor: "text-yellow-600",
+        bgColor: "bg-yellow-50",
+        borderColor: "border-yellow-100"
+    },
+    {
+        title: "Ongoing Cases",
+        dataKey: "ongoing" as const,
+        icon: AlertTriangle,
+        iconColor: "text-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-100"
+    },
+    {
+        title: "Forwarded to Lupon",
+        dataKey: "forwarded" as const,
+        icon: ArrowRightLeft,
+        iconColor: "text-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-100"
+    },
+    {
+        title: "Resolved Cases",
+        dataKey: "resolved" as const,
+        icon: CheckCircle,
+        iconColor: "text-emerald-600",
+        bgColor: "bg-emerald-50",
+        borderColor: "border-emerald-100"
+    },
+];
 
 // Resident badge component
 function ResidentBadge() {
@@ -77,14 +113,18 @@ function SummonCases(){
         { id: "Waiting for Schedule", name: "Waiting for Schedule" },
     ];
 
+    // Fetch analytics data for cards
+    const { data: analyticsData, isLoading: isLoadingAnalytics } = useGetMediationCardAnalytics();
+    
     // Use the hook with pagination and filtering parameters
-    const { data: summonCaseData = { results: [], count: 0 }, isLoading } = useGetCouncilCaseList(
+    const { data: summonCaseData = { results: [], count: 0 }, isLoading: isLoadingCases } = useGetCouncilCaseList(
         currentPage, 
         pageSize, 
         debouncedSearchQuery, 
         selectedFilter
     );
 
+    const isLoading = isLoadingAnalytics || isLoadingCases;
     const summonCases = summonCaseData.results || [];
     const totalItems = summonCaseData.count || 0;
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -128,6 +168,33 @@ function SummonCases(){
                     </p>
                 </div>
                 <hr className="border-gray mb-7 sm:mb-8" />
+            </div>
+
+            {/* Analytics Cards Section */}
+            <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {mediationCards.map((card) => {
+                        const Icon = card.icon;
+                        const value = analyticsData?.[card.dataKey] ?? 0;
+                        
+                        return (
+                            <div 
+                                key={card.title}
+                                className={`${card.bgColor} border ${card.borderColor} rounded-lg p-4 transition-all duration-200 hover:shadow-md`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 mb-1">{card.title}</p>
+                                        <p className="text-2xl font-bold text-gray-900">{value}</p>
+                                    </div>
+                                    <div className={`w-12 h-12 rounded-full ${card.bgColor} flex items-center justify-center`}>
+                                        <Icon className={`w-6 h-6 ${card.iconColor}`} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Search and Filter Section - ALWAYS VISIBLE */}
