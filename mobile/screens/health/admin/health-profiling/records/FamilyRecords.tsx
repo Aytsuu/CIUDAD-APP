@@ -35,7 +35,15 @@ export default function FamilyRecords() {
     data: familiesTableData,
     isLoading,
     refetch,
+    error,
   } = useGetFamilyList(currentPage, pageSize, debouncedSearchQuery);
+
+  // Log any errors
+  React.useEffect(() => {
+    if (error) {
+      // console.log('❌ Family list query error:', error);
+    }
+  }, [error]);
 
   const families = familiesTableData?.results || [];
   const totalCount = familiesTableData?.count || 0;
@@ -70,7 +78,28 @@ export default function FamilyRecords() {
     const street = item.street || "N/A";
     const building = item.fam_building || "N/A";
 
-    const location = building !== "N/A" ? `${sitio}, ${street}` : sitio;
+    // Uppercase location
+    const location = building !== "N/A" 
+      ? `${sitio?.toUpperCase() || 'N/A'}, ${street?.toUpperCase() || 'N/A'}` 
+      : sitio?.toUpperCase() || 'N/A';
+
+    // Determine family head (display in uppercase)
+    let familyHead = "";
+    let headRole = "";
+    
+    if (item.father) {
+      familyHead = item.father?.toUpperCase() || "";
+      headRole = "Father";
+    } else if (item.mother) {
+      familyHead = item.mother?.toUpperCase() || "";
+      headRole = "Mother";
+    } else if (item.guardian) {
+      familyHead = item.guardian?.toUpperCase() || "";
+      headRole = "Guardian";
+    } else if (item.independent) {
+      familyHead = item.independent?.toUpperCase() || "";
+      headRole = "Independent";
+    }
 
     return (
       <TouchableOpacity
@@ -100,8 +129,23 @@ export default function FamilyRecords() {
               <Text className="text-gray-900 font-semibold text-base mb-1" numberOfLines={1}>
                 {item.fam_id}
               </Text>
+              
+              {/* Family Head */}
+              {familyHead && (
+                <View className="flex-row items-center gap-2 mb-2">
+                  <View className="bg-blue-100 px-2 py-1 rounded">
+                    <Text className="text-blue-700 text-xs font-medium">
+                      Family Head
+                    </Text>
+                  </View>
+                  <Text className="text-gray-700 font-medium text-sm flex-1" numberOfLines={1}>
+                    {familyHead}
+                  </Text>
+                </View>
+              )}
+              
               <Text className="text-gray-500 text-sm mb-2" numberOfLines={1}>
-                {capitalize(location)}
+                {location}
               </Text>
 
               {/* Badges */}
@@ -111,6 +155,7 @@ export default function FamilyRecords() {
                     Family
                   </Text>
                 </View>
+                
                 <View className="bg-gray-100 px-2 py-1 rounded-full flex-row items-center gap-1">
                   {membersCount > 1 ? (
                     <UsersRound size={12} className="text-gray-700" />

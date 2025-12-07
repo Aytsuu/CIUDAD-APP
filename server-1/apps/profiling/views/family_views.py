@@ -33,10 +33,8 @@ class FamilyTableView(generics.ListCreateAPIView):
 
         full_name = Concat(
            'rp__per__per_lname', Value(', '),
-           'rp__per__per_fname', Value(' '),
-           'rp__per__per_mname',
+           'rp__per__per_fname',
            output_field=CharField()
-
         )
 
         queryset = Family.objects.select_related('staff', 'hh__add__sitio').prefetch_related(
@@ -47,7 +45,7 @@ class FamilyTableView(generics.ListCreateAPIView):
                 Subquery(
                     family_compositions.filter(
                         fam=OuterRef('pk'), 
-                        fc_role='Father'
+                        fc_role='FATHER'
                     ).annotate(name=full_name).values('name')[:1],
                     output_field=CharField()
                 ),
@@ -57,7 +55,7 @@ class FamilyTableView(generics.ListCreateAPIView):
                 Subquery(
                     family_compositions.filter(
                         fam=OuterRef('pk'), 
-                        fc_role='Mother'
+                        fc_role='MOTHER'
                     ).annotate(name=full_name).values('name')[:1],
                     output_field=CharField()
                 ),
@@ -67,7 +65,7 @@ class FamilyTableView(generics.ListCreateAPIView):
                 Subquery(
                     family_compositions.filter(
                         fam=OuterRef('pk'), 
-                        fc_role='Guardian'
+                        fc_role='GUARDIAN'
                     ).annotate(name=full_name).values('name')[:1],
                     output_field=CharField()
                 ),

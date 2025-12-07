@@ -110,7 +110,7 @@ export default function RegVerification({
     } catch (error: any) {
       if (!isMounted.current) return;
       
-      console.error("OTP verification error:", error);
+      // console.error("OTP verification error:", error);
       setErrorMessage(
         error?.response?.data?.error ||
           error?.response?.data?.message ||
@@ -152,7 +152,7 @@ export default function RegVerification({
     } catch (error: any) {
       if (!isMounted.current) return;
       
-      console.error("Resend error:", error);
+      // console.error("Resend error:", error);
       setErrorMessage(
         error?.response?.data?.message ||
           error?.response?.data?.error ||

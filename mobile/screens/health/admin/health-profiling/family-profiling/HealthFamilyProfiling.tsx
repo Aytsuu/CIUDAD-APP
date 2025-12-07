@@ -32,6 +32,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import PageLayout from '@/screens/_PageLayout';
 import { MultiStepProgressBar } from '@/components/healthcomponents/multi-step-progress-bar';
 import { MobileModal } from '@/components/healthcomponents/mobile-modal';
+import { useToastContext } from '@/components/ui/toast';
 
 const STEPS = [
   { id: 1, title: 'Demographics', label: 'Demographics', icon: Home },
@@ -50,6 +51,7 @@ const progressSteps = STEPS.map(step => ({
 export default function HealthFamilyProfiling() {
   const router = useRouter();
   const { user } = useAuth();
+  const { toast } = useToastContext();
   const [currentStep, setCurrentStep] = useState(0); // 0-based indexing: 0=Demographics, 1=Parents, 2=Dependents, 3=Env&Health, 4=Survey
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [householdId, setHouseholdId] = useState<string | null>(null);
@@ -220,6 +222,9 @@ export default function HealthFamilyProfiling() {
       // console.log('Submitting survey:', payload);
       const result = await submitSurveyMut.mutateAsync(payload);
       
+      // Show success toast
+      toast.success('Family successfully registered!', 4000);
+      
       setShowSuccessModal(true);
       
       return result;
@@ -285,7 +290,7 @@ export default function HealthFamilyProfiling() {
             await handleSurveySubmit();
             return;
           } catch (error) {
-            console.error('Error submitting data:', error);
+            // console.error('Error submitting data:', error);
             setErrorMessage('Failed to submit data. Please try again.');
             setShowErrorModal(true);
           }
@@ -332,7 +337,7 @@ export default function HealthFamilyProfiling() {
       case 1: // Parents
         return <ParentsStep form={form} onNext={handleNext} onBack={handleBack} />;
       case 2: // Dependents
-        return <DependentsStep form={form} onFamilyCreated={handleFamilyCreated} staffId={staffId} />;
+        return <DependentsStep form={form} onFamilyCreated={handleFamilyCreated} staffId={staffId} onBack={handleBack} />;
       case 3: // Environmental & Health Records (Combined)
         // console.log('Rendering step 3 - Family ID:', familyId);
         return (

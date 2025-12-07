@@ -72,6 +72,31 @@ export default function PersonalForm({ form, onNext }: PersonalFormProps) {
     };
   }, []);
 
+  // Auto-capitalize text inputs to uppercase
+  React.useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name && isMounted.current) {
+        const textFields = [
+          'personalSchema.per_fname',
+          'personalSchema.per_lname',
+          'personalSchema.per_mname',
+          'personalSchema.per_suffix',
+        ];
+        
+        if (textFields.includes(name)) {
+          const currentValue = getValues(name);
+          if (typeof currentValue === 'string' && currentValue) {
+            const uppercaseValue = currentValue.toUpperCase();
+            if (uppercaseValue !== currentValue) {
+              setValue(name, uppercaseValue, { shouldValidate: false });
+            }
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, getValues, setValue]);
+
   const {
     headingSize,
     bodyTextSize,

@@ -16,9 +16,9 @@ class ResidentProfileTableView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         search_query = self.request.query_params.get('search', '').strip()
-        age = self.request.query_params.get('age', None).lower()
-        voter = self.request.query_params.get('voter', None).lower()
-        disable = self.request.query_params.get('disable', None).lower()
+        age = (self.request.query_params.get('age') or 'all').lower()
+        voter = (self.request.query_params.get('voter') or 'all').lower()
+        disable = (self.request.query_params.get('disable') or 'all').lower()
 
         queryset = ResidentProfile.objects.select_related(
           'per',

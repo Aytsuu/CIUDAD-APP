@@ -35,12 +35,13 @@ export const api = axios.create({
 // });
 
 // export const api2 = axios.create({
-//   baseURL: "http://192.168.1.15:8001",
+//   baseURL: "http://192.168.1.3:8001",
 //   withCredentials: true,
 //   headers: {
 //     "Content-Type": "application/json",
 //     "Accept": "application/json",
 //   },
+//   timeout: 10000,
 //   timeout: 10000,
 // });
 
@@ -52,6 +53,8 @@ export const api2 = axios.create({
     "Accept": "application/json",
   },
 });
+
+
 
 setupApiInterceptor(api)
 

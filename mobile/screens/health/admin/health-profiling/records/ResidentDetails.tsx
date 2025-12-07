@@ -33,7 +33,7 @@ export default function ResidentDetails() {
     try {
       return JSON.parse(params.resident as string);
     } catch (error) {
-      console.error("Error parsing resident data:", error);
+      // console.error("Error parsing resident data:", error);
       return null;
     }
   }, [params.resident]);
