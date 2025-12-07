@@ -86,9 +86,9 @@ function WasteEventSched() {
     const queryClient = useQueryClient();
     const { user } = useAuth();
     const { data: sitioList = [], isLoading: isSitioLoading } = useSitioList();
-    const sitioOptions = (sitioList || []).map((s: any) => ({ id: s.sitio_id, name: s.sitio_name }));
+    const sitioOptions = (sitioList || []).map((s: any) => ({ id: String(s.sitio_id), name: s.sitio_name }));
     const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-    const staffOptions = (staffList || []).map((s: any) => ({ id: s.staff_id, name: s.full_name }));
+    const staffOptions = (staffList || []).map((s: any) => ({ id: String(s.staff_id), name: s.full_name }));
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
