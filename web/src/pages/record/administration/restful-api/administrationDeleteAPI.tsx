@@ -8,7 +8,6 @@ export const deletePosition = async (selectedPosition: string) => {
     );
     return res.status;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };
@@ -24,7 +23,6 @@ export const deleteAssignedFeature = async (
     );
     return res.status;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };

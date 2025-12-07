@@ -9,7 +9,7 @@ export const getResolution = async (
     areaFilter?: string, 
     yearFilter?: string,
     isArchive?: boolean
-): Promise<{ results: ResolutionData[]; count: number }> => {
+): Promise<any> => {
     try {
         const params: any = { page, page_size: pageSize };
         if (searchQuery) params.search = searchQuery;
@@ -19,22 +19,14 @@ export const getResolution = async (
         
         const res = await api.get('council/resolution/', { params });
         
-        // Handle paginated response
-        if (res.data.results !== undefined) {
-            return {
-                results: res.data.results || [],
-                count: res.data.count || 0
-            };
-        }
-        
-        // Fallback for non-paginated response
-        return {
-            results: Array.isArray(res.data) ? res.data : [],
-            count: Array.isArray(res.data) ? res.data.length : 0
-        };
+        return res.data;
     } catch (_err) {
-        // console.error(err);
-        return { results: [], count: 0 };
+        return { 
+            results: [], 
+            count: 0,
+            next: null,
+            previous: null
+        };
     }
 };
 

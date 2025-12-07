@@ -247,7 +247,7 @@ const AttendanceSheetView: React.FC<EnhancedAttendanceSheetViewProps> = ({
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0);
-          const base64 = canvas.toDataURL("image/jpeg");
+          const base64 = canvas.toDataURL("image/png");
           callback(base64);
         }
       };

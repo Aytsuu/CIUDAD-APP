@@ -18,6 +18,7 @@ export const BusinessPermitSchema = z.object({
     assessment_image: z.string().optional(), 
     pr_id: z.number().optional(), 
     rp_id: z.string().optional(), 
+    br_id: z.string().optional(), 
     req_amount: z.number().optional(), 
     ags_id: z.number().optional(), 
 });

@@ -1,4 +1,5 @@
 import { AxiosError } from "axios";
+import { useQuery } from "@tanstack/react-query";
 import { 
   getBusinessPermits as getBusinessPermitsAPI, 
   getIssuedBusinessPermits as getIssuedBusinessPermitsAPI
@@ -132,6 +133,23 @@ export const getIssuedBusinessPermits = async (
   }
 };
 
+
+export const useBusinessPermits = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  status?: string,
+  paymentStatus?: string,
+  businessType?: string
+) => {
+  return useQuery({
+    queryKey: ['businessPermits', page, pageSize, searchQuery, status, paymentStatus, businessType],
+    queryFn: () => getBusinessPermits(searchQuery, page, pageSize, status, paymentStatus, businessType),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+};
 
 export { 
   getBusinessPermitById, 

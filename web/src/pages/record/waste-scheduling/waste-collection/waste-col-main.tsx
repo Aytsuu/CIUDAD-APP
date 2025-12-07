@@ -169,23 +169,52 @@ function WasteCollectionMain() {
     const commonColumns: ColumnDef<WasteCollectionSchedFull>[] = [
         {
             accessorKey: "wc_day",
-            header: "Collection Day",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Collection Day
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.getValue("wc_day")}</div>
+            )              
         },
         {
             accessorKey: "wc_time",
-            header: "Collection Time",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Collection Time
+                </div>
+            ),
             cell: ({ row }) => {
                 const time = row.original.wc_time;
-                return formatTime(time);
+                return (
+                <div className="flex justify-center">
+                    <p>{formatTime(time)}</p>
+                </div>
+                );
             },
         },
         {
             accessorKey: "sitio_name",
-            header: "Sitio",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Sitio
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.getValue("sitio_name")}</div>
+            )               
         },
         {
             accessorKey: "wc_add_info",
-            header: "Additional Details",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Additional Details
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.getValue("wc_add_info")}</div>
+            )               
         },
     ];
 
@@ -194,7 +223,11 @@ function WasteCollectionMain() {
         ...commonColumns,
         {
             accessorKey: "action",
-            header: "Action",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({ row }) => (
                 <div className="flex justify-center gap-2">
                     <TooltipLayout
@@ -257,7 +290,11 @@ function WasteCollectionMain() {
         ...commonColumns,
         {
             accessorKey: "action",
-            header: "Action",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({ row }) => (
                 <div className="flex justify-center gap-2">
                     <TooltipLayout

@@ -166,7 +166,7 @@ function ClerkDonateView({ don_num, onSaveSuccess }: ClerkDonateViewProps) {
             name="don_donor"
             render={({ field }) => (
               <ComboboxInput
-                value={field.value}
+                value={field.value || ""}
                 options={[
                   { full_name: "Anonymous", per_id: null },
                   ...personalList,

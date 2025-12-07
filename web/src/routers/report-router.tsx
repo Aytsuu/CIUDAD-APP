@@ -5,8 +5,10 @@ import ARRecords from '@/pages/record/report/acknowledgement/ARRecords';
 import ARFormLayout from '@/pages/record/report/acknowledgement/ARFormLayout';
 import ReportDocument from '@/pages/record/report/ReportDocument';
 import CreateMissingWeeks from '@/pages/record/report/weekly/CreateMissingWeeks';
+import SecuradoReports from '@/pages/record/report/securado/SecuradoReports';
+import ResidentReports from '@/pages/record/report/resident/ResidentReports';
+import RRArchive from '@/pages/record/report/resident/RRArchive';
 import IRArchive from '@/pages/record/report/incident/IRArchive';
-import SecuradoReports from '@/pages/record/report/incident/securado/SecuradoReports';
 
 // Creating routes
 export const report_router = [
@@ -15,15 +17,35 @@ export const report_router = [
     element: <IRRecords/>,
   },
   {
-    path: '/report/incident/securado',
-    element: <SecuradoReports/>,
-  },
-  {
     path: '/report/incident/archive',
     element: <IRArchive/>,
   },
   {
-    path: '/report/acknowledgement',
+    path: '/report/incident/archive/view',
+    element: <IRViewDetails/>,
+  },
+  {
+    path: '/report/resident/archive',
+    element: <RRArchive/>,
+  },
+  {
+    path: '/report/resident/archive/view',
+    element: <IRViewDetails/>,
+  },
+  {
+    path: '/report/resident/view',
+    element: <IRViewDetails/>
+  },
+  {
+    path: '/report/resident',
+    element: <ResidentReports/>,
+  },
+  {
+    path: '/report/securado',
+    element: <SecuradoReports/>,
+  },
+  {
+    path: '/report/action',
     element: <ARRecords/>
   },
   {
@@ -35,15 +57,15 @@ export const report_router = [
     element: <IRViewDetails/>
   },
   {
-    path: '/report/acknowledgement/form',
+    path: '/report/action/form',
     element: <ARFormLayout/>
   },
   {
-    path: '/report/acknowledgement/document',
+    path: '/report/action/document',
     element: <ReportDocument/>
   },
   {
     path: '/report/weekly-accomplishment/missing-report/create',
     element: <CreateMissingWeeks/>
   }
-]
+] 

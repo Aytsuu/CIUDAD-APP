@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
   FlatList,
+  RefreshControl,
   ActivityIndicator
 } from 'react-native';
 import {
@@ -15,10 +16,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SelectLayout } from '@/components/ui/select-layout';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import PageLayout from '@/screens/_PageLayout';
-import { useExpenseLog, type ExpenseLog } from '../queries/income-expense-FetchQueries';
+import { useExpenseLog } from '../queries/income-expense-FetchQueries';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
-
 
 const monthOptions = [
   { id: "All", name: "All" },
@@ -36,18 +36,25 @@ const monthOptions = [
   { id: "12", name: "December" }
 ];
 
+const INITIAL_PAGE_SIZE = 10;
+
 const ExpenseLogMain = () => {  
   const router = useRouter();
   const params = useLocalSearchParams();
   const year = params.LogYear as string;
 
-
+  // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMonth, setSelectedMonth] = useState('All');
-  const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<{ ief_url: string; ief_name: string }[]>([]);
-  const [currentZoomScale, setCurrentZoomScale] = useState(1);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Add debouncing for search
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -58,20 +65,76 @@ const ExpenseLogMain = () => {
     value: month.id
   }));
 
-  // Updated to handle paginated response
+  // Updated API call with pagination
   const { 
-    data: responseData = { results: [], count: 0 }, 
-    isLoading 
+    data: responseData = { results: [], count: 0, next: null, previous: null }, 
+    isLoading, 
+    refetch,
+    isFetching 
   } = useExpenseLog(
-    1, // page
-    1000, // pageSize - large number to get all data
+    currentPage,
+    pageSize,
     year ? parseInt(year) : new Date().getFullYear(),
     debouncedSearchQuery,
     selectedMonth
   );
 
-  // Extract the actual data array
-  const fetchedData = responseData.results || [];
+  // Extract data from response
+  const fetchedData = responseData?.results || [];
+  const totalCount = responseData?.count || 0;
+  const hasNext = responseData?.next;
+
+  // Filter data - only show non-archived entries
+  const filteredData = fetchedData.filter((row: any) => row.el_is_archive === false);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [debouncedSearchQuery, selectedMonth, year]);
+
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  // Handle load more
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -94,34 +157,24 @@ const ExpenseLogMain = () => {
     setSelectedMonth(option.value);
   };
 
-  // Filter data - only show non-archived entries (archive filtering still done on frontend)
-  const filteredData = fetchedData.filter(row => row.el_is_archive === false);
-
-  const handleViewFiles = (files: { ief_url: string; ief_name: string }[]) => {
-    setSelectedFiles(files);
-    setCurrentIndex(0);
-    setViewFilesModalVisible(true);
-  };
-
   const handleBack = () => {
     router.back();
   };
-
 
   // Loading state component
   const renderLoadingState = () => (
     <View className="h-64 justify-center items-center">
       <LoadingState/>
     </View>
-  );  
+  );
 
-
-  const renderItem = ({ item }: { item: any }) => {
+  // Expense Log Card Component - Memoized
+  const ExpenseLogCard = React.memo(({ item }: { item: any }) => {
     const amount = Number(item.el_proposed_budget);
     const actualAmount = Number(item.el_actual_expense);
     const returnAmount = Number(item.el_return_amount);
 
-    // Determine text color based on comparison (matching web version)
+    // Determine text color based on comparison
     const textColor = amount > actualAmount ? 'text-green-600' : 'text-red-600';
     
     return (
@@ -157,26 +210,49 @@ const ExpenseLogMain = () => {
         </CardContent>
       </Card>
     );
+  });
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: any }) => <ExpenseLogCard item={item} />,
+    []
+  );
+
+  // Simple empty state component
+  const renderEmptyState = () => {
+    const message = searchQuery
+      ? "No records found matching your criteria."
+      : "No expense log records found.";
+    
+    return (
+      <View className="flex-1 justify-center items-center h-full">
+        <Text className="text-gray-500">{message}</Text>
+      </View>
+    );
   };
+
+  // Loading state for initial load
+  if (isLoading) {
+    return <LoadingState />;
+  }
 
   return (
     <PageLayout
-        leftAction={
-            <TouchableOpacity onPress={handleBack} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-            <ChevronLeft size={24} className="text-gray-700" />
-            </TouchableOpacity>
-        }
-        headerTitle={
-            <View>
-            <Text className="text-[13px]">Expense Log</Text>
-            </View>
-        }
-        rightAction={
-            <View className="w-10 h-10 rounded-full items-center justify-center"></View>
-        }    
-        wrapScroll={false}
+      leftAction={
+        <TouchableOpacity onPress={handleBack} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+          <ChevronLeft size={24} className="text-gray-700" />
+        </TouchableOpacity>
+      }
+      headerTitle={
+        <View>
+          <Text className="text-[13px]">Expense Log</Text>
+        </View>
+      }
+      rightAction={
+        <View className="w-10 h-10 rounded-full items-center justify-center"></View>
+      }    
+      wrapScroll={false}
     >
-      <View className="flex-1 px-6">
+      <View className="flex-1 px-6 bg-white">
         {/* Search and Filters */}
         <View className="mb-4">
           <View className="flex-row items-center gap-2 mb-3">
@@ -191,38 +267,76 @@ const ExpenseLogMain = () => {
             </View>
             
             <View className="w-[120px] pb-3">
-                <SelectLayout
-                  options={monthFilterOptions}
-                  className="h-10"
-                  selectedValue={selectedMonth}
-                  onSelect={handleMonthChange}
-                  placeholder="Month"
-                  isInModal={false}
-                />
+              <SelectLayout
+                options={monthFilterOptions}
+                className="h-10"
+                selectedValue={selectedMonth}
+                onSelect={handleMonthChange}
+                placeholder="Month"
+                isInModal={false}
+              />
             </View>
           </View>
         </View>
 
-        {/* Data List */}
-        {isLoading ? (
-          // <View className="h-64 justify-center items-center">
-          //   <ActivityIndicator size="large" color="#2a3a61" />
-          //   <Text className="text-sm text-gray-500 mt-2">Loading...</Text>
-          // </View>
-          renderLoadingState()           
-        ) : filteredData.length > 0 ? (
+        {/* Result Count - Only show when there are items */}
+        {!isRefreshing && filteredData.length > 0 && (
+          <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${filteredData.length} of ${totalCount} expense log records`}</Text>
+        )}
+        
+        {/* Loading state during refresh */}
+        {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
+
+        {/* Main Content - only render when not refreshing */}
+        {!isRefreshing && (
           <FlatList
+            maxToRenderPerBatch={10}
+            overScrollMode="never"
             data={filteredData}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.el_id.toString()}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            ListFooterComponent={<View className="h-20" />}
             showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            initialNumToRender={10}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.3}
+            onScroll={handleScroll}
+            windowSize={21}
+            renderItem={renderItem}
+            keyExtractor={(item) => `expense-log-${item.el_id}`}
+            removeClippedSubviews
+            contentContainerStyle={{
+              paddingHorizontal: 0,
+              paddingTop: 0,
+              paddingBottom: 20,
+              flexGrow: 1,
+            }}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={["#00a8f0"]}
+              />
+            }
+            ListFooterComponent={() =>
+              isFetching ? (
+                <View className="py-4 items-center">
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                  <Text className="text-xs text-gray-500 mt-2">
+                    Loading more...
+                  </Text>
+                </View>
+              ) : (
+                !hasNext &&
+                filteredData.length > 0 && (
+                  <View className="py-4 items-center">
+                    <Text className="text-xs text-gray-400">
+                      No more records
+                    </Text>
+                  </View>
+                )
+              )
+            }
+            ListEmptyComponent={renderEmptyState()}
           />
-        ) : (
-          <View className="flex-1 justify-center items-center">
-            <Text className="text-gray-500">No expense log records found</Text>
-          </View>
         )}
       </View>
     </PageLayout>

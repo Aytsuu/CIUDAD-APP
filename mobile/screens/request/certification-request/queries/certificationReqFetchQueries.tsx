@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCertificates, getCertificateById, searchCertificates, getPersonalClearances, getPurposeAndRates, getAnnualGrossSales, getBusinessByResidentId, checkResidentVoterId } from "../restful-API/certificationReqGetAPI";
+import { getCertificates, getCertificateById, searchCertificates, getPersonalClearances, getPurposeAndRates, getAnnualGrossSales, getBusinessByResidentId, getBusinessRespondentById, checkResidentVoterId } from "../restful-API/certificationReqGetAPI";
 
 export interface PurposeAndRate {
     pr_id: number;
@@ -76,6 +76,8 @@ export interface Business {
     sitio: string;
     bus_date_verified: string | null;
     bus_status: string;
+    rp_id: string | null;
+    br_id: string | null;
 }
 
 
@@ -87,11 +89,33 @@ export interface BusinessResponse {
 }
 
 
-export const useBusinessByResidentId = (rpId: string) => {
+export const useBusinessByResidentId = (rpId: string, brId?: string) => {
     return useQuery<BusinessResponse>({
-        queryKey: ["business-by-resident", rpId],
-        queryFn: () => getBusinessByResidentId(rpId),
-        enabled: !!rpId, 
+        queryKey: ["business-by-resident", rpId, brId],
+        queryFn: () => getBusinessByResidentId(rpId, brId),
+        enabled: !!(rpId || brId), 
+    });
+};
+
+// Business Respondent types
+export interface BusinessRespondent {
+    br_id: string;
+    br_date_registered: string;
+    br_lname: string;
+    br_fname: string;
+    br_mname: string | null;
+    br_sex: string;
+    br_dob: string;
+    br_contact: string;
+    registered_by?: string;
+}
+
+// Query hook for business respondent
+export const useBusinessRespondentById = (brId: string | null | undefined) => {
+    return useQuery<BusinessRespondent>({
+        queryKey: ["business-respondent", brId],
+        queryFn: () => getBusinessRespondentById(brId!),
+        enabled: !!brId,
     });
 };
 

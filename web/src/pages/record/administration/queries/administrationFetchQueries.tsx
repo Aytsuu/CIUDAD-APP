@@ -12,11 +12,12 @@ export const useStaffs = (
   page: number, 
   pageSize: number, 
   searchQuery: string, 
-  staffTypeFilter?: 'Barangay Staff' | 'Health Staff'
+  staffTypeFilter?: 'Barangay Staff' | 'Health Staff',
+  positionGroupFilter?: string
 ) => {
   return useQuery({
-    queryKey: ["staffs", page, pageSize, searchQuery, staffTypeFilter],
-    queryFn: () => getStaffs(page, pageSize, searchQuery, staffTypeFilter),
+    queryKey: ["staffs", page, pageSize, searchQuery, staffTypeFilter, positionGroupFilter],
+    queryFn: () => getStaffs(page, pageSize, searchQuery, staffTypeFilter, positionGroupFilter),
     staleTime: 5000
   });
 };

@@ -34,7 +34,12 @@ export const getAllTrucks = async (
   pageSize: number = 10,
   searchQuery?: string,
   isArchive?: boolean
-): Promise<{ results: Trucks[]; count: number }> => {
+): Promise<{ 
+  results: Trucks[]; 
+  count: number; 
+  next: string | null; 
+  previous: string | null 
+}> => {
   try {
     const params: any = {
       page,
@@ -58,7 +63,9 @@ export const getAllTrucks = async (
           ...truck,
           truck_last_maint: formatDate(truck.truck_last_maint)
         })),
-      count: response.data.count || trucksData.length
+      count: response.data.count || trucksData.length,
+      next: response.data.next || null,
+      previous: response.data.previous || null
     };
   } catch (error) {
     throw new Error("Failed to fetch trucks");
@@ -70,7 +77,12 @@ export const getAllPersonnel = async (
   pageSize: number = 10,
   searchQuery?: string,
   position?: string
-): Promise<{ results: WastePersonnel[]; count: number }> => {
+): Promise<{ 
+  results: WastePersonnel[]; 
+  count: number; 
+  next: string | null; 
+  previous: string | null 
+}> => {
   try {
     const params: any = {
       page,
@@ -84,24 +96,27 @@ export const getAllPersonnel = async (
     
     // Handle paginated response
     if (response.data.results !== undefined) {
-      const returnData = {
+      return {
         results: response.data.results || [],
-        count: response.data.count || 0
+        count: response.data.count || 0,
+        next: response.data.next || null,
+        previous: response.data.previous || null
       };
-
-      return returnData;
     }
     
     // Handle non-paginated response
     const fallbackData = {
       results: response.data || [],
-      count: response.data?.length || 0
+      count: response.data?.length || 0,
+      next: null,
+      previous: null
     };
     return fallbackData;
   } catch (error) {
     throw error;
   }
 };
+
 export const addTruck = async (data: TruckFormValues): Promise<TruckData> => {
   const response = await api.post("/waste/waste-trucks/", data);
   return {

@@ -73,13 +73,21 @@ export const useGetAnnualDevPlanById = (devId?: string | number) => {
   });
 };
 
-export const useGetAnnualDevPlansByYear = (year: string | number) => {
+export const useGetAnnualDevPlansByYear = (
+  year: string | number,
+  page: number = 1,
+  pageSize: number = 10,
+  search?: string
+) => {
   return useQuery({
-    queryKey: ["annualDevPlansByYear", year],
+    queryKey: ["annualDevPlansByYear", year, page, pageSize, search],
     queryFn: async () => {
-      return await getAnnualDevPlansByYear(year);
+      return await getAnnualDevPlansByYear(year, search, page, pageSize);
     },
     enabled: Boolean(year),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
   });
 };
 

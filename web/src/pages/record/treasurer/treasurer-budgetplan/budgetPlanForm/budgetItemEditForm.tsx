@@ -454,7 +454,7 @@ export default function BudgetItemEditForm({ planId, budgetItems, balanceUnappro
 
                 {/* 3. Transferrable (From expense logs) */}
                 <div className="text-center flex flex-col gap-1 mt-2">
-                  <div className="text-sm font-semibold text-blue-600">
+                  <div className="text-sm font-semibold text-primary">
                     ₱{transferrableDisplay}
                   </div>
                 </div>

@@ -13,8 +13,10 @@ import z from "zod";
 import { useToastContext } from '@/components/ui/toast';
 import { useEditAnnualGrossSales } from './queries/ratesUpdateQueries';
 import { LoadingModal } from '@/components/ui/loading-modal';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AnnualGrossSalesEdit() {
+  const {user} = useAuth();
   const router = useRouter()
   const params = useLocalSearchParams();
   const {ags_id, ags_maximum, ags_minimum, ags_rate} = params;
@@ -28,6 +30,7 @@ export default function AnnualGrossSalesEdit() {
       minRange: String(ags_minimum),
       maxRange: String(ags_maximum),
       amount: String(ags_rate),
+      staff_id: user?.staff?.staff_id
     }
   });
 

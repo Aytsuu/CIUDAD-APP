@@ -13,11 +13,20 @@ export const getAnnualDevPlanYears = async () => {
 };
 
 // Get all plans for a specific year (only non-archived plans)
-export const getAnnualDevPlansByYear = async (year: string | number) => {
+export const getAnnualDevPlansByYear = async (year: string | number, search?: string, page?: number, pageSize?: number) => {
   try {
     const params = new URLSearchParams();
     params.append('year', year.toString());
     params.append('dev_archived', 'false'); // Only get non-archived plans
+    if (search) {
+      params.append('search', search);
+    }
+    if (page) {
+      params.append('page', page.toString());
+    }
+    if (pageSize) {
+      params.append('page_size', pageSize.toString());
+    }
     const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
     return res.data;
   } catch (error) {

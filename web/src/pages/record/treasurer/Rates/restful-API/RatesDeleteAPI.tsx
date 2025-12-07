@@ -1,11 +1,14 @@
 import { api } from "@/api/api"
 
-export const deleteAnnualGrossSales= async (ags_id: number) => {
+export const deleteAnnualGrossSales= async (ags_id: number, staff_id: string) => {
     try{
 
         const res = await api.put(`treasurer/delete-annual-gross-sales/${ags_id}/`, {
             ags_is_archive: true,
+            ags_date: new Date().toISOString(),
+            staff_id: staff_id,
         })
+        
         return res.data
     } catch(error){
         // console.error(error)
@@ -19,6 +22,7 @@ export const deletePurposeAndRate= async (pr_id: number) => {
 
         const res = await api.put(`treasurer/delete-purpose-and-rate/${pr_id}/`, {
             pr_is_archive: true,
+            pr_date: new Date().toISOString(),
         })
 
         const res2 = await api.delete(`council/delete-template-with-pr-id/${pr_id}/`)

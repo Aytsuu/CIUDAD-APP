@@ -28,10 +28,12 @@ export const useResolution = (
     yearFilter?: string,
     isArchive?: boolean
 ) => {
-    return useQuery<{ results: ResolutionData[]; count: number }>({
+    return useQuery({
         queryKey: ["resData", page, pageSize, searchQuery, areaFilter, yearFilter, isArchive], 
         queryFn: () => getResolution(page, pageSize, searchQuery, areaFilter, yearFilter, isArchive),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 

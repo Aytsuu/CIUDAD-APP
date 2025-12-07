@@ -11,6 +11,7 @@ urlpatterns = [
   path('ir/create/from-securado/', TrackerReportCreateView.as_view(), name="create-from-securado"),
   path('ir/list/table/', IRTableView.as_view(), name='ir-list-table'),
   path('ir/<int:ir_id>/info/', IRInfoView.as_view(), name='incident-report-info'),
+  path('ir/<int:ir_id>/update/', IRUpdateView.as_view(), name='incident-report-update'),
   path('rt/create/', ReportTypeCreateView.as_view(), name="create-rt"),
   path('rt/list/<str:rt_category>/', ReportTypeListView.as_view(), name='rt-list'),
   path('ar/list/table/', ARTableView.as_view(), name='ar-list'),

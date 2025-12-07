@@ -10,10 +10,7 @@ export const useAddAccount = () => {
     }) => {
       try {
           const response = await api.post('authentication/signup/', {
-            username: accountInfo.username,
-            email: accountInfo.email,
-            phone: accountInfo.phone,
-            password: accountInfo.password,
+            ...accountInfo,
             resident_id: residentId 
           });
       

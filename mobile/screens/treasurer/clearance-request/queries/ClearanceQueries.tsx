@@ -1,4 +1,5 @@
 import { AxiosError } from "axios";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/api";
 
 export interface UnpaidCertificate {
@@ -214,14 +215,16 @@ export const getUnpaidBusinessPermits = async (
 
 // Fetch unpaid business permits (matching web version for unpaid tab)
 export const getBusinessPermits = async (
-  search?: string
-): Promise<UnpaidBusinessPermit[]> => {
+  search?: string,
+  page?: number,
+  pageSize?: number
+): Promise<{results: UnpaidBusinessPermit[], count: number, next: string | null, previous: string | null}> => {
   try {
-    // Fetch from the same endpoint as web version
     const params = new URLSearchParams();
-    if (search) {
-      params.append('search', search);
-    }
+    if (search) params.append('search', search);
+    if (page) params.append('page', page.toString());
+    if (pageSize) params.append('page_size', pageSize.toString());
+    
     const url = `/clerk/business-permit/${params.toString() ? '?' + params.toString() : ''}`;
     const res = await api.get(url);
     const payload = res.data as any;
@@ -254,29 +257,15 @@ export const getBusinessPermits = async (
       decline_reason: item.bus_reason || item.bpr_reason || item.req_declined_reason || item.decline_reason || '',
     }));
 
-    // Don't filter by payment status here - let the component handle filtering
-    const filtered = normalized;
-
-    // Apply search filter if provided
-    if (search) {
-      const searchLower = search.toLowerCase();
-      return filtered.filter((item) => {
-        return (
-          item.bp_id?.toLowerCase().includes(searchLower) ||
-          item.bpr_id?.toLowerCase().includes(searchLower) ||
-          item.business_name?.toLowerCase().includes(searchLower) ||
-          item.owner_name?.toLowerCase().includes(searchLower) ||
-          item.business_type?.toLowerCase().includes(searchLower) ||
-          item.purpose?.toLowerCase().includes(searchLower)
-        );
-      });
-    }
-
-    return filtered;
+    const count = payload?.count ?? normalized.length;
+    const next = payload?.next ?? null;
+    const previous = payload?.previous ?? null;
+    
+    return { results: normalized, count, next, previous };
   } catch (err) {
     const error = err as AxiosError;
     if (error.response?.status === 500) {
-      return [];
+      return { results: [], count: 0, next: null, previous: null };
     }
     throw error;
   }
@@ -344,5 +333,49 @@ export const getUnpaidServiceCharges = async (
     }
     throw error;
   }
+};
+
+export const useUnpaidCertificates = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  paymentStatus?: string
+) => {
+  return useQuery({
+    queryKey: ['unpaidCertificates', page, pageSize, searchQuery, paymentStatus],
+    queryFn: () => getUnpaidCertificates(searchQuery, page, pageSize, paymentStatus),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+};
+
+export const useBusinessPermits = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string
+) => {
+  return useQuery({
+    queryKey: ['businessPermits', page, pageSize, searchQuery],
+    queryFn: () => getBusinessPermits(searchQuery, page, pageSize),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+};
+
+export const useUnpaidServiceCharges = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  tab?: "unpaid" | "paid" | "declined"
+) => {
+  return useQuery({
+    queryKey: ['unpaidServiceCharges', page, pageSize, searchQuery, tab],
+    queryFn: () => getUnpaidServiceCharges(searchQuery, page, pageSize, tab),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
 };
 

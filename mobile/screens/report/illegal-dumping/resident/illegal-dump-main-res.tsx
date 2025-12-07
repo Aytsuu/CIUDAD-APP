@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, FlatList, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, Pressable, FlatList, TouchableOpacity, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { Search, CheckCircle, ChevronLeft, SquareArrowOutUpRight, XCircle } from 'lucide-react-native';
 import { useWasteReport, type WasteReport } from '../queries/illegal-dump-fetch-queries';
 import { SelectLayout } from '@/components/ui/select-layout';
@@ -10,17 +10,25 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingState } from "@/components/ui/loading-state";
 
-
+const INITIAL_PAGE_SIZE = 10;
 
 export default function WasteIllegalDumpingResMain() {
   const [selectedFilterId, setSelectedFilterId] = useState('0');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'pending' | 'resolved' | 'cancelled'>('pending');
-  const [isRefreshing, setIsRefreshing] = useState(false); 
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const {user} = useAuth()  
-
 
   let rp_ide = user?.rp;
 
@@ -32,10 +40,16 @@ export default function WasteIllegalDumpingResMain() {
     return "";
   };
 
-  // Fetch data with backend filtering - using large page size like staff version
-  const { data: wasteReportData = { results: [], count: 0 }, isLoading, isError, refetch } = useWasteReport(
-    1, // page
-    1000, // pageSize - large number to get all data
+  // Fetch data with backend filtering and pagination
+  const { 
+    data: responseData = { results: [], count: 0, next: null, previous: null }, 
+    isLoading, 
+    isError, 
+    refetch,
+    isFetching 
+  } = useWasteReport(
+    currentPage,
+    pageSize,
     debouncedSearchQuery, 
     selectedFilterId,
     getStatusParam(activeTab),
@@ -44,18 +58,71 @@ export default function WasteIllegalDumpingResMain() {
   );
 
   // Extract the actual data array from paginated response
-  const fetchedData = wasteReportData.results || [];
+  const fetchedData = responseData?.results || [];
+  const totalCount = responseData?.count || 0;
+  const hasNext = responseData?.next;
+
+  // Reset pagination when filters or tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [debouncedSearchQuery, selectedFilterId, activeTab, rp_ide]);
+
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  // Handle load more
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   const filterOptions = [
-    { id: "0", name: "All Report Matter" },
-    { id: "Littering, Illegal dumping, Illegal disposal of garbage", name: "Littering, Illegal dumping, Illegal disposal of garbage" },
-    { id: "Urinating, defecating, spitting in a public place", name: "Urinating, defecating, spitting in a public place" },
-    { id: "Dirty frontage and immediate surroundings for establishment owners", name: "Dirty frontage and immediate surroundings for establishment owners" },
-    { id: "Improper and untimely stacking of garbage outside residences or establishmen", name: "Improper and untimely stacking of garbage outside residences or establishment" },
-    { id: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)", name: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)" },
-    { id: "Dirty public utility vehicles, or no trash can or receptacle", name: "Dirty public utility vehicles, or no trash can or receptacle" },
-    { id: "Spilling, scattering, littering of wastes by public utility vehicles", name: "Spilling, scattering, littering of wastes by public utility vehicles" },
-    { id: "Illegal posting or installed signage, billboards, posters, streamers and movie ads.", name: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
+    { label: "All Report Matter", value: "0" },
+    { label: "Littering, Illegal dumping, Illegal disposal of garbage", value: "Littering, Illegal dumping, Illegal disposal of garbage" },
+    { label: "Urinating, defecating, spitting in a public place", value: "Urinating, defecating, spitting in a public place" },
+    { label: "Dirty frontage and immediate surroundings for establishment owners", value: "Dirty frontage and immediate surroundings for establishment owners" },
+    { label: "Improper and untimely stacking of garbage outside residences or establishment", value: "Improper and untimely stacking of garbage outside residences or establishment" },
+    { label: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)", value: "Obstruction (any dilapidated appliance, vehicle, and etc., display of merchandise illegal structure along sidewalk)" },
+    { label: "Dirty public utility vehicles, or no trash can or receptacle", value: "Dirty public utility vehicles, or no trash can or receptacle" },
+    { label: "Spilling, scattering, littering of wastes by public utility vehicles", value: "Spilling, scattering, littering of wastes by public utility vehicles" },
+    { label: "Illegal posting or installed signage, billboards, posters, streamers and movie ads.", value: "Illegal posting or installed signage, billboards, posters, streamers and movie ads." },
   ];
 
   const handleFilterChange = (value: string) => {
@@ -73,29 +140,20 @@ export default function WasteIllegalDumpingResMain() {
     });
   };
 
-  //Refresh the page
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
-  };
-
   // Loading state component
   const renderLoadingState = () => (
     <View className="h-64 justify-center items-center">
       <LoadingState/>
     </View>
-  );  
+  );
 
-
-  const renderReportCard = (item: WasteReport) => (
+  // Waste Report Card Component - Memoized for better performance
+  const WasteReportCard = React.memo(({ item, onView }: { item: WasteReport; onView: (item: WasteReport) => void }) => (
     <Pressable
-      key={item.rep_id}
-      onPress={() => handleView(item)}
+      onPress={() => onView(item)}
       className="mb-3 border border-gray-200 rounded-lg p-4 bg-white shadow-sm active:opacity-80"
     >
       <View className="flex-row justify-between items-start mb-3">
-
         <Text className="font-semibold text-xl text-primaryBlue">Report No. {item.rep_id}</Text>       
         
         <View className="flex-row items-center">
@@ -143,7 +201,7 @@ export default function WasteIllegalDumpingResMain() {
         <Text className="text-base">{item.rep_location}</Text>
       </View>
 
-      {item.rep_status === "cancelled" && (
+      {item.rep_status === "cancelled" && item.rep_cancel_reason && (
         <View className="mb-4">
           <Text className="text-base font-semibold">Cancel Reason:</Text>
           <Text>{item.rep_cancel_reason}</Text>              
@@ -154,7 +212,25 @@ export default function WasteIllegalDumpingResMain() {
         <SquareArrowOutUpRight size={16} color="#00A8F0" />
       </View>
     </Pressable>
+  ));
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: WasteReport }) => <WasteReportCard item={item} onView={handleView} />,
+    []
   );
+
+  // Simple empty state component
+  const renderEmptyState = () => {
+    const message = searchQuery || selectedFilterId !== "0"
+      ? "No matching reports found."
+      : `No ${activeTab} reports found`;
+    
+    return (
+      <View className="flex-1 justify-center items-center py-8">
+        <Text className="text-gray-500 text-center">{message}</Text>
+      </View>
+    );
+  };
 
   if (isError) {
     return (
@@ -216,13 +292,13 @@ export default function WasteIllegalDumpingResMain() {
       }
       wrapScroll={false}
     >
-      <View className="flex-1 bg-gray-50">
+      <View className="flex-1 bg-white">
         {/* Search Bar - Conditionally rendered */}
         {showSearch && (
           <SearchInput 
             value={searchQuery}
             onChange={setSearchQuery}
-            onSubmit={() => {}} // Can leave empty since you're using debounce
+            onSubmit={() => {}}
           />
         )}
 
@@ -249,51 +325,80 @@ export default function WasteIllegalDumpingResMain() {
           </ScrollView>
         </View>      
 
-        <View className="flex-1 px-6">
+        <View className="flex-1">
           {/* Filters only - Search moved to top */}
-          <View className="mb-4">
+          <View className="px-6 pt-4 pb-4">
             <SelectLayout
               placeholder="Select report matter"
-              options={filterOptions.map(({ id, name }) => ({ value: id, label: name }))}
+              options={filterOptions}
               selectedValue={selectedFilterId}
               onSelect={(option) => handleFilterChange(option.value)}
               className="bg-white"
             />
           </View>
 
-          {/* Tab Content */}
-          <View className="mb-2">
-            <Text className="text-sm text-gray-500">
-              {fetchedData.length} report
-              {fetchedData.length !== 1 ? 's' : ''} found
-            </Text>
-          </View>
+          {/* Loading state during refresh */}
+          {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
 
-          {isLoading ? (
-            renderLoadingState()               
-          ) : (    
-            <FlatList
-              data={fetchedData}
-              renderItem={({ item }) => renderReportCard(item)}
-              keyExtractor={(item) => item.rep_id.toString()}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={handleRefresh}
-                  colors={['#00a8f0']}  // Android spinner color
-                  tintColor="#00a8f0"    // iOS spinner color
-                />
-              }              
-              ListEmptyComponent={
-                <View className="py-8 items-center">
-                  <Text className="text-gray-500 text-center">
-                    No {activeTab} reports found
-                  </Text>
-                </View>
-              }
-            />
+          {/* Main Content - only render when not refreshing */}
+          {!isRefreshing && (
+            <View className="flex-1 px-2">
+              {/* Result Count - Only show when there are items - EXACT SAME as expense */}
+              {fetchedData.length > 0 && (
+                <Text className="text-xs text-gray-500 mt-2 mb-3 px-6">
+                  {`Showing ${fetchedData.length} of ${totalCount} waste reports`}
+                </Text>
+              )}
+              
+              <FlatList
+                maxToRenderPerBatch={5}
+                overScrollMode="never"
+                data={fetchedData}
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
+                initialNumToRender={5}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                onScroll={handleScroll}
+                windowSize={11}
+                renderItem={renderItem}
+                keyExtractor={(item) => `waste-report-res-${item.rep_id}`}
+                removeClippedSubviews
+                contentContainerStyle={{
+                  paddingHorizontal: 16,
+                  paddingTop: 8,
+                  paddingBottom: 20,
+                  flexGrow: 1,
+                }}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={["#00a8f0"]}
+                  />
+                }
+                ListFooterComponent={() =>
+                  isFetching && isLoadMore ? (
+                    <View className="py-4 items-center">
+                      <ActivityIndicator size="small" color="#3B82F6" />
+                      <Text className="text-xs text-gray-500 mt-2">
+                        Loading more reports...
+                      </Text>
+                    </View>
+                  ) : (
+                    !hasNext &&
+                    fetchedData.length > 0 && (
+                      <View className="py-4 items-center">
+                        <Text className="text-xs text-gray-400">
+                          No more reports
+                        </Text>
+                      </View>
+                    )
+                  )
+                }
+                ListEmptyComponent={renderEmptyState()}
+              />
+            </View>
           )}
         </View>
       </View>

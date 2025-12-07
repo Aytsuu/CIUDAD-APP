@@ -21,14 +21,17 @@ export type ServiceCharge = {
   };
 };
 
-export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
+export const getPaidServiceCharges = async (search?: string, page?: number, pageSize?: number): Promise<{results: ServiceCharge[], count: number, next: string | null, previous: string | null}> => {
   try {
-    
     const params = new URLSearchParams({
       status: 'pending',
       payment_status: 'Unpaid',
       sr_type: 'File Action',
     });
+
+    if (search) params.append('search', search);
+    if (page) params.append('page', page.toString());
+    if (pageSize) params.append('page_size', pageSize.toString());
 
     const res = await api.get(`/clerk/service-charge-treasurer-list/?${params.toString()}`);
     const payload = res.data as any;
@@ -50,17 +53,28 @@ export const getPaidServiceCharges = async (): Promise<ServiceCharge[]> => {
         invoice: undefined,
       }));
 
-    return merged;
+    return {
+      results: merged,
+      count: payload?.count || merged.length,
+      next: payload?.next || null,
+      previous: payload?.previous || null
+    };
   } catch (err) {
     console.error('Error fetching service charges:', err);
-    return [];
+    return { results: [], count: 0, next: null, previous: null };
   }
 };
 
-export const useServiceCharges = () => {
+export const useServiceCharges = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string
+) => {
   return useQuery({
-    queryKey: ['serviceCharges'],
-    queryFn: getPaidServiceCharges,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: ['serviceCharges', page, pageSize, searchQuery],
+    queryFn: () => getPaidServiceCharges(searchQuery, page, pageSize),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
   });
 };

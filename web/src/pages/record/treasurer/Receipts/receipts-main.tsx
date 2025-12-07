@@ -29,7 +29,7 @@ function ReceiptPage() {
     selectedFilterId
   );
 
-  console.log("RECEIPTT DATA", receiptData)
+
 
   // Extract data from paginated response
   const fetchedData = receiptData.results || [];
@@ -49,14 +49,22 @@ function ReceiptPage() {
   const columns: ColumnDef<Receipt>[] = [
     {
       accessorKey: "inv_serial_num",
-      header: "Serial No.",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Serial No.
+          </div>
+      ),
       cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("inv_serial_num")}</div>
+        <div className="capitalize text-center">{row.getValue("inv_serial_num")}</div>
       )
     },
     {
       accessorKey: "inv_date",
-      header: "Date Issued",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Date Issued
+          </div>
+      ),
       cell: ({ row }) => {
         const dateValue = row.getValue("inv_date");
         if (!dateValue || typeof dateValue === 'object' && Object.keys(dateValue).length === 0) {
@@ -82,19 +90,27 @@ function ReceiptPage() {
             hour12: true,
           });
 
-          return <div>{`${formattedDate} at ${formattedTime}`}</div>;
+          return <div className="text-center">{`${formattedDate} at ${formattedTime}`}</div>;
         } catch (error) {
-          return <div className="text-gray-400">Error</div>;
+          return <div className="text-gray-400 text-center">Error</div>;
         }
       },
     },
     {
       accessorKey: "inv_payor",
-      header: "Payor",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Payor
+          </div>
+      ),
     },    
     {
       accessorKey: "inv_nat_of_collection",
-      header: "Nature of Collection",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Nature of Collection
+          </div>
+      ),
       cell: ({ row }) => {
         const nature = row.getValue("inv_nat_of_collection") as string;
         
@@ -127,12 +143,12 @@ function ReceiptPage() {
             'postal id': 'bg-cyan-100 text-cyan-800 border-cyan-300',
             'nbi': 'bg-sky-100 text-sky-800 border-sky-300',
             'pwd identification': 'bg-teal-100 text-teal-800 border-teal-300',
-            'señior citizen identification': 'bg-emerald-100 text-emerald-800 border-emerald-300',
+            'senior citizen identification': 'bg-emerald-100 text-emerald-800 border-emerald-300',
             'police clearance': 'bg-blue-100 text-blue-800 border-blue-300',
             
             // Financial Assistance - Green variants
             'pwd financial assistance': 'bg-green-100 text-green-800 border-green-300',
-            'señior citizen financial assistance': 'bg-lime-100 text-lime-800 border-lime-300',
+            'senior citizen financial assistance': 'bg-lime-100 text-lime-800 border-lime-300',
             'fire victim': 'bg-emerald-100 text-emerald-800 border-emerald-300',
             
             // Legal & Government - Orange/Amber variants
@@ -169,8 +185,8 @@ function ReceiptPage() {
         };
         
         return (
-          <div className="flex justify-center">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getColorScheme(nature)}`}>
+          <div className="flex justify-center w-full">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium border truncate ${getColorScheme(nature)}`}>
               {nature}
             </span>
           </div>
@@ -179,25 +195,55 @@ function ReceiptPage() {
     },
     {
       accessorKey: "inv_amount",
-      header: "Amount",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Amount
+        </div>
+      ),
       cell: ({ row }) => {
-        const value = row.getValue("inv_amount");
-        return `₱ ${value}`;
+        const value = row.getValue("inv_amount") as number; // <-- cast here
+
+        return (
+          <div className="flex justify-center items-center w-full font-medium">
+            ₱ {value}
+          </div>
+        );
       }
     },
     {
       accessorKey: "inv_change",
-      header: "Change",
-      cell: ({ row }) => `₱ ${(Number(row.getValue("inv_change")) || 0).toFixed(2)}`
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Change
+        </div>
+      ),
+      cell: ({ row }) => {
+        const value = Number(row.getValue("inv_change")) || 0;
+
+        return (
+          <div className="flex justify-center items-center w-full font-medium">
+            ₱ {value.toFixed(2)}
+          </div>
+        );
+      }
     },
     {
       accessorKey: "inv_discount_reason",
-      header: "Discount Reason",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Discount Reason
+        </div>
+      ),
       cell: ({ row }) => {
         const value = row.getValue("inv_discount_reason") as string;
-        return value ? value : "None";
+
+        return (
+          <div className="text-center">
+            {value ? value : "None"}
+          </div>
+        );
       }
-    },
+    }
   ];
 
   // Dynamically generate filter options from inv_nat_of_collection

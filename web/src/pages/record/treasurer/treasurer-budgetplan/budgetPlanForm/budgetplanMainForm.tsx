@@ -294,7 +294,6 @@ function BudgetPlanMainForm({
         <Button 
           onClick={handleNext}
           disabled={isSubmitting}
-          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
         >
           Next
           <ChevronRightIcon className="w-4 h-4" />
@@ -362,7 +361,7 @@ function BudgetPlanMainForm({
               <div className="p-4 bg-white flex flex-col gap-3 rounded-lg drop-shadow cursor-pointer">
                 <div className="flex items-center justify-between">
                   <Label className={styles.labelDesign}>NET Available Resources:</Label>
-                  <ChevronRightIcon className="w-4 h-4 text-blue-500" />
+                  <ChevronRightIcon className="w-4 h-4 text-primary" />
                 </div>
                 <Label className="text-sm font-semibold">{formatNumber(availableResources.toString())}</Label>
               </div>

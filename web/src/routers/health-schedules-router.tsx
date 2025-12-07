@@ -5,13 +5,13 @@ import { ProtectedRoute } from "@/ProtectedRoutes";
 export const health_schedule_routes = [
 	{
 		path: '/scheduled/follow-ups',
-		element: <ProtectedRoute requiredFeature="FOLLOW-UP VISITS">
+		element: <ProtectedRoute requiredFeatures={["FOLLOW-UP VISITS"]}>
 			<ScheduleRecords />
 		</ProtectedRoute>
 	},
 	{
 		path: '/scheduler',
-		element: <ProtectedRoute requiredFeature="SERVICE SCHEDULER">
+		element: <ProtectedRoute requiredFeatures={["SERVICE SCHEDULER"]}>
 			<SchedulerMain />
 		</ProtectedRoute>
 	}

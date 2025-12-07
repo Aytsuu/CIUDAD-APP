@@ -151,10 +151,10 @@ export default function ReportDocument() {
   // ----------------- RENDER ---------------------
   return (
     <LayoutWithBack 
-      title={type === "AR" ? "Acknowledgement Report Document" : "Weekly AR Document"} 
+      title={type === "AR" ? "Action Report Document" : "Weekly AR Document"} 
       description={type === "AR" ? 
-        "Review and manage your AR document" : 
-        "Review and manage your Weekly AR document"
+        "Review and manage your Action Report document" : 
+        "Review and manage your Weekly Accomplishment Report document"
       }
     >
       <div className="w-full h-full flex">

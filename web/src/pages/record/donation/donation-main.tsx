@@ -14,14 +14,16 @@ import { Donations } from "./donation-types";
 import { useGetDonations } from "./queries/donationFetchQueries";
 import { Button } from "@/components/ui/button/button";
 import { Spinner } from "@/components/ui/spinner";
-import { useLoading } from "@/context/LoadingContext"; 
+import { useLoading } from "@/context/LoadingContext";
 import { useDebounce } from "@/hooks/use-debounce";
 import { formatTableDate } from "@/helpers/dateHelper";
-import { useAuth } from "@/context/AuthContext"; 
+import { useAuth } from "@/context/AuthContext";
 
 function DonationTracker() {
-  const { user } = useAuth(); 
-  const isSecretary = ["admin", "secretary"].includes(user?.staff?.pos?.toLowerCase());
+  const { user } = useAuth();
+  const isSecretary = ["admin", "secretary"].includes(
+    user?.staff?.pos?.toLowerCase()
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
@@ -31,9 +33,9 @@ function DonationTracker() {
   const [currentPage, setCurrentPage] = useState(1);
   const { showLoading, hideLoading } = useLoading();
 
-  const { 
-    data: donationsData = { results: [], count: 0 }, 
-    isLoading, 
+  const {
+    data: donationsData = { results: [], count: 0 },
+    isLoading,
     refetch,
   } = useGetDonations(
     currentPage,
@@ -87,28 +89,38 @@ function DonationTracker() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex-row items-center bg-blue-50 px-2 py-0.5 rounded-full border border-primary">
-        <div className="text-primary text-xs font-medium">{row.getValue("don_num")}</div>
+        <div className="flex-row justify-center items-center bg-blue-50 px-2 py-0.5 rounded-full border border-primary">
+          <div className="text-primary text-center text-xs font-medium">
+            {row.getValue("don_num")}
+          </div>
         </div>
       ),
     },
     {
       accessorKey: "don_date",
-      header: "Date",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Date</div>
+      ),
       cell: ({ row }) => (
-        <div className="text-center">{formatTableDate(row.getValue("don_date"))}</div>
+        <div className="text-center">
+          {formatTableDate(row.getValue("don_date"))}
+        </div>
       ),
     },
     {
       accessorKey: "don_donor",
-      header: "Donor",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Donor</div>
+      ),
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_donor")}</div>
       ),
     },
     {
       accessorKey: "don_item_name",
-      header: "Item Name",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Item Name</div>
+      ),
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_item_name")}</div>
       ),
@@ -122,14 +134,20 @@ function DonationTracker() {
     // },
     {
       accessorKey: "don_qty",
-      header: "Quantity/Amount",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Quantity/Amount
+        </div>
+      ),
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("don_qty")}</div>
       ),
     },
     {
       accessorKey: "don_status",
-      header: "Condition",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Condition</div>
+      ),
       cell: ({ row }) => {
         const status = row.getValue("don_status") as string;
         return (
@@ -187,9 +205,9 @@ function DonationTracker() {
   };
 
   const handleFilterChange = (filterType: string, value: string) => {
-    if (filterType === 'category') {
+    if (filterType === "category") {
       setCategoryFilter(value);
-    } else if (filterType === 'status') {
+    } else if (filterType === "status") {
       setStatusFilter(value);
     }
     setCurrentPage(1);
@@ -232,7 +250,7 @@ function DonationTracker() {
               placeholder="Filter by Category"
               options={categoryOptions}
               value={categoryFilter}
-              onChange={(value) => handleFilterChange('category', value)}
+              onChange={(value) => handleFilterChange("category", value)}
               valueLabel="Category"
             />
             <SelectLayout
@@ -240,7 +258,7 @@ function DonationTracker() {
               placeholder="Filter by Status"
               options={statusOptions}
               value={statusFilter}
-              onChange={(value) => handleFilterChange('status', value)}
+              onChange={(value) => handleFilterChange("status", value)}
               valueLabel="Status"
             />
           </div>
@@ -304,8 +322,8 @@ function DonationTracker() {
             <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
               <p className="text-xs sm:text-sm text-darkGray">
                 Showing {(currentPage - 1) * pageSize + 1}-
-                {Math.min(currentPage * pageSize, totalCount)} of{" "}
-                {totalCount} rows
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount}{" "}
+                rows
               </p>
               {totalCount > 0 && totalPages > 1 && (
                 <PaginationLayout

@@ -205,7 +205,7 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
                       <FormControl>
                         <Combobox
                           options={formattedHealthStaff}
-                          value={field.value}
+                          value={field.value || ''}
                           onChange={(value) => field.onChange(value)}
                           placeholder="Select health staff"
                           contentClassName="w-[24rem] max-h-60"
@@ -237,7 +237,7 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
                       <FormControl>
                         <Combobox
                           options={formattedFamilyMembers}
-                          value={field.value}
+                          value={field.value || ''}
                           onChange={(value) => field.onChange(value)}
                           placeholder="Select family member"
                           contentClassName="w-[24rem] max-h-60"
@@ -268,7 +268,7 @@ const SurveyIdentificationForm = forwardRef<SurveyIdentificationFormHandle, Surv
                       <FormControl>
                         <Combobox
                           options={formattedHealthStaff}
-                          value={field.value}
+                          value={field.value || ''}
                           onChange={(value) => field.onChange(value)}
                           placeholder="Select health staff"
                           contentClassName="w-[24rem] max-h-60"

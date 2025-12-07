@@ -295,7 +295,7 @@ const PersonalInfoForm = ({
             </div>
           ))
         }
-        {(![Type.Viewing, Type.Request].includes(formType)) &&
+        {!isReadOnly &&
           <div>
             <Button 
               variant={"outline"} 

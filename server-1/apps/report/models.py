@@ -27,14 +27,18 @@ class IncidentReport(AbstractModels):
   ir_track_user_contact = models.CharField(max_length=20, null=True)
   ir_track_user_name = models.CharField(max_length=100, null=True)
   ir_created_at = models.DateTimeField(auto_now_add=True)
+  ir_updated_at = models.DateTimeField(auto_now=True)
   ir_is_archive = models.BooleanField(default=False)
+  ir_status = models.CharField(max_length=50, default="IN-PROGRESS")
+  ir_is_verified = models.BooleanField(default=False)
+  ir_remark = models.TextField(null=True)
   rt = models.ForeignKey(ReportType, on_delete=models.CASCADE, null=True)
   rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, null=True)
 
   class Meta:
     db_table = 'incident_report'
 
-class AcknowledgementReport(AbstractModels):
+class ActionReport(AbstractModels):
   ar_id = models.BigAutoField(primary_key=True)
   ar_title = models.CharField(max_length=500)
   ar_date_started = models.DateField()
@@ -47,11 +51,11 @@ class AcknowledgementReport(AbstractModels):
   ar_created_at = models.DateField(default=date.today)
   ar_status = models.CharField(max_length=20, default='UNSIGNED')
   ar_is_archive = models.BooleanField(default=False)
-  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True)
+  ir = models.ForeignKey(IncidentReport, on_delete=models.CASCADE, null=True, related_name="action_report")
   staff = models.ForeignKey('administration.Staff', on_delete=models.CASCADE)
 
   class Meta:
-    db_table = 'acknowledgement_report'
+    db_table = 'action_report'
 
 class ARFile(models.Model):
   arf_id = models.BigAutoField(primary_key=True)
@@ -60,7 +64,7 @@ class ARFile(models.Model):
   arf_path = models.CharField(max_length=500)
   arf_url = models.URLField()
   arf_is_supp = models.BooleanField(default=False)
-  ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE, related_name="ar_files")
+  ar = models.ForeignKey(ActionReport, on_delete=models.CASCADE, related_name="ar_files")
 
   class Meta:
     db_table = 'ar_file'
@@ -89,7 +93,7 @@ class WARFile(models.Model):
 
 class WeeklyARComposition(models.Model):
   warc_id = models.BigAutoField(primary_key=True)
-  ar = models.ForeignKey(AcknowledgementReport, on_delete=models.CASCADE)
+  ar = models.ForeignKey(ActionReport, on_delete=models.CASCADE)
   war = models.ForeignKey(WeeklyAccomplishmentReport, on_delete=models.CASCADE)
 
   class Meta:

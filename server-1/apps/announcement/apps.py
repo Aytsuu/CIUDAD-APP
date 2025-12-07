@@ -31,6 +31,6 @@ class AnnouncementConfig(AppConfig):
                 id='announcement_status_update',
             )
             scheduler.start()
-            logger.info("✅ Announcement scheduler started successfully")
+            # logger.info("✅ Announcement scheduler started successfully")
         except Exception as e:
             logger.error(f"Failed to start scheduler: {str(e)}")

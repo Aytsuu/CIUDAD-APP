@@ -574,7 +574,22 @@ class BusinessPermitSerializer(serializers.ModelSerializer):
             return ''
 
     def get_purpose(self, obj):
-        return obj.pr_id.pr_purpose if obj.pr_id else ""
+        try:
+            if obj.pr_id:
+                return {
+                    "pr_purpose": obj.pr_id.pr_purpose,
+                    "pr_rate": obj.pr_id.pr_rate
+                }
+            return {
+                "pr_purpose": "",
+                "pr_rate": 0.0
+            }
+        except Exception as e:
+            logger.error(f"Error getting purpose and rate: {str(e)}")
+            return {
+                "pr_purpose": "",
+                "pr_rate": 0.0
+            }
 
     def get_amount_to_pay(self, obj):
         try:
