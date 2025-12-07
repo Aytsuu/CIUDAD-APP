@@ -1402,7 +1402,7 @@ class GarbagePickupRequestAnalyticsView(APIView):
             'accepted': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='accepted').count(),
             'rejected': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='rejected').count(),
             'completed': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='completed').count(),
-            'total': Garbage_Pickup_Request.objects.count()
+            'totalPickup': Garbage_Pickup_Request.objects.count()
         }
         
         return Response(counts, status=status.HTTP_200_OK)

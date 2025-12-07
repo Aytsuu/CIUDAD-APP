@@ -108,7 +108,7 @@ export const getItemsConfig = (
     rejected: complaintRejected, 
     raised: complaintRaised 
   } = complaintCards;
-  const { accepted, rejected: garbRejected, completed, pending: garbPending  } = garbCards;
+  const { totalPickup} = garbCards;
   const { waiting, ongoing, escalated, resolved } = conciliationCards;
   const { waiting: mediationWaiting, ongoing: mediationOngoing, forwarded, resolved: mediationResolved } = mediationCards;
   const { cashDonations } = donationCards;
@@ -286,7 +286,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, garbPending, garbRejected, accepted, completed],
+        card: [driverLoaders, wasteLoaders, collectionVehicles, totalPickup],
         upcomingEvents: wasteUpcomingEvents,
       },
     ]
