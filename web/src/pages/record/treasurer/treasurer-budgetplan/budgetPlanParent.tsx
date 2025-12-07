@@ -46,7 +46,7 @@ const StepIndicator = ({ currentStep }: { currentStep: "header" | "withLimits" |
         
         {/* Animated Progress Line */}
         <div
-          className="absolute top-8 left-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700 ease-out shadow-sm"
+          className="absolute top-8 left-0 h-1 bg-gradient-to-r from-primary to-primary rounded-full transition-all duration-700 ease-out shadow-sm"
           style={{
             width: `${getProgressPercentage()}%`,
           }}
@@ -69,7 +69,7 @@ const StepIndicator = ({ currentStep }: { currentStep: "header" | "withLimits" |
                       status === "completed"
                         ? "bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25 border-2 border-green-400"
                         : status === "current"
-                          ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 border-2 border-blue-400 ring-4 ring-blue-100"
+                          ? "bg-gradient-to-br from-primary to-primary text-white shadow-lg shadow-primary-500/25 border-2 border-primary-400 ring-4 ring-primary-100"
                           : "bg-white text-gray-400 border-2 border-gray-300 shadow-md hover:border-gray-400"
                     }
                   `}
@@ -82,7 +82,7 @@ const StepIndicator = ({ currentStep }: { currentStep: "header" | "withLimits" |
                   
                   {/* Pulse animation for current step */}
                   {status === "current" && (
-                    <div className="absolute inset-0 rounded-full bg-blue-500 animate-ping opacity-20" />
+                    <div className="absolute inset-0 rounded-full bg-primary animate-ping opacity-20" />
                   )}
                 </div>
 
@@ -93,7 +93,7 @@ const StepIndicator = ({ currentStep }: { currentStep: "header" | "withLimits" |
                       text-sm font-semibold leading-tight mb-1 transition-colors duration-300
                       ${
                         status === "current"
-                          ? "text-blue-600"
+                          ? "text-primary-600"
                           : status === "completed"
                             ? "text-green-600"
                             : "text-gray-500 group-hover:text-gray-700"
@@ -109,7 +109,7 @@ const StepIndicator = ({ currentStep }: { currentStep: "header" | "withLimits" |
                       text-xs leading-tight transition-colors duration-300
                       ${
                         status === "current"
-                          ? "text-blue-500"
+                          ? "text-primary-500"
                           : status === "completed"
                             ? "text-green-500"
                             : "text-gray-400 group-hover:text-gray-500"
@@ -122,7 +122,7 @@ const StepIndicator = ({ currentStep }: { currentStep: "header" | "withLimits" |
 
                 {/* Step Status Badge */}
                 {status === "current" && (
-                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full animate-pulse" />
+                  <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary-500 rounded-full animate-pulse" />
                 )}
               </div>
             )

@@ -1,4 +1,5 @@
 import { AxiosError } from "axios";
+import { useQuery } from "@tanstack/react-query";
 import { getCertificates as getCertificatesAPI } from "../restful-api/certificateGetAPI";
 
 // Enhanced types for web backend compatibility
@@ -94,6 +95,22 @@ export const getCertificates = async (
   }
 };
 
+export const useCertificates = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  status?: string,
+  paymentStatus?: string,
+  purpose?: string
+) => {
+  return useQuery({
+    queryKey: ['certificates', page, pageSize, searchQuery, status, paymentStatus, purpose],
+    queryFn: () => getCertificates(searchQuery, page, pageSize, status, paymentStatus, purpose),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+};
 
 export { getCertificateById, searchCertificates, getPersonalClearances } from '../restful-api/certificateGetAPI';
 

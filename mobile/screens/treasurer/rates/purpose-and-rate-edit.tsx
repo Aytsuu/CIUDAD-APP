@@ -12,8 +12,10 @@ import { useRouter, useLocalSearchParams } from 'expo-router'
 import z from "zod";
 import { useEditPurposeAndRate } from './queries/ratesUpdateQueries'
 import { LoadingModal } from '@/components/ui/loading-modal'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function PurposeAndRateEditForm() {
+    const {user} = useAuth();
     const router = useRouter();
     const params = useLocalSearchParams();
     const {pr_id, pr_purpose, pr_amount, category} = params;
@@ -24,6 +26,7 @@ export default function PurposeAndRateEditForm() {
             purpose: String(pr_purpose),
             amount: String(pr_amount),
             category: String(category),
+            staff_id: user?.staff?.staff_id
         }
     })
     const {mutate: editPurpose, isPending} = useEditPurposeAndRate();

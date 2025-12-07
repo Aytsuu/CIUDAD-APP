@@ -26,19 +26,23 @@ export type MinutesOfMeetingRecords = {
 };
 
 export const useGetActiveMinutesOfMeetingRecords = (page: number, pageSize: number, searchQuery: string,) => {
-    return useQuery<{results: MinutesOfMeetingRecords[], count: number}>({
+    return useQuery({
         queryKey: ["ActivemomRecords", page, pageSize, searchQuery],
         queryFn:() => getActiveMinutesOfMeeting(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     })
 }
 
 
 export const useGetInactiveMinutesOfMeetingRecords = (page: number, pageSize: number, searchQuery: string,) => {
-    return useQuery<{results: MinutesOfMeetingRecords[], count: number}>({
+    return useQuery({
         queryKey: ["InactivemomRecords", page, pageSize, searchQuery],
         queryFn:() => getInactiveMinutesOfMeeting(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     })
 }
 

@@ -12,6 +12,8 @@ import { useDonationSectionCards } from "@/components/analytics/donation/donatio
 import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import { useGADUpcomingActivities } from "@/components/analytics/gad/gad-activity-bar";
+import { useWasteUpcomingEvents } from "@/components/analytics/waste/waste-event-bar";
 import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
 import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
@@ -38,7 +40,12 @@ export default function Dashboard() {
   const remarkCard = useNoRemarksSectionCard();
 
   const councilEvents = useCouncilUpcomingEvents();
-  const instance = getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards)
+  const gadActivities = useGADUpcomingActivities();
+  const wasteEvents = useWasteUpcomingEvents();
+  const instance = React.useMemo(
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards, gadActivities, wasteEvents),
+    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards, gadActivities, wasteEvents]
+  );
   
 
   const validateFeature = (feature: string) => {
@@ -76,6 +83,7 @@ export default function Dashboard() {
   const sidebarsWithAccess = React.useMemo(() => {
     return (instance ?? []).filter((item) => item.sidebar && validateFeature(item.dashboard));
   }, [instance, user]);
+
 
   // Carousel pagination
   const cardsPerPage = 6; // 3 columns × 2 rows
@@ -248,7 +256,24 @@ export default function Dashboard() {
                         <div>{component.element}</div>
                       </div>
                     </ProtectedComponent>
-                  ) : (<div>{component.element}</div>)}
+                  ) : component.title === "Certificate Requests" || component.title === "Business Permit Requests" ? (
+                    <div className="bg-white rounded-lg border overflow-hidden shadow-sm flex-shrink-0 mb-4">
+                      {/* Sidebar Header */}
+                      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="text-lg font-bold text-gray-900">{component.title}</h3>
+                            <p className="text-xs text-gray-600 mt-1">Latest updates and activity</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sidebar Content */}
+                      <div>{component.element}</div>
+                    </div>
+                  ) : (
+                    <div>{component.element}</div>
+                  )}
                 </React.Fragment>
               ))
             )}

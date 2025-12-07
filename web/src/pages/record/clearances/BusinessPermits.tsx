@@ -1,45 +1,95 @@
 import { useState, useEffect, useMemo } from "react";
-// import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
 import {Search, ArrowUpDown, CheckCircle, Eye } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Column } from "@tanstack/react-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import DialogLayout from "@/components/ui/dialog/dialog-layout";
+import TemplateMainPage from "../council/templates/template-main";
 import { getBusinessPermit, type BusinessPermit } from "@/pages/record/clearances/queries/busFetchQueries";
 import { markBusinessPermitAsIssued, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busUpdateQueries";
-import TemplateMainPage from "../council/templates/template-main";
-import { useAuth } from "@/context/AuthContext";
+import { getAllPurposes, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { formatDate } from "@/helpers/dateHelper";
 import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
+import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
+import { Combobox } from "@/components/ui/combobox";
+import { Label } from "@/components/ui/label";
+
+type ExtendedBusinessPermit = BusinessPermit & {
+  signatory?: string;
+};
 
 function BusinessDocumentPage() {
+  const [selectedStaffId, setSelectedStaffId] = useState("");
   const queryClient = useQueryClient();
-  const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
-  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedPermit, setSelectedPermit] = useState<BusinessPermit | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewingPermit, setViewingPermit] = useState<BusinessPermit | null>(null);
+  const [selectedPermit, setSelectedPermit] = useState<ExtendedBusinessPermit | null>(null);
+  // Staff list for signatory
+  const { data: staffList = [] } = useGetStaffList();
+  const staffOptions = useMemo(() => staffList.map((staff: any) => ({ id: staff.staff_id, name: staff.full_name })), [staffList]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterPurpose, setFilterPurpose] = useState("all");
 
   const { data: businessPermits, isLoading, error } = useQuery<BusinessPermit[]>({
     queryKey: ["businessPermits"],
     queryFn: getBusinessPermit,
   });
 
-  // Show only paid permits
+  // Fetch purposes for filter dropdown
+  const { data: allPurposes = [] } = useQuery<Purpose[]>({
+    queryKey: ["allPurposes"],
+    queryFn: getAllPurposes,
+  });
+
+  // Filter purposes to show only Barangay Permit and Barangay Clearance categories (for business permits)
+  const businessPurposes = useMemo(() => {
+    return allPurposes
+      .filter(purpose => 
+        !purpose.pr_is_archive && 
+        (purpose.pr_category === "Barangay Permit" || purpose.pr_category === "Barangay Clearance")
+      )
+      .map(purpose => ({
+        id: purpose.pr_purpose.toLowerCase(),
+        name: purpose.pr_purpose
+      }));
+  }, [allPurposes]);
+
+  // Show only paid permits and apply filters
   const paidPermits = useMemo(() => {
-    return (businessPermits || [])
+    let filtered = (businessPermits || [])
       .filter((p) => String(p.req_payment_status || "").toLowerCase() === "paid")
       .filter((p) => String(p.req_status || "").toLowerCase() !== "completed");
-  }, [businessPermits]);
+    
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((p) => 
+        p.business_name?.toLowerCase().includes(searchLower) ||
+        p.bpr_id?.toLowerCase().includes(searchLower) ||
+        (p.purpose as string)?.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Apply purpose filter
+    if (filterPurpose !== "all") {
+      filtered = filtered.filter((p) => {
+        const permitPurpose = (p.purpose as string)?.toLowerCase() || "";
+        return permitPurpose === filterPurpose.toLowerCase();
+      });
+    }
+    
+    return filtered;
+  }, [businessPermits, searchTerm, filterPurpose]);
 
   // Handle loading state
   useEffect(() => {
@@ -71,43 +121,49 @@ function BusinessDocumentPage() {
   });
 
   const handleMarkAsPrinted = (permit: BusinessPermit) => {
+    if (!selectedStaffId) {
+      showErrorToast("Please select a signatory before printing/issuing the business permit.");
+      return;
+    }
     markAsIssuedMutation.mutate({
       bpr_id: permit.bpr_id,
-      staff_id: staffId, 
+      staff_id: selectedStaffId,
     });
   };
 
   const handleViewFile = (permit: BusinessPermit) => {
-    setSelectedPermit(permit); 
+    setSelectedPermit(null); // Clear previous selection
+    setViewingPermit(permit);
+    setSelectedStaffId("");
+    setIsDialogOpen(true);
+  };
+
+  const handleProceed = () => {
+    setIsDialogOpen(false);
+
+    if (viewingPermit && selectedStaffId) {
+      const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
+      
+      // Create permit details with staff data
+      const permitDetails: ExtendedBusinessPermit = {
+        ...viewingPermit,
+        signatory: selectedStaff?.name,
+      };
+      
+      setSelectedPermit(permitDetails);
+      setSelectedStaffId("");
+    }
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // const handleRowClick = (row: BusinessPermit) => {
-  //   navigate(`/record/clearances/BusinessPermitDocumentation/${row.bpr_id}`, {
-  //     state: {
-  //       requestNo: row.bpr_id,
-  //       businessName: row.business_name,
-  //       businessAddress: row.business_address, 
-  //       paymentMethod: row.req_pay_method,
-  //       dateRequested: row.req_request_date,
-  //       dateClaim: row.req_claim_date,
-  //       status: row.req_status,
-  //       paymentStatus: row.req_payment_status,
-  //       transactionId: row.req_transac_id,
-  //       grossSales: row.business_gross_sales,
-  //       purpose: row.req_purpose,
-  //       pr_id: row.pr_id, 
-  //     },
-  //   });
-  // };
 
   const columns: ColumnDef<BusinessPermit>[] = [
     {
       accessorKey: "bpr_id",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<BusinessPermit> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -126,8 +182,16 @@ function BusinessDocumentPage() {
     },
     {
       accessorKey: "business_name",
-      header: "Business Name",
-      cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
+      header: ({ column }: { column: Column<BusinessPermit> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Business Name
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-center capitalize">{row.getValue("business_name")}</div>,
     },
     // {
     //   accessorKey: "business_gross_sales",
@@ -164,28 +228,48 @@ function BusinessDocumentPage() {
     // },
     {
       accessorKey: "purpose",
-      header: "Purpose",
+      header: ({ column }: { column: Column<BusinessPermit> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Purpose
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const raw = (row.original as any)?.purpose as string | undefined;
         const value = raw ? raw.toString() : "";
         const capitalizedValue = value
           ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
           : "";
+        const lowerValue = value.toLowerCase();
 
         let bg = "bg-[#eaf4ff]";
         let text = "text-[#2563eb]";
         let border = "border border-[#b6d6f7]";
 
-        if (capitalizedValue === "Business clearance") {
+        if (lowerValue === "business clearance") {
           // blue (default)
-        } else if (capitalizedValue === "Barangay sinulog permit") {
+          bg = "bg-[#eaf4ff]";
+          text = "text-[#2563eb]";
+          border = "border border-[#b6d6f7]";
+        } else if (lowerValue === "barangay sinulog permit") {
           bg = "bg-[#f0fff4]";
           text = "text-[#006400]";
           border = "border border-[#c6eac6]";
-        } else if (capitalizedValue === "Barangay Fiesta Permit") {
+        } else if (lowerValue === "barangay fiesta permit") {
           bg = "bg-[#fffaf0]";
           text = "text-[#b45309]";
           border = "border border-[#fcd34d]";
+        } else if (lowerValue === "electrical connection") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#d97706]";
+          border = "border border-[#fcd34d]";
+        } else if (lowerValue === "building permit") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#4338ca]";
+          border = "border border-[#a5b4fc]";
         } else if (capitalizedValue) {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
@@ -195,19 +279,29 @@ function BusinessDocumentPage() {
         const label = capitalizedValue || "Not Set";
 
         return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {label}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+              style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+            >
+              {label}
+            </span>
+          </div>
         );
       },
     },
     {
       accessorKey: "req_request_date",
-      header: "Date Requested",
-      cell: ({ row }) => <div>{formatDate(row.getValue("req_request_date"), "long")}</div>,
+      header: ({ column }: { column: Column<BusinessPermit> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Requested
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-center">{formatDate(row.getValue("req_request_date"), "long")}</div>,
     },
     // {
     //   accessorKey: "req_claim_date",
@@ -280,15 +374,29 @@ function BusinessDocumentPage() {
         <div className="flex gap-x-2">
           <div className="relative flex-1 bg-white">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" size={17} />
-            <Input placeholder="Search..." className="pl-10 w-72" />
+            <Input 
+              placeholder="Search..." 
+              className="pl-10 w-72" 
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
+            />
           </div>
           <SelectLayout
-            placeholder="Filter by"
+            placeholder="Filter by purpose"
             label=""
             className="bg-white"
-            options={[]}
-            value=""
-            onChange={() => {}}
+            options={[
+              { id: "all", name: "All Purposes" },
+              ...businessPurposes
+            ]}
+            value={filterPurpose}
+            onChange={(value) => {
+              setFilterPurpose(value);
+              setCurrentPage(1); // Reset to first page when filtering
+            }}
           />
         </div>
       </div>
@@ -336,16 +444,63 @@ function BusinessDocumentPage() {
         </div>
       </div>
 
-      {/* Render Business Permit Template like Certification: component manages its own dialog */}
+      {/* Render TemplateMainPage when a permit is selected */}
       {selectedPermit && (
         <TemplateMainPage
           businessName={selectedPermit.business_name}
           address={selectedPermit.business_address}
           purpose={selectedPermit.purpose}
           issuedDate={new Date().toISOString()}
+          Signatory={selectedPermit.signatory || ""}
           showAddDetails={false}
         />
       )}
+
+      {/* Dialog for signatory selection */}
+      <DialogLayout
+    isOpen={isDialogOpen}
+    onOpenChange={(open: boolean) => {
+      setIsDialogOpen(open);
+      if (!open) {
+        setSelectedStaffId("");
+      }
+    }}
+    className="max-w-[35%] max-h-[85vh] flex flex-col overflow-auto scrollbar-custom"
+    title="Additional Details"
+    description={`Please provide the needed details for the certificate.`}
+    mainContent={
+      <div>
+        {viewingPermit ? (
+          <div className="space-y-3">
+            <Label className="pb-1">Signatory</Label>
+            <div className="w-full pb-3">
+              <Combobox
+                options={staffOptions}
+                value={selectedStaffId}
+                onChange={(value) => setSelectedStaffId(value || "")}
+                placeholder="Select signatory staff member"
+                emptyMessage="No staff found"
+                triggerClassName="w-full"
+                contentClassName="w-full"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                className="bg-[#2563eb] hover:bg-[#1746a2] text-white"
+                onClick={handleProceed}
+                disabled={!selectedStaffId}
+              >
+                Proceed
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p>No permit selected</p>
+        )}
+      </div>
+    }
+  />
     </div>
   );
 }

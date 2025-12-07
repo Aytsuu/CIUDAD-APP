@@ -151,7 +151,7 @@ export default function MinutesOfMeetingView() {
                             </View>
 
                             {/* Main Document Section */}
-                            {momDetails.mom_file.momf_url && (
+                            {momDetails.mom_file?.momf_url !== null && momDetails.mom_file?.momf_url && (
                                 <View className="bg-white rounded-lg p-4 mb-4 shadow-sm border border-gray-100">
                                     <View className="flex-row items-center mb-3 gap-2">
                                         <FileText size={20}  color="gray"/>

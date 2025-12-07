@@ -9,10 +9,6 @@ export const BusinessSidebar = () => {
   const navigate = useNavigate();
   const { data: businessData, isLoading } = useGetBusinessPermitSidebar();
 
-  const formatName = (firstName: string, lastName: string) => {
-    return `${firstName} ${lastName}`;
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
@@ -92,13 +88,6 @@ export const BusinessSidebar = () => {
                       </div>
 
                       <div className="text-xs text-gray-600">
-                        <span className="font-medium">Owner:</span> {formatName(
-                          request.rp_id__per__per_fname || 'Unknown',
-                          request.rp_id__per__per_lname || 'User'
-                        )}
-                      </div>
-
-                      <div className="text-xs text-gray-600 mt-1">
                         <span className="font-medium">Purpose:</span> {request.pr_id__pr_purpose || 'N/A'}
                       </div>
                     </div>

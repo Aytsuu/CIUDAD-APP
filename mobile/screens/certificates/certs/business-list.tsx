@@ -1,42 +1,95 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
-import React, { useState, useEffect, useMemo } from 'react'
+import { View, Text, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { SafeAreaView } from "react-native-safe-area-context"
 import { router } from 'expo-router'
-import { getBusinessPermits, BusinessPermit } from '../queries/businessPermitQueries'
+import { useBusinessPermits, getBusinessPermits, BusinessPermit } from '../queries/businessPermitQueries'
 import PageLayout from '../../_PageLayout'
 import { ChevronLeft } from 'lucide-react-native'
 import { LoadingState } from '@/components/ui/loading-state'
 import { Search } from '@/lib/icons/Search'
 import { SearchInput } from '@/components/ui/search-input'
 import { SelectLayout } from '@/components/ui/select-layout'
+import { useDebounce } from '@/hooks/use-debounce'
+
+const INITIAL_PAGE_SIZE = 10;
 
 const BusinessList = () => {
-  const [businessPermits, setBusinessPermits] = useState<BusinessPermit[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [allPurposes, setAllPurposes] = useState<string[]>([])
   const [purposeFilter, setPurposeFilter] = useState<string>('all')
   const [searchInputVal, setSearchInputVal] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showSearch, setShowSearch] = useState<boolean>(false)
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isScrolling, setIsScrolling] = useState<boolean>(false)
+  const [isLoadMore, setIsLoadMore] = useState<boolean>(false)
+  const [isInitialRender, setIsInitialRender] = useState(true)
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null)
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+  // Fetch all purposes once for filter dropdown
   useEffect(() => {
-    const fetchBusinessPermits = async () => {
+    const fetchPurposes = async () => {
       try {
-        setLoading(true)
-        // Fetch all business permits (like web version)
-        const data = await getBusinessPermits(undefined, 1, 1000, undefined, undefined, undefined)
-        setBusinessPermits(data.results)
-        setError(null)
+        const data = await getBusinessPermits(undefined, 1, 1000, undefined, 'Paid', undefined)
+        const purposesSet = new Set<string>()
+        data.results.forEach(business => {
+          const purpose = business.purpose || business.business_type
+          if (purpose) purposesSet.add(purpose)
+        })
+        setAllPurposes(Array.from(purposesSet).sort())
       } catch (err) {
-        setError('Failed to load business permits')
-      } finally {
-        setLoading(false)
+        // Silently fail
       }
     }
-
-    fetchBusinessPermits()
+    fetchPurposes()
   }, [])
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+    setPageSize(INITIAL_PAGE_SIZE)
+  }, [purposeFilter, debouncedSearchQuery])
+
+  const purposeParam = purposeFilter === 'all' ? undefined : purposeFilter
+
+  // Use React Query hook
+  const { 
+    data: responseData = { results: [], count: 0, next: null, previous: null },
+    isLoading,
+    isError,
+    refetch,
+    isFetching
+  } = useBusinessPermits(
+    currentPage,
+    pageSize,
+    debouncedSearchQuery || undefined,
+    undefined,
+    'Paid',
+    purposeParam
+  )
+
+  // Extract data and filter out completed items client-side
+  const rawResults = responseData?.results || []
+  const businessPermits = rawResults.filter((p: BusinessPermit) => 
+    String(p.req_status || "").toLowerCase() !== "completed"
+  )
+  const totalCount = responseData?.count || businessPermits.length
+  const hasNext = !!responseData?.next
+
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false)
+  }, [isFetching, isRefreshing])
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false)
+  }, [isLoading, isInitialRender])
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false)
+  }, [isFetching, isLoadMore])
 
   const getStatusBadge = (status?: string) => {
     const normalized = (status || "").toLowerCase();
@@ -79,66 +132,33 @@ const BusinessList = () => {
   // Refresh function
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    try {
-      const data = await getBusinessPermits(undefined, 1, 1000, undefined, undefined, undefined)
-      setBusinessPermits(data.results)
-    } catch (err) {
-      // Silently handle error
-    } finally {
-      setIsRefreshing(false);
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
     }
   };
 
-  // Extract unique purposes (business types) from business permits
-  const purposes = useMemo(() => {
-    const uniquePurposes = new Set<string>();
-    businessPermits.forEach(business => {
-      const purpose = business.purpose || business.business_type;
-      if (purpose) {
-        uniquePurposes.add(purpose);
-      }
-    });
-    return Array.from(uniquePurposes).sort();
-  }, [businessPermits])
-
-  // Filter business permits based on payment status, purpose, and search (like web version)
-  const filteredBusinesses = useMemo(() => {
-    // First filter for paid and not completed (exactly like web version)
-    let filtered = businessPermits
-      .filter((p) => String(p.req_payment_status || "").toLowerCase() === "paid")
-      .filter((p) => String(p.req_status || "").toLowerCase() !== "completed");
-
-    // Then filter by purpose (using purpose or business_type)
-    if (purposeFilter !== 'all') {
-      filtered = filtered.filter(business => {
-        const purpose = business.purpose || business.business_type;
-        if (purpose !== purposeFilter) {
-          return false;
-        }
-        return true;
-      });
-    }
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(business => {
-        const searchLower = searchQuery.toLowerCase();
-        return (
-          business.bpr_id?.toLowerCase().includes(searchLower) ||
-          business.bp_id?.toLowerCase().includes(searchLower) ||
-          business.business_name?.toLowerCase().includes(searchLower) ||
-          business.owner_name?.toLowerCase().includes(searchLower) ||
-          business.requestor?.toLowerCase().includes(searchLower) ||
-          business.purpose?.toLowerCase().includes(searchLower) ||
-          business.business_type?.toLowerCase().includes(searchLower)
-        );
-      });
-    }
-
-    return filtered;
-  }, [businessPermits, purposeFilter, searchQuery])
-
-  if (loading) {
+  if (isLoading && isInitialRender) {
     return (
       <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
         <LoadingState />
@@ -184,7 +204,7 @@ const BusinessList = () => {
             placeholder="Select purpose"
             options={[
               { label: 'All', value: 'all' },
-              ...purposes.map(purpose => ({ label: purpose, value: purpose }))
+              ...allPurposes.map(purpose => ({ label: purpose, value: purpose }))
             ]}
             selectedValue={purposeFilter}
             onSelect={(option) => setPurposeFilter(option.value)}
@@ -193,57 +213,103 @@ const BusinessList = () => {
 
         {/* Scrollable Content Area */}
         <View className="flex-1">
-          {error ? (
+          {isError ? (
             <View className="flex-1 justify-center items-center p-6">
               <View className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <Text className="text-red-800 text-sm text-center">Failed to load business permits.</Text>
               </View>
             </View>
           ) : (
-            <ScrollView 
-              className="flex-1 p-6" 
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={isRefreshing}
-                  onRefresh={handleRefresh}
-                  colors={['#00a8f0']}
-                  tintColor="#00a8f0"
-                />
-              }
-            >
-              {filteredBusinesses.length ? (
-                filteredBusinesses.map((business, idx) => (
-                  <View key={idx} className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
-                    <View className="flex-row justify-between items-center">
-                      <Text className="text-gray-900 font-medium">{wrapPurpose(business.business_name || "Business Permit")}</Text>
-                      {getStatusBadge(business.req_status)}
-                    </View>
-                    <Text className="text-gray-500 text-xs mt-1">ID: {business.bpr_id || business.bp_id || '—'}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Owner: {business.owner_name || business.requestor || '—'}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Type: {business.purpose || business.business_type || '—'}</Text>
-                    <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(business.req_request_date)}</Text>
-                    {business.req_claim_date && (
-                      <Text className="text-gray-500 text-xs mt-1">Date Claimed: {formatDate(business.req_claim_date)}</Text>
-                    )}
-                  </View>
-                ))
-              ) : (
-                <View className="flex-1 items-center justify-center py-12">
-                  <View className="items-center">
-                    <View className="bg-gray-100 rounded-full p-4 mb-4">
-                      `<Text className="text-gray-500 text-2xl">🏢</Text>`
-                    </View>
-                    <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
-                      {searchQuery ? 'No business permits found matching your search' : 'No business permits yet'}
-                    </Text>
-                    <Text className="text-gray-500 text-sm text-center">
-                      {searchQuery ? 'Try adjusting your search terms' : 'Your business permits will appear here'}
-                    </Text>
-                  </View>
+            <>
+              {!isRefreshing && businessPermits.length > 0 && (
+                <View className="px-6 pt-4">
+                  <Text className="text-xs text-gray-500">{`Showing ${businessPermits.length} of ${totalCount} business permits`}</Text>
                 </View>
               )}
-            </ScrollView>
+              {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
+              {!isRefreshing && (
+                <FlatList
+                  maxToRenderPerBatch={5}
+                  overScrollMode="never"
+                  data={businessPermits}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                  initialNumToRender={5}
+                  onEndReached={handleLoadMore}
+                  onEndReachedThreshold={0.5}
+                  onScroll={handleScroll}
+                  windowSize={11}
+                  keyExtractor={(item, idx) => item.bpr_id || item.bp_id || `business-${idx}`}
+                  removeClippedSubviews
+                renderItem={({ item: business }) => (
+                  <View className="px-6 pt-4">
+                    <View className="bg-white rounded-xl p-4 mb-3 shadow-sm border border-gray-100">
+                      <View className="flex-row justify-between items-center">
+                        <Text className="text-gray-900 font-medium">{wrapPurpose(business.business_name || "Business Permit")}</Text>
+                        {getStatusBadge(business.req_status)}
+                      </View>
+                      <Text className="text-gray-500 text-xs mt-1">ID: {business.bpr_id || business.bp_id || '—'}</Text>
+                      <Text className="text-gray-500 text-xs mt-1">Owner: {business.owner_name || business.requestor || '—'}</Text>
+                      <Text className="text-gray-500 text-xs mt-1">Type: {business.purpose || business.business_type || '—'}</Text>
+                      <Text className="text-gray-500 text-xs mt-1">Date Requested: {formatDate(business.req_request_date)}</Text>
+                      {business.req_claim_date && (
+                        <Text className="text-gray-500 text-xs mt-1">Date Claimed: {formatDate(business.req_claim_date)}</Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={['#00a8f0']}
+                      tintColor="#00a8f0"
+                    />
+                  }
+                  contentContainerStyle={{
+                    paddingTop: 0,
+                    paddingBottom: 20,
+                    gap: 15,
+                  }}
+                  ListEmptyComponent={
+                    !isLoading ? (
+                      <View className="flex-1 items-center justify-center py-12 px-6">
+                        <View className="items-center">
+                          <View className="bg-gray-100 rounded-full p-4 mb-4">
+                            <Text className="text-gray-500 text-2xl">🏢</Text>
+                          </View>
+                          <Text className="text-gray-700 text-lg font-medium mb-2 text-center">
+                            {searchQuery ? 'No business permits found matching your search' : 'No business permits yet'}
+                          </Text>
+                          <Text className="text-gray-500 text-sm text-center">
+                            {searchQuery ? 'Try adjusting your search terms' : 'Your business permits will appear here'}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : null
+                  }
+                  ListFooterComponent={() =>
+                    isFetching && isLoadMore ? (
+                      <View className="py-4 items-center">
+                        <ActivityIndicator size="small" color="#3B82F6" />
+                        <Text className="text-xs text-gray-500 mt-2">
+                          Loading more business permits...
+                        </Text>
+                      </View>
+                    ) : (
+                      !hasNext &&
+                      businessPermits.length > 0 && (
+                        <View className="py-4 items-center">
+                          <Text className="text-xs text-gray-400">
+                            No more business permits
+                          </Text>
+                        </View>
+                      )
+                    )
+                  }
+                />
+              )}
+            </>
           )}
         </View>
       </View>

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DataTable } from "@/components/ui/table/data-table";
 import { ArrowUpDown } from "lucide-react";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Column } from "@tanstack/react-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
@@ -18,7 +18,6 @@ import TemplateCreateForm from "../council/templates/template-create";
 import TemplateUpdateForm from "../council/templates/template-update";
 import { useGetTemplateRecord } from "../council/templates/queries/template-FetchQueries";
 import { calculateAge } from '@/helpers/ageCalculator';
-import { useUpdateCertStatus, useUpdateNonCertStatus } from "./queries/certUpdateQueries";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import { getAllPurposes, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
@@ -52,7 +51,6 @@ interface ExtendedCertificate extends Certificate {
 }
 
 function CertificatePage() {
-  // const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
@@ -61,8 +59,6 @@ function CertificatePage() {
   const [filterType, setFilterType] = useState("all");
   const [filterPurpose, setFilterPurpose] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const {mutate: updateStatus} = useUpdateCertStatus()
-  const {mutate: updateNonResStatus} = useUpdateNonCertStatus()
   
   const { data: staffList = []} = useGetStaffList();
   const { data: residentsList = [] } = useResidentsList();
@@ -74,12 +70,12 @@ function CertificatePage() {
     queryFn: getAllPurposes,
   });
 
-  // Filter purposes to show only Personal category purposes
+  // Filter purposes to show only Personal category and non-archived purposes
   const personalPurposes = useMemo(() => {
     return allPurposes
-      .filter(purpose => purpose.pr_category === "Personal" && !purpose.pr_is_archive)
+      .filter(purpose => !purpose.pr_is_archive && purpose.pr_category === "Personal")
       .map(purpose => ({
-        id: purpose.pr_purpose.toLowerCase(),
+        id: purpose.pr_purpose, // Use actual purpose name for backend matching
         name: purpose.pr_purpose
       }));
   }, [allPurposes]);
@@ -127,8 +123,6 @@ function CertificatePage() {
       name: staff.full_name,
     }));
   }, [staffList]);
-
-
 
 
   const residentOptions = useMemo(() => {
@@ -187,14 +181,16 @@ function CertificatePage() {
   }, [deceasedResidentsList]);
 
   const { data: certificatesData, isLoading, error } = useQuery({
-    queryKey: ["certificates", currentPage, searchTerm, filterType, filterPurpose],
+    queryKey: ["certificates", currentPage, searchTerm, filterPurpose, filterType],
     queryFn: () => getCertificates(
       searchTerm, 
       currentPage, 
       10, 
-      filterType === "all" ? undefined : filterType, 
-      filterPurpose === "all" ? undefined : filterPurpose, 
-      "Paid"
+      undefined, // status param is for request status, not resident type - backend now handles this
+      filterPurpose === "all" ? undefined : filterPurpose, // purpose parameter
+      "Paid", // paymentStatus parameter
+      undefined, // ordering parameter
+      filterType // certificateType parameter - backend now filters by resident/non-resident
     ),
   });
 
@@ -207,46 +203,41 @@ function CertificatePage() {
     }
   }, [isLoading, showLoading, hideLoading]);
 
+  // Clear selected certificate when filters change to prevent template from showing
+  useEffect(() => {
+    setSelectedCertificate(null);
+  }, [filterType, filterPurpose, searchTerm, currentPage]);
+
   const certificates = certificatesData?.results || [];
   const totalCount = certificatesData?.count || 0;
   const totalPages = Math.ceil(totalCount / 10);
 
-  // Sort certificates by request date (latest first) and apply filters
+  // Helper function to detect non-resident certificates
+  const isNonResidentCertificate = (cert: Certificate): boolean => {
+    // Check multiple indicators to determine if certificate is non-resident
+    return !!(
+      cert.is_nonresident || 
+      cert.nrc_id || 
+      !cert.resident_details ||
+      (cert.cr_id && cert.cr_id.toUpperCase().startsWith("NRC")) ||
+      (cert.nrc_fname || cert.nrc_lname || cert.nrc_mname) // Has non-resident name fields
+    );
+  };
+
+  // Backend now handles filtering by resident/non-resident type
+  // Just use certificates directly as backend handles filtering and sorting
   const filteredCertificates = useMemo(() => {
-    const result = [...certificates];
-    
-    // Sort by request date descending (latest first)
-    result.sort((a, b) => {
-      const dateA = new Date(a.req_request_date || 0).getTime();
-      const dateB = new Date(b.req_request_date || 0).getTime();
-      return dateB - dateA; // Descending order (latest first)
-    });
-    
-    return result;
+    return certificates;
   }, [certificates]);
 
   const markAsIssuedMutation = useMutation<any, unknown, MarkCertificateVariables>({
     mutationFn: markCertificateAsIssued,
     onSuccess: async (_data, variables) => {
-      const certificateType = variables.is_nonresident ? 'Non-resident certificate' : 'Certificate';
       const certificateId = variables.is_nonresident ? variables.nrc_id : variables.cr_id;
       
-      showSuccessToast(`${certificateType} ${certificateId} marked as printed successfully!`);
+      showSuccessToast(`Certificate ${certificateId} marked as printed successfully!`);
       queryClient.invalidateQueries({ queryKey: ["certificates"] });
-      
-      try {
-        // Only call updateStatus for resident certificates
-        if (!variables.is_nonresident) {
-          await updateStatus(variables.cr_id);
-        }
-        else{
-          await updateNonResStatus(Number(variables.nrc_id))
-        }
-
-        setSelectedCertificate(null);
-      } catch (error) {
-        showErrorToast("First mutation succeeded but second failed");
-      }
+      setSelectedCertificate(null);
     },
     onError: (error: any) => {
       showErrorToast(error.response?.data?.error || "Failed to mark certificate as printed");
@@ -254,14 +245,25 @@ function CertificatePage() {
   });
 
   const handleMarkAsPrinted = (certificate: Certificate) => {
+    // Determine if this is a non-resident certificate
+    const isNonResident = isNonResidentCertificate(certificate);
+    
+    // For non-residents, ensure nrc_id is available
+    if (isNonResident && !certificate.nrc_id) {
+      showErrorToast("Non-resident certificate ID (nrc_id) is missing. Please refresh and try again.");
+      return;
+    }
+    
     const markData: MarkCertificateVariables = {
-      cr_id: certificate.cr_id,
+      // For residents, send cr_id. For non-residents, send both cr_id (mapped from nrc_id) and nrc_id
+      cr_id: isNonResident ? certificate.nrc_id : certificate.cr_id,
       // Include staff_id if available and valid (backend now strictly validates; no upsert)
       staff_id: staffId,
-      is_nonresident: certificate.is_nonresident || false,
+      is_nonresident: isNonResident,
     };
 
-    if (certificate.is_nonresident && certificate.nrc_id) {
+    // For non-residents, also send nrc_id explicitly
+    if (isNonResident && certificate.nrc_id) {
       markData.nrc_id = certificate.nrc_id;
     }
 
@@ -408,6 +410,37 @@ function CertificatePage() {
 
     if (viewingCertificate && selectedStaffId) {
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
+      const purpose = viewingCertificate.req_purpose?.toLowerCase() || "";
+      
+      // Purposes that DON'T need purpose input (have hardcoded purpose text in template)
+      const purposesWithoutInput = [
+        "identification",
+        "loan",
+        "sss",
+        "bir",
+        "bank requirement",
+        "electrical connection",
+        "mcwd requirements",
+        "scholarship",
+        "postal id",
+        "nbi",
+        "board examination",
+        "tesda",
+        "pwd identification",
+        "senior citizen identification",
+        "senior citizen financial assistance",
+        "bail bond",
+        "burial",
+        "building permit",
+        "business clearance",
+        "file action",
+        "barangay clearance",
+        "indigency (for minors)",
+        "barangay sinulog permit",
+        "barangay fiesta permit"
+      ];
+      
+      const needsPurposeInput = !purposesWithoutInput.includes(purpose);
   
       // Handle custody names - either from selection or manual input
       let custodies: string[] = [];
@@ -429,7 +462,7 @@ function CertificatePage() {
       const certDetails: ExtendedCertificate = {
         ...viewingCertificate,
         AsignatoryStaff: selectedStaff?.name,
-        SpecificPurpose: purposeInput,
+        SpecificPurpose: needsPurposeInput ? purposeInput : undefined,
         custodyChildren: custodies,
         // BURIAL fields
         deceasedName: deceasedName || undefined,
@@ -486,7 +519,7 @@ function CertificatePage() {
   //       paymentMethod: row.req_pay_method,
   //       isNonResident: row.is_nonresident,
   //       nonResidentData: row.is_nonresident ? {
-  //         requester: row.nrc_requester,
+  //         requester: `${row.nrc_fname || ''} ${row.nrc_mname || ''} ${row.nrc_lname || ''}`.trim(),
   //         address: row.nrc_address,
   //         birthdate: row.nrc_birthdate,
   //       } : undefined,
@@ -494,10 +527,11 @@ function CertificatePage() {
   //   });
   // };
 
+// ...
   const columns: ColumnDef<Certificate>[] = [
     {
       accessorKey: "cr_id",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<Certificate> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -506,23 +540,28 @@ function CertificatePage() {
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
-      cell: ({ row }) => (
-        <div className="capitalize flex justify-center items-center gap-2">
-          {row.original.is_nonresident && (
-            <TooltipLayout 
-              trigger={''} 
-              content="Non-resident" 
-            />
-          )}
-          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
-            {row.getValue("cr_id")}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        // For non-residents, show nrc_id; for residents, show cr_id
+        const certificate = row.original;
+        const requestId = certificate.is_nonresident ? certificate.nrc_id : certificate.cr_id;
+        return (
+          <div className="capitalize flex justify-center items-center gap-2">
+            {certificate.is_nonresident && (
+              <TooltipLayout 
+                trigger={''} 
+                content="Non-resident" 
+              />
+            )}
+            <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+              {requestId || 'N/A'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "requester",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<Certificate> }) => (
         <div
           className="flex w-full justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -539,79 +578,282 @@ function CertificatePage() {
             row.original.nrc_fname,
             row.original.nrc_mname
           ].filter(part => part && part.trim() !== '');
-          
-          return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
-        }
         
+        return <div className="text-center">{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
+      } else {
         // For residents, format as "Last Name First Name Middle Name" (all uppercase)
         const resident = row.original.resident_details;
-        if (!resident) return <div>N/A</div>;
-        
+        if (!resident) return <div className="text-center">N/A</div>;
+      
         const nameParts = [
           resident.per_lname,
           resident.per_fname,
           resident.per_mname
         ].filter(part => part && part.trim() !== '');
-        
-        return <div>{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
-      },
+      
+        return <div className="text-center">{nameParts.join(' ').toUpperCase() || 'N/A'}</div>;
+      }
+    },
     },
     {
       accessorKey: "req_request_date",
-      header: "Date Requested",
-      cell: ({ row }) => <div>{formatDate(row.getValue("req_request_date"), "long")}</div>,
+      header: ({ column }: { column: Column<Certificate> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Requested
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-center">{formatDate(row.getValue("req_request_date"), "long")}</div>,
     },
     {
       accessorKey: "req_purpose",
-      header: "Purpose",
+      header: ({ column }: { column: Column<Certificate> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Purpose
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const value = (row.getValue("req_purpose") as string) || (row.getValue("req_type") as string);
         const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+        const lowerValue = value?.toLowerCase() || '';
+        
         let bg = "bg-[#eaf4ff]";
         let text = "text-[#2563eb]";
         let border = "border border-[#b6d6f7]";
         
-        if (capitalizedValue === "Employment") {
-          // blue (default)
-        } else if (capitalizedValue === "Bir") {
+        // Employment - Blue (default)
+        if (lowerValue === "employment") {
+          bg = "bg-[#eaf4ff]";
+          text = "text-[#2563eb]";
+          border = "border border-[#b6d6f7]";
+        }
+        // BIR - Yellow/Amber
+        else if (lowerValue === "bir") {
           bg = "bg-[#fffbe6]";
           text = "text-[#b59f00]";
           border = "border border-[#f7e7b6]";
-        } else if (capitalizedValue === "Burial") {
+        }
+        // Burial - Gray
+        else if (lowerValue === "burial") {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
           border = "border border-[#e5e7eb]";
-        } else {
+        }
+        // First Time Job Seeker - Green
+        else if (lowerValue === "first time job seeker") {
+          bg = "bg-[#f0fff4]";
+          text = "text-[#006400]";
+          border = "border border-[#c6eac6]";
+        }
+        // Identification - Purple
+        else if (lowerValue === "identification") {
+          bg = "bg-[#f3e8ff]";
+          text = "text-[#7c3aed]";
+          border = "border border-[#c4b5fd]";
+        }
+        // Loan - Orange
+        else if (lowerValue === "loan") {
+          bg = "bg-[#fff7ed]";
+          text = "text-[#c2410c]";
+          border = "border border-[#fdba74]";
+        }
+        // SSS - Teal
+        else if (lowerValue === "sss") {
+          bg = "bg-[#f0fdfa]";
+          text = "text-[#0d9488]";
+          border = "border border-[#5eead4]";
+        }
+        // Bank Requirement - Indigo
+        else if (lowerValue === "bank requirement") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#4338ca]";
+          border = "border border-[#a5b4fc]";
+        }
+        // Electrical Connection - Amber
+        else if (lowerValue === "electrical connection") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#d97706]";
+          border = "border border-[#fcd34d]";
+        }
+        // MCWD Requirements - Cyan
+        else if (lowerValue === "mcwd requirements") {
+          bg = "bg-[#e0f2fe]";
+          text = "text-[#0369a1]";
+          border = "border border-[#7dd3fc]";
+        }
+        // Scholarship - Emerald
+        else if (lowerValue === "scholarship") {
+          bg = "bg-[#d1fae5]";
+          text = "text-[#047857]";
+          border = "border border-[#6ee7b7]";
+        }
+        // Postal ID - Rose
+        else if (lowerValue === "postal id") {
+          bg = "bg-[#fff1f2]";
+          text = "text-[#be123c]";
+          border = "border border-[#fda4af]";
+        }
+        // NBI - Slate
+        else if (lowerValue === "nbi") {
+          bg = "bg-[#f1f5f9]";
+          text = "text-[#475569]";
+          border = "border border-[#cbd5e1]";
+        }
+        // Board Examination - Violet
+        else if (lowerValue === "board examination") {
+          bg = "bg-[#ede9fe]";
+          text = "text-[#6d28d9]";
+          border = "border border-[#a78bfa]";
+        }
+        // TESDA - Sky
+        else if (lowerValue === "tesda") {
+          bg = "bg-[#e0f2fe]";
+          text = "text-[#0c4a6e]";
+          border = "border border-[#7dd3fc]";
+        }
+        // PWD Identification - Pink
+        else if (lowerValue === "pwd identification") {
+          bg = "bg-[#fce7f3]";
+          text = "text-[#be185d]";
+          border = "border border-[#f9a8d4]";
+        }
+        // PWD Financial Assistance - Fuchsia
+        else if (lowerValue === "pwd financial assistance") {
+          bg = "bg-[#fdf4ff]";
+          text = "text-[#a21caf]";
+          border = "border border-[#f0abfc]";
+        }
+        // Senior Citizen Identification - Lime
+        else if (lowerValue === "senior citizen identification") {
+          bg = "bg-[#f7fee7]";
+          text = "text-[#365314]";
+          border = "border border-[#bef264]";
+        }
+        // Senior Citizen Financial Assistance - Green
+        else if (lowerValue === "senior citizen financial assistance") {
+          bg = "bg-[#dcfce7]";
+          text = "text-[#166534]";
+          border = "border border-[#86efac]";
+        }
+        // Bail Bond - Red
+        else if (lowerValue === "bail bond") {
+          bg = "bg-[#fee2e2]";
+          text = "text-[#991b1b]";
+          border = "border border-[#fca5a5]";
+        }
+        // Fire Victim - Orange
+        else if (lowerValue === "fire victim") {
+          bg = "bg-[#ffedd5]";
+          text = "text-[#9a3412]";
+          border = "border border-[#fdba74]";
+        }
+        // Cohabitation - Purple
+        else if (lowerValue === "cohabitation") {
+          bg = "bg-[#f3e8ff]";
+          text = "text-[#6b21a8]";
+          border = "border border-[#c4b5fd]";
+        }
+        // Marriage Certification - Rose
+        else if (lowerValue === "marriage certification") {
+          bg = "bg-[#fff1f2]";
+          text = "text-[#9f1239]";
+          border = "border border-[#fda4af]";
+        }
+        // DWUP - Stone
+        else if (lowerValue === "dwup") {
+          bg = "bg-[#fafaf9]";
+          text = "text-[#57534e]";
+          border = "border border-[#d6d3d1]";
+        }
+        // Probation - Zinc
+        else if (lowerValue === "probation") {
+          bg = "bg-[#fafafa]";
+          text = "text-[#3f3f46]";
+          border = "border border-[#d4d4d8]";
+        }
+        // Police Clearance - Blue
+        else if (lowerValue === "police clearance") {
+          bg = "bg-[#dbeafe]";
+          text = "text-[#1e40af]";
+          border = "border border-[#93c5fd]";
+        }
+        // Barangay Clearance - Emerald
+        else if (lowerValue === "barangay clearance") {
+          bg = "bg-[#d1fae5]";
+          text = "text-[#065f46]";
+          border = "border border-[#6ee7b7]";
+        }
+        // Proof of Custody - Indigo
+        else if (lowerValue === "proof of custody") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#3730a3]";
+          border = "border border-[#a5b4fc]";
+        }
+        // Good Moral - Teal
+        else if (lowerValue === "good moral") {
+          bg = "bg-[#ccfbf1]";
+          text = "text-[#134e4a]";
+          border = "border border-[#5eead4]";
+        }
+        // Indigency (for minors) - Amber
+        else if (lowerValue === "indigency (for minors)") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#92400e]";
+          border = "border border-[#fcd34d]";
+        }
+        // Indigency - Yellow
+        else if (lowerValue === "indigency") {
+          bg = "bg-[#fefce8]";
+          text = "text-[#713f12]";
+          border = "border border-[#fde047]";
+        }
+        // Default - Gray
+        else {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
           border = "border border-[#e5e7eb]";
         }
         
         return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {capitalizedValue}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+              style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+            >
+              {capitalizedValue}
+            </span>
+          </div>
         );
       },
     },
     {
       id: "certificate_type",
-      header: "Type",
+      header: () => (
+        <div className="w-full h-full flex justify-center items-center">
+          Type
+        </div>
+      ),
       cell: ({ row }) => {
         const isNonResident = row.original.is_nonresident;
         return (
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              isNonResident 
-                ? "bg-purple-100 text-purple-700 border border-purple-200" 
-                : "bg-green-100 text-green-700 border border-green-200"
-            }`}
-          >
-            {isNonResident ? "Non-resident" : "Resident"}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                isNonResident 
+                  ? "bg-purple-100 text-purple-700 border border-purple-200" 
+                  : "bg-green-100 text-green-700 border border-green-200"
+              }`}
+            >
+              {isNonResident ? "Non-resident" : "Resident"}
+            </span>
+          </div>
         );
       },
     },
@@ -651,7 +893,7 @@ function CertificatePage() {
                 </Button>
               }
               title="Mark Certificate as Printed"
-              description={`Are you sure you want to mark ${certificate.is_nonresident ? 'non-resident ' : ''}certificate ${certificate.cr_id} as printed? This will move it to the Issued Certificates page.`}
+              description={`Are you sure you want to mark ${certificate.is_nonresident ? 'non-resident ' : ''}certificate ${certificate.is_nonresident ? certificate.nrc_id : certificate.cr_id} as printed? This will move it to the Issued Certificates page.`}
               actionLabel="Mark as Printed"
               onClick={() => handleMarkAsPrinted(certificate)}
             />        
@@ -779,7 +1021,7 @@ function CertificatePage() {
 
       <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
         <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-          Showing {((currentPage - 1) * 10) + 1}-{Math.min(currentPage * 10, totalCount)} of {totalCount} rows
+          Showing {filteredCertificates.length > 0 ? ((currentPage - 1) * 10) + 1 : 0}-{Math.min(currentPage * 10, filteredCertificates.length)} of {filteredCertificates.length} rows
         </p>
 
         <div className="w-full sm:w-auto flex justify-center">
@@ -794,7 +1036,7 @@ function CertificatePage() {
       {/* Render TemplateMainPage when a certificate is selected */}
       {selectedCertificate && (
         <TemplateMainPage
-          key={selectedCertificate.cr_id + Date.now()}
+          key={(selectedCertificate.is_nonresident ? (selectedCertificate.nrc_id || '') : (selectedCertificate.cr_id || '')) + Date.now()}
           fname={selectedCertificate.resident_details?.per_fname || selectedCertificate.nrc_fname || ''}
           mname={selectedCertificate.resident_details?.per_mname || selectedCertificate.nrc_mname || ''}
           lname={selectedCertificate.resident_details?.per_lname || selectedCertificate.nrc_lname || ''}
@@ -864,14 +1106,53 @@ function CertificatePage() {
                   />   
                 </div>      
 
-                <Label className="pb-1">Purpose</Label>           
-                <div className="w-full pb-3">
-                  <Input 
-                    placeholder="Specify Purpose"
-                    value={purposeInput} 
-                    onChange={(e) => setPurposeInput(e.target.value)}
-                  />
-                </div>
+                {/* Purpose field - Only show for purposes that use specificPurpose in template */}
+                {(() => {
+                  const purpose = viewingCertificate?.req_purpose?.toLowerCase() || "";
+                  // Purposes that DON'T need purpose input (have hardcoded purpose text in template)
+                  const purposesWithoutInput = [
+                    "identification",
+                    "loan",
+                    "sss",
+                    "bir",
+                    "bank requirement",
+                    "electrical connection",
+                    "mcwd requirements",
+                    "scholarship",
+                    "postal id",
+                    "nbi",
+                    "board examination",
+                    "tesda",
+                    "pwd identification",
+                    "senior citizen identification",
+                    "senior citizen financial assistance",
+                    "bail bond",
+                    "burial",
+                    "building permit",
+                    "business clearance",
+                    "file action",
+                    "barangay clearance",
+                    "indigency (for minors)",
+                    "barangay sinulog permit",
+                    "barangay fiesta permit"
+                  ];
+                  
+                  // Only show purpose input if the purpose is NOT in the list above
+                  const needsPurposeInput = !purposesWithoutInput.includes(purpose);
+                  
+                  return needsPurposeInput ? (
+                    <>
+                      <Label className="pb-1">Purpose</Label>           
+                      <div className="w-full pb-3">
+                        <Input 
+                          placeholder="Specify Purpose"
+                          value={purposeInput} 
+                          onChange={(e) => setPurposeInput(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  ) : null;
+                })()}
 
                
                 {/* BURIAL FIELDS */}
@@ -1079,7 +1360,37 @@ function CertificatePage() {
                   <Button 
                     type="button" 
                     onClick={handleViewFile2} 
-                    disabled={!selectedStaffId || !purposeInput} 
+                    disabled={(() => {
+                      const purpose = viewingCertificate?.req_purpose?.toLowerCase() || "";
+                      const purposesWithoutInput = [
+                        "identification",
+                        "loan",
+                        "sss",
+                        "bir",
+                        "bank requirement",
+                        "electrical connection",
+                        "mcwd requirements",
+                        "scholarship",
+                        "postal id",
+                        "nbi",
+                        "board examination",
+                        "tesda",
+                        "pwd identification",
+                        "senior citizen identification",
+                        "senior citizen financial assistance",
+                        "bail bond",
+                        "burial",
+                        "building permit",
+                        "business clearance",
+                        "file action",
+                        "barangay clearance",
+                        "indigency (for minors)",
+                        "barangay sinulog permit",
+                        "barangay fiesta permit"
+                      ];
+                      const needsPurposeInput = !purposesWithoutInput.includes(purpose);
+                      return !selectedStaffId || (needsPurposeInput && !purposeInput);
+                    })()} 
                   >
                     Proceed
                   </Button>

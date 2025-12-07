@@ -213,8 +213,12 @@ AUTH_USER_MODEL = 'account.Account'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    '192.168.100.6',
+    '192.168.100.8',
+    '192.168.254.101',
     'ciudad-app-server-1.onrender.com',
-    '192.168.1.15'
+    '10.184.185.53',
+    '192.168.254.167'
 ]
 
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool) # disable in production

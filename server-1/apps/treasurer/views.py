@@ -206,6 +206,8 @@ class BudgetPlanHistoryView(ActivityLogMixin, generics.ListCreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = BudgetPlanHistorySerializer
     queryset = Budget_Plan_History.objects.all()
+    pagination_class = StandardResultsPagination
+
 
     def get_queryset(self):
         queryset = super().get_queryset()

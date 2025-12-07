@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   FlatList,
-  RefreshControl
+  RefreshControl,
+  ActivityIndicator
 } from 'react-native';
 import { 
   ChevronLeft,
@@ -19,46 +19,114 @@ import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
 
-
+const INITIAL_PAGE_SIZE = 10;
 
 const ReceiptPage = () => {
   const router = useRouter();
   
   // State for search and filter
-  const [showSearch, setShowSearch] = React.useState<boolean>(false);
+  const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilterId, setSelectedFilterId] = useState('all');
-  const [isRefreshing, setIsRefreshing] = useState(false); 
-
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  
   // Use debounce for search to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Fetch data with backend filtering and pagination
-  // Using large page size (1000) to get all data like in Resolution mobile
-  const { data: receiptData = { results: [], count: 0 }, isLoading, isError, refetch } = useInvoiceQuery(
-    1, // page
-    1000, // pageSize - large number to get all data
+  const { 
+    data: responseData = { results: [], count: 0, next: null, previous: null }, 
+    isLoading, 
+    isError, 
+    refetch,
+    isFetching 
+  } = useInvoiceQuery(
+    currentPage,
+    pageSize,
     debouncedSearchQuery, 
     selectedFilterId
   );
 
   // Extract the actual data array from paginated response
-  const fetchedData = receiptData.results || [];
+  const fetchedData = responseData?.results || [];
+  const totalCount = responseData?.count || 0;
+  const hasNext = responseData?.next;
 
-  // Generate filter options from the fetched data
+  // Reset pagination when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [debouncedSearchQuery, selectedFilterId]);
+
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  // Handle load more
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
+
+  // Generate filter options from fetched data
+  // NOTE: With pagination, this might not get all unique values
+  // Consider fetching filter options separately if needed
   const filterOptions = useMemo(() => {
     const uniqueNatures = Array.from(
-      new Set(fetchedData.map(item => item.inv_nat_of_collection))
-    ).filter(Boolean);
+      new Set(fetchedData.map((item: Receipt) => item.inv_nat_of_collection))
+    ).filter(Boolean) as string[];
 
     return [
       { label: 'All', value: 'all' },
-      ...uniqueNatures.map(nature => ({ label: nature, value: nature })),
+      ...uniqueNatures.map((nature: string) => ({ label: nature, value: nature })),
     ];
   }, [fetchedData]);
 
   // Helper function to get color scheme for nature of collection
-  const getColorScheme = (nature: string) => {
+  const getColorScheme = useCallback((nature: string) => {
     const normalized = nature?.toLowerCase().trim() || '';
     
     const colorMap: Record<string, { bg: string; text: string; border: string }> = {
@@ -125,24 +193,11 @@ const ReceiptPage = () => {
     
     // Default for any unknown values
     return { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-300' };
-  };
-
-
-  //Refresh the page
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
-  };
-
-  const handleSearchChange = (text: string) => {
-    setSearchQuery(text);
-  };
+  }, []);
 
   const handleFilterChange = (value: string) => {
     setSelectedFilterId(value);
   };
-
 
   // Loading state component
   const renderLoadingState = () => (
@@ -151,8 +206,8 @@ const ReceiptPage = () => {
     </View>
   );  
 
-
-  const renderItem = ({ item }: { item: Receipt }) => {
+  // Receipt Card Component - Memoized for better performance
+  const ReceiptCard = React.memo(({ item }: { item: Receipt }) => {
     const colorScheme = getColorScheme(item.inv_nat_of_collection);
     
     return (
@@ -212,6 +267,24 @@ const ReceiptPage = () => {
         </View>
       </View>
     );
+  });
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: Receipt }) => <ReceiptCard item={item} />,
+    []
+  );
+
+  // Simple empty state component
+  const renderEmptyState = () => {
+    const message = searchQuery || selectedFilterId !== 'all'
+      ? "No matching receipts found."
+      : "No receipts found.";
+    
+    return (
+      <View className="flex-1 justify-center items-center py-8">
+        <Text className="text-gray-500 text-center">{message}</Text>
+      </View>
+    );
   };
 
   if (isError) {
@@ -260,18 +333,17 @@ const ReceiptPage = () => {
       }
       wrapScroll={false}
     >
+      <View className="flex-1 bg-white">
+        {showSearch && (
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={() => {}}
+          />
+        )}
 
-      {showSearch && (
-        <SearchInput 
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={() => {}} // Can leave empty since you're using debounce
-        />
-      )}
-
-      <View className="flex-1 px-6">
-        {/* Search and Filter */}        
-        <View className="flex-col pb-8">
+        {/* Filter Section */}
+        <View className="px-6 pt-4 pb-4">
           <SelectLayout
             className="w-full bg-white"
             placeholder="Filter"
@@ -281,33 +353,67 @@ const ReceiptPage = () => {
           />
         </View>
 
-        {/* Receipts List */}
-        {isLoading ? (
-          // <View className="flex-1 justify-center items-center">
-          //   <ActivityIndicator size="large" color="#2a3a61" />
-          //   <Text className="text-sm text-gray-500 mt-2">Loading receipts...</Text>
-          // </View>
-          renderLoadingState()           
-        ) : (
+        {/* Result Count - Only show when there are items */}
+        {!isRefreshing && fetchedData.length > 0 && (
+          <View className="px-6 mb-2">
+            <Text className="text-xs text-gray-500">
+              Showing {fetchedData.length} of {totalCount} receipts
+            </Text>
+          </View>
+        )}
+        
+        {/* Loading state during refresh */}
+        {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
+
+        {/* Main Content - only render when not refreshing */}
+        {!isRefreshing && (
           <FlatList
+            maxToRenderPerBatch={5}
+            overScrollMode="never"
             data={fetchedData}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.inv_num.toString()}
-            contentContainerStyle={{ paddingBottom: 16 }}
             showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            initialNumToRender={5}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            onScroll={handleScroll}
+            windowSize={11}
+            renderItem={renderItem}
+            keyExtractor={(item) => `receipt-${item.inv_num}`}
+            removeClippedSubviews
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: 20,
+              flexGrow: 1,
+            }}
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
-                colors={['#00a8f0']}  // Android spinner color
-                tintColor="#00a8f0"    // iOS spinner color
+                colors={["#00a8f0"]}
               />
-            }              
-            ListEmptyComponent={
-              <Text className="text-center text-gray-500 py-4">
-                No receipts found
-              </Text>
             }
+            ListFooterComponent={() =>
+              isFetching && isLoadMore ? (
+                <View className="py-4 items-center">
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                  <Text className="text-xs text-gray-500 mt-2">
+                    Loading more receipts...
+                  </Text>
+                </View>
+              ) : (
+                !hasNext &&
+                fetchedData.length > 0 && (
+                  <View className="py-4 items-center">
+                    <Text className="text-xs text-gray-400">
+                      No more receipts
+                    </Text>
+                  </View>
+                )
+              )
+            }
+            ListEmptyComponent={renderEmptyState()}
           />
         )}
       </View>

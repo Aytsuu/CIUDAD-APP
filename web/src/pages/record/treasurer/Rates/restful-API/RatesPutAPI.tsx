@@ -10,7 +10,9 @@ const editAnnualGrossSales = async (ags_id: string, grossSales: {
 }) => {
     try {
         await api.patch(`treasurer/update-annual-gross-sales/${ags_id}/`, {
-        ags_is_archive: true
+          ags_is_archive: true,
+          ags_date: new Date().toISOString(),
+          staff_id: grossSales.staff_id
         });
         const newRecord = {
         ags_minimum: parseFloatSafe(grossSales.minRange),
@@ -38,7 +40,9 @@ const editPurposeAndRate = async (pr_id: string, purposeAndRate: {
 }) => {
     try {
         await api.patch(`treasurer/update-purpose-and-rate/${pr_id}/`, {
-        pr_is_archive: true
+          pr_is_archive: true,
+          pr_date: new Date().toISOString(),
+          staff_id: purposeAndRate.staff_id
         });
         
         const newRecord = {

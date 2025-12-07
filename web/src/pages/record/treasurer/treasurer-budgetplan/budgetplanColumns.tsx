@@ -46,14 +46,29 @@ export const useBudgetPlanColumns = () => {
     },
     {
       accessorKey: "plan_issue_date",
-      header: "Issued On",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Issued On
+        </div>
+      ),
       cell: ({ row }) => (
-        <div className="text-center">{formatDate(row.getValue("plan_issue_date"), "long")}</div>
+        <div className="flex w-full justify-center items-center">
+          {formatDate(row.getValue("plan_issue_date"), "long")}
+        </div>
       )
     },
     {
       accessorKey: "staff_name",
-      header: "Created By"
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Created By
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex w-full justify-center items-center">
+          {row.getValue("staff_name")}
+        </div>
+      )
     }
   ];
 
@@ -61,7 +76,11 @@ export const useBudgetPlanColumns = () => {
     ...budgetPlanCommonColumns,
     {
       accessorKey: "action",
-      header: "Action",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+         Action
+        </div>
+      ),
       cell: ({ row }) => {
         const planId = row.original.plan_id;
         return (
@@ -106,7 +125,11 @@ export const useBudgetPlanColumns = () => {
     ...budgetPlanCommonColumns,
     {
       accessorKey: "action",
-      header: "Action",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Action
+        </div>
+      ),
       cell: ({ row }) => {
         const planId = row.original.plan_id;
         const planYear = row.original.plan_year || '';

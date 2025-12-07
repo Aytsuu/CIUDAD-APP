@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
   Image,
   RefreshControl,
   Linking,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,59 +27,125 @@ import { useArchiveOrRestoreResolution } from './queries/resolution-delete-queri
 import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
+import { formatDate } from "@/helpers/dateHelpers"
 
 
+const INITIAL_PAGE_SIZE = 10;
 
 function ResolutionPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("active");
+  const [activeTab, setActiveTab] = useState<"active" | "archive">("active");
   const [showSearch, setShowSearch] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<string>("all");
   const [yearFilter, setYearFilter] = useState<string>("all");
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  
   const [viewImagesModalVisible, setViewImagesModalVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState<{rsd_url: string, rsd_name: string}[]>([]);
   const [currentZoomScale, setCurrentZoomScale] = useState(1);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false); 
 
   // Use debounce for search to avoid too many API calls
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
-  // Updated to handle paginated response with archive filtering
+  // Updated to use pagination
   const { 
-    data: resolutionData = { results: [], count: 0 }, 
+    data: responseData = { results: [], count: 0, next: null, previous: null }, 
     isLoading, 
     isError, 
-    refetch 
+    refetch,
+    isFetching 
   } = useResolution(
-    1, // page
-    1000, // pageSize - large number to get all data
+    currentPage,
+    pageSize,
     debouncedSearchQuery, 
     filter, 
     yearFilter,
-    activeTab === "archive" // Send archive status to backend
+    activeTab === "archive"
   );
 
   // Extract the actual data array from paginated response
-  const fetchedData = resolutionData.results || [];
+  const fetchedData = responseData?.results || [];
+  const totalCount = responseData?.count || 0;
+  const hasNext = responseData?.next;
 
   const { mutate: deleteRes, isPending: isDeletePending } = useDeleteResolution();
   const { mutate: archiveRestore, isPending: isArchivePending } = useArchiveOrRestoreResolution();
 
+  // Reset pagination when filters or tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [debouncedSearchQuery, filter, yearFilter, activeTab]);
+
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  // Handle load more
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
+
+  // Filter options
   const filterOptions = [
-    { id: "all", name: "All" },
-    { id: "council", name: "Council" },
-    { id: "waste", name: "Waste Committee" },
-    { id: "gad", name: "GAD" },
-    { id: "finance", name: "Finance" }
+    { label: "All", value: "all" },
+    { label: "Council", value: "council" },
+    { label: "Waste Committee", value: "waste" },
+    { label: "GAD", value: "gad" },
+    { label: "Finance", value: "finance" }
   ];
 
-  // Extract unique years from resolution data for the dropdown
+  // Extract unique years from fetched data for the dropdown
   const yearOptions = useMemo(() => {
     const years = new Set<number>();
     
-    fetchedData.forEach(record => {
+    fetchedData.forEach((record: any) => {
       if (record.res_date_approved) {
         try {
           const date = new Date(record.res_date_approved);
@@ -93,17 +160,14 @@ function ResolutionPage() {
 
     const sortedYears = Array.from(years).sort((a, b) => b - a);
     
-    const options = [{ id: "all", name: "All Years" }];
+    const options = [{ label: "All Years", value: "all" }];
     
     sortedYears.forEach(year => {
-      options.push({ id: year.toString(), name: year.toString() });
+      options.push({ label: year.toString(), value: year.toString() });
     });
 
     return options;
   }, [fetchedData]);
-
-  // No frontend filtering needed - backend already filtered based on activeTab
-  const filteredData = fetchedData;
 
   const handleDelete = (res_num: number) => deleteRes(String(res_num));
   const handleArchive = (res_num: number) => archiveRestore({ res_num: String(res_num), res_is_archive: true });
@@ -156,15 +220,6 @@ function ResolutionPage() {
     });    
   }
 
-
-  //Refresh the page
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
-  };
-
-
   // Loading state component
   const renderLoadingState = () => (
     <View className="h-64 justify-center items-center">
@@ -172,16 +227,22 @@ function ResolutionPage() {
     </View>
   );
 
-
-  const renderItem = ({ item }: { item: any }) => (
-    <Pressable onPress={() => handleEdit(item)} className="mb-4">
+  // Resolution Card Component - Memoized for better performance
+  const ResolutionCard = React.memo(({ item, activeTab, onViewPdf, onViewImages, onEdit }: { 
+    item: any; 
+    activeTab: string;
+    onViewPdf: (url: string) => void;
+    onViewImages: (images: {rsd_url: string, rsd_name: string}[]) => void;
+    onEdit: (item: any) => void;
+  }) => (
+    <Pressable onPress={() => onEdit(item)} className="mb-4">
       <Card className="border border-gray-200 bg-white">
         <CardHeader className="flex-row justify-between items-center">
           <CardTitle className="text-lg text-[#2a3a61]">Resolution No. {item.res_num}</CardTitle>
           {activeTab === 'active' ? (
             <View className="flex-row gap-1">
               <TouchableOpacity 
-                onPress={() => item.resolution_files?.[0]?.rf_url && handleViewPdf(item.resolution_files[0].rf_url)} 
+                onPress={() => item.resolution_files?.[0]?.rf_url && onViewPdf(item.resolution_files[0].rf_url)} 
                 className="bg-blue-50 rounded py-1 px-1.5"
               >
                 <Files size={16} color="#00A8F0"/>
@@ -198,7 +259,7 @@ function ResolutionPage() {
           ) : (
             <View className="flex-row gap-1">
               <TouchableOpacity 
-                onPress={() => item.resolution_files?.[0]?.rf_url && handleViewPdf(item.resolution_files[0].rf_url)} 
+                onPress={() => item.resolution_files?.[0]?.rf_url && onViewPdf(item.resolution_files[0].rf_url)} 
                 className="bg-blue-50 rounded py-1 px-1.5"
               >
                 <Files size={16} color="#00A8F0"/>
@@ -232,18 +293,18 @@ function ResolutionPage() {
 
           <View className="flex-row justify-between pb-1">
             <Text className="text-gray-600">Date Approved:</Text>
-            <Text>{item.res_date_approved}</Text>
+            <Text>{formatDate(item.res_date_approved,"long")}</Text>
           </View>
 
           <View className="flex-row justify-between pb-1">
             <Text className="text-gray-600">Area of Focus:</Text>
-            <Text>{item.res_area_of_focus.join(', ')}</Text>
+            <Text>{item.res_area_of_focus?.join(', ') || ''}</Text>
           </View>
 
           <View className="flex-row justify-between">
             <Text className="text-gray-600">Supporting Documents:</Text>
             {item.resolution_supp?.length > 0 ? (
-              <TouchableOpacity onPress={() => handleViewImages(item.resolution_supp)}>
+              <TouchableOpacity onPress={() => onViewImages(item.resolution_supp)}>
                 <Text className="text-blue-600 underline">{item.resolution_supp.length} attachment(s)</Text>
               </TouchableOpacity>
             ) : (
@@ -256,7 +317,35 @@ function ResolutionPage() {
         </CardContent>
       </Card>
     </Pressable>
+  ));
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: any }) => (
+      <ResolutionCard 
+        item={item} 
+        activeTab={activeTab}
+        onViewPdf={handleViewPdf}
+        onViewImages={handleViewImages}
+        onEdit={handleEdit}
+      />
+    ),
+    [activeTab]
   );
+
+  // Simple empty state component
+  const renderEmptyState = () => {
+    const message = searchQuery || filter !== 'all' || yearFilter !== 'all'
+      ? "No matching resolutions found."
+      : activeTab === 'active' 
+        ? "No active resolutions found." 
+        : "No archived resolutions found.";
+    
+    return (
+      <View className="flex-1 justify-center items-center py-8">
+        <Text className="text-gray-500 text-center">{message}</Text>
+      </View>
+    );
+  };
 
   if (isError) {
     return (
@@ -306,22 +395,21 @@ function ResolutionPage() {
       }
       wrapScroll={false}
     >
-      {showSearch && (
-        <SearchInput 
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onSubmit={() => {}} 
-        />
-      )}      
-
-      <View className="flex-1 px-6">
+      <View className="flex-1 bg-white">
+        {showSearch && (
+          <SearchInput 
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={() => {}} 
+          />
+        )}      
 
         {/*Filters */}
-        <View className="mb-4">
-          <View className="flex-row justify-between items-center gap-2 pb-5">
-            <View className="flex-1">
+        <View className="px-6 pt-4 pb-4">
+          <View className="flex-row justify-between items-center gap-2">
+            <View className="flex-1 pb-4">
               <SelectLayout
-                options={yearOptions.map(y => ({ label: y.name, value: y.id }))}
+                options={yearOptions}
                 className="h-8"
                 selectedValue={yearFilter}
                 onSelect={(option) => handleYearFilterChange(option.value)}
@@ -330,9 +418,9 @@ function ResolutionPage() {
               />
             </View>
 
-            <View className="flex-1">
+            <View className="flex-1 pb-4">
               <SelectLayout
-                options={filterOptions.map(f => ({ label: f.name, value: f.id }))}
+                options={filterOptions}
                 className="h-8"
                 selectedValue={filter}
                 onSelect={(option) => handleFilterChange(option.value)}
@@ -344,15 +432,15 @@ function ResolutionPage() {
 
           <Button 
             onPress={() => router.push('/(council)/resolution/res-create')} 
-            className="bg-primaryBlue mt-3 rounded-xl"
+            className="bg-primaryBlue mt-4 rounded-xl"
           >
             <Text className="text-white text-[17px]">Create</Text>
           </Button>
         </View>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-blue-50 mb-5 mt-5 flex-row justify-between">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "active" | "archive")} className="flex-1">
+          <TabsList className="bg-blue-50 mx-6 mb-5 mt-2 flex-row justify-between">
             <TabsTrigger 
               value="active" 
               className={`flex-1 mx-1 ${activeTab === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
@@ -371,59 +459,133 @@ function ResolutionPage() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="active">
-            {isLoading || isArchivePending || isDeletePending ? (
-              renderLoadingState()          
-            ) : (
-              <FlatList
-                data={filteredData}
-                renderItem={renderItem}
-                keyExtractor={item => item.res_num.toString()}
-                contentContainerStyle={{ paddingBottom: 500 }}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={isRefreshing}
-                    onRefresh={handleRefresh}
-                    colors={['#00a8f0']}
-                    tintColor="#00a8f0"
-                  />
-                }                                  
-                ListEmptyComponent={
-                  <Text className="text-center text-gray-500 py-4">
-                    No active resolutions found
-                  </Text>
-                }
-              />
-            )}            
-          </TabsContent>
+          {/* Loading state during refresh */}
+          {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
 
-          <TabsContent value="archive">
-            {isLoading || isArchivePending || isDeletePending ? (
-              renderLoadingState()          
-            ) : (
-              <FlatList
-                data={filteredData}
-                renderItem={renderItem}
-                keyExtractor={item => item.res_num.toString()}
-                contentContainerStyle={{ paddingBottom: 500 }}
-                showsVerticalScrollIndicator={false}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={isRefreshing}
-                    onRefresh={handleRefresh}
-                    colors={['#00a8f0']}
-                    tintColor="#00a8f0"
-                  />
-                }                 
-                ListEmptyComponent={
-                  <Text className="text-center text-gray-500 py-4">
-                    No archived resolutions found
-                  </Text>
-                }
-              />              
-            )}              
-          </TabsContent>
+          {/* Main Content - only render when not refreshing */}
+          {!isRefreshing && (
+            <>
+              <TabsContent value="active" className="flex-1 p-2">
+                {/* Result Count - Only show when there are items */}
+                {!isRefreshing && fetchedData.length > 0 && (
+                  <View className="px-6 mb-2">
+                    <Text className="text-xs text-gray-500">
+                      Showing {fetchedData.length} of {totalCount} resolutions
+                    </Text>
+                  </View>
+                )}
+
+                <FlatList
+                  maxToRenderPerBatch={5}
+                  overScrollMode="never"
+                  data={fetchedData}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                  initialNumToRender={5}
+                  onEndReached={handleLoadMore}
+                  onEndReachedThreshold={0.5}
+                  onScroll={handleScroll}
+                  windowSize={11}
+                  renderItem={renderItem}
+                  keyExtractor={item => `resolution-active-${item.res_num}`}
+                  removeClippedSubviews
+                  contentContainerStyle={{
+                    paddingHorizontal: 16,
+                    paddingTop: 8,
+                    paddingBottom: 20,
+                    flexGrow: 1,
+                  }}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={["#00a8f0"]}
+                    />
+                  }
+                  ListFooterComponent={() =>
+                    isFetching && isLoadMore ? (
+                      <View className="py-4 items-center">
+                        <ActivityIndicator size="small" color="#3B82F6" />
+                        <Text className="text-xs text-gray-500 mt-2">
+                          Loading more resolutions...
+                        </Text>
+                      </View>
+                    ) : (
+                      !hasNext &&
+                      fetchedData.length > 0 && (
+                        <View className="py-4 items-center">
+                          <Text className="text-xs text-gray-400">
+                            No more resolutions
+                          </Text>
+                        </View>
+                      )
+                    )
+                  }
+                  ListEmptyComponent={renderEmptyState()}
+                />
+              </TabsContent>
+
+              <TabsContent value="archive" className="flex-1 p-2">
+                {/* Result Count - Only show when there are items */}
+                {!isRefreshing && fetchedData.length > 0 && (
+                  <View className="px-6 mb-2">
+                    <Text className="text-xs text-gray-500">
+                      Showing {fetchedData.length} of {totalCount} resolutions
+                    </Text>
+                  </View>
+                )}
+
+                <FlatList
+                  maxToRenderPerBatch={5}
+                  overScrollMode="never"
+                  data={fetchedData}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                  initialNumToRender={5}
+                  onEndReached={handleLoadMore}
+                  onEndReachedThreshold={0.5}
+                  onScroll={handleScroll}
+                  windowSize={11}
+                  renderItem={renderItem}
+                  keyExtractor={item => `resolution-archive-${item.res_num}`}
+                  removeClippedSubviews
+                  contentContainerStyle={{
+                    paddingHorizontal: 16,
+                    paddingTop: 8,
+                    paddingBottom: 20,
+                    flexGrow: 1,
+                  }}
+                  refreshControl={
+                    <RefreshControl
+                      refreshing={isRefreshing}
+                      onRefresh={handleRefresh}
+                      colors={["#00a8f0"]}
+                    />
+                  }
+                  ListFooterComponent={() =>
+                    isFetching && isLoadMore ? (
+                      <View className="py-4 items-center">
+                        <ActivityIndicator size="small" color="#3B82F6" />
+                        <Text className="text-xs text-gray-500 mt-2">
+                          Loading more resolutions...
+                        </Text>
+                      </View>
+                    ) : (
+                      !hasNext &&
+                      fetchedData.length > 0 && (
+                        <View className="py-4 items-center">
+                          <Text className="text-xs text-gray-400">
+                            No more resolutions
+                          </Text>
+                        </View>
+                      )
+                    )
+                  }
+                  ListEmptyComponent={renderEmptyState()}
+                />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
 
         {/* View Images Modal - keep this part the same */}

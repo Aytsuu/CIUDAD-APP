@@ -76,8 +76,8 @@ function BarangayServiceForm(){
                                             onCheckedChange={(checked: boolean) => {
                                                 field.onChange(
                                                     checked
-                                                        ? [...field.value, purpose] // Add selected purpose
-                                                        : field.value.filter((p: string) => p !== purpose) // Remove unselected purpose
+                                                        ? [...(field.value || []), purpose] // Add selected purpose
+                                                        : (field.value || []).filter((p: string) => p !== purpose) // Remove unselected purpose
                                                 );
                                             }}
                                         />
