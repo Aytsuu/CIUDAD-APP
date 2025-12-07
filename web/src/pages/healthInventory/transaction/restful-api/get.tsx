@@ -14,7 +14,9 @@ export const getMedicineTransactions = async (page: number, pageSize: number, se
     if (res.status === 200) {
       return res.data;
     }
-    console.error(res.status);
+    if (process.env.NODE_ENV === "development") {
+      console.error(res.status);
+    }
     return {
       results: [],
       count: 0,
@@ -22,7 +24,9 @@ export const getMedicineTransactions = async (page: number, pageSize: number, se
       previous: null
     };
   } catch (err) {
-    console.log(err);
+    if (process.env.NODE_ENV === "development") {
+      console.error(err);
+    }
     return {
       results: [],
       count: 0,
@@ -46,7 +50,9 @@ export const getCommodityTransactions = async (page: number, pageSize: number, s
     if (res.status === 200) {
       return res.data;
     }
-    console.error(res.status);
+    if (process.env.NODE_ENV === "development") {
+      console.error(res.status);
+    }
     return {
       results: [],
       count: 0,
@@ -54,7 +60,9 @@ export const getCommodityTransactions = async (page: number, pageSize: number, s
       previous: null
     };
   } catch (err) {
-    console.log(err);
+    if (process.env.NODE_ENV === "development") {
+      console.error(err);
+    }
     return {
       results: [],
       count: 0,
@@ -78,7 +86,9 @@ export const getFirstAidTransactions = async (page: number, pageSize: number, se
     if (res.status === 200) {
       return res.data;
     }
-    console.error(res.status);
+    if (process.env.NODE_ENV === "development") {
+      console.error(res.status);
+    }
     return {
       results: [],
       count: 0,
@@ -86,7 +96,9 @@ export const getFirstAidTransactions = async (page: number, pageSize: number, se
       previous: null
     };
   } catch (err) {
-    console.log(err);
+    if (process.env.NODE_ENV === "development") {
+      console.error(err);
+    }
     return {
       results: [],
       count: 0,
@@ -110,7 +122,9 @@ export const getAntigenTransactions = async (page: number, pageSize: number, sea
     if (res.status === 200) {
       return res.data;
     }
-    console.error(res.status);
+    if (process.env.NODE_ENV === "development") {
+      console.error(res.status);
+    }
     return {
       results: [],
       count: 0,
@@ -118,7 +132,9 @@ export const getAntigenTransactions = async (page: number, pageSize: number, sea
       previous: null
     };
   } catch (err) {
-    console.log(err);
+    if (process.env.NODE_ENV === "development") {
+      console.error(err);
+    }
     return {
       results: [],
       count: 0,

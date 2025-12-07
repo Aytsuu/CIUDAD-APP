@@ -81,6 +81,9 @@ export default function MedicineTransactionTable() {
     };
 
   if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error loading medicine transactions:", error);
+    }
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-red-500">Error loading medicine transactions</div>

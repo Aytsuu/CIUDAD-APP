@@ -134,6 +134,9 @@ export default function FirstAidTransactionTable() {
   };
 
   if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error loading first aid transactions:", error);
+    }
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-red-500">Error loading first aid transactions</div>

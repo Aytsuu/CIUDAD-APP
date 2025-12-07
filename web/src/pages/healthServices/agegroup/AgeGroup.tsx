@@ -74,8 +74,9 @@ export default function AgeGroup() {
       return { previousAgeGroups };
     },
     onError: (error: any, _, context) => {
-      console.error("Error deleting age group:", error);
-      
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error deleting age group:", error);
+      }
       // Handle the specific protected error
       if (error.response?.status === 409) {
         const errorData = error.response.data;
@@ -91,7 +92,6 @@ export default function AgeGroup() {
       } else {
         toast.error("Error deleting age group. Please try again.");
       }
-      
       if (context?.previousAgeGroups) {
         queryClient.setQueryData(["ageGroups"], context.previousAgeGroups);
       }
@@ -156,6 +156,9 @@ export default function AgeGroup() {
   }
 
   if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error fetching age groups:", error);
+    }
     return (
       <div className="max-w-4xl mx-auto p-6 text-center">
         <p className="text-red-600">Error fetching age groups: {(error as Error).message}</p>

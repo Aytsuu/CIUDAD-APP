@@ -10,10 +10,15 @@ export const useSubmitCommodityStock = () => {
 
   return useMutation({
     mutationFn: async ({ data }: { data: any }) => {
-      console.log("Data being submitted:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Data being submitted:", data);
+      }
       const com_id = data.com_id;
       if (!com_id) {
-        throw new Error("Invalid commodity selection: com_id must have a value");
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Invalid commodity selection: com_id must have a value");
+        }
+        return;
       }
       const atomicData = { ...data, com_id };
       const result = await createCommodityStock(atomicData);
@@ -29,10 +34,14 @@ export const useSubmitCommodityStock = () => {
       navigate(-1);
       showSuccessToast("Added successfully");
 
-      console.log("Created records:", data.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Created records:", data.data);
+      }
     },
     onError: (error) => {
-      console.error("Failed to add commodity stock:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to add commodity stock:", error);
+      }
       showErrorToast(error.message || "Failed to Add");
     }
   });

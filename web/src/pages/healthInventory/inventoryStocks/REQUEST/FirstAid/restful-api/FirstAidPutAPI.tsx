@@ -7,7 +7,9 @@ export const updateInventoryTimestamp = async (inv_id: string) => {
       });
       return res.data;
     } catch (err) {
-      console.error(err)
+      if (process.env.NODE_ENV === 'development') {
+        console.error(err)
+      }
   }
   };
  
@@ -16,7 +18,9 @@ export const updateInventoryTimestamp = async (inv_id: string) => {
       const res = await api2.patch(`inventory/update_firstaidstocks/${finv_id}/`, data);
       return res.data;
     } catch (err) {
-      console.error(err)
+      if (process.env.NODE_ENV === 'development') {
+        console.error(err)
+      }
   }
   };
 

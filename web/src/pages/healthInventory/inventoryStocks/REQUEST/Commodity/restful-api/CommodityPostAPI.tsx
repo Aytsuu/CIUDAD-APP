@@ -11,7 +11,9 @@ export const createCommodityStock = async (data: Record<string, any>) => {
     }
     return res.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
     throw err;
   }
 };
@@ -27,6 +29,8 @@ export const addCommodityTransaction = async (data: Record<any, string>) => {
     }
     return res.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
   }
 };

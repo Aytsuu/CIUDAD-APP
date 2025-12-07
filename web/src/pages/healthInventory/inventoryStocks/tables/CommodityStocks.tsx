@@ -198,7 +198,9 @@ const prepareExportData = () => {
         queryClient.invalidateQueries({ queryKey: ["commodityStocks"] });
         showSuccessToast("Commodity archived successfully");
       } catch (error) {
-        console.error("Failed to archive commodity:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to archive commodity:", error);
+        }
         showErrorToast("Failed to archive commodity.");
       } finally {
         setCommodityToArchive(null);

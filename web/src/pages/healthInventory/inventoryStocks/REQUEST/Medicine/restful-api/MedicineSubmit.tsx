@@ -10,12 +10,12 @@ export const useSubmitMedicineStock = () => {
 
   return useMutation({
     mutationFn: async ({ data }: { data: any }) => {
-      console.log("Data being submitted:", data);
+      if (process.env.NODE_ENV === "development") {
+        console.log("Data being submitted:", data);
+      }
 
       const medicineID = data.medicineID;
-
       const atomicData = { ...data, medicineID };
-
       const result = await createMedicineStock(atomicData);
       return result;
     },
@@ -28,10 +28,14 @@ export const useSubmitMedicineStock = () => {
       navigate(-1);
       showSuccessToast("Added successfully");
 
-      console.log("Created records:", data.data);
+      if (process.env.NODE_ENV === "development") {
+        console.log("Created records:", data.data);
+      }
     },
     onError: (error: any) => {
-      console.error("Failed to add medicine stock:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to add medicine stock:", error);
+      }
       showErrorToast(error.message || "Failed to Add");
     }
   });

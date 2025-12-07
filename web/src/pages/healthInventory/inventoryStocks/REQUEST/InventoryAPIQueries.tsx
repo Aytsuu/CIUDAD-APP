@@ -6,8 +6,10 @@ export const addInventory = async (data: Record<any, string>) => {
     const res = await api2.post("inventory/inventorylist/", data);
     return res.data;
   } catch (err: any) {
-    console.log("Error response:", err.response?.data || err.message);
-    throw err;
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error response:", err.response?.data || err.message);
+    }
+    return null;
   }
 };
 
@@ -25,7 +27,9 @@ export const archiveInventory = async (inv_id: string) => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error archiving inventory:", error);
-    throw error;
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error archiving inventory:", error);
+    }
+    return null;
   }
 };

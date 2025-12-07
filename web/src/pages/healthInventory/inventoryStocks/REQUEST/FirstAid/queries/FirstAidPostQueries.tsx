@@ -10,11 +10,15 @@ export const useSubmitFirstAidStock = () => {
 
   return useMutation({
     mutationFn: async ({ data }: { data: any }) => {
-      console.log("Data being submitted:", data);
-      
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Data being submitted:", data);
+      }
       const fa_id = data.fa_id?.trim();
       if (!fa_id) {
-        throw new Error("Invalid first aid item selection: fa_id is required and cannot be empty");
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Invalid first aid item selection: fa_id is required and cannot be empty");
+        }
+        return;
       }
 
       const atomicData = { ...data, fa_id };
@@ -28,14 +32,18 @@ export const useSubmitFirstAidStock = () => {
       queryClient.invalidateQueries({ queryKey: ["firstaidinventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["firstaidtransactions"] });
       queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
-      
+
       navigate(-1);
       showSuccessToast("Added successfully");
-      
-      console.log("Created records:", data.data);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Created records:", data.data);
+      }
     },
     onError: (error) => {
-      console.error("Failed to add first aid stock:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to add first aid stock:", error);
+      }
       showErrorToast(error.message || "Failed to Add");
     },
   });

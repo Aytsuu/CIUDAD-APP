@@ -28,7 +28,9 @@ export const CommodityStocksColumns = (handleArchiveInventory: (commodity: any) 
           </div>
         );
       } catch (error) {
-        console.error("Invalid date format:", dateString);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Invalid date format:", dateString);
+        }
         return <div className="text-center text-red-400">Invalid Date</div>;
       }
     }

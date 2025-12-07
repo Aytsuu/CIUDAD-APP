@@ -74,6 +74,9 @@ export default function AntigenTransactionTable() {
       exportToPDF2(dataToExport, `antigen_transactions_${new Date().toISOString().slice(0, 10)}`, "Antigen Transactions Report");
     };
   if (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error loading antigen transactions:", error);
+    }
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-red-500">Error loading antigen transactions</div>

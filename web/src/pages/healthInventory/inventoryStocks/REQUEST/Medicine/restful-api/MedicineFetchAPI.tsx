@@ -34,8 +34,14 @@ export const fetchMedicines = () => {
           })),
         };
       } catch (error) {
-        showErrorToast("Failed to fetch medicines data");
-        throw error;
+          showErrorToast("Failed to fetch medicines data");
+          if (process.env.NODE_ENV === "development") {
+            console.error(error);
+          }
+          return {
+            default: [],
+            formatted: [],
+          };
       }
     },
   });
