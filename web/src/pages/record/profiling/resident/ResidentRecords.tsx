@@ -50,6 +50,7 @@ export default function ResidentRecords() {
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
   React.useEffect(() => {
+    if(debouncedSearchQuery == "") return;
     handlePageChange(1)
   }, [debouncedSearchQuery])
 

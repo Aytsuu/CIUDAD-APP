@@ -39,7 +39,7 @@ export default function IRRecords() {
   const [severity, setSeverity] = React.useState<string>("all");
   const [status, setStatus] = React.useState<string>("all");
 
-  const debouncedSearch = useDebounce(search, 300);
+  const debouncedSearchQuery = useDebounce(search, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
 
   // ================ QUERIES ================
@@ -48,7 +48,7 @@ export default function IRRecords() {
     useGetIncidentReport(
       currentPage,
       debouncedPageSize,
-      debouncedSearch,
+      debouncedSearchQuery,
       false,
       undefined,
       severity,
@@ -112,8 +112,9 @@ export default function IRRecords() {
   // ================ SIDE EFFECTS ================
   // Reset to page 1 when search changes
   React.useEffect(() => {
+    if(debouncedSearchQuery == "") return;
     handlePageChange(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearchQuery]);
 
   // ================== HANDLERS ==================
   const handlePageChange = (page: number) => {

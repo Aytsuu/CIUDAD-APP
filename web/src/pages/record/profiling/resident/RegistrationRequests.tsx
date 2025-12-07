@@ -1,41 +1,52 @@
-import React from "react"
-import { Search, FileText, Clock, Loader2, User, Users } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { DataTable } from "@/components/ui/table/data-table"
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { FamilyRequestColumns, IndividualRequestColumns } from "./RequestColumns"
-import { useRequests } from "../queries/profilingFetchQueries"
-import { useDebounce } from "@/hooks/use-debounce"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { Card, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useLoading } from "@/context/LoadingContext"
-import { CardSidebar } from "@/components/ui/card-sidebar"
-import { useSearchParams } from "react-router"
+import React from "react";
+import { Search, FileText, Clock, Loader2, User, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { DataTable } from "@/components/ui/table/data-table";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import {
+  FamilyRequestColumns,
+  IndividualRequestColumns,
+} from "./RequestColumns";
+import { useRequests } from "../queries/profilingFetchQueries";
+import { useDebounce } from "@/hooks/use-debounce";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useLoading } from "@/context/LoadingContext";
+import { CardSidebar } from "@/components/ui/card-sidebar";
+import { useSearchParams } from "react-router";
 
 export default function RegistrationRequests() {
   // ----------------- STATE INITIALIZATION --------------------
-  const currentPath = location.pathname.split("/").pop() || ""
-  const { showLoading, hideLoading } = useLoading()
-  const [searchQuery, setSearchQuery] = React.useState<string>("")
-  const [pageSize, setPageSize] = React.useState<number>(10)
-  const [selectedRequestType, setSelectedRequestType] = React.useState<string>(currentPath)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const currentPage = parseInt(searchParams.get("page") || '1', 10)
-  const debouncedPageSize = useDebounce(pageSize, 100)
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const currentPath = location.pathname.split("/").pop() || "";
+  const { showLoading, hideLoading } = useLoading();
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [pageSize, setPageSize] = React.useState<number>(10);
+  const [selectedRequestType, setSelectedRequestType] =
+    React.useState<string>(currentPath);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+  const debouncedPageSize = useDebounce(pageSize, 100);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const { data: registrationRequests, isLoading: isLoadingRequests } = useRequests(
-    currentPage,
-    debouncedPageSize,
-    debouncedSearchQuery,
-    selectedRequestType,
-  )
+  const { data: registrationRequests, isLoading: isLoadingRequests } =
+    useRequests(
+      currentPage,
+      debouncedPageSize,
+      debouncedSearchQuery,
+      selectedRequestType
+    );
 
-  const requestList = registrationRequests?.results || []
-  const totalCount = registrationRequests?.count || 0
-  const totalPages = Math.ceil(totalCount / pageSize)
+  const requestList = registrationRequests?.results || [];
+  const totalCount = registrationRequests?.count || 0;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const sidebarItems = [
     {
@@ -52,26 +63,32 @@ export default function RegistrationRequests() {
       description: "Family registrations",
       route: "family",
     },
-  ]
+  ];
 
   // ----------------- SIDE EFFECTS --------------------
   React.useEffect(() => {
-    if (isLoadingRequests) showLoading()
-    else hideLoading()
-  }, [isLoadingRequests])
+    if (isLoadingRequests) showLoading();
+    else hideLoading();
+  }, [isLoadingRequests]);
+
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    if (debouncedSearchQuery == "") return;
+    handlePageChange(1);
+  }, [debouncedSearchQuery]);
 
   // Reset to first page when filter changes
   React.useEffect(() => {
-    handlePageChange(1)
-  }, [selectedRequestType])
+    handlePageChange(1);
+  }, [selectedRequestType]);
 
   // ----------------- HANDLERS --------------------
   const formatRequestList = React.useCallback(() => {
     const formatted = requestList.map((request: any) => {
-      console.log("mapped request:", request)
-      console.log("selected request type:", selectedRequestType)
-      if(selectedRequestType === "individual") {
-        const personal = request.compositions[0] 
+      console.log("mapped request:", request);
+      console.log("selected request type:", selectedRequestType);
+      if (selectedRequestType === "individual") {
+        const personal = request.compositions[0];
         return {
           req_id: request.req_id,
           req_created_at: request.req_created_at,
@@ -88,29 +105,34 @@ export default function RegistrationRequests() {
           per_religion: personal.per_religion,
           per_contact: personal.per_contact,
           per_disability: personal.per_disability,
-          per_addresses: personal.per_addresses
-        }
+          per_addresses: personal.per_addresses,
+        };
       } else {
-        const respondent = request.compositions.filter((comp: any) => comp.acc !== null)[0]
+        const respondent = request.compositions.filter(
+          (comp: any) => comp.acc !== null
+        )[0];
         return {
           req_id: request.req_id,
           req_created_at: request.req_created_at,
           respondent: respondent,
-          compositions: request.compositions
-        }
+          compositions: request.compositions,
+        };
       }
     });
 
-    return formatted
-  }, [requestList])
+    return formatted;
+  }, [requestList]);
 
   const handlePageChange = (page: number) => {
-    setSearchParams({ page: String(page) })
-  }
+    setSearchParams({ page: String(page) });
+  };
 
   return (
     // ----------------- RENDER --------------------
-    <LayoutWithBack title="Awaiting Approval" description="Submissions under review and pending authorization">
+    <LayoutWithBack
+      title="Awaiting Approval"
+      description="Submissions under review and pending authorization"
+    >
       <div className="space-y-4">
         {/* Summary Card */}
         <Card>
@@ -122,10 +144,15 @@ export default function RegistrationRequests() {
                 </div>
                 <div>
                   <CardTitle className="text-lg">Pending Requests</CardTitle>
-                  <p className="text-sm text-gray-600">Registration requests awaiting review</p>
+                  <p className="text-sm text-gray-600">
+                    Registration requests awaiting review
+                  </p>
                 </div>
               </div>
-              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+              <Badge
+                variant="outline"
+                className="bg-orange-50 text-orange-700 border-orange-200"
+              >
                 {totalCount} Pending
               </Badge>
             </div>
@@ -134,11 +161,15 @@ export default function RegistrationRequests() {
 
         <div className="w-full flex gap-4">
           <div className="w-64 flex-shrink-0">
-            <CardSidebar 
-              header={<div className="p-4 bg-gray-50 border-b">
-                <h3 className="font-semibold text-gray-900">Request Types</h3>
-                <p className="text-xs text-gray-600 mt-1">Select registration type</p>
-              </div>}
+            <CardSidebar
+              header={
+                <div className="p-4 bg-gray-50 border-b">
+                  <h3 className="font-semibold text-gray-900">Request Types</h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    Select registration type
+                  </p>
+                </div>
+              }
               sidebarItems={sidebarItems}
               selectedItem={selectedRequestType}
               setSelectedItem={setSelectedRequestType}
@@ -151,7 +182,10 @@ export default function RegistrationRequests() {
             <div className="bg-white rounded-xl p-6">
               <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <Search
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={18}
+                  />
                   <Input
                     placeholder="Search by name, submission date..."
                     className="pl-11"
@@ -166,8 +200,15 @@ export default function RegistrationRequests() {
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700">Show</span>
-                  <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
+                  <span className="text-sm font-medium text-gray-700">
+                    Show
+                  </span>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) =>
+                      setPageSize(Number.parseInt(value))
+                    }
+                  >
                     <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
                       <SelectValue />
                     </SelectTrigger>
@@ -208,25 +249,39 @@ export default function RegistrationRequests() {
             )}
 
             {/* Data Table */}
-            {!isLoadingRequests && requestList.length > 0 && <DataTable 
-              columns={
-                selectedRequestType == "individual" ? 
-                IndividualRequestColumns : FamilyRequestColumns as any
-              } 
-              data={formatRequestList()} 
-            />}
+            {!isLoadingRequests && requestList.length > 0 && (
+              <DataTable
+                columns={
+                  selectedRequestType == "individual"
+                    ? IndividualRequestColumns
+                    : (FamilyRequestColumns as any)
+                }
+                data={formatRequestList()}
+              />
+            )}
 
             {/* Pagination */}
             {!isLoadingRequests && requestList.length > 0 && (
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <p className="text-sm text-gray-600 mb-2 sm:mb-0">
-                    Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
-                    <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of{" "}
-                    <span className="font-medium">{totalCount}</span> requests
+                    Showing{" "}
+                    <span className="font-medium">
+                      {(currentPage - 1) * pageSize + 1}
+                    </span>{" "}
+                    -{" "}
+                    <span className="font-medium">
+                      {Math.min(currentPage * pageSize, totalCount)}
+                    </span>{" "}
+                    of <span className="font-medium">{totalCount}</span>{" "}
+                    requests
                   </p>
                   {totalPages > 0 && (
-                    <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+                    <PaginationLayout
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                    />
                   )}
                 </div>
               </div>
@@ -235,5 +290,5 @@ export default function RegistrationRequests() {
         </div>
       </div>
     </LayoutWithBack>
-  )
+  );
 }
