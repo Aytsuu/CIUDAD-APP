@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button/button";
-import { Archive } from "lucide-react";
+import { Archive, FileCheck, FileText, ScrollText } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { Link, useLocation } from "react-router";
 import { useLoading } from "@/context/LoadingContext";
 import AnnualDevelopmentPlanView from './annual_development_plan_view.tsx';
 import AnnualDevelopmentPlanArchive from './annual_development_plan_archive.tsx';
 import {getAnnualDevPlans } from "./restful-api/annualGetAPI";
-import { useGetArchivedAnnualDevPlans } from "./queries/annualDevPlanFetchQueries";
+import { useGetArchivedAnnualDevPlans, useGetMandatedPlansCount, useGetPlansWithProposalsCount, useGetPlansWithResolutionsCount } from "./queries/annualDevPlanFetchQueries";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function AnnualDevelopmentPlan(){
     const { showLoading, hideLoading } = useLoading();
@@ -22,6 +24,15 @@ function AnnualDevelopmentPlan(){
     // Get archived plans count
     const { data: archivedPlansData } = useGetArchivedAnnualDevPlans(1, 1);
     const archivedCount = archivedPlansData?.count || 0;
+
+    // Get analytics data
+    const { data: mandatedData, isLoading: isLoadingMandated } = useGetMandatedPlansCount();
+    const { data: proposalsData, isLoading: isLoadingProposals } = useGetPlansWithProposalsCount();
+    const { data: resolutionsData, isLoading: isLoadingResolutions } = useGetPlansWithResolutionsCount();
+
+    const mandatedCount = mandatedData?.count || 0;
+    const proposalsCount = proposalsData?.count || 0;
+    const resolutionsCount = resolutionsData?.count || 0;
 
     useEffect(() => {
         fetchYears();
@@ -69,7 +80,79 @@ function AnnualDevelopmentPlan(){
                     Plan, monitor, and achieve your annual development goals with structured strategies and progress tracking.
                 </p>
             </div>
-            <hr className="border-gray mb-5 sm:mb-4" />   
+            <hr className="border-gray mb-5 sm:mb-4" />
+
+            {/* Analytics Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
+                <Card className="border border-gray-200 bg-white shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-600">
+                            Mandated
+                        </CardTitle>
+                        <div className="p-2 rounded-full bg-purple-50">
+                            <FileCheck className="h-4 w-4 text-purple-600" />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-primary">
+                            {isLoadingMandated ? (
+                                <Skeleton className="h-8 w-16 bg-slate-200" />
+                            ) : (
+                                mandatedCount
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Mandated development plans
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="border border-gray-200 bg-white shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-600">
+                            With Project Proposal
+                        </CardTitle>
+                        <div className="p-2 rounded-full bg-blue-50">
+                            <FileText className="h-4 w-4 text-blue-600" />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-primary">
+                            {isLoadingProposals ? (
+                                <Skeleton className="h-8 w-16 bg-slate-200" />
+                            ) : (
+                                proposalsCount
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Plans with project proposals
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="border border-gray-200 bg-white shadow-sm">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium text-gray-600">
+                            With Resolution
+                        </CardTitle>
+                        <div className="p-2 rounded-full bg-green-50">
+                            <ScrollText className="h-4 w-4 text-green-600" />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-primary">
+                            {isLoadingResolutions ? (
+                                <Skeleton className="h-8 w-16 bg-slate-200" />
+                            ) : (
+                                resolutionsCount
+                            )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Plans with resolutions
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>   
 
             {/* Tab Navigation */}
             <div className="flex border-b border-gray-200 mb-4">
