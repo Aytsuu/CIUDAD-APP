@@ -7,6 +7,7 @@ import ComplaintSectionCharts from "@/components/analytics/complaint/complaint-s
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 import { GarbagePickupSidebar } from "@/components/analytics/waste/garbage-pickup-sidebar";
 import { ConciliationIncidentChart } from "@/components/analytics/summon/conciliation-section-charts";
+import { RemarksSectionCharts } from "@/components/analytics/summon/remarks-section-charts";
 
 // HEALTH SERVICES
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
@@ -203,7 +204,13 @@ export const getItemsConfig = (
       },
       {
         dashboard: "SUMMON REMARKS",
-        card: [noRemark]
+        card: [noRemark],
+        chart: [
+          {
+            title: "Summon Remarks Overview",
+            element: <RemarksSectionCharts />,
+          }
+        ]
       },
       {
         dashboard: "GAD",

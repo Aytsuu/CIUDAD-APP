@@ -670,3 +670,39 @@ class ConciliationIncidentChartView(APIView):
         
         return Response(formatted_data, status=status.HTTP_200_OK)
     
+class SummonRemarksChartAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        # Get all hearings
+        all_hearings = HearingSchedule.objects.all()
+        
+        # Basic counts
+        total_open = all_hearings.filter(hs_is_closed=False).count()
+        total_closed = all_hearings.filter(hs_is_closed=True).count()
+        
+        # Get hearings with remarks
+        hearings_with_remarks = all_hearings.filter(remark__isnull=False)
+        
+        # Closed hearings analysis
+        closed_hearings = all_hearings.filter(hs_is_closed=True)
+        closed_with_remarks = closed_hearings.filter(remark__isnull=False).count()
+        closed_without_remarks = closed_hearings.filter(remark__isnull=True).count()
+        
+        # Open hearings analysis
+        open_hearings = all_hearings.filter(hs_is_closed=False)
+        open_with_remarks = open_hearings.filter(remark__isnull=False).count()
+        
+        hearing_closure_stats = {
+            'total_open_hearings': total_open,
+            'total_closed_hearings': total_closed,
+            'closed_with_remarks': closed_with_remarks,
+            'closed_without_remarks': closed_without_remarks,
+            'open_with_remarks': open_with_remarks,
+            # Additional useful metrics
+            'total_hearings': all_hearings.count(),
+            'hearings_with_remarks': hearings_with_remarks.count(),
+            'hearings_without_remarks': all_hearings.filter(remark__isnull=True).count(),
+        }
+        
+        return Response(hearing_closure_stats, status=status.HTTP_200_OK)
