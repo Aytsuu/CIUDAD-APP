@@ -29,7 +29,7 @@ import { VaccineResidentChart } from "@/components/analytics/health/vaccine-char
 // import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
 import { InventoryAlertsSidebar } from "@/components/analytics/health/inventory-alerts-sidebar";
 
-import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+// import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
@@ -79,7 +79,7 @@ export const getItemsConfig = (
   administrationCards: ReturnType<typeof useAdminSectionCards>,
   reportCards: ReturnType<typeof useReportSectionCards>,
   healthCards: ReturnType<typeof useHealthServicesSectionCards>,
-  wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
+  // wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
   donationCards: ReturnType<typeof useDonationSectionCards>,
   garbCards: ReturnType<typeof useGarbagePickupSectionCards>,
   certificateCards: ReturnType<typeof useCertificateSectionCards>,
@@ -102,7 +102,7 @@ export const getItemsConfig = (
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
 
   const { childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal, consultationsByDoctor, chilrenConsulted } = healthCards;
-  const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
+  // const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
   const {  
     pending: complaintPending, 
     cancelled: complaintCancelled, 
@@ -294,7 +294,7 @@ export const getItemsConfig = (
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, totalPickup],
+        card: [totalPickup],
         upcomingEvents: wasteUpcomingEvents,
         sidebar: [
           {
