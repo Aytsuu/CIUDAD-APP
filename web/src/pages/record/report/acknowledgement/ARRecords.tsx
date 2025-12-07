@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatDate, getWeekNumber } from "@/helpers/dateHelper";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "@/context/LoadingContext";
 import {
   Select,
@@ -38,7 +38,8 @@ export default function ARRecords() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const [selectedRows, setSelectedRows] = React.useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isCreatingWeeklyAR, setIsCreatingWeeklyAR] =
@@ -105,7 +106,16 @@ export default function ARRecords() {
     }
   }, [warThisMonth]);
 
+  // Reset to page 1 when search changes
+    React.useEffect(() => {
+      handlePageChange(1);
+    }, [debouncedSearchQuery]);
+
   // =================== HANDLERS ===================
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page) });
+  };
+
   const onSelectedRowsChange = React.useCallback((rows: any[]) => {
     setSelectedRows(rows);
   }, []);
@@ -203,7 +213,7 @@ export default function ARRecords() {
                     className="gap-4 focus:ring-0"
                     onChange={(value) => {
                       setStatus(value);
-                      setCurrentPage(1);
+                      handlePageChange(1);
                     }}
                     placeholder=""
                     options={[
@@ -355,7 +365,7 @@ export default function ARRecords() {
                   <PaginationLayout
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage}
+                    onPageChange={handlePageChange}
                   />
                 </div>
               </div>

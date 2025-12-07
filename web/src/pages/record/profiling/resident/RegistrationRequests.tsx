@@ -12,6 +12,7 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useLoading } from "@/context/LoadingContext"
 import { CardSidebar } from "@/components/ui/card-sidebar"
+import { useSearchParams } from "react-router"
 
 export default function RegistrationRequests() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -19,9 +20,9 @@ export default function RegistrationRequests() {
   const { showLoading, hideLoading } = useLoading()
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
-  const [currentPage, setCurrentPage] = React.useState<number>(1)
   const [selectedRequestType, setSelectedRequestType] = React.useState<string>(currentPath)
-
+  const [searchParams, setSearchParams] = useSearchParams()
+  const currentPage = parseInt(searchParams.get("page") || '1', 10)
   const debouncedPageSize = useDebounce(pageSize, 100)
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
@@ -61,7 +62,7 @@ export default function RegistrationRequests() {
 
   // Reset to first page when filter changes
   React.useEffect(() => {
-    setCurrentPage(1)
+    handlePageChange(1)
   }, [selectedRequestType])
 
   // ----------------- HANDLERS --------------------
@@ -103,7 +104,9 @@ export default function RegistrationRequests() {
     return formatted
   }, [requestList])
 
-  console.log("formatted:", formatRequestList())
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page) })
+  }
 
   return (
     // ----------------- RENDER --------------------
@@ -223,7 +226,7 @@ export default function RegistrationRequests() {
                     <span className="font-medium">{totalCount}</span> requests
                   </p>
                   {totalPages > 0 && (
-                    <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                    <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
                   )}
                 </div>
               </div>

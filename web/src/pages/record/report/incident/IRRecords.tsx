@@ -7,26 +7,33 @@ import { IRColumns } from "../ReportColumns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Skeleton } from "@/components/ui/skeleton"; 
-import { 
-  Search, 
-  FileText, 
-  Activity, 
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Search,
+  FileText,
+  Activity,
   CheckCircle2,
-  Archive, 
+  Archive,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import { Button } from "@/components/ui/button/button";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 export default function IRRecords() {
   // ================ STATE INITIALIZATION ================
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [search, setSearch] = React.useState<string>("");
   const [severity, setSeverity] = React.useState<string>("all");
@@ -36,66 +43,82 @@ export default function IRRecords() {
   const debouncedPageSize = useDebounce(pageSize, 100);
 
   // ================ QUERIES ================
-
   // 1. Main Table Data
-  const { data: incidentReports, isLoading: isLoadingIR } = useGetIncidentReport(
-    currentPage,
-    debouncedPageSize,
-    debouncedSearch,
-    false,
-    undefined,
-    severity,
-    true,
-    status
-  );
+  const { data: incidentReports, isLoading: isLoadingIR } =
+    useGetIncidentReport(
+      currentPage,
+      debouncedPageSize,
+      debouncedSearch,
+      false,
+      undefined,
+      severity,
+      true,
+      status
+    );
 
   const IRList = incidentReports?.results || [];
   const totalCount = incidentReports?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // 2. Analytics Data
-  const { data: inProgressIR, isLoading: isLoadingInProgress } = useGetIncidentReport(
-    1, 1, '', false, undefined, 'all', true, 'in-progress'
-  );
-  const { data: resolvedIR, isLoading: isLoadingResolved } = useGetIncidentReport(
-    1, 1, '', false, undefined, 'all', true, 'resolved'
-  );
+  const { data: inProgressIR, isLoading: isLoadingInProgress } =
+    useGetIncidentReport(
+      1,
+      1,
+      "",
+      false,
+      undefined,
+      "all",
+      true,
+      "in-progress"
+    );
+  const { data: resolvedIR, isLoading: isLoadingResolved } =
+    useGetIncidentReport(1, 1, "", false, undefined, "all", true, "resolved");
 
-  const { data: archivedIR, isLoading: isLoadingArchived } = useGetIncidentReport(
-    1, 1, '', true
-  )
+  const { data: archivedIR, isLoading: isLoadingArchived } =
+    useGetIncidentReport(1, 1, "", true);
 
   // ================ CONFIGURATION ================
-  
   const statCards = [
-    { 
-      label: "In-Progress", 
-      icon: Activity, 
-      color: "text-blue-600", 
+    {
+      label: "In-Progress",
+      icon: Activity,
+      color: "text-blue-600",
       bg: "bg-blue-50",
       count: inProgressIR?.count || 0,
       isLoading: isLoadingInProgress,
-      trend: "Active handling"
+      trend: "Active handling",
     },
-    { 
-      label: "Resolved", 
-      icon: CheckCircle2, 
-      color: "text-green-600", 
+    {
+      label: "Resolved",
+      icon: CheckCircle2,
+      color: "text-green-600",
       bg: "bg-green-50",
       count: resolvedIR?.count || 0,
       isLoading: isLoadingResolved,
-      trend: "Successful result"
+      trend: "Successful result",
     },
-    { 
-      label: "Archived", 
-      icon: Archive, 
-      color: "text-gray-600", 
+    {
+      label: "Archived",
+      icon: Archive,
+      color: "text-gray-600",
       bg: "bg-gray-100",
       count: archivedIR?.count || 0,
       isLoading: isLoadingArchived,
-      trend: "Historical record of unresolved reports"
+      trend: "Historical record of unresolved reports",
     },
   ];
+
+  // ================ SIDE EFFECTS ================
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    handlePageChange(1);
+  }, [debouncedSearch]);
+
+  // ================== HANDLERS ==================
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page) });
+  };
 
   // ================ RENDER ================
   return (
@@ -104,14 +127,13 @@ export default function IRRecords() {
       description="Manage and view all incident reports in your system"
     >
       <div className="flex flex-col w-full h-full gap-6">
-        
         {/* --- ANALYTICS STATUS CARDS (Read Only) --- */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {statCards.map((stat) => {
             const Icon = stat.icon;
-            
+
             return (
-              <Card 
+              <Card
                 key={stat.label}
                 className="border border-gray-200 bg-white shadow-sm"
               >
@@ -126,9 +148,9 @@ export default function IRRecords() {
                 <CardContent>
                   <div className="text-2xl font-bold text-primary">
                     {stat.isLoading ? (
-                        <Skeleton className="h-8 w-16 bg-slate-200" />
+                      <Skeleton className="h-8 w-16 bg-slate-200" />
                     ) : (
-                        stat.count
+                      stat.count
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -136,7 +158,7 @@ export default function IRRecords() {
                   </p>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
 
@@ -148,45 +170,49 @@ export default function IRRecords() {
                 <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder={status === 'all' ? "Search all reports..." : `Search ${status} reports...`}
+                    placeholder={
+                      status === "all"
+                        ? "Search all reports..."
+                        : `Search ${status} reports...`
+                    }
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-              </div> 
+              </div>
 
               <div className="flex items-center gap-2">
-                <SelectLayout 
+                <SelectLayout
                   value={severity}
                   className="gap-4"
                   onChange={(value) => {
-                    setCurrentPage(1)
-                    setSeverity(value)
+                    handlePageChange(1);
+                    setSeverity(value);
                   }}
                   placeholder=""
                   options={[
-                    {id: "all", name: "All Severities"},
-                    {id: "low", name: "Low"},
-                    {id: "medium", name: "Medium"},
-                    {id: "high", name: "High"}
+                    { id: "all", name: "All Severities" },
+                    { id: "low", name: "Low" },
+                    { id: "medium", name: "Medium" },
+                    { id: "high", name: "High" },
                   ]}
                   withReset={false}
                   valueLabel="Severity"
                 />
 
-                <SelectLayout 
+                <SelectLayout
                   value={status}
                   className="gap-4"
                   onChange={(value) => {
-                    setCurrentPage(1)
-                    setStatus(value)
+                    handlePageChange(1);
+                    setStatus(value);
                   }}
                   placeholder=""
                   options={[
-                    {id: "all", name: "All Statuses"},
-                    {id: "in-progress", name: "In-Progress"},
-                    {id: "resolved", name: "Resolved"},
+                    { id: "all", name: "All Statuses" },
+                    { id: "in-progress", name: "In-Progress" },
+                    { id: "resolved", name: "Resolved" },
                   ]}
                   withReset={false}
                   valueLabel="Status"
@@ -194,9 +220,10 @@ export default function IRRecords() {
 
                 <TooltipLayout
                   trigger={
-                    <Button variant={"outline"}
+                    <Button
+                      variant={"outline"}
                       onClick={() => {
-                        navigate('archive');
+                        navigate("archive");
                       }}
                     >
                       <Archive className="text-gray-700" />
@@ -204,7 +231,7 @@ export default function IRRecords() {
                   }
                   content="Archive"
                 />
-              </div>  
+              </div>
             </div>
           </CardHeader>
 
@@ -212,19 +239,22 @@ export default function IRRecords() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-sm font-medium text-gray-700">Show</span>
-                  <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
-                    <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm text-gray-600">entries</span>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => setPageSize(Number.parseInt(value))}
+                >
+                  <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600">entries</span>
               </div>
             </div>
 
@@ -236,28 +266,30 @@ export default function IRRecords() {
                   No reports found
                 </h3>
                 <p className="text-gray-500 mb-4">
-                   {status !== 'all' 
-                     ? `There are no ${status} reports matching your criteria.` 
-                     : "There are currently no reports."}
+                  {status !== "all"
+                    ? `There are no ${status} reports matching your criteria.`
+                    : "There are currently no reports."}
                 </p>
               </div>
             )}
-            
+
             {/* Loading State */}
             {isLoadingIR && (
               <div className="flex items-center justify-center py-12">
-                <Spinner size="lg"/>
-                <span className="ml-2 text-gray-600">Loading incident reports...</span>
+                <Spinner size="lg" />
+                <span className="ml-2 text-gray-600">
+                  Loading incident reports...
+                </span>
               </div>
             )}
 
             {/* Data Table */}
             {!isLoadingIR && IRList?.length > 0 && (
-                <DataTable
-                  columns={IRColumns()}
-                  data={IRList}
-                  isLoading={isLoadingIR}
-                />
+              <DataTable
+                columns={IRColumns()}
+                data={IRList}
+                isLoading={isLoadingIR}
+              />
             )}
           </CardContent>
 
@@ -274,22 +306,27 @@ export default function IRRecords() {
                         Loading...
                       </div>
                     ) : (
-                      `Showing ${totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0} -
-                      ${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} entries`
+                      `Showing ${
+                        totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0
+                      } -
+                      ${Math.min(
+                        currentPage * pageSize,
+                        totalCount
+                      )} of ${totalCount} entries`
                     )}
                   </div>
 
                   <PaginationLayout
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage}
+                    onPageChange={handlePageChange}
                   />
                 </div>
               </div>
             </>
           )}
         </Card>
-        </div>
+      </div>
     </MainLayoutComponent>
   );
 }

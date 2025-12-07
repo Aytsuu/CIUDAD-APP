@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, ClockArrowUp, Search, Users } from "lucide-react"
-import { Link } from "react-router"
+import { Link, useSearchParams } from "react-router"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import { DataTable } from "@/components/ui/table/data-table"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
@@ -22,12 +22,13 @@ export default function ResidentRecords() {
   const {showLoading, hideLoading} = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("")
   const [pageSize, setPageSize] = React.useState<number>(10)
-  const [currentPage, setCurrentPage] = React.useState<number>(1)
+  const [searchParams, setSearchParams] = useSearchParams();
   const [age, setAge] = React.useState<string>('all')
   const [voter, setVoter] = React.useState<string>('all')
   const [disable, setDisable] = React.useState<string>('all')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const debouncedPageSize = useDebounce(pageSize, 100)
+  const currentPage = parseInt(searchParams.get("page") || "1", 10)
 
   // const { data: personalModification, isLoading: isLoadingRequests } = usePersonalModification()
   const { data: requestCount, isLoading: isLoadingRequestCount } = useRequestCount(); 
@@ -49,13 +50,18 @@ export default function ResidentRecords() {
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
   React.useEffect(() => {
-    setCurrentPage(1)
+    handlePageChange(1)
   }, [debouncedSearchQuery])
 
   React.useEffect(() => {
     if(isLoading) showLoading();
     else hideLoading();
   }, [isLoading])
+
+  // ----------------- HANDLERS --------------------
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page)})
+  }
 
   // ----------------- RENDER --------------------
   return (
@@ -85,7 +91,7 @@ export default function ResidentRecords() {
                   className="gap-4"
                   onChange={(value) => {
                     setAge(value)
-                    setCurrentPage(1);
+                    handlePageChange(1);
                   }}
                   placeholder=""
                   options={[
@@ -104,7 +110,7 @@ export default function ResidentRecords() {
                   className="gap-4"
                   onChange={(value) => {
                     setVoter(value)
-                    setCurrentPage(1);
+                    handlePageChange(1);
                   }}
                   placeholder=""
                   options={[
@@ -123,7 +129,7 @@ export default function ResidentRecords() {
                   className="gap-4"
                   onChange={(value) => {
                     setDisable(value)
-                    setCurrentPage(1);
+                    handlePageChange(1);
                   }}
                   placeholder=""
                   options={[
@@ -219,19 +225,6 @@ export default function ResidentRecords() {
                 </Select>
                 <span>entries</span>
               </div>
-              {/* <div className="flex items-center gap-2 text-sm text-blue-700">
-                <div className="flex item-center justify-between gap-12">
-                  {profiles.map((profile: any, idx: number) => (
-                    <div key={idx} className="flex gap-2">
-                      <profile.icon size={18} 
-                        className=""
-                      />
-                      <p>-</p>
-                      <p>{capitalize(profile.id)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div> */}
             </div>
 
             {/* Loading State */}
@@ -289,7 +282,7 @@ export default function ResidentRecords() {
                 </p>
 
                 {totalPages > 0 && (
-                  <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                  <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
                 )}
               </div>
             )}
