@@ -15,3 +15,18 @@ export const useGetConciliationAnalytics = () => {
         staleTime: 5000
     })
 }
+
+export const useGetConciliationIncidentChart = () => {
+    return useQuery({
+        queryKey: ['conciliationIncidentChart'],
+        queryFn: async () => {
+            try {
+                const res = await api.get('clerk/conciliation-incident-chart/')
+                return res.data;
+            } catch (err) {
+                throw err;
+            }  
+        },
+        staleTime: 5000
+    })
+}

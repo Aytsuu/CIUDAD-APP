@@ -35,6 +35,21 @@ export const useGetCouncilCaseList = (page: number, pageSize: number, searchQuer
     })
 }
 
+export const useGetConciliationCardAnalytics = () => {
+    return useQuery({
+        queryKey: ['conciliationAnalytics'],
+        queryFn: async () => {
+            try {
+                const res = await api.get('clerk/conciliation-analytics/');
+                return res.data;
+            } catch (err) {
+                throw err;
+            }
+        },
+        staleTime: 5000
+    })
+}
+
 export const useGetLuponCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
     return useQuery<{results: SummonCaseList[], count: number}>({
         queryKey: ['luponCases', page, pageSize, searchQuery, statusFilter],

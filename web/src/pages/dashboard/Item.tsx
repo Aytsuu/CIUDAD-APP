@@ -6,6 +6,7 @@ import ReportSectionCharts from "@/components/analytics/report/report-section-ch
 import ComplaintSectionCharts from "@/components/analytics/complaint/complaint-section-chart";
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
 import { GarbagePickupSidebar } from "@/components/analytics/waste/garbage-pickup-sidebar";
+import { ConciliationIncidentChart } from "@/components/analytics/summon/conciliation-section-charts";
 
 // HEALTH SERVICES
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
@@ -110,7 +111,7 @@ export const getItemsConfig = (
     raised: complaintRaised 
   } = complaintCards;
   const { totalPickup} = garbCards;
-  const { waiting, ongoing, escalated, resolved } = conciliationCards;
+  const {conciliationCases } = conciliationCards;
   const { mediationcases } = mediationCards;
   const { cashDonations } = donationCards;
   const { noRemark } = remarkCard;
@@ -188,7 +189,13 @@ export const getItemsConfig = (
       },
       {
         dashboard: "CONCILIATION PROCEEDINGS",
-        card: [waiting, ongoing, escalated, resolved], 
+        card: [conciliationCases], 
+        chart: [
+          {
+            title: "Conciliation Incident Types Overview",
+            element: <ConciliationIncidentChart />,
+          },
+        ],
       },
       {
         dashboard: "COUNCIL MEDIATION",

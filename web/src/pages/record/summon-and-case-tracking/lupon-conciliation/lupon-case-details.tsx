@@ -214,7 +214,7 @@ export default function LuponCaseDetails() {
         accessorKey: "remark",
         header: ({}) => (
           <div className="flex w-full justify-center items-center">
-              Hearing Remarks
+            Remarks
           </div>
        ),
         cell: ({ row }) => {

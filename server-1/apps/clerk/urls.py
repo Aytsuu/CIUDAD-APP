@@ -39,6 +39,7 @@ urlpatterns = [
 
     # analytics
     path('conciliation-analytics/', ConciliationAnalyticsView.as_view(), name='conciliation-analytics'),
+    path('conciliation-incident-chart/', ConciliationIncidentChartView.as_view(), name='conciliation-incident-chart'),
     path('mediation-analytics/', MediationAnalyticsView.as_view(), name='mediation-analytics'),
     path('remarks-analytics/', SummonRemarksAnalyticsView.as_view(), name='remarks-analytics'),
 

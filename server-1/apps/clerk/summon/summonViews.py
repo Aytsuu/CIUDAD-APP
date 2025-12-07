@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from apps.complaint.serializers import ComplaintSerializer
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from django.db.models import Count
 
 # ===================== COUNCIL MEDIATION / CONCILIATION PROCEEDINGS ========================
 class LuponCasesView(generics.ListAPIView):
@@ -477,12 +478,17 @@ class ConciliationAnalyticsView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, format=None):
+        base_queryset = SummonCase.objects.filter(
+            sc_mediation_status__iexact='forwarded to lupon',
+            sc_conciliation_status__isnull=False
+        )
+        
         counts = {
-            'waiting': SummonCase.objects.filter(sc_conciliation_status__iexact='waiting for schedule').count(),
-            'ongoing': SummonCase.objects.filter(sc_conciliation_status__iexact='ongoing').count(),
-            'escalated': SummonCase.objects.filter(sc_conciliation_status__iexact='escalated').count(),
-            'resolved': SummonCase.objects.filter(sc_conciliation_status__iexact='resolved').count(),
-            'total': SummonCase.objects.count()
+            'waiting': base_queryset.filter(sc_conciliation_status__iexact='waiting for schedule').count(),
+            'ongoing': base_queryset.filter(sc_conciliation_status__iexact='ongoing').count(),
+            'escalated': base_queryset.filter(sc_conciliation_status__iexact='escalated').count(),
+            'resolved': base_queryset.filter(sc_conciliation_status__iexact='resolved').count(),
+            'total': base_queryset.count()  # This now only counts forwarded to lupon + conciliation not null
         }
         
         return Response(counts, status=status.HTTP_200_OK)
@@ -635,3 +641,32 @@ class ConciliationProceedingsCalendarView(generics.ListAPIView):
                 ).select_related('sd_id', 'st_id')  
             )
         ).distinct()
+    
+# ============================= CHART ANALYTICS =================================
+class ConciliationIncidentChartView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        common_incidents = SummonCase.objects.filter(
+            sc_mediation_status__iexact='forwarded to lupon',
+            sc_conciliation_status__isnull=False,
+            comp_id__isnull=False  
+        ).values(
+            'comp_id__comp_incident_type' 
+        ).annotate(
+            count=Count('sc_id')
+        ).order_by('-count') 
+        
+        formatted_data = []
+        for item in common_incidents:
+            incident_name = item.get('comp_id__comp_incident_type', '')
+            if not incident_name:  
+                incident_name = "Unknown"
+            
+            formatted_data.append({
+                'it_name': incident_name,
+                'count': item['count']
+            })
+        
+        return Response(formatted_data, status=status.HTTP_200_OK)
+    
