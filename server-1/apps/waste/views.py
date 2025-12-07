@@ -1406,6 +1406,14 @@ class GarbagePickupRequestAnalyticsView(APIView):
         }
         
         return Response(counts, status=status.HTTP_200_OK)
+
+class GarbagePickupSidebarAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        recent_requests = Garbage_Pickup_Request.objects.all().order_by('-garb_created_at')
+        serializer = RecentGarbagePickupRequestSerializer(recent_requests, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 
 class GarbagePickupFileView(generics.ListCreateAPIView):

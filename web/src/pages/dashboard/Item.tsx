@@ -5,6 +5,7 @@ import { useReportSectionCards } from "@/components/analytics/report/report-sect
 import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
 import ComplaintSectionCharts from "@/components/analytics/complaint/complaint-section-chart";
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
+import { GarbagePickupSidebar } from "@/components/analytics/waste/garbage-pickup-sidebar";
 
 // HEALTH SERVICES
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
@@ -288,6 +289,12 @@ export const getItemsConfig = (
         dashboard: "WASTE",
         card: [driverLoaders, wasteLoaders, collectionVehicles, totalPickup],
         upcomingEvents: wasteUpcomingEvents,
+        sidebar: [
+          {
+            title: "Recent Garbage Pickup Requests",
+            element: <GarbagePickupSidebar />,
+          },
+        ]
       },
     ]
   }

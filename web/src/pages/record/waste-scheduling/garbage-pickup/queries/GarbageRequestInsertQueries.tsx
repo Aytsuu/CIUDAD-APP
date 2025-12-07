@@ -18,7 +18,8 @@ export const useAddDecision = (onSuccess?: () => void) => {
             onSuccess: () => {
                 Promise.all([
                     queryClient.invalidateQueries({ queryKey: ['garbageRequest'] }),
-                    queryClient.invalidateQueries({ queryKey: ['garbageRejectedRequest'] })
+                    queryClient.invalidateQueries({ queryKey: ['garbageRejectedRequest'] }),
+                    queryClient.invalidateQueries({ queryKey: ['garbagePickupSidebarAnalytics'] })
                 ]);
         
                 showSuccessToast('Request rejected!')
@@ -49,7 +50,8 @@ export const useAddPickupAssignmentandCollectors = (onSuccess?: () => void) => {
         onSuccess: () => {
             Promise.all([
                     queryClient.invalidateQueries({ queryKey: ['garbageRequest'] }),
-                    queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] })
+                    queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] }),
+                    queryClient.invalidateQueries({ queryKey: ['garbagePickupSidebarAnalytics'] })
             ]);
             showSuccessToast('Request Accepted!')
             onSuccess?.();
