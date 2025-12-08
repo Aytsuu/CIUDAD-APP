@@ -4,6 +4,7 @@ import GADEditEntryForm from "@/pages/record/gad/budget-tracker/budget-tracker-e
 import GADProjectProposal from "@/pages/record/gad/project-proposal/project-proposal-main";
 import AnnualDevelopmentPlan from "@/pages/record/gad/annual_development_plan/annual_development_plan_main";
 import AnnaualDevelopmentPlanTable from "@/pages/record/gad/annual_development_plan/annual_development_table";
+import AnnualDevelopmentPlanView from "@/pages/record/gad/annual_development_plan/annual_development_plan_view";
 import GADBudgetLogTable from "@/pages/record/gad/budget-tracker/budget-log";
 import AnnualDevelopmentPlanEdit from "@/pages/record/gad/annual_development_plan/annual_development_plan_edit";
 import AnnualDevelopmentPlanCreate from "@/pages/record/gad/annual_development_plan/annual_development_plan_create";
@@ -32,6 +33,10 @@ export const gad_router = [
   {
     path: "/gad-annual-development-plan",
     element: <AnnualDevelopmentPlan />,
+  },
+  {
+    path: "/gad-annual-development-plan/view",
+    element: <AnnualDevelopmentPlanView year={new Date().getFullYear()} onBack={() => window.history.back()} />,
   },
   {
     path: "/gad-annual-development-plan-table",
