@@ -67,7 +67,7 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "action",
       header: () => <div className="flex justify-center">Action</div>,
-      cell: ({ }) => (
+      cell: () => (
         <div className="flex gap-2">
           <div className="text-black px-3 py-1.5 rounded cursor-pointer">
             <ViewButton
