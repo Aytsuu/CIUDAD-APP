@@ -76,7 +76,7 @@ export const healthinventory = [
               { path: "medicine", element: <MedicineStocks /> },
               { path: "antigen", element: <VaccineStocks /> },
               { path: "commodity", element: <CommodityStocks /> },
-              { path: "firstaid", element: <FirstAidStocks /> }
+              { path: "first-aid", element: <FirstAidStocks /> }
             ]
           },
           {
