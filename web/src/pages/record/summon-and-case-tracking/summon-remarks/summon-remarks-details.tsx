@@ -99,9 +99,9 @@ export default function SummonRemarksDetails() {
           </div>
       ),
       cell: ({ row }) => (
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium text-center">
+        <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium text-center">
           {row.original.hs_level}
-        </span>
+        </div>
       ),
     },
     {
