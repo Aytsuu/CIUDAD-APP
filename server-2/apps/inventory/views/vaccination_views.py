@@ -1379,7 +1379,7 @@ class WasteRequestMixin:
             )
         
         # Validate action_type
-        if action_type not in ['administered', 'wasted']:
+        if action_type not in ['deducted', 'wasted']:
             return None, Response(
                 {"error": "action_type must be either 'administered' or 'wasted'"},
                 status=status.HTTP_400_BAD_REQUEST
@@ -1438,7 +1438,7 @@ class VaccineWasteView(APIView, WasteRequestMixin):
         # Validate action_type
         if action_type not in ['administered', 'wasted']:
             return Response(
-                {"error": "action_type must be either 'administered' or 'wasted'"},
+                {"error": "action_type must be either 'deducted' or 'wasted'"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
@@ -1520,9 +1520,9 @@ class SupplyWasteView(APIView, WasteRequestMixin):
             wasted_amount, staff_id, action_type = data
         
         # Validate action_type
-        if action_type not in ['administered', 'wasted']:
+        if action_type not in ['deducted', 'wasted']:
             return Response(
-                {"error": "action_type must be either 'administered' or 'wasted'"},
+                {"error": "action_type must be either 'deducted' or 'wasted'"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         

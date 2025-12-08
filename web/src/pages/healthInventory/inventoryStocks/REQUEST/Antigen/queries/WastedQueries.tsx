@@ -64,10 +64,8 @@ export const useHandleWaste = () => {
       queryClient.invalidateQueries({ queryKey: ["waste_records"] });
       
       const actionType = variables.data.action_type;
-      const message = actionType === "administered" 
-        ? "Successfully recorded administered items" 
-        : "Successfully recorded wasted items";
-      showSuccessToast(message);
+     
+      showSuccessToast("Successfully recorded ");
     },
     onError: (error: any) => {
       if (process.env.NODE_ENV === 'development') {
