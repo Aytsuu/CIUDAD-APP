@@ -79,6 +79,7 @@ class Personal(AbstractModels):
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
 
+# DEPRECATED (NO LONGER NEEDED) -----
 class PersonalModification(AbstractModels):
     pm_id = models.BigAutoField(primary_key=True)
     pm_lname = models.CharField(max_length=50, null=True)
@@ -240,7 +241,7 @@ class BusinessModification(AbstractModels):
     bm_updated_gs = models.FloatField(null=True)
     bm_updated_loc = models.TextField(null=True)
     bm_submitted_at = models.DateTimeField(auto_now_add=True)
-    bm_status = models.CharField(max_length=50, null=True)
+    bm_status = models.CharField(max_length=50, default='PENDING')
     bm_rejection_reason = models.TextField(null=True)
     bus = models.ForeignKey(Business, on_delete=models.CASCADE)
 

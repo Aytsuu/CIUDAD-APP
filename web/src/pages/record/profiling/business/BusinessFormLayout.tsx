@@ -55,7 +55,10 @@ export default function BusinessFormLayout({ tab_params }: { tab_params?: Record
   const { mutateAsync: addBusiness } = useAddBusiness()
   const { mutateAsync: updateBusiness } = useUpdateBusiness()
 
-  const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests()
+  const { data: modificationRequests, isLoading: isLoadingRequests } = 
+    useModificationRequests(
+      "pending"
+    )
   const { data: businessInfo, isLoading: isLoadingBusInfo } = useBusinessInfo(params?.busId)
   const { data: businessHistory, isLoading: isLoadingHistory } = useBusinessHistory(params?.busId)
   const { data: sitioList, isLoading: isLoadingSitio } = useSitioList()

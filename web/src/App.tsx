@@ -22,12 +22,12 @@ function App() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <QueryClientProvider client={queryClient}>
-            <LoadingProvider>
-              <LinearLoader />
-              <AnimatePresence mode="wait">
-                <RouterProvider router={router} />
-              </AnimatePresence>
-            </LoadingProvider>
+          <LoadingProvider>
+            <LinearLoader />
+            <AnimatePresence mode="wait">
+              <RouterProvider router={router} />
+            </AnimatePresence>
+          </LoadingProvider>
         </QueryClientProvider>
       </PersistGate>
     </Provider>

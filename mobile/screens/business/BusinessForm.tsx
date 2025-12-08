@@ -57,8 +57,7 @@ export default function BusinessForm({
           <MediaPicker
             selectedImages={selectedImages}
             setSelectedImages={setSelectedImages}
-            multiple={true}
-            maxImages={2}
+            limit={3}
           />
           
           {selectedImages?.length < 1 && (

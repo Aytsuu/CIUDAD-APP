@@ -83,10 +83,10 @@ export const SignupOptions = () => {
 
             {/* Content */}
             <View className="flex-1">
-              <Text className="text-md font-PoppinsSemiBold text-gray-900 mb-1">
+              <Text className="text-md font-medium text-gray-900 mb-1">
                 {option.title}
               </Text>
-              <Text className="text-sm font-PoppinsRegular text-gray-600 leading-5">
+              <Text className="text-sm text-gray-600 leading-5">
                 {option.description}
               </Text>
             </View>
