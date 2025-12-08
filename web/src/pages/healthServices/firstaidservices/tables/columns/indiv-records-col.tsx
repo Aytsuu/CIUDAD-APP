@@ -19,7 +19,7 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "firstaid_item",
     header: "First Aid Item",
     cell: ({ row }) => (
-      <div className="flex justify-center min-w-[200px] px-2">
+      <div className="flex min-w-[200px] px-2">
         <div className="font-medium">
           {row.original.finv_details?.fa_detail?.fa_name || "Unknown"}
           <div className="text-xs text-gray-500">
@@ -33,7 +33,7 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "qty",
     header: "Qty used",
     cell: ({ row }) => (
-      <div className="flex justify-center min-w-[200px] px-2">
+      <div className="flex min-w-[200px] px-2">
         <div className="text-sm">{row.original.qty}</div>
       </div>
     )
@@ -54,7 +54,7 @@ export const firstAidColumns: ColumnDef<any>[] = [
        const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
  
        return (
-         <div className="flex justify-center px-3 py-2">
+         <div className="flex px-3 py-2">
            {row.original.signature ? (
              <>
                <div className="h-12 w-32 border border-gray-200 rounded bg-white p-1 cursor-pointer hover:shadow-md transition-shadow group relative" onClick={() => setIsSignatureModalOpen(true)}>
@@ -64,7 +64,7 @@ export const firstAidColumns: ColumnDef<any>[] = [
                    <span className="text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">Click to enlarge</span>
                  </div>
                </div>
- 
+
                <SignatureModal signature={row.original.signature} isOpen={isSignatureModalOpen} onClose={() => setIsSignatureModalOpen(false)} />
              </>
            ) : (

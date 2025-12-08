@@ -11,7 +11,7 @@ export const useScheduledVaccinationColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
@@ -91,7 +91,7 @@ export const useScheduledVaccinationColumns = (): ColumnDef<any>[] => {
       accessorKey: "sitio",
       header: "Sitio",
       cell: ({ row }) => (
-        <div className="flex justify-center px-2">
+        <div className="flex px-2">
           <div>{row.original.patient?.address?.add_sitio || "No address provided"}</div>
         </div>
       )
@@ -139,7 +139,7 @@ export const useScheduledVaccinationColumns = (): ColumnDef<any>[] => {
         };
 
         return (
-          <div className="flex justify-center gap-2">
+          <div className="flex gap-2">
             <ViewButton onClick={handleViewClick} />
           </div>
         );

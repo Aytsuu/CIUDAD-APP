@@ -19,7 +19,7 @@ export const getMedicalConsultationColumns = (patientData?: any): ColumnDef<any>
       const formattedDate = createdAt.toLocaleDateString();
 
       return (
-        <div className={`flex flex-col items-center gap-2 text-sm px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : "text-gray-600"}`}>
+        <div className={`flex flex-col gap-2 text-sm px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : "text-gray-600"}`}>
           {formattedDate}
           {highlighted && (
             <span className="px-2 py-0.5 text-xs font-semibold text-white bg-blue-600 rounded-full">
@@ -37,22 +37,22 @@ export const getMedicalConsultationColumns = (patientData?: any): ColumnDef<any>
       const highlighted = isHighlighted(row.original?.app_id, patientData?.app_id);
       const vital = row.original.vital_signs || {};
       return (
-        <div className={`flex justify-center items-center gap-2 min-w-[200px] px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : ""}`}>
+        <div className={`flex gap-2 min-w-[200px] px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : ""}`}>
           <div className="flex flex-col text-sm">
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-              <div className="flex items-center">
+              <div className="flex">
                 <span className="font-medium mr-1">BP:</span>
                 <span>{vital?.vital_bp_systolic ?? "—"}/{vital?.vital_bp_diastolic ?? "—"} mmHg</span>
               </div>
-              <div className="flex items-center">
+              <div className="flex">
                 <span className="font-medium mr-1">Temp:</span>
                 <span>{vital?.vital_temp ?? "—"}°C</span>
               </div>
-              <div className="flex items-center">
+              <div className="flex">
                 <span className="font-medium mr-1">Pulse:</span>
                 <span>{vital?.vital_pulse ?? "—"} bpm</span>
               </div>
-              <div className="flex items-center">
+              <div className="flex">
                 <span className="font-medium mr-1">RR:</span>
                 <span>{vital?.vital_RR ?? "—"} cpm</span>
               </div>
@@ -69,8 +69,8 @@ export const getMedicalConsultationColumns = (patientData?: any): ColumnDef<any>
       const highlighted = isHighlighted(row.original?.app_id, patientData?.app_id);
       const bmi = row.original.bmi_details || {};
       return (
-        <div className={`w-full flex justify-center gap-2 min-w-[150px] px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : ""}`}>
-          <div className="text-sm flex flex-col items-center gap-1 w-[180px]">
+        <div className={`w-full flex gap-2 min-w-[150px] px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : ""}`}>
+          <div className="text-sm flex flex-col gap-1 w-[180px]">
             <span>Height: {bmi?.height ?? "—"} cm</span>
             <span>Weight: {bmi?.weight ?? "—"} kg</span>
           </div>
@@ -84,8 +84,8 @@ export const getMedicalConsultationColumns = (patientData?: any): ColumnDef<any>
     cell: ({ row }) => {
       const highlighted = isHighlighted(row.original?.app_id, patientData?.app_id);
       return (
-        <div className={`flex w-full justify-center px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : ""}`}>
-          <div className="text-sm font-medium w-[240px] text-center">
+        <div className={`flex w-full px-2 py-1 ${highlighted ? "text-blue-700 font-medium" : ""}`}>
+          <div className="text-sm font-medium w-[240px]">
             {row.original.medrec_chief_complaint || "N/A"}
           </div>
         </div>
@@ -114,7 +114,7 @@ export const getMedicalConsultationColumns = (patientData?: any): ColumnDef<any>
       const highlighted = isHighlighted(row.original?.app_id, patientData?.app_id);
       const navigate = useNavigate();
       return (
-        <div className={`flex justify-center px-2 py-1 ${highlighted ? "text-blue-700" : ""}`}>
+        <div className={`flex px-2 py-1 ${highlighted ? "text-blue-700" : ""}`}>
           <ViewButton
             onClick={() => {
               navigate("/services/medical-consultation/records/history", {

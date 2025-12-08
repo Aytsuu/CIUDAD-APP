@@ -8,11 +8,17 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
     cell: ({ row }) => {
       const archivedDate = row.original.archivedDate;
       return (
-        <div className="text-center">
+        <div>
           {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
         </div>
       );
     },
+  },
+
+    {
+    accessorKey: "inv_id",
+    header: "ID",
+    cell: ({ row }) => <div className="bg-primary p-1 rounded-md text-white w-fit">{row.original.inv_id || "N/A"}</div>
   },
   {
     accessorKey: "item",
@@ -21,10 +27,10 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
       const item = row.original.item;
       return (
         <div className="flex flex-col">
-          <div className="font-medium text-center">
+          <div className="font-medium">
             {item.com_name}
           </div>
-          <div className="text-sm text-center text-gray-600">
+          <div className="text-sm text-gray-600">
             {row.original.category}
           </div>
         </div>
@@ -46,7 +52,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
           const totalPcs = qtyData?.cinv_pcs || 0;
           
           return (
-            <div className="text-center">
+            <div>
               {boxes} box{boxes !== 1 ? "es" : ""}
               <div className="text-sm text-blue-500">
                 ({totalPcs} pcs total)
@@ -57,7 +63,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
           // For other units, extract the quantity value from the object
           const quantity = qtyData?.cinv_qty || qtyData?.value || 0;
           return (
-            <div className="text-center">
+            <div>
               {quantity} {unit}
             </div>
           );
@@ -66,7 +72,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
       
       // If qtyData is not an object (shouldn't happen based on error, but safe guard)
       return (
-        <div className="text-center">
+        <div>
           {typeof qtyData === 'object' ? JSON.stringify(qtyData) : qtyData} {unit}
         </div>
       );
@@ -89,7 +95,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
         
         if (remainingPcs > 0) {
           return (
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-start">
               <span>
                 {fullBoxes + 1} box{(fullBoxes + 1) !== 1 ? "es" : ""}
               </span>
@@ -100,7 +106,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
           );
         } else {
           return (
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-start">
               <span>
                 {fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
               </span>
@@ -113,7 +119,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
       }
       
       return (
-        <div className="text-center">
+        <div>
           {availableStock} {unit}
         </div>
       );
@@ -128,7 +134,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
       const displayUnit = isBoxes ? "pcs" : unit;
 
       return (
-        <div className="text-center text-red-600">
+        <div className="text-red-600">
           {row.original.administered}  {displayUnit}
         </div>
       );
@@ -144,7 +150,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
       const displayUnit = isBoxes ? "pcs" : unit;
 
       return (
-        <div className="text-center text-red-600">
+        <div className="text-red-600">
           {row.original.wasted}  {displayUnit}
         </div>
       );
@@ -155,7 +161,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
     header: "Received From",
     cell: ({ row }) => {
       return (
-        <div className="text-center">
+        <div>
           {row.original.recevFrom || "OTHERS"}
         </div>
       );
@@ -167,7 +173,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
     cell: ({ row }) => {
       const expiryDate = row.original.expiryDate;
       return (
-        <div className="text-center">
+        <div>
           {expiryDate ? new Date(expiryDate).toLocaleDateString() : "N/A"}
         </div>
       );
@@ -180,7 +186,7 @@ export const getArchiveCommodityStocks = (): ColumnDef<any>[] => [
     cell: ({ row }) => {
       const reason = row.original.reason;
       return (
-        <div className="text-center">
+        <div>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
             reason === "Expired" 
               ? "bg-red-100 text-red-800" 

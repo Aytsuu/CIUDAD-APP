@@ -10,15 +10,15 @@ export const childColumns: ColumnDef<any>[] = [
     accessorKey: "pat_id",
     header: "Patient ID",
     cell: ({ row }) => (
-      <div className="flex w-full justify-center items-center px-2 py-3">
-        <div className="bg-lightBlue text-darkBlue1 px-2 sm:px-3 py-1 rounded-md text-center font-semibold text-xs sm:text-sm">{row.original.pat_id || ""}</div>
+      <div className="flex w-full px-2 py-3">
+        <div className="bg-lightBlue text-darkBlue1 px-2 sm:px-3 py-1 rounded-md font-semibold text-xs sm:text-sm">{row.original.pat_id || ""}</div>
       </div>
     ),
   },
   {
     accessorKey: "child",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <span className="text-xs sm:text-sm font-medium">Child</span>
         <ArrowUpDown size={12} className="sm:w-4 sm:h-4" />
       </div>
@@ -26,11 +26,11 @@ export const childColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
-        <div className="flex justify-center items-center  px-2 py-3">
-          <div className="flex flex-col space-y-1 items-center">
-            <div className="font-medium text-xs sm:text-sm break-words leading-tight text-center">{toTitleCase(fullName)}</div>
-            <div className="text-xs text-darkGray text-center">
-              {toTitleCase(row.original.sex || "")}, {row.original.age} YO
+        <div className="flex px-2 py-3">
+          <div className="flex flex-col space-y-1">
+            <div className="font-medium text-xs sm:text-sm break-words leading-tight">{toTitleCase(fullName)}</div>
+            <div className="text-xs text-darkGray">
+              {toTitleCase(row.original.sex || "")}, {row.original.age} 
             </div>
           </div>
         </div>
@@ -40,7 +40,7 @@ export const childColumns: ColumnDef<any>[] = [
   {
     accessorKey: "mother",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <span className="text-xs sm:text-sm font-medium">Mother</span>
         <ArrowUpDown size={12} className="sm:w-4 sm:h-4" />
       </div>
@@ -48,8 +48,8 @@ export const childColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const fullName = `${row.original.mother_lname || ""}, ${row.original.mother_fname || ""} ${row.original.mother_mname || ""}`.trim();
       return (
-        <div className="flex justify-center items-center px-2 py-3">
-          <div className="font-medium text-xs sm:text-sm break-words leading-tight text-center">{toTitleCase(fullName) || "N/A"}</div>
+        <div className="flex py-3">
+          <div className="font-medium text-xs sm:text-sm break-words leading-tight">{toTitleCase(fullName) || "N/A"}</div>
         </div>
       );
     },
@@ -57,7 +57,7 @@ export const childColumns: ColumnDef<any>[] = [
   {
     accessorKey: "father",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <span className="text-xs sm:text-sm font-medium">Father</span>
         <ArrowUpDown size={12} className="sm:w-4 sm:h-4" />
       </div>
@@ -65,8 +65,8 @@ export const childColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const fullName = `${row.original.father_lname || ""}, ${row.original.father_fname || ""} ${row.original.father_mname || ""}`.trim();
       return (
-        <div className="flex justify-center items-center min-w-[120px] sm:min-w-[180px] px-2 py-3">
-          <div className="font-medium text-xs sm:text-sm break-words leading-tight text-center">{toTitleCase(fullName) || "N/A"}</div>
+        <div className="flex min-w-[120px] sm:min-w-[180px] px-2 py-3">
+          <div className="font-medium text-xs sm:text-sm break-words leading-tight">{toTitleCase(fullName) || "N/A"}</div>
         </div>
       );
     },
@@ -75,14 +75,14 @@ export const childColumns: ColumnDef<any>[] = [
     accessorKey: "address",
     size: 300,
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <span className="text-xs sm:text-sm font-medium">Address</span>
         <ArrowUpDown size={12} className="sm:w-4 sm:h-4" />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex justify-center items-center px-2 py-3">
-        <div className="w-[160px] sm:w-[250px] text-xs sm:text-sm break-words leading-relaxed text-center">{toTitleCase(row.original.address || "UNKNOWN")}</div>
+      <div className="flex px-2 py-3">
+        <div className="w-[160px] sm:w-[250px] text-xs sm:text-sm break-words leading-relaxed">{toTitleCase(row.original.address || "UNKNOWN")}</div>
       </div>
     ),
   },
@@ -90,13 +90,13 @@ export const childColumns: ColumnDef<any>[] = [
     accessorKey: "sitio",
     size: 80,
     header: () => (
-      <div className="flex w-full justify-center items-center py-2">
+      <div className="flex w-full py-2">
         <span className="text-xs sm:text-sm font-medium">Sitio</span>
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex justify-center items-center  px-2 py-3">
-        <div className="text-xs sm:text-sm text-center">{toTitleCase(row.original.sitio || "N/A")}</div>
+      <div className="flex px-2 py-3">
+        <div className="text-xs sm:text-sm">{toTitleCase(row.original.sitio || "N/A")}</div>
       </div>
     ),
   },
@@ -104,7 +104,7 @@ export const childColumns: ColumnDef<any>[] = [
       accessorKey: "pat_type",
       header: () => <div className="">Type</div>,
       cell: ({ row }) => (
-        <div className="flex items-center justify-center">
+        <div className="flex">
         <div className={getPatType(row.original.pat_type)}>{row.original.pat_type}</div>
         </div>
       )
@@ -112,16 +112,15 @@ export const childColumns: ColumnDef<any>[] = [
 
   {
     accessorKey: "latest_child_history_date",
-    size: 120,
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <span className="text-xs sm:text-sm font-medium">Latest Record</span>
         <ArrowUpDown size={12} className="sm:w-4 sm:h-4" />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex justify-center items-center px-2 py-3">
-        <div className="text-xs sm:text-sm text-center">
+      <div className="flex px-2 py-3">
+        <div className="text-xs sm:text-sm">
           {row.original.latest_child_history_date
             ? new Date(row.original.latest_child_history_date).toLocaleDateString("en-US", {
                 year: "2-digit",
@@ -137,7 +136,7 @@ export const childColumns: ColumnDef<any>[] = [
     accessorKey: "action",
     size: 100,
     header: () => (
-      <div className="flex w-full justify-center items-center py-2">
+      <div className="flex w-full py-2">
         <span className="text-xs sm:text-sm font-medium">Action</span>
       </div>
     ),
@@ -145,7 +144,7 @@ export const childColumns: ColumnDef<any>[] = [
       const navigate = useNavigate();
 
       return (
-        <div className="flex justify-center items-center min-w-[80px] px-2 py-3">
+        <div className="flex min-w-[80px] px-2 py-3">
           <ViewButton
             onClick={() =>
               navigate(`/services/childhealthrecords/records`, {

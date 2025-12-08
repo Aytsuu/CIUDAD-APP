@@ -96,16 +96,16 @@ export default function UnvaccinatedResidents() {
     {
       accessorKey: "vac_name",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Vaccine Name <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[200px] px-2">
-          <div className="flex flex-col items-center w-full">
-            <div className="font-medium text-center">{row.original.vac_name}</div>
-            {row.original.vac_description && <div className="text-sm text-gray-600 text-center">{row.original.vac_description}</div>}
-            {row.original.is_conditional && <div className="text-xs text-blue-600 font-medium mt-1">Conditional Vaccine</div>}
+        <div className="flex min-w-[200px] px-2">
+          <div className="flex flex-col w-full">
+            <div className="font-medium">{row.original.vac_name}</div>
+            {row.original.vac_description && <div className="text-sm text-gray-600">{row.original.vac_description}</div>}
+            {/* {row.original.is_conditional && <div className="text-xs text-blue-600 font-medium mt-1">Conditional Vaccine</div>} */}
           </div>
         </div>
       ),
@@ -113,39 +113,39 @@ export default function UnvaccinatedResidents() {
     {
       accessorKey: "total_unvaccinated",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Unvaccinated <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className={`text-center w-full font-medium ${row.original.total_unvaccinated > 0 ? "text-red-600" : "text-gray-500"}`}>{row.original.total_unvaccinated}</div>
+        <div className="flex min-w-[100px] px-2">
+          <div className={`w-full font-medium ${row.original.total_unvaccinated > 0 ? "text-red-600" : "text-gray-500"}`}>{row.original.total_unvaccinated}</div>
         </div>
       ),
     },
     {
       accessorKey: "total_partially_vaccinated",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Partially Vaccinated <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className={`text-center w-full font-medium ${row.original.total_partially_vaccinated > 0 ? "text-yellow-600" : "text-gray-500"}`}>{row.original.total_partially_vaccinated}</div>
+        <div className="flex min-w-[150px] px-2">
+          <div className={`w-full font-medium ${row.original.total_partially_vaccinated > 0 ? "text-orange-600" : "text-gray-500"}`}>{row.original.total_partially_vaccinated}</div>
         </div>
       ),
     },
     {
       accessorKey: "total_fully_vaccinated",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Fully Vaccinated <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className={`text-center w-full font-medium ${row.original.total_fully_vaccinated > 0 ? "text-green-600" : "text-gray-500"}`}>{row.original.total_fully_vaccinated}</div>
+        <div className="flex min-w-[130px] px-2">
+          <div className={`w-full font-medium ${row.original.total_fully_vaccinated > 0 ? "text-green-600" : "text-gray-500"}`}>{row.original.total_fully_vaccinated}</div>
         </div>
       ),
     },
@@ -155,7 +155,7 @@ export default function UnvaccinatedResidents() {
       cell: ({ row }) => {
 
         return (
-          <div className="flex flex-col items-center justify-center gap-2 ">
+          <div className="flex flex-col gap-2">
             {row.original.age_groups.length === 0 ? (
               <div className="text-sm text-gray-500 italic">No age groups defined</div>
             ) : (
@@ -164,8 +164,8 @@ export default function UnvaccinatedResidents() {
                   ageGroup.min_age !== undefined && ageGroup.max_age !== undefined ? `${ageGroup.min_age}-${ageGroup.max_age} ${ageGroup.time_unit === "NA" ? "" : ageGroup.time_unit}` : "";
 
                 return (
-                  <div key={ageGroup.age_group_id} className="flex justify-between items-center text-sm w-full">
-                    <span className="font-medium text-darkBlue1 text-center">
+                  <div key={ageGroup.age_group_id} className="flex gap-2 text-sm w-full">
+                    <span className="font-medium text-darkBlue1">
                       {ageGroup.age_group_name} {ageRange && `(${ageRange})`}
                     </span>
                   </div>

@@ -31,7 +31,7 @@ export const VaccineColumns = (
   {
     accessorKey: "vaccineName",
     header: "Vaccine Name",
-    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>
+    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>,
   },
   {
     accessorKey: "vaccineType",
@@ -40,21 +40,24 @@ export const VaccineColumns = (
       const value = row.getValue("vaccineType");
       if (value === "N/A") return <div className="text-gray-500">N/A</div>;
 
-      return <span className={`px-2 py-1 rounded-full text-xs ${value === "Routine" ? "bg-blue-100 text-blue-800" : value === "Primary Series" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"}`}>{String(value)}</span>;
-    }
+      return (
+        <span
+          className={`px-2 py-1 rounded-full text-xs ${value === "Routine" ? "bg-blue-100 text-blue-800" : value === "Primary Series" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"}`}
+        >
+          {String(value)}
+        </span>
+      );
+    },
   },
   {
     accessorKey: "ageGroup",
     header: "Age Group",
-    cell: ({ row }) => <div className="text-sm">{row.getValue("ageGroup") || "N/A"}</div>
+    cell: ({ row }) => <div className="text-sm">{row.getValue("ageGroup") || "N/A"}</div>,
   },
   {
     accessorKey: "doses",
     header: "Total Doses",
-    cell: ({ row }) => {
-      const value = row.getValue("doses");
-      return <div className="text-center">{value === "N/A" ? <span className="text-gray-500">N/A</span> : String(value)}</div>;
-    }
+   
   },
   {
     accessorKey: "doseDetails",
@@ -68,7 +71,7 @@ export const VaccineColumns = (
       }
 
       return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 items-start">
           {vaccine.vaccineType === "Routine" ? (
             <div className="text-sm">
               Every {doseDetails[0]?.interval} {doseDetails[0]?.unit}
@@ -87,7 +90,7 @@ export const VaccineColumns = (
           )}
         </div>
       );
-    }
+    },
   },
   {
     accessorKey: "action",
@@ -96,7 +99,7 @@ export const VaccineColumns = (
       const record = row.original;
 
       return (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-start gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -122,8 +125,8 @@ export const VaccineColumns = (
           </Button>
         </div>
       );
-    }
-  }
+    },
+  },
 ];
 
 // Columns for Supplies Tab
@@ -138,7 +141,7 @@ export const SupplyColumns = (
   {
     accessorKey: "vaccineName",
     header: "Supply Name",
-    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>
+    cell: ({ row }) => <div className="font-medium">{row.getValue("vaccineName")}</div>,
   },
 
   {
@@ -148,7 +151,7 @@ export const SupplyColumns = (
       const record = row.original;
 
       return (
-        <div className="flex justify-center gap-2">
+        <div className="flex justify-start gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -174,6 +177,6 @@ export const SupplyColumns = (
           </Button>
         </div>
       );
-    }
-  }
+    },
+  },
 ];

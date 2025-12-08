@@ -12,29 +12,29 @@ import { toTitleCase } from "@/helpers/ToTitleCase";
 export const medicineRequestReferredColumns: ColumnDef<any>[] = [
   {
     id: "index",
-    header: () => <div className="text-center">#</div>,
+    header: () => <div>#</div>,
     size: 50,
     cell: ({ row, table }) => {
-      return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
+      return <div>{table.getRowModel().rows.indexOf(row) + 1}</div>;
     }
   },
   {
     accessorKey: "medreq_id",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Request ID <ArrowUpDown size={15} />
       </div>
     ),
     size: 120,
     cell: ({ row }) => (
-      <div className="flex justify-center px-2 py-2">
-        <div className="text-center font-medium">{row.original.medreq_id.toString().padStart(5, "0")}</div>
+      <div className="flex px-2 py-2">
+        <div className="font-medium">{row.original.medreq_id.toString().padStart(5, "0")}</div>
       </div>
     )
   },
   {
     accessorKey: "personal_info",
-    header: () => <div className="text-center">Patient Information</div>,
+    header: () => <div>Patient Information</div>,
     size: 220,
     cell: ({ row }) => {
       const personalInfo = row.original.personal_info || {};
@@ -47,7 +47,7 @@ export const medicineRequestReferredColumns: ColumnDef<any>[] = [
 
       return (
         <div className="px-2 py-2">
-          <div className="text-center space-y-1">
+          <div className="space-y-1">
             <div className="font-medium text-gray-900 break-words whitespace-normal" title={fullName}>
               {fullName}
             </div>
@@ -61,7 +61,7 @@ export const medicineRequestReferredColumns: ColumnDef<any>[] = [
   },
   {
     accessorKey: "address",
-    header: () => <div className="text-center">Address</div>,
+    header: () => <div>Address</div>,
     size: 250,
     cell: ({ row }) => {
       const address = row.original.address;
@@ -72,7 +72,7 @@ export const medicineRequestReferredColumns: ColumnDef<any>[] = [
         : "No address provided";
       return (
         <div className="px-2 py-2">
-          <div className="text-sm text-gray-700 break-words whitespace-normal text-center leading-relaxed" title={addressText}>
+          <div className="text-sm text-gray-700 break-words whitespace-normal leading-relaxed" title={addressText}>
             {addressText}
           </div>
         </div>
@@ -116,7 +116,7 @@ export const medicineRequestReferredColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const { date } = formatDateTime(row.original.cancelled_rejected_reffered_at);
       return (
-        <div className="text-center py-2">
+        <div className="py-2">
           <div className="font-medium text-gray-900 text-sm">{date}</div>
           {/* {time && <div className="text-xs text-gray-500 mt-1">{time}</div>} */}
         </div>
@@ -125,14 +125,14 @@ export const medicineRequestReferredColumns: ColumnDef<any>[] = [
   },
   {
     id: "actions",
-    header: () => <div className="text-center">Actions</div>,
+    header: () => <div>Actions</div>,
     size: 100,
     cell: ({ row }) => {
       const navigate = useNavigate();
       const address = row.original.address || {};
       
       return (
-        <div className="flex justify-center py-2">
+        <div className="flex py-2">
           <ViewButton
             onClick={() => {
               navigate(`/services/medicine/requests/referred/view`, {
@@ -176,16 +176,16 @@ export const medicineRequestReferredColumns: ColumnDef<any>[] = [
 export const referredDetailsIColumns: ColumnDef<any>[] = [
     {
       id: "index",
-      header: () => <div className="text-center">#</div>,
+      header: () => <div>#</div>,
       size: 50,
       cell: ({ row, table }) => {
-        return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
+        return <div>{table.getRowModel().rows.indexOf(row) + 1}</div>;
       }
     },
     {
         accessorKey: "requested_at",
         header: ({ column }) => (
-          <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Requested Date <ArrowUpDown size={15} />
           </div>
         ),
@@ -193,7 +193,7 @@ export const referredDetailsIColumns: ColumnDef<any>[] = [
         cell: ({ row }) => {
           const { date, time } = formatDateTime(row.original.requested_at);
           return (
-          <div className="text-center py-2">
+          <div className="py-2">
             <div className="font-medium text-gray-900 text-sm">{date}</div>
             {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
           </div>
@@ -202,7 +202,7 @@ export const referredDetailsIColumns: ColumnDef<any>[] = [
       },
     {
       accessorKey: "medicine",
-      header: () => <div className="text-center">Medicine Details</div>,
+      header: () => <div>Medicine Details</div>,
       size: 300,
       cell: ({ row }) => {
         // Use formatted_med_name which includes dosage and form (e.g., "Paracetamol 500mg Tablet")
@@ -222,7 +222,7 @@ export const referredDetailsIColumns: ColumnDef<any>[] = [
   
         return (
           <div className="px-3 py-2">
-            <div className="text-center space-y-1">
+            <div className="space-y-1">
               <div className="font-semibold text-gray-900">{formattedName}</div>
               <div className="text-sm text-gray-600">{medType}</div>
               {(dosageInfo || formInfo) && (
@@ -241,7 +241,7 @@ export const referredDetailsIColumns: ColumnDef<any>[] = [
    
     {
       id: "documents",
-      header: () => <div className="text-center">Documents</div>,
+      header: () => <div>Documents</div>,
       size: 120,
       cell: ({ row }) => {
         const [isModalOpen, setIsModalOpen] = useState(false);
@@ -250,7 +250,7 @@ export const referredDetailsIColumns: ColumnDef<any>[] = [
         const isPrescription = med_type === "Prescription";
   
         return (
-          <div className="px-3 py-2 text-center">
+          <div className="px-3 py-2">
             {isPrescription ? (
               files.length > 0 ? (
                 <>
@@ -299,7 +299,7 @@ export const referredDetailsIColumns: ColumnDef<any>[] = [
   
           return (
             <div className="px-3 py-2">
-              <div className="text-sm text-gray-700 break-words whitespace-normal text-center leading-relaxed line-clamp-3">{reason}</div>
+              <div className="text-sm text-gray-700 break-words whitespace-normal leading-relaxed line-clamp-3">{reason}</div>
             </div>
           );
 
