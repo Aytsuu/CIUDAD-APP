@@ -1,4 +1,3 @@
-// IdleContext.tsx
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 interface IdleContextType {
