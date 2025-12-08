@@ -34,7 +34,7 @@ export const GarbagePickupSidebar = ({ limit = 3 }: GarbagePickupSidebarProps) =
   const requests = recentRequests || [];
   const total = requests.length;
 
-  const handleClick = (garb_id: string) => {
+  const handleClick = () => {
     navigate("/garbage-pickup-request");
   };
 
@@ -83,7 +83,7 @@ export const GarbagePickupSidebar = ({ limit = 3 }: GarbagePickupSidebarProps) =
                   className={`p-4 transition-all duration-200 cursor-pointer border-b border-gray-200 hover:bg-gray-50 ${
                     index === 0 ? "border-t" : ""
                   }`}
-                  onClick={() => handleClick(request.garb_id)}
+                  onClick={() => handleClick()}
                 >
                   {/* Content */}
                   <div className="relative z-10">
