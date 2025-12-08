@@ -8,7 +8,7 @@ export const getCouncilEvents = async (
   searchQuery?: string,
   year?: string,
   isArchive?: boolean
-): Promise<{ results: any[]; count: number }> => {
+): Promise<{ results: any[]; count: number; next: string | null; previous: string | null }> => {
   try {
     const params: any = {
       page,
@@ -20,24 +20,20 @@ export const getCouncilEvents = async (
     if (isArchive !== undefined) params.is_archive = isArchive;
     
     const res = await api.get("council/event-meeting/", { params });
-    
-    // Handle paginated response
-    if (res.data.results) {
-      return {
-        results: res.data.results || [],
-        count: res.data.count || 0
-      };
-    }
-    
-    // Handle non-paginated response (fallback)
-    const data = res.data?.data ?? res.data ?? [];
+  
     return {
-      results: Array.isArray(data) ? data : [],
-      count: Array.isArray(data) ? data.length : 0
+      results: res.data.results || [],
+      count: res.data.count || 0,
+      next: res.data.next || null,
+      previous: res.data.previous || null
     };
   } catch (err) {
-    // console.error('Error fetching council events:', err);
-    return { results: [], count: 0 };
+    return { 
+      results: [], 
+      count: 0,
+      next: null,
+      previous: null
+    };
   }
 };
 

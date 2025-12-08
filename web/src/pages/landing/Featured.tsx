@@ -66,14 +66,14 @@ export default function Featured() {
             <Carousel setApi={setApi}>
               <CarouselContent>
                 {slide.map((image: any, index: number) => (
-                <CarouselItem key={index} className="relative pl-0 md:basis-1/2 lg:basis-1/2">
-                  <div className={`absolute bg-black w-full h-full transition-opacity duration-300 ${index == current ? 'opacity-0' : 'opacity-70'}`}/>
-                  <img 
-                    src={image}
-                    className="h-[450px]"
-                  />
-                </CarouselItem>
-              ))}
+                  <CarouselItem key={index} className="relative pl-0 md:basis-1/2 lg:basis-1/2">
+                    <div className={`absolute bg-black w-full h-full transition-opacity duration-300 ${index == current ? 'opacity-0' : 'opacity-70'}`}/>
+                    <img 
+                      src={image}
+                      className="h-[450px]"
+                    />
+                  </CarouselItem>
+                ))}
               </CarouselContent>
               <CarouselPrevious />
               <CarouselNext />

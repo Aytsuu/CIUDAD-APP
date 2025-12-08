@@ -1,4 +1,5 @@
 import { AxiosError } from "axios";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/api";
 
 export interface IssuedCertificate {
@@ -227,4 +228,48 @@ export const getIssuedServiceCharges = async (
     }
     throw error;
   }
+};
+
+export const useIssuedCertificates = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  purpose?: string
+) => {
+  return useQuery({
+    queryKey: ['issuedCertificates', page, pageSize, searchQuery, purpose],
+    queryFn: () => getIssuedCertificates(searchQuery, page, pageSize, purpose),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+};
+
+export const useIssuedBusinessPermits = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string,
+  purpose?: string
+) => {
+  return useQuery({
+    queryKey: ['issuedBusinessPermits', page, pageSize, searchQuery, purpose],
+    queryFn: () => getIssuedBusinessPermits(searchQuery, page, pageSize, purpose),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
+};
+
+export const useIssuedServiceCharges = (
+  page: number = 1,
+  pageSize: number = 10,
+  searchQuery?: string
+) => {
+  return useQuery({
+    queryKey: ['issuedServiceCharges', page, pageSize, searchQuery],
+    queryFn: () => getIssuedServiceCharges(searchQuery, page, pageSize),
+    staleTime: 1000 * 60 * 30,
+    placeholderData: (previous) => previous,
+    retry: false,
+  });
 };

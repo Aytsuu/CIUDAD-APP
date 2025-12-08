@@ -1,4 +1,5 @@
 import { api } from "@/api/api"
+import { ProjectProposal } from "../projprop-types"
 
 export const getProjectProposalYears = async (): Promise<number[]> => {
   try {
@@ -16,18 +17,25 @@ export const getProjectProposals = async (
   searchQuery?: string,
   archive?: boolean,
   year?: string
-): Promise<{ results: any[]; count: number }> => {
+): Promise<{ 
+  results: ProjectProposal[]; 
+  count: number; 
+  next: string | null; 
+  previous: string | null 
+}> => {
   try {
     const params: any = {
       page,
       page_size: pageSize,
-      is_archive: archive !== undefined ? archive : false
     };
     
     if (searchQuery) params.search = searchQuery;
+    if (archive !== undefined) params.archive = archive;
     if (year && year !== "All") params.year = year;
+    
     const res = await api.get('gad/project-proposals/', { params });
     
+    // Process the data
     if (res.data.results) {
       const proposalsWithData = await Promise.all(
         res.data.results.map(async (proposal: any) => {
@@ -47,14 +55,26 @@ export const getProjectProposals = async (
       
       return {
         results: proposalsWithData,
-        count: res.data.count || 0
+        count: res.data.count || 0,
+        next: res.data.next || null,
+        previous: res.data.previous || null
       };
     }
     
-    return { results: [], count: 0 };
+    return { 
+      results: [], 
+      count: 0,
+      next: null,
+      previous: null 
+    };
   } catch (err) {
     // console.error('Error fetching project proposals:', err);
-    return { results: [], count: 0 };
+    return { 
+      results: [], 
+      count: 0,
+      next: null,
+      previous: null 
+    };
   }
 };
 

@@ -1,21 +1,22 @@
 import CardLayout from "@/components/ui/card/card-layout";
-import { Link } from "react-router-dom";
-import { Search } from 'lucide-react';
+import { Link, useLocation } from "react-router-dom";
+import { Search, Clock, AlertTriangle, ArrowUpRight, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState, useEffect } from "react";
-import { useGetLuponCaseList } from "../queries/summonFetchQueries";
+import { useGetLuponCaseList, useGetConciliationCardAnalytics } from "../queries/summonFetchQueries";
 import type { SummonCaseList } from "../summon-types";
 import { useLoading } from "@/context/LoadingContext";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useSearchParams } from "react-router-dom";
 
 const styles = {
-    cardContent: "font-semibold text-[12px]", // Changed from 14px to 12px
-    cardInfoRow: "flex flex-grid items-center gap-3", // Changed from gap-5 to gap-3
-    cardInfo: "font-sm text-[12px]", // Changed from 14px to 12px
+    cardContent: "font-semibold text-[12px]",
+    cardInfoRow: "flex flex-grid items-center gap-3",
+    cardInfo: "font-sm text-[12px]",
     statusOngoing: "font-bold text-[#5B72CF]",
     statusResolved: "font-bold text-[#17AD00]",
     statusEscalated: "font-bold text-[#FF0000]",
@@ -37,6 +38,42 @@ function getStatusColor(status: string) {
             return "";
     }
 }
+
+// Analytics cards configuration
+const conciliationCards = [
+    {
+        title: "Waiting for Schedule",
+        dataKey: "waiting" as const,
+        icon: Clock,
+        iconColor: "text-yellow-600",
+        bgColor: "bg-yellow-50",
+        borderColor: "border-yellow-100"
+    },
+    {
+        title: "Ongoing Cases",
+        dataKey: "ongoing" as const,
+        icon: AlertTriangle,
+        iconColor: "text-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-100"
+    },
+    {
+        title: "Escalated Cases",
+        dataKey: "escalated" as const,
+        icon: ArrowUpRight,
+        iconColor: "text-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-100"
+    },
+    {
+        title: "Resolved Cases",
+        dataKey: "resolved" as const,
+        icon: CheckCircle,
+        iconColor: "text-emerald-600",
+        bgColor: "bg-emerald-50",
+        borderColor: "border-emerald-100"
+    },
+];
 
 // Resident badge component
 function ResidentBadge() {
@@ -61,13 +98,20 @@ const formatNames = (data: string[] | string | null | undefined): string => {
 
 function LuponCases(){  
     const { showLoading, hideLoading } = useLoading();
+    const location = useLocation();
     
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedFilter, setSelectedFilter] = useState("All");
     const [pageSize, setPageSize] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    
+    const handlePageChange = (page: number) => {
+        setSearchParams({ page: String(page) });
+    };
 
     const filterOptions = [
         { id: "All", name: "All" },
@@ -77,14 +121,18 @@ function LuponCases(){
         { id: "Waiting for Schedule", name: "Waiting for Schedule" },
     ];
 
+    // Fetch analytics data for cards
+    const { data: analyticsData, isLoading: isLoadingAnalytics } = useGetConciliationCardAnalytics();
+    
     // Use the hook with pagination and filtering parameters
-    const { data: luponCaseData = { results: [], count: 0 }, isLoading } = useGetLuponCaseList(
+    const { data: luponCaseData = { results: [], count: 0 }, isLoading: isLoadingCases } = useGetLuponCaseList(
         currentPage, 
         pageSize, 
         debouncedSearchQuery, 
         selectedFilter
     );
 
+    const isLoading = isLoadingAnalytics || isLoadingCases;
     const luponCases = luponCaseData.results || [];
     const totalItems = luponCaseData.count || 0;
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -98,10 +146,20 @@ function LuponCases(){
         }
     }, [isLoading, showLoading, hideLoading]);
 
+    // Set initial loading state
+    useEffect(() => {
+        if (luponCaseData.results !== undefined) {
+            setIsInitialLoading(false);
+        }
+    }, [luponCaseData]);
+
     // Reset to first page when filters change
     useEffect(() => {
-        setCurrentPage(1);
-    }, [debouncedSearchQuery, selectedFilter, pageSize]);
+        if (debouncedSearchQuery === "" && searchQuery !== "") return;
+        if (selectedFilter !== "All") {
+            handlePageChange(1);
+        }
+    }, [debouncedSearchQuery, selectedFilter]);
 
     const hasResidentComplainant = (item: SummonCaseList) => {
         if (!item.complainant_rp_ids) return false;
@@ -112,6 +170,16 @@ function LuponCases(){
         
         return item.complainant_rp_ids != null;
     };
+
+    // Show only initial loading spinner, not during searches
+    if (isInitialLoading && !searchQuery) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Spinner size="md" />
+                <span className="ml-2 text-gray-600">Loading lupon cases...</span>
+            </div>
+        );
+    }
 
     return(
         <div className="w-full h-full flex flex-col">
@@ -130,6 +198,33 @@ function LuponCases(){
                 <hr className="border-gray mb-7 sm:mb-8" />
             </div>
 
+            {/* Analytics Cards Section */}
+            <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {conciliationCards.map((card) => {
+                        const Icon = card.icon;
+                        const value = analyticsData?.[card.dataKey] ?? 0;
+                        
+                        return (
+                            <div 
+                                key={card.title}
+                                className={`${card.bgColor} border ${card.borderColor} rounded-lg p-4 transition-all duration-200 hover:shadow-md`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 mb-1">{card.title}</p>
+                                        <p className="text-2xl font-bold text-gray-900">{value}</p>
+                                    </div>
+                                    <div className={`w-12 h-12 rounded-full ${card.bgColor} flex items-center justify-center`}>
+                                        <Icon className={`w-6 h-6 ${card.iconColor}`} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Search and Filter Section - ALWAYS VISIBLE */}
             <div className="flex-shrink-0 mb-6 mt-6">
                 {/* Filters Row */}
@@ -145,6 +240,11 @@ function LuponCases(){
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
+                            {isLoadingCases && searchQuery && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <Spinner size="sm" />
+                                </div>
+                            )}
                         </div>
 
                         {/* Status Filter */}
@@ -155,7 +255,10 @@ function LuponCases(){
                                 options={filterOptions}
                                 value={selectedFilter}
                                 label=""
-                                onChange={(value) => setSelectedFilter(value)}
+                                onChange={(value) => {
+                                    handlePageChange(1);
+                                    setSelectedFilter(value);
+                                }}
                             />
                         </div>
                     </div>
@@ -167,7 +270,7 @@ function LuponCases(){
                             value={pageSize.toString()} 
                             onValueChange={(value) => {
                                 setPageSize(Number.parseInt(value))
-                                setCurrentPage(1)
+                                handlePageChange(1)
                             }}
                         >
                             <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
@@ -188,14 +291,17 @@ function LuponCases(){
 
             {/* Content Area - Shows loading or data */}
             <div className="flex-1 overflow-y-auto">
-                {isLoading ? (
-                    // Loading state - shows spinner but keeps header and filters visible
+                {isLoadingCases ? (
+                    // ALWAYS show loading spinner when isLoadingCases is true
+                    // This covers: initial load, page changes, filter changes, etc.
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="md" />
-                        <span className="ml-2 text-gray-600">Loading cases...</span>
+                        <span className="ml-2 text-gray-600">
+                            {searchQuery ? "Searching lupon cases..." : "Loading lupon cases..."}
+                        </span>
                     </div>
                 ) : totalItems === 0 ? (
-                    // Empty state
+                    // Empty state - only show when NOT loading
                     <div className="flex flex-col items-center justify-center py-10">
                         <p className="text-gray-500 text-lg">No lupon cases found</p>
                         <p className="text-sm text-gray-400 mt-2">
@@ -206,9 +312,8 @@ function LuponCases(){
                         </p>
                     </div>
                 ) : (
-                    // Data state
+                    // Data state - only show when data is loaded and has items
                     <>
-                        {/* Changed from grid-cols-2 to grid-cols-1 md:grid-cols-2 lg:grid-cols-3 for consistent sizing */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-6"> 
                             {luponCases.map((item: SummonCaseList) => (
                                 <Link 
@@ -230,7 +335,11 @@ function LuponCases(){
                                         accused_addresses: Array.isArray(item.accused_addresses) 
                                             ? item.accused_addresses 
                                             : [item.accused_addresses || "N/A"],
-                                        complainant_rp_ids: item.complainant_rp_ids
+                                        complainant_rp_ids: item.complainant_rp_ids,
+                                        // Preserve current page state for back navigation
+                                        fromPage: currentPage,
+                                        fromPath: location.pathname,
+                                        fromSearchParams: Object.fromEntries(searchParams.entries())
                                     }} 
                                     className="hover:shadow-lg transition-shadow"
                                 >
@@ -238,7 +347,6 @@ function LuponCases(){
                                         title={
                                             <div className="flex flex-row">
                                                 <div className="flex justify-between items-center w-full">
-                                                    {/* Changed text-xl to text-lg to match council cases */}
                                                     <p className="text-primary flex items-center font-semibold text-lg mb-2">
                                                         Case No. {item.sc_code}
                                                         {hasResidentComplainant(item) && <ResidentBadge />}
@@ -273,7 +381,6 @@ function LuponCases(){
                                                     </div>
                                                 </div>
 
-                                                {/* Updated to use sc_conciliation_status */}
                                                 <div className={styles.cardInfoRow}>
                                                     <p className={styles.cardContent}>Status: </p>
                                                     <p className={`${styles.cardInfo} ${getStatusColor(item.sc_conciliation_status || item.sc_mediation_status)}`}>
@@ -297,7 +404,7 @@ function LuponCases(){
                                 <PaginationLayout 
                                     currentPage={currentPage} 
                                     totalPages={totalPages} 
-                                    onPageChange={setCurrentPage} 
+                                    onPageChange={handlePageChange} 
                                 />
                             )}
                         </div>

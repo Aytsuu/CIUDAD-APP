@@ -234,6 +234,13 @@ class MinutesOfMeeting(models.Model):
         default=list,
         blank=True
     )
+    momf_id = models.ForeignKey(
+        'MOMFile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        db_column='momf_id'
+    )
     mom_is_archive = models.BooleanField(default=False)
     staff_id = models.ForeignKey(
         'administration.Staff',
@@ -252,13 +259,6 @@ class MOMFile(models.Model):
     momf_type = models.CharField(max_length=100)
     momf_path = models.CharField(max_length=500)
     momf_url = models.CharField(max_length=500)
-    mom_id = models.OneToOneField(
-        'council.MinutesOfMeeting',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        db_column='mom_id'
-    )
 
     class Meta:
         db_table = 'mom_file'

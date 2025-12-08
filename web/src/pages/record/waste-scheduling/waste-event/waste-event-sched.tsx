@@ -86,9 +86,9 @@ function WasteEventSched() {
     const queryClient = useQueryClient();
     const { user } = useAuth();
     const { data: sitioList = [], isLoading: isSitioLoading } = useSitioList();
-    const sitioOptions = (sitioList || []).map((s: any) => ({ id: s.sitio_id, name: s.sitio_name }));
+    const sitioOptions = (sitioList || []).map((s: any) => ({ id: String(s.sitio_id), name: s.sitio_name }));
     const { data: staffList = [], isLoading: isStaffLoading } = useGetStaffList();
-    const staffOptions = (staffList || []).map((s: any) => ({ id: s.staff_id, name: s.full_name }));
+    const staffOptions = (staffList || []).map((s: any) => ({ id: String(s.staff_id), name: s.full_name }));
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -126,6 +126,63 @@ function WasteEventSched() {
             const selectedStaff = staffOptions.find((o: { id: string; name: string }) => String(o.id) === String(values.organizer));
             const organizerName = selectedStaff?.name || '';
 
+            // Format eventSubject with clean format: Location, Date, Time, Organizer
+            let formattedEventSubject = '';
+            if (values.selectedAnnouncements && values.selectedAnnouncements.length > 0) {
+                const eventDetails: string[] = [];
+                
+                // Add user's custom message first if provided
+                if (values.eventSubject && values.eventSubject.trim()) {
+                    eventDetails.push(values.eventSubject.trim());
+                    eventDetails.push(''); // Empty line for spacing
+                }
+                
+                // Add Location
+                if (sitioName) {
+                    eventDetails.push(`Location: ${sitioName}`);
+                }
+                
+                // Add Date
+                if (formattedDate) {
+                    try {
+                        const dateObj = new Date(formattedDate + 'T00:00:00');
+                        const formattedDateStr = dateObj.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        });
+                        eventDetails.push(`Date: ${formattedDateStr}`);
+                    } catch (e) {
+                        eventDetails.push(`Date: ${formattedDate}`);
+                    }
+                }
+                
+                // Add Time
+                if (formattedTime) {
+                    try {
+                        const [hours, minutes] = formattedTime.split(':');
+                        const hour = parseInt(hours, 10);
+                        if (!isNaN(hour)) {
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            const displayHour = hour % 12 || 12;
+                            const formattedTimeStr = `${displayHour}:${minutes || '00'} ${ampm}`;
+                            eventDetails.push(`Time: ${formattedTimeStr}`);
+                        } else {
+                            eventDetails.push(`Time: ${formattedTime}`);
+                        }
+                    } catch (e) {
+                        eventDetails.push(`Time: ${formattedTime}`);
+                    }
+                }
+                
+                // Add Organizer
+                if (organizerName) {
+                    eventDetails.push(`Organizer: ${organizerName}`);
+                }
+                
+                formattedEventSubject = eventDetails.join('\n');
+            }
+
             const eventData: Omit<WasteEvent, 'we_num'> & { selectedAnnouncements?: string[]; eventSubject?: string } = {
                 we_name: values.eventName,
                 we_location: sitioName,
@@ -138,15 +195,18 @@ function WasteEventSched() {
                 staff: staffId,
                 // Include announcement data
                 selectedAnnouncements: values.selectedAnnouncements || [],
-                eventSubject: values.eventSubject || ''
+                eventSubject: formattedEventSubject
             };
 
             const response = await createWasteEvent(eventData);
             
             queryClient.invalidateQueries({ queryKey: ['wasteEvents'] });
+            queryClient.invalidateQueries({ queryKey: ['wasteEvents', false] });
             queryClient.invalidateQueries({ queryKey: ['announcements'] });
             
-            // Show appropriate success message
+    
+            await queryClient.refetchQueries({ queryKey: ['wasteEvents', false] });
+            
             if (response?.announcement_created) {
                 showSuccessToast("Event scheduled and announcement sent successfully!");
             } else {
@@ -331,10 +391,10 @@ function WasteEventSched() {
                                     name="eventSubject"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <Label className="font-medium">Event Subject</Label>
+                                            <Label className="font-medium">Additional Message (Optional)</Label>
                                             <FormControl>
                                                 <Textarea 
-                                                    placeholder="Enter event subject for announcement" 
+                                                    placeholder="Enter additional message or subject for the announcement. Event details (location, date, time) will be automatically included." 
                                                     {...field} 
                                                     className="w-full" 
                                                 />
@@ -352,7 +412,7 @@ function WasteEventSched() {
                                     disabled={isSubmitting}
                                     className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isSubmitting ? "Schedule event... Creating..." : "Schedule Event"}
+                                    {isSubmitting ? "Creating..." : "Schedule Event"}
                                 </Button>
                             </div>
                         </CardContent>

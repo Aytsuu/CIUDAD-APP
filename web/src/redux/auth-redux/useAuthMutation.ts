@@ -61,7 +61,6 @@ export const useSendEmailOTPMutation = () => {
   
   return useMutation<{ message: string }, Error, Record<string, any>>({
     mutationFn: async (data) => {
-      console.log("Email data to be sent: ", data)
       const response = await api.post('authentication/email/sendOtp/', data);
       return response.data;
     },

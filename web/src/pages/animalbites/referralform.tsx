@@ -438,7 +438,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                     <FormControl>
                       <SelectLayout
                         options={exposureTypeOptions}
-                        value={field.value}
+                        value={field.value || ''}
                         onChange={field.onChange}
                         placeholder="Select exposure type"
                       />
@@ -459,7 +459,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                         placeholder="Select exposure site"
                         label=""
                         options={exposureSites}
-                        value={field.value}
+                        value={field.value || ''}
                         onChange={(value) => field.onChange(value)}
                         onAdd={(newSite) => {
                           handleAddExposureSite(newSite, (newId) => {
@@ -485,7 +485,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
                         placeholder="Select biting animal"
                         label=""
                         options={bitingAnimals}
-                        value={field.value}
+                        value={field.value || ''}
                         onChange={(value) => field.onChange(value)}
                         onAdd={(newAnimal) => {
                           handleAddBitingAnimal(newAnimal, (newId) => {

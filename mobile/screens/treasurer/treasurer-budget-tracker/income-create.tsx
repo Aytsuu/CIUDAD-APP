@@ -141,7 +141,7 @@ function IncomeCreateForm() {
                               placeholder="Select a particular"
                               label="Particulars"
                               options={IncomeParticulars}
-                              value={value}
+                              value={value ?? ''}
                               onChange={onChange}
                               onAdd={(newParticular) => {
                               handleAddParticular(newParticular, (newId) => {

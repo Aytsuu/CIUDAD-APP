@@ -103,3 +103,33 @@ export const restoreAnnualDevPlans = async (devIds: number[], staffId?: string) 
   });
   return res.data;
 };
+
+// Get mandated plans count
+export const getMandatedPlansCount = async () => {
+  const params = new URLSearchParams();
+  params.append('dev_archived', 'false');
+  params.append('dev_mandated', 'true');
+  params.append('page_size', '1');
+  const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
+  return res.data;
+};
+
+// Get plans with project proposals count
+export const getPlansWithProposalsCount = async () => {
+  const params = new URLSearchParams();
+  params.append('dev_archived', 'false');
+  params.append('has_proposal', 'true');
+  params.append('page_size', '1');
+  const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
+  return res.data;
+};
+
+// Get plans with resolutions count (through project proposals)
+export const getPlansWithResolutionsCount = async () => {
+  const params = new URLSearchParams();
+  params.append('dev_archived', 'false');
+  params.append('has_resolution', 'true');
+  params.append('page_size', '1');
+  const res = await api.get(`/gad/gad-annual-development-plan/?${params.toString()}`);
+  return res.data;
+};

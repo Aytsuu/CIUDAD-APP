@@ -6,5 +6,6 @@ export const useGetGADYearBudgets = (page: number = 1, pageSize: number = 10, se
     queryKey: ["gad-budget", searchQuery, page, pageSize],
     queryFn: () => getbudgetyearreq(page, pageSize, searchQuery),
     staleTime: 1000 * 60 * 5,
+    placeholderData: (previous) => previous,
   });
 };

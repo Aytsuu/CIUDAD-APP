@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Column } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button/button";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search } from "lucide-react";
@@ -41,10 +41,13 @@ function IssuedCertificates() {
   const [pageSize, setPageSize] = useState(10);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBusinessPermitDialogOpen, setIsBusinessPermitDialogOpen] = useState(false);
   const [viewingCertificate, setViewingCertificate] = useState<IssuedCertificate | null>(null);
+  const [viewingBusinessPermit, setViewingBusinessPermit] = useState<IssuedBusinessPermit | null>(null);
   const [selectedCertificate, setSelectedCertificate] = useState<ExtendedIssuedCertificate | null>(null);
-  const [selectedBusinessPermit, setSelectedBusinessPermit] = useState<IssuedBusinessPermit | null>(null);
+  const [selectedBusinessPermit, setSelectedBusinessPermit] = useState<IssuedBusinessPermit & { signatory?: string } | null>(null);
   const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [selectedBusinessPermitStaffId, setSelectedBusinessPermitStaffId] = useState("");
   const [purposeInput, setPurposeInput] = useState("");
 
   
@@ -91,13 +94,33 @@ function IssuedCertificates() {
   };
 
   const handleViewBusinessFile = (permit: IssuedBusinessPermit) => {
-    setSelectedBusinessPermit(permit);
+    setSelectedBusinessPermit(null); // Clear previous selection
+    setViewingBusinessPermit(permit);
+    setSelectedBusinessPermitStaffId("");
+    setIsBusinessPermitDialogOpen(true);
+  };
+
+  const handleProceedBusinessPermit = () => {
+    setIsBusinessPermitDialogOpen(false);
+
+    if (viewingBusinessPermit && selectedBusinessPermitStaffId) {
+      const selectedStaff = staffOptions.find(staff => staff.id === selectedBusinessPermitStaffId);
+      
+      // Create permit details with staff data
+      const permitDetails: IssuedBusinessPermit & { signatory?: string } = {
+        ...viewingBusinessPermit,
+        signatory: selectedStaff?.name,
+      };
+      
+      setSelectedBusinessPermit(permitDetails);
+      setSelectedBusinessPermitStaffId("");
+    }
   };
 
   const certificateColumns: ColumnDef<IssuedCertificate>[] = [
     {
       accessorKey: "cr_id",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<IssuedCertificate> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -106,59 +129,278 @@ function IssuedCertificates() {
           <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
         </div>
       ),
-      cell: ({ row }) => (
-        <div className="flex justify-center items-center gap-2">
-          <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
-            {row.getValue("cr_id")}
-          </span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        // For non-residents, show nrc_id; for residents, show cr_id
+        const certificate = row.original;
+        const requestId = certificate.is_nonresident ? certificate.nrc_id : certificate.cr_id;
+        return (
+          <div className="flex justify-center items-center gap-2">
+            <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+              {requestId || 'N/A'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: "requester",
-      header: "Requester",
-      cell: ({ row }) => <div className="capitalize">{row.getValue("requester")}</div>,
+      header: ({ column }: { column: Column<IssuedCertificate> }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Requester
+          <ArrowUpDown size={14} />
+        </div>
+      ),
+      cell: ({ row }) => {
+        const requester = row.getValue("requester") as string;
+        return <div className="text-center">{requester?.toUpperCase() || 'N/A'}</div>;
+      },
     },
     {
       accessorKey: "dateIssued",
-      header: "Date Issued",
+      header: ({ column }: { column: Column<IssuedCertificate> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Issued
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const dateStr = row.getValue("dateIssued") as string;
         try {
           const date = parseISO(dateStr);
-          return <div>{format(date, "MM/dd/yyyy")}</div>;
+          return <div className="text-center">{format(date, "MM/dd/yyyy")}</div>;
         } catch (e) {
-          return <div>{dateStr || ""}</div>;
+          return <div className="text-center">{dateStr || ""}</div>;
         }
       },
     },
     {
       accessorKey: "purpose",
-      header: "Purpose",
+      header: ({ column }: { column: Column<IssuedCertificate> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Purpose
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const value = row.getValue("purpose") as string;
         const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+        const lowerValue = value?.toLowerCase() || '';
+        
         let bg = "bg-[#eaf4ff]";
         let text = "text-[#2563eb]";
         let border = "border border-[#b6d6f7]";
-        if (capitalizedValue === "Employment") {
-          // blue
-        } else if (capitalizedValue === "Bir") {
+        
+        // Employment - Blue (default)
+        if (lowerValue === "employment") {
+          bg = "bg-[#eaf4ff]";
+          text = "text-[#2563eb]";
+          border = "border border-[#b6d6f7]";
+        }
+        // BIR - Yellow/Amber
+        else if (lowerValue === "bir") {
           bg = "bg-[#fffbe6]";
           text = "text-[#b59f00]";
           border = "border border-[#f7e7b6]";
-        } else {
+        }
+        // Burial - Gray
+        else if (lowerValue === "burial") {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
           border = "border border-[#e5e7eb]";
         }
+        // First Time Job Seeker - Green
+        else if (lowerValue === "first time job seeker") {
+          bg = "bg-[#f0fff4]";
+          text = "text-[#006400]";
+          border = "border border-[#c6eac6]";
+        }
+        // Identification - Purple
+        else if (lowerValue === "identification") {
+          bg = "bg-[#f3e8ff]";
+          text = "text-[#7c3aed]";
+          border = "border border-[#c4b5fd]";
+        }
+        // Loan - Orange
+        else if (lowerValue === "loan") {
+          bg = "bg-[#fff7ed]";
+          text = "text-[#c2410c]";
+          border = "border border-[#fdba74]";
+        }
+        // SSS - Teal
+        else if (lowerValue === "sss") {
+          bg = "bg-[#f0fdfa]";
+          text = "text-[#0d9488]";
+          border = "border border-[#5eead4]";
+        }
+        // Bank Requirement - Indigo
+        else if (lowerValue === "bank requirement") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#4338ca]";
+          border = "border border-[#a5b4fc]";
+        }
+        // Electrical Connection - Amber
+        else if (lowerValue === "electrical connection") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#d97706]";
+          border = "border border-[#fcd34d]";
+        }
+        // MCWD Requirements - Cyan
+        else if (lowerValue === "mcwd requirements") {
+          bg = "bg-[#e0f2fe]";
+          text = "text-[#0369a1]";
+          border = "border border-[#7dd3fc]";
+        }
+        // Scholarship - Emerald
+        else if (lowerValue === "scholarship") {
+          bg = "bg-[#d1fae5]";
+          text = "text-[#047857]";
+          border = "border border-[#6ee7b7]";
+        }
+        // Postal ID - Rose
+        else if (lowerValue === "postal id") {
+          bg = "bg-[#fff1f2]";
+          text = "text-[#be123c]";
+          border = "border border-[#fda4af]";
+        }
+        // NBI - Slate
+        else if (lowerValue === "nbi") {
+          bg = "bg-[#f1f5f9]";
+          text = "text-[#475569]";
+          border = "border border-[#cbd5e1]";
+        }
+        // Board Examination - Violet
+        else if (lowerValue === "board examination") {
+          bg = "bg-[#ede9fe]";
+          text = "text-[#6d28d9]";
+          border = "border border-[#a78bfa]";
+        }
+        // TESDA - Sky
+        else if (lowerValue === "tesda") {
+          bg = "bg-[#e0f2fe]";
+          text = "text-[#0c4a6e]";
+          border = "border border-[#7dd3fc]";
+        }
+        // PWD Identification - Pink
+        else if (lowerValue === "pwd identification") {
+          bg = "bg-[#fce7f3]";
+          text = "text-[#be185d]";
+          border = "border border-[#f9a8d4]";
+        }
+        // PWD Financial Assistance - Fuchsia
+        else if (lowerValue === "pwd financial assistance") {
+          bg = "bg-[#fdf4ff]";
+          text = "text-[#a21caf]";
+          border = "border border-[#f0abfc]";
+        }
+        // Senior Citizen Identification - Lime
+        else if (lowerValue === "senior citizen identification") {
+          bg = "bg-[#f7fee7]";
+          text = "text-[#365314]";
+          border = "border border-[#bef264]";
+        }
+        // Senior Citizen Financial Assistance - Green
+        else if (lowerValue === "senior citizen financial assistance") {
+          bg = "bg-[#dcfce7]";
+          text = "text-[#166534]";
+          border = "border border-[#86efac]";
+        }
+        // Bail Bond - Red
+        else if (lowerValue === "bail bond") {
+          bg = "bg-[#fee2e2]";
+          text = "text-[#991b1b]";
+          border = "border border-[#fca5a5]";
+        }
+        // Fire Victim - Orange
+        else if (lowerValue === "fire victim") {
+          bg = "bg-[#ffedd5]";
+          text = "text-[#9a3412]";
+          border = "border border-[#fdba74]";
+        }
+        // Cohabitation - Purple
+        else if (lowerValue === "cohabitation") {
+          bg = "bg-[#f3e8ff]";
+          text = "text-[#6b21a8]";
+          border = "border border-[#c4b5fd]";
+        }
+        // Marriage Certification - Rose
+        else if (lowerValue === "marriage certification") {
+          bg = "bg-[#fff1f2]";
+          text = "text-[#9f1239]";
+          border = "border border-[#fda4af]";
+        }
+        // DWUP - Stone
+        else if (lowerValue === "dwup") {
+          bg = "bg-[#fafaf9]";
+          text = "text-[#57534e]";
+          border = "border border-[#d6d3d1]";
+        }
+        // Probation - Zinc
+        else if (lowerValue === "probation") {
+          bg = "bg-[#fafafa]";
+          text = "text-[#3f3f46]";
+          border = "border border-[#d4d4d8]";
+        }
+        // Police Clearance - Blue
+        else if (lowerValue === "police clearance") {
+          bg = "bg-[#dbeafe]";
+          text = "text-[#1e40af]";
+          border = "border border-[#93c5fd]";
+        }
+        // Barangay Clearance - Emerald
+        else if (lowerValue === "barangay clearance") {
+          bg = "bg-[#d1fae5]";
+          text = "text-[#065f46]";
+          border = "border border-[#6ee7b7]";
+        }
+        // Proof of Custody - Indigo
+        else if (lowerValue === "proof of custody") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#3730a3]";
+          border = "border border-[#a5b4fc]";
+        }
+        // Good Moral - Teal
+        else if (lowerValue === "good moral") {
+          bg = "bg-[#ccfbf1]";
+          text = "text-[#134e4a]";
+          border = "border border-[#5eead4]";
+        }
+        // Indigency (for minors) - Amber
+        else if (lowerValue === "indigency (for minors)") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#92400e]";
+          border = "border border-[#fcd34d]";
+        }
+        // Indigency - Yellow
+        else if (lowerValue === "indigency") {
+          bg = "bg-[#fefce8]";
+          text = "text-[#713f12]";
+          border = "border border-[#fde047]";
+        }
+        // Default - Gray
+        else {
+          bg = "bg-[#f3f2f2]";
+          text = "text-black";
+          border = "border border-[#e5e7eb]";
+        }
+        
         return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {capitalizedValue}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+              style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+            >
+              {capitalizedValue}
+            </span>
+          </div>
         );
       },
     },
@@ -186,7 +428,7 @@ function IssuedCertificates() {
   const businessPermitColumns: ColumnDef<IssuedBusinessPermit>[] = [
     {
       accessorKey: "bpr_id",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<IssuedBusinessPermit> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -205,51 +447,94 @@ function IssuedCertificates() {
     },
     {
       accessorKey: "business_name",
-      header: "Business Name",
-      cell: ({ row }) => <div className="capitalize">{row.getValue("business_name")}</div>,
+      header: ({ column }: { column: Column<IssuedBusinessPermit> }) => (
+        <div
+          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Business Name
+          <ArrowUpDown size={14} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-center capitalize">{row.getValue("business_name")}</div>,
     },
     {
       accessorKey: "dateIssued",
-      header: "Date Issued",
+      header: ({ column }: { column: Column<IssuedBusinessPermit> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Issued
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const dateStr = row.getValue("dateIssued") as string;
         try {
           const date = parseISO(dateStr);
-          return <div>{format(date, "MM/dd/yyyy")}</div>;
+          return <div className="text-center">{format(date, "MM/dd/yyyy")}</div>;
         } catch (e) {
-          return <div>{dateStr || ""}</div>;
+          return <div className="text-center">{dateStr || ""}</div>;
         }
       },
     },
     {
       accessorKey: "purpose",
-      header: "Purpose",
+      header: ({ column }: { column: Column<IssuedBusinessPermit> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Purpose
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
       cell: ({ row }) => {
         const value = row.getValue("purpose") as string;
         const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
+        const lowerValue = value?.toLowerCase() || '';
+        
         let bg = "bg-[#eaf4ff]";
         let text = "text-[#2563eb]";
         let border = "border border-[#b6d6f7]";
-        if (capitalizedValue === "Commercial Building Permit") {
-          bg = "bg-[#fffbe6]";
-          text = "text-[#b59f00]";
-          border = "border border-[#f7e7b6]";
-        } else if (capitalizedValue === "Residential Permit") {
-          bg = "bg-[#eaffea]";
-          text = "text-[#15803d]";
-          border = "border border-[#b6e7c3]";
-        } else {
+        
+        if (lowerValue === "business clearance") {
+          // blue (default)
+          bg = "bg-[#eaf4ff]";
+          text = "text-[#2563eb]";
+          border = "border border-[#b6d6f7]";
+        } else if (lowerValue === "barangay sinulog permit") {
+          bg = "bg-[#f0fff4]";
+          text = "text-[#006400]";
+          border = "border border-[#c6eac6]";
+        } else if (lowerValue === "barangay fiesta permit") {
+          bg = "bg-[#fffaf0]";
+          text = "text-[#b45309]";
+          border = "border border-[#fcd34d]";
+        } else if (lowerValue === "electrical connection") {
+          bg = "bg-[#fef3c7]";
+          text = "text-[#d97706]";
+          border = "border border-[#fcd34d]";
+        } else if (lowerValue === "building permit") {
+          bg = "bg-[#e0e7ff]";
+          text = "text-[#4338ca]";
+          border = "border border-[#a5b4fc]";
+        } else if (capitalizedValue) {
           bg = "bg-[#f3f2f2]";
           text = "text-black";
           border = "border border-[#e5e7eb]";
         }
+        
         return (
-          <span
-            className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-            style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-          >
-            {capitalizedValue}
-          </span>
+          <div className="flex justify-center">
+            <span
+              className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+              style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+            >
+              {capitalizedValue}
+            </span>
+          </div>
         );
       },
     },
@@ -277,7 +562,7 @@ function IssuedCertificates() {
   const serviceChargeColumns: ColumnDef<ServiceCharge>[] = [
     {
       accessorKey: "sr_code",
-      header: ({ column }) => (
+      header: ({ column }: { column: Column<ServiceCharge> }) => (
         <div
           className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
@@ -296,44 +581,52 @@ function IssuedCertificates() {
     },
     {
       accessorKey: "complainant_names",
-      header: "Complainant",
+      header: () => <div className="text-center">Complainant</div>,
       cell: ({ row }) => {
         const names = row.original.complainant_names || (row.original.complainant_name ? [row.original.complainant_name] : []);
-        if (!names.length) return <div>—</div>;
-        return <div className="text-sm">{names.join(', ')}</div>;
+        if (!names.length) return <div className="text-center">—</div>;
+        return <div className="text-sm text-center">{names.join(', ')}</div>;
       },
     },
     {
       id: "complainant_addresses",
-      header: "Complainant Address",
+      header: () => <div className="text-center">Complainant Address</div>,
       cell: ({ row }) => {
         const addrs = row.original.complainant_addresses || [];
-        if (!addrs.length) return <div>—</div>;
-        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+        if (!addrs.length) return <div className="text-center">—</div>;
+        return <div className="text-sm text-center">{addrs.filter(Boolean).join(', ')}</div>;
       },
     },
     {
       accessorKey: "accused_names",
-      header: "Respondent",
+      header: () => <div className="text-center">Respondent</div>,
       cell: ({ row }) => {
         const names = row.original.accused_names || [];
-        if (!names.length) return <div>—</div>;
-        return <div className="text-sm">{names.join(', ')}</div>;
+        if (!names.length) return <div className="text-center">—</div>;
+        return <div className="text-sm text-center">{names.join(', ')}</div>;
       },
     },
     {
       id: "accused_addresses",
-      header: "Respondent Address",
+      header: () => <div className="text-center">Respondent Address</div>,
       cell: ({ row }) => {
         const addrs = row.original.accused_addresses || [];
-        if (!addrs.length) return <div>—</div>;
-        return <div className="text-sm">{addrs.filter(Boolean).join(', ')}</div>;
+        if (!addrs.length) return <div className="text-center">—</div>;
+        return <div className="text-sm text-center">{addrs.filter(Boolean).join(', ')}</div>;
       },
     },
     {
       accessorKey: "sr_req_date",
-      header: "Date Requested",
-      cell: ({ row }) => <div>{localDateFormatter(row.getValue("sr_req_date"))}</div>,
+      header: ({ column }: { column: Column<ServiceCharge> }) => (
+        <div
+          className="w-full h-full flex justify-center items-center gap-2 cursor-pointer"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date Requested
+          <TooltipLayout trigger={<ArrowUpDown size={15} />} content={"Sort"} />
+        </div>
+      ),
+      cell: ({ row }) => <div className="text-center">{localDateFormatter(row.getValue("sr_req_date"))}</div>,
     },
     {
       id: "actions",
@@ -393,8 +686,10 @@ function IssuedCertificates() {
   const totalPagesCert = Math.ceil(certCount / pageSize) || 1;
 
   const filteredCertificates = certificates?.filter((cert: IssuedCertificate) => {
+    const requestId = cert.is_nonresident ? cert.nrc_id : cert.cr_id;
     const matchesSearch = cert.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (cert.purpose && cert.purpose.toLowerCase().includes(searchQuery.toLowerCase()));
+                         (cert.purpose && cert.purpose.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         (requestId && requestId.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesFilter = !filterValue || filterValue === "All" || cert.purpose === filterValue;
     return matchesSearch && matchesFilter;
   });
@@ -422,6 +717,8 @@ function IssuedCertificates() {
     // Clear selected certificate/permit when switching tabs
     setSelectedCertificate(null);
     setSelectedBusinessPermit(null);
+    setViewingBusinessPermit(null);
+    setIsBusinessPermitDialogOpen(false);
   }, [activeTab, filterValue, businessFilterValue, searchQuery, businessSearchQuery, pageSize]);
 
   const filteredBusinessPermits = businessPermits?.filter((permit: IssuedBusinessPermit) => {
@@ -651,7 +948,7 @@ function IssuedCertificates() {
           Signatory={selectedCertificate.AsignatoryStaff}
           specificPurpose={selectedCertificate.SpecificPurpose}
           issuedDate={selectedCertificate.dateIssued || new Date().toISOString()}
-          isNonResident={false}
+          isNonResident={selectedCertificate.is_nonresident || false}
           showAddDetails={false}
         />
       )}
@@ -663,9 +960,56 @@ function IssuedCertificates() {
           address={(selectedBusinessPermit as any)?.original_permit?.business_address || ""}
           purpose={selectedBusinessPermit.purpose as any}
           issuedDate={selectedBusinessPermit.dateIssued || new Date().toISOString()}
+          Signatory={selectedBusinessPermit.signatory || ""}
           showAddDetails={false}
         />
       )}
+
+      {/* Dialog for business permit signatory selection */}
+      <DialogLayout
+        isOpen={isBusinessPermitDialogOpen}
+        onOpenChange={(open: boolean) => {
+          setIsBusinessPermitDialogOpen(open);
+          if (!open) {
+            setSelectedBusinessPermitStaffId("");
+          }
+        }}
+        className="max-w-[35%] max-h-[85vh] flex flex-col overflow-auto scrollbar-custom"
+        title="Additional Details"
+        description={`Please provide the needed details for the certificate.`}
+        mainContent={
+          <div>
+            {viewingBusinessPermit ? (
+              <div className="space-y-3">
+                <Label className="pb-1">Signatory</Label>
+                <div className="w-full pb-3">
+                  <Combobox
+                    options={staffOptions}
+                    value={selectedBusinessPermitStaffId}
+                    onChange={(value) => setSelectedBusinessPermitStaffId(value || "")}
+                    placeholder="Select signatory staff member"
+                    emptyMessage="No staff found"
+                    triggerClassName="w-full"
+                    contentClassName="w-full"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    className="bg-[#2563eb] hover:bg-[#1746a2] text-white"
+                    onClick={handleProceedBusinessPermit}
+                    disabled={!selectedBusinessPermitStaffId}
+                  >
+                    Proceed
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p>No permit selected</p>
+            )}
+          </div>
+        }
+      />
 
       <DialogLayout
         isOpen={isDialogOpen}

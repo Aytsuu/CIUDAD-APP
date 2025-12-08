@@ -11,7 +11,6 @@ export const updatePosition = async (
     const res = await api.put(path, body);
     return res.data;
   } catch (err) {
-    console.error(err);
     throw err;
   }
 };

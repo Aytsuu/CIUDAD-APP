@@ -1,11 +1,12 @@
-import type React from "react";
-import { useState } from "react";
+import React from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   RefreshControl,
   FlatList,
+  ActivityIndicator
 } from "react-native";
 import {
   Archive,
@@ -34,9 +35,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Search } from "@/lib/icons/Search";
 import { SearchInput } from "@/components/ui/search-input";
 
+const INITIAL_PAGE_SIZE = 10;
+
 const DisbursementVoucherList: React.FC = () => {
   const router = useRouter();
-  const [refreshing, setRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<"active" | "archived">("active");
   const [_showDeleteSuccess, setShowDeleteSuccess] = useState(false);
   const [selectedDisbursement, setSelectedDisbursement] =
@@ -45,10 +47,17 @@ const DisbursementVoucherList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchTerm = useDebounce(searchQuery, 500);
   const [selectedYear, setSelectedYear] = useState("All");
-  const [currentPage, setCurrentPage] = useState(1);
   const [showSearch, setShowSearch] = useState(false);
   
-  const pageSize = 10;
+  // Pagination states - simplified version
+  const [currentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  
   const { data: availableYears = [] } = useGetDisbursementVoucherYears();
   const {
     data: disbursementsData,
@@ -70,7 +79,56 @@ const DisbursementVoucherList: React.FC = () => {
 
   const disbursements = disbursementsData?.results || [];
   const totalCount = disbursementsData?.count || 0;
+  
+  // Calculate if there are more items to load
   const totalPages = Math.ceil(totalCount / pageSize);
+  const hasMore = currentPage < totalPages;
+
+  // Reset pagination when search, filter, year or view mode changes
+  useEffect(() => {
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [debouncedSearchTerm, selectedYear, viewMode]);
+
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  // Handle load more - increment page number
+  const handleLoadMore = () => {
+    if (isScrolling && hasMore && !isFetching && !isLoadMore) {
+      setIsLoadMore(true);
+      setPageSize((prev) => prev + 5); 
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setPageSize(INITIAL_PAGE_SIZE);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   const yearFilterOptions = [
     { label: "All Years", value: "All" },
@@ -80,16 +138,9 @@ const DisbursementVoucherList: React.FC = () => {
     })),
   ];
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-    setCurrentPage(1);
-  };
-
   const handleSearch = () => {
     setSearchQuery(searchInputVal);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   const handleArchivePress = (disbursement: DisbursementVoucher, event?: any) => {
@@ -126,15 +177,16 @@ const DisbursementVoucherList: React.FC = () => {
 
   const handleViewModeChange = (mode: "active" | "archived") => {
     setViewMode(mode);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   const handleYearChange = (option: { label: string; value: string }) => {
     setSelectedYear(option.value);
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
-  const RenderDisbursementCard = ({ disbursement }: { disbursement: DisbursementVoucher }) => (
+  // Memoized card component for better performance
+  const RenderDisbursementCard = React.memo(({ disbursement }: { disbursement: DisbursementVoucher }) => (
     <TouchableOpacity
       onPress={() => handleDisbursementPress(disbursement)}
       activeOpacity={0.8}
@@ -245,6 +297,12 @@ const DisbursementVoucherList: React.FC = () => {
         </CardContent>
       </Card>
     </TouchableOpacity>
+  ));
+
+  // Render function for FlatList
+  const renderItem = React.useCallback(
+    ({ item }: { item: DisbursementVoucher }) => <RenderDisbursementCard disbursement={item} />,
+    []
   );
 
   const renderEmptyState = () => {
@@ -298,7 +356,7 @@ const DisbursementVoucherList: React.FC = () => {
             {error.message}
           </Text>
           <TouchableOpacity
-            onPress={() => refetch()}
+            onPress={handleRefresh}
             className="bg-primaryBlue px-6 py-3 rounded-xl"
           >
             <Text className="text-white font-medium font-sans">Retry</Text>
@@ -349,6 +407,15 @@ const DisbursementVoucherList: React.FC = () => {
               />
             </View>
 
+            {/* Result Count - Like receipt page */}
+            {!isRefreshing && disbursements.length > 0 && (
+              <View className="mb-2">
+              <Text className="text-xs text-gray-500 font-sans">
+                Showing {disbursements.length} of {totalCount} vouchers
+              </Text>
+            </View>
+            )}
+
             {/* Tabs */}
             <Tabs value={viewMode} onValueChange={val => handleViewModeChange(val as "active" | "archived")} className="flex-1">
               <TabsList className="bg-blue-50 flex-row justify-between">
@@ -370,9 +437,9 @@ const DisbursementVoucherList: React.FC = () => {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Active Tab Content */}
+              {/* Both Tab Contents use the same structure */}
               <TabsContent value="active" className="flex-1 mt-4">
-                {isLoading ? (
+                {isLoading && isInitialRender ? (
                   <View className="flex-1 justify-center items-center">
                     <LoadingState/>
                   </View>
@@ -383,48 +450,48 @@ const DisbursementVoucherList: React.FC = () => {
                     ) : (
                       <FlatList
                         data={disbursements}
-                        renderItem={({ item }) => <RenderDisbursementCard disbursement={item} />}
+                        maxToRenderPerBatch={5}
+                        overScrollMode="never"
                         showsVerticalScrollIndicator={false}
+                        showsHorizontalScrollIndicator={false}
+                        initialNumToRender={5}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        onScroll={handleScroll}
+                        windowSize={11}
+                        renderItem={renderItem}
+                        keyExtractor={(item, index) => `dv-${item.dis_num}-${index}`}
+                        removeClippedSubviews
+                        contentContainerStyle={{
+                          paddingBottom: 20,
+                          paddingTop: 8,
+                          flexGrow: 1,
+                        }}
                         refreshControl={
                           <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
                             colors={['#00a8f0']}
                           />
                         }
-                        contentContainerStyle={{ 
-                          paddingBottom: 16,
-                          paddingTop: 16
-                        }}
-                        ListFooterComponent={
-                          totalPages > 1 ? (
-                            <View className="flex-row justify-between items-center mt-4 px-4">
-                              <TouchableOpacity
-                                onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-                              >
-                                <Text className="text-primaryBlue font-bold font-sans">← Previous</Text>
-                              </TouchableOpacity>
-
-                              <View className="flex-row items-center">
-                                {isFetching && (
-                                  <LoadingState />
-                                )}
-                                <Text className="text-gray-500 font-sans">
-                                  Page {currentPage} of {totalPages}
+                        ListFooterComponent={() =>
+                          isFetching && isLoadMore ? (
+                            <View className="py-4 items-center">
+                              <ActivityIndicator size="small" color="#3B82F6" />
+                              <Text className="text-xs text-gray-500 mt-2 font-sans">
+                                Loading more vouchers...
+                              </Text>
+                            </View>
+                          ) : (
+                            !hasMore &&
+                            disbursements.length > 0 && (
+                              <View className="py-4 items-center">
+                                <Text className="text-xs text-gray-400 font-sans">
+                                  No more vouchers
                                 </Text>
                               </View>
-
-                              <TouchableOpacity
-                                onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                                className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
-                              >
-                                <Text className="text-primaryBlue font-bold font-sans">Next →</Text>
-                              </TouchableOpacity>
-                            </View>
-                          ) : null
+                            )
+                          )
                         }
                       />
                     )}
@@ -432,9 +499,8 @@ const DisbursementVoucherList: React.FC = () => {
                 )}
               </TabsContent>
 
-              {/* Archived Tab Content */}
               <TabsContent value="archived" className="flex-1 mt-4">
-                {isLoading ? (
+                {isLoading && isInitialRender ? (
                   <View className="flex-1 justify-center items-center">
                     <LoadingState/>
                   </View>
@@ -445,48 +511,48 @@ const DisbursementVoucherList: React.FC = () => {
                     ) : (
                       <FlatList
                         data={disbursements}
-                        renderItem={({ item }) => <RenderDisbursementCard disbursement={item} />}
+                        maxToRenderPerBatch={5}
+                        overScrollMode="never"
                         showsVerticalScrollIndicator={false}
+                        showsHorizontalScrollIndicator={false}
+                        initialNumToRender={5}
+                        onEndReached={handleLoadMore}
+                        onEndReachedThreshold={0.5}
+                        onScroll={handleScroll}
+                        windowSize={11}
+                        renderItem={renderItem}
+                        keyExtractor={(item, index) => `dv-${item.dis_num}-${index}`}
+                        removeClippedSubviews
+                        contentContainerStyle={{
+                          paddingBottom: 20,
+                          paddingTop: 8,
+                          flexGrow: 1,
+                        }}
                         refreshControl={
                           <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
+                            refreshing={isRefreshing}
+                            onRefresh={handleRefresh}
                             colors={['#00a8f0']}
                           />
                         }
-                        contentContainerStyle={{ 
-                          paddingBottom: 16,
-                          paddingTop: 16
-                        }}
-                        ListFooterComponent={
-                          totalPages > 1 ? (
-                            <View className="flex-row justify-between items-center mt-4 px-4">
-                              <TouchableOpacity
-                                onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-                              >
-                                <Text className="text-primaryBlue font-bold font-sans">← Previous</Text>
-                              </TouchableOpacity>
-
-                              <View className="flex-row items-center">
-                                {isFetching && (
-                                  <LoadingState />
-                                )}
-                                <Text className="text-gray-500 font-sans">
-                                  Page {currentPage} of {totalPages}
+                        ListFooterComponent={() =>
+                          isFetching && isLoadMore ? (
+                            <View className="py-4 items-center">
+                              <ActivityIndicator size="small" color="#3B82F6" />
+                              <Text className="text-xs text-gray-500 mt-2 font-sans">
+                                Loading more vouchers...
+                              </Text>
+                            </View>
+                          ) : (
+                            !hasMore &&
+                            disbursements.length > 0 && (
+                              <View className="py-4 items-center">
+                                <Text className="text-xs text-gray-400 font-sans">
+                                  No more vouchers
                                 </Text>
                               </View>
-
-                              <TouchableOpacity
-                                onPress={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages}
-                                className={`p-2 ${currentPage === totalPages ? "opacity-50" : ""}`}
-                              >
-                                <Text className="text-primaryBlue font-bold font-sans">Next →</Text>
-                              </TouchableOpacity>
-                            </View>
-                          ) : null
+                            )
+                          )
                         }
                       />
                     )}

@@ -1,16 +1,18 @@
 import CardLayout from "@/components/ui/card/card-layout";
-import { Link } from "react-router-dom";
-import { Search } from 'lucide-react';
+import { Link, useLocation } from "react-router-dom";
+import { Search, Clock, AlertTriangle, ArrowRightLeft, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { useState, useEffect } from "react";
-import { useGetCouncilCaseList } from "../queries/summonFetchQueries";
+import { useGetCouncilCaseList, useGetMediationCardAnalytics } from "../queries/summonFetchQueries";
 import type { SummonCaseList } from "../summon-types";
 import { useLoading } from "@/context/LoadingContext";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useSearchParams } from "react-router-dom";
+import React from "react";
 
 const styles = {
     cardContent: "font-semibold text-[12px]",
@@ -38,6 +40,42 @@ function getStatusColor(status: string) {
     }
 }
 
+// Analytics cards configuration
+const mediationCards = [
+    {
+        title: "Waiting for Schedule",
+        dataKey: "waiting" as const,
+        icon: Clock,
+        iconColor: "text-yellow-600",
+        bgColor: "bg-yellow-50",
+        borderColor: "border-yellow-100"
+    },
+    {
+        title: "Ongoing Cases",
+        dataKey: "ongoing" as const,
+        icon: AlertTriangle,
+        iconColor: "text-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-100"
+    },
+    {
+        title: "Forwarded to Lupon",
+        dataKey: "forwarded" as const,
+        icon: ArrowRightLeft,
+        iconColor: "text-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-100"
+    },
+    {
+        title: "Resolved Cases",
+        dataKey: "resolved" as const,
+        icon: CheckCircle,
+        iconColor: "text-emerald-600",
+        bgColor: "bg-emerald-50",
+        borderColor: "border-emerald-100"
+    },
+];
+
 // Resident badge component
 function ResidentBadge() {
     return (
@@ -61,13 +99,19 @@ const formatNames = (data: string[] | string | null | undefined): string => {
 
 function SummonCases(){  
     const { showLoading, hideLoading } = useLoading();
+    const location = useLocation();
     
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedFilter, setSelectedFilter] = useState("All");
     const [pageSize, setPageSize] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    const handlePageChange = (page: number) => {
+        setSearchParams({ page: String(page) });
+    };
 
     const filterOptions = [
         { id: "All", name: "All" },
@@ -77,14 +121,18 @@ function SummonCases(){
         { id: "Waiting for Schedule", name: "Waiting for Schedule" },
     ];
 
+    // Fetch analytics data for cards
+    const { data: analyticsData, isLoading: isLoadingAnalytics } = useGetMediationCardAnalytics();
+    
     // Use the hook with pagination and filtering parameters
-    const { data: summonCaseData = { results: [], count: 0 }, isLoading } = useGetCouncilCaseList(
+    const { data: summonCaseData = { results: [], count: 0 }, isLoading: isLoadingCases } = useGetCouncilCaseList(
         currentPage, 
         pageSize, 
         debouncedSearchQuery, 
         selectedFilter
     );
 
+    const isLoading = isLoadingAnalytics || isLoadingCases;
     const summonCases = summonCaseData.results || [];
     const totalItems = summonCaseData.count || 0;
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -98,10 +146,20 @@ function SummonCases(){
         }
     }, [isLoading, showLoading, hideLoading]);
 
-    // Reset to first page when filters change
+    // Set initial loading state
     useEffect(() => {
-        setCurrentPage(1);
-    }, [debouncedSearchQuery, selectedFilter, pageSize]);
+        if (summonCaseData.results !== undefined) {
+            setIsInitialLoading(false);
+        }
+    }, [summonCaseData]);
+
+    // Reset to first page when filters change
+    React.useEffect(() => {
+        if (debouncedSearchQuery === "" && searchQuery !== "") return;
+        if (selectedFilter !== "All") {
+            handlePageChange(1);
+        }
+    }, [debouncedSearchQuery, selectedFilter]);
 
     const hasResidentComplainant = (item: SummonCaseList) => {
         if (!item.complainant_rp_ids) return false;
@@ -112,6 +170,16 @@ function SummonCases(){
         
         return item.complainant_rp_ids != null;
     };
+
+    // Show only initial loading spinner, not during searches
+    if (isInitialLoading && !searchQuery) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Spinner size="md" />
+                <span className="ml-2 text-gray-600">Loading cases...</span>
+            </div>
+        );
+    }
 
     return(
         <div className="w-full h-full flex flex-col">
@@ -130,6 +198,33 @@ function SummonCases(){
                 <hr className="border-gray mb-7 sm:mb-8" />
             </div>
 
+            {/* Analytics Cards Section */}
+            <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {mediationCards.map((card) => {
+                        const Icon = card.icon;
+                        const value = analyticsData?.[card.dataKey] ?? 0;
+                        
+                        return (
+                            <div 
+                                key={card.title}
+                                className={`${card.bgColor} border ${card.borderColor} rounded-lg p-4 transition-all duration-200 hover:shadow-md`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-600 mb-1">{card.title}</p>
+                                        <p className="text-2xl font-bold text-gray-900">{value}</p>
+                                    </div>
+                                    <div className={`w-12 h-12 rounded-full ${card.bgColor} flex items-center justify-center`}>
+                                        <Icon className={`w-6 h-6 ${card.iconColor}`} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Search and Filter Section - ALWAYS VISIBLE */}
             <div className="flex-shrink-0 mb-6 mt-6">
                 {/* Filters Row */}
@@ -145,6 +240,11 @@ function SummonCases(){
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
+                            {isLoadingCases && searchQuery && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <Spinner size="sm" />
+                                </div>
+                            )}
                         </div>
 
                         {/* Status Filter */}
@@ -155,7 +255,10 @@ function SummonCases(){
                                 options={filterOptions}
                                 value={selectedFilter}
                                 label=""
-                                onChange={(value) => setSelectedFilter(value)}
+                                onChange={(value) => {
+                                    handlePageChange(1);
+                                    setSelectedFilter(value);
+                                }}
                             />
                         </div>
                     </div>
@@ -167,7 +270,7 @@ function SummonCases(){
                             value={pageSize.toString()} 
                             onValueChange={(value) => {
                                 setPageSize(Number.parseInt(value))
-                                setCurrentPage(1)
+                                handlePageChange(1)
                             }}
                         >
                             <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
@@ -188,14 +291,17 @@ function SummonCases(){
 
             {/* Content Area - Shows loading or data */}
             <div className="flex-1 overflow-y-auto">
-                {isLoading ? (
-                    // Loading state - shows spinner but keeps header and filters visible
+                {isLoadingCases ? (
+                    // ALWAYS show loading spinner when isLoadingCases is true
+                    // This covers: initial load, page changes, filter changes, etc.
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="md" />
-                        <span className="ml-2 text-gray-600">Loading cases...</span>
+                        <span className="ml-2 text-gray-600">
+                            {searchQuery ? "Searching cases..." : "Loading cases..."}
+                        </span>
                     </div>
                 ) : totalItems === 0 ? (
-                    // Empty state
+                    // Empty state - only show when NOT loading
                     <div className="flex flex-col items-center justify-center py-10">
                         <p className="text-gray-500 text-lg">No summon cases found</p>
                         <p className="text-sm text-gray-400 mt-2">
@@ -206,7 +312,7 @@ function SummonCases(){
                         </p>
                     </div>
                 ) : (
-                    // Data state
+                    // Data state - only show when data is loaded and has items
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-6"> 
                             {summonCases.map((item: SummonCaseList) => (
@@ -229,7 +335,11 @@ function SummonCases(){
                                         accused_addresses: Array.isArray(item.accused_addresses) 
                                             ? item.accused_addresses 
                                             : [item.accused_addresses || "N/A"],
-                                        complainant_rp_ids: item.complainant_rp_ids
+                                        complainant_rp_ids: item.complainant_rp_ids,
+                                        // Preserve current page state for back navigation
+                                        fromPage: currentPage,
+                                        fromPath: location.pathname,
+                                        fromSearchParams: Object.fromEntries(searchParams.entries())
                                     }} 
                                     className="hover:shadow-lg transition-shadow"
                                 >
@@ -294,7 +404,7 @@ function SummonCases(){
                                 <PaginationLayout 
                                     currentPage={currentPage} 
                                     totalPages={totalPages} 
-                                    onPageChange={setCurrentPage} 
+                                    onPageChange={handlePageChange} 
                                 />
                             )}
                         </div>

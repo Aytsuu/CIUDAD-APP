@@ -64,7 +64,7 @@ export default function RejectedTable() {
         </div>
       ),
       cell: ({ row }) => (
-        <div>
+        <div className='text-center'>
           <div className="bg-blue-100 border-2 border-blue-300 px-3 py-2 rounded-lg inline-block shadow-sm">
             <p className="text-sm font-mono font-bold text-blue-800 tracking-wider uppercase">
               {row.original.garb_id}
@@ -88,28 +88,49 @@ export default function RejectedTable() {
         <div className="text-center">{formatTimestamp(row.getValue("garb_created_at"))}</div>
       )
     },
-    {
+     {
       accessorKey: "garb_requester",
-      header: "Requester",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Requester
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.original.garb_requester}</div>
+      )
     },
     {
       accessorKey: "sitio_name",
-      header: "Sitio"
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Sitio
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.original.sitio_name}</div>
+      )
     },
     {
       accessorKey: "garb_waste_type",
-      header: "Waste Type"
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Waste Type
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.original.garb_waste_type}</div>
+      )
     },
     {
       accessorKey: "",
       header: "   ",
       cell: ({ row }) => {
         return (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center text-center">
             <DialogLayout
               className="w-[90vw] h-[80vh] max-w-[900px] max-h-[1000px]"
               trigger={
-                <Button className="flex items-center gap-2 text-primary bg-white shadow-none hover:bg-white group">
+                <Button className="flex items-center gap-2 text-primary bg-transperent shadow-none hover:bg-transparent group">
                   <span className="text-sm font-medium group-hover:text-primary">View</span>
                   <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
                     <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />

@@ -5,26 +5,32 @@ import { SummonDates, SummonTimeSlots, SummonCaseDetails, SummonCaseList, Schedu
 
 
 export const useGetSummonCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
-    return useQuery<{results: SummonCaseList[], count: number}>({
+    return useQuery({
         queryKey: ['summonCases', page, pageSize, searchQuery, statusFilter],
         queryFn:() => getSummonCaseList(page, pageSize, searchQuery, statusFilter),
         staleTime: 5000,
+        placeholderData: (previous) => previous,
+        retry: false,
     })
 }
 
 export const useGetCouncilCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
-    return useQuery<{results: SummonCaseList[], count: number}>({
+    return useQuery({
         queryKey: ['councilCases', page, pageSize, searchQuery, statusFilter],
         queryFn:() => getCouncilCaseList(page, pageSize, searchQuery, statusFilter),
         staleTime: 5000,
+        placeholderData: (previous) => previous,
+        retry: false,
     })
 }
 
 export const useGetLuponCaseList = (page: number, pageSize: number, searchQuery: string, statusFilter: string) => {
-    return useQuery<{results: SummonCaseList[], count: number}>({
+    return useQuery({
         queryKey: ['luponCases', page, pageSize, searchQuery, statusFilter],
         queryFn:() => getLuponCaseList(page, pageSize, searchQuery, statusFilter),
         staleTime: 5000,
+        placeholderData: (previous) => previous,
+        retry: false,
     })
 }
 

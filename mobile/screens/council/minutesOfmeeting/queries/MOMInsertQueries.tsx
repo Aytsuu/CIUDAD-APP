@@ -24,25 +24,62 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (values: MOMFullData) => {
-        const mom_id = await  insertMinutesOfMeeting(values);
+    // mutationFn: async (values: MOMFullData) => {
+    //     const mom_id = await  insertMinutesOfMeeting(values);
 
-          if (values.files?.length) {
-            await Promise.all(
-              values.files.map(file => 
-                createMOMFile({
-                  mom_id,
-                  file_data: {
-                    name: file.name,
-                    type: file.type,
-                    file: file.file
-                  }
-                })
-              )
-            );
-          }
+    //       if (values.files?.length) {
+    //         await Promise.all(
+    //           values.files.map(file => 
+    //             createMOMFile({
+    //               mom_id,
+    //               file_data: {
+    //                 name: file.name,
+    //                 type: file.type,
+    //                 file: file.file
+    //               }
+    //             })
+    //           )
+    //         );
+    //       }
           
-          if (values.suppDocs && values.suppDocs.length > 0) {
+    //       if (values.suppDocs && values.suppDocs.length > 0) {
+    //             await Promise.all(
+    //                 values.suppDocs.map(file => 
+    //                   addSuppDoc({
+    //                     mom_id,
+    //                     file_data: {
+    //                       name: file.name,
+    //                       type: file.type,
+    //                       file: file.file
+    //                     }
+    //                   }).catch(error => {
+    //                     // console.error("Error creating file entry:", error);
+    //                     return null;
+    //                   })
+    //                 )
+    //               );
+    //           }      
+        
+    // },
+
+     mutationFn: async (values: MOMFullData) => {
+            if (values.files?.length) {
+              const momf_id = await Promise.all(
+                values.files.map(file => 
+                  createMOMFile({
+                    file_data: {
+                      name: file.name,
+                      type: file.type,
+                      file: file.file
+                    }
+                  })
+                )
+              );
+
+            if(momf_id){
+              const mom_id = await  insertMinutesOfMeeting(values, String(momf_id)); 
+
+              if (values.suppDocs && values.suppDocs.length > 0 && mom_id){
                 await Promise.all(
                     values.suppDocs.map(file => 
                       addSuppDoc({
@@ -52,13 +89,17 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
                           type: file.type,
                           file: file.file
                         }
-                      }).catch(error => {
+                      }).catch(_error => {
                         // console.error("Error creating file entry:", error);
                         return null;
                       })
                     )
                   );
-              }      
+              } 
+
+            }   
+
+          }  
         
     },
     onSuccess: () => {
@@ -78,3 +119,4 @@ export const useInsertMinutesOfMeeting = (onSuccess?: () => void) => {
     }
   });
 };
+

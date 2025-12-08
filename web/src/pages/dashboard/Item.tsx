@@ -5,6 +5,9 @@ import { useReportSectionCards } from "@/components/analytics/report/report-sect
 import ReportSectionCharts from "@/components/analytics/report/report-section-charts";
 import ComplaintSectionCharts from "@/components/analytics/complaint/complaint-section-chart";
 import { ReportSidebar } from "@/components/analytics/report/report-sidebar";
+import { GarbagePickupSidebar } from "@/components/analytics/waste/garbage-pickup-sidebar";
+import { ConciliationIncidentChart } from "@/components/analytics/summon/conciliation-section-charts";
+import { RemarksSectionCharts } from "@/components/analytics/summon/remarks-section-charts";
 
 // HEALTH SERVICES
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
@@ -27,11 +30,10 @@ import { VaccineResidentChart } from "@/components/analytics/health/vaccine-char
 // import { CommodityAlertsSidebar } from "@/components/analytics/health/invcommodity_sidebar";
 import { InventoryAlertsSidebar } from "@/components/analytics/health/inventory-alerts-sidebar";
 
-import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+// import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { GADQuarterlyBudgetChart } from "@/components/analytics/gad/btracker-quarterly-report";
-import { GADExpenseSidebar } from "@/components/analytics/gad/btracker-sidebar";
 import { ProjectProposalSidebar } from "@/components/analytics/gad/projprop-sidebar";
 import { DisbursementSidebar } from "@/components/analytics/treasurer/disbursement-sidebar";
 import { IncomeExpenseQuarterlyChart } from "@/components/analytics/treasurer/expense-quarterly-report";
@@ -42,21 +44,30 @@ import { CertificatePurposeChart } from "@/components/analytics/certificate/cert
 import { CertificateSidebar } from "@/components/analytics/certificate/certificate-sidebar";
 import { BusinessSidebar } from "@/components/analytics/certificate/business-sidebar";
 import { useCouncilUpcomingEvents } from "@/components/analytics/council/ce-event-bar";
+import { useGADAnalyticsCards } from "@/components/analytics/gad/gad-analytics-cards";
 import ComplaintSidebar from "@/components/analytics/complaint/complaint-sidebar";
 import { useComplaintSectionCards } from "@/components/analytics/complaint/complaint-card";
-import { ReactElement } from "react";
 import { useMediationSectionCards } from "@/components/analytics/summon/mediation-analytics-section-cards";
 import { useConciliationSectionCards } from "@/components/analytics/summon/conciliation-analytics-section-cards";
 import { useNoRemarksSectionCard } from "@/components/analytics/summon/remarks-analytics-section-cards";
 
 type DashboardItem = {
   dashboard: string;
-  card?: ReactElement[];
-  sidebar?: { title: string; element: ReactElement }[];
-  chart?: { title: string; element: ReactElement }[];
-  upcomingEvents?: ReactElement;
+  card?: React.ReactNode[];
+  sidebar?: { title: string; element: React.ReactNode }[];
+  chart?: { title: string; element: React.ReactNode }[];
+  upcomingEvents?: React.ReactNode;
 };
 
+type GADActivities = {
+  upcomingEvents?: React.ReactNode;
+  cards?: React.ReactNode[];
+  sidebar?: { title: string; element: React.ReactNode }[];
+};
+
+type WasteEvents = {
+  upcomingEvents?: React.ReactNode;
+};
 
 // import { PendingMedicalAppointmentsSidebar } from "@/components/analytics/health/pending-medapp-sidebar";
 import { PendingMedicineRequestsSidebar } from "@/components/analytics/health/pending-medreq-sidebar";
@@ -75,7 +86,7 @@ export const getItemsConfig = (
   administrationCards: ReturnType<typeof useAdminSectionCards>,
   reportCards: ReturnType<typeof useReportSectionCards>,
   healthCards: ReturnType<typeof useHealthServicesSectionCards>,
-  wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
+  // wasteCards: ReturnType<typeof useWastePersonnelSectionCards>,
   donationCards: ReturnType<typeof useDonationSectionCards>,
   garbCards: ReturnType<typeof useGarbagePickupSectionCards>,
   certificateCards: ReturnType<typeof useCertificateSectionCards>,
@@ -84,17 +95,28 @@ export const getItemsConfig = (
   remarkCard: ReturnType<typeof useNoRemarksSectionCard>,
   councilEvents: ReturnType<typeof useCouncilUpcomingEvents>,
   complaintCards: ReturnType<typeof useComplaintSectionCards>,
+  gadActivities: GADActivities,
+  wasteEvents: WasteEvents,
 ): DashboardItem[] => {
   const { user } = useAuth();
   const currentMonth = format(new Date(), "yyyy-MM");
   const currentYear = format(new Date(), "yyyy");
-  const { upcomingEvents: councilUpcomingEvents } = councilEvents;
+  const { upcomingEvents: councilUpcomingEvents } = councilEvents || { upcomingEvents: undefined };
+  const { 
+    upcomingEvents: gadUpcomingActivities, 
+    cards: gadCards = [], 
+    sidebar: gadSidebar = [] 
+  } = gadActivities || { upcomingEvents: undefined, cards: [], sidebar: [] };
+  const { upcomingEvents: wasteUpcomingEvents } = wasteEvents || { upcomingEvents: undefined };
+  
+  // GAD Analytics Cards
+  const gadAnalyticsCards = useGADAnalyticsCards();
   const { residents, families, households, businesses } = profilingCards;
   const { staffs } = administrationCards;
   const { incidentReports, acknowledgementReports, weeklyARs } = reportCards;
 
   const { childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal, consultationsByDoctor, chilrenConsulted } = healthCards;
-  const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
+  // const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
   const {  
     pending: complaintPending, 
     cancelled: complaintCancelled, 
@@ -102,9 +124,9 @@ export const getItemsConfig = (
     rejected: complaintRejected, 
     raised: complaintRaised 
   } = complaintCards;
-  const { accepted, rejected: garbRejected, completed, pending: garbPending  } = garbCards;
-  const { waiting, ongoing, escalated, resolved } = conciliationCards;
-  const { waiting: mediationWaiting, ongoing: mediationOngoing, forwarded, resolved: mediationResolved } = mediationCards;
+  const { totalPickup} = garbCards;
+  const {conciliationCases } = conciliationCards;
+  const { mediationcases } = mediationCards;
   const { cashDonations } = donationCards;
   const { noRemark } = remarkCard;
   const { 
@@ -181,34 +203,48 @@ export const getItemsConfig = (
       },
       {
         dashboard: "CONCILIATION PROCEEDINGS",
-        card: [waiting, ongoing, escalated, resolved], 
+        card: [conciliationCases], 
+        chart: [
+          {
+            title: "Conciliation Incident Types Overview",
+            element: <ConciliationIncidentChart />,
+          },
+        ],
       },
       {
         dashboard: "COUNCIL MEDIATION",
-        card: [mediationWaiting, mediationOngoing, forwarded, mediationResolved], 
+        card: [mediationcases], 
       },
       {
         dashboard: "SUMMON REMARKS",
-        card: [noRemark]
+        card: [noRemark],
+        chart: [
+          {
+            title: "Summon Remarks Overview",
+            element: <RemarksSectionCharts />,
+          }
+        ]
       },
       {
         dashboard: "GAD",
+        card: [
+          ...gadAnalyticsCards,
+          ...gadCards
+        ],
+        sidebar: [
+          ...gadSidebar,
+          {
+            title: "Project Proposals",
+            element: <ProjectProposalSidebar />,
+          }
+        ],
         chart: [
           {
-            title: "GAD Budget Overview",
+            title: "GAD Quarterly Budget",
             element: <GADQuarterlyBudgetChart />,
           },
         ],
-        sidebar: [
-          {
-            title: "GAD Recent Expenses",
-            element: <GADExpenseSidebar />,
-          },
-          {
-            title: "Recent Project Proposal",
-            element: <ProjectProposalSidebar />,
-          },
-        ],
+        upcomingEvents: gadUpcomingActivities
       },
       {
         dashboard: "COUNCIL",
@@ -264,25 +300,29 @@ export const getItemsConfig = (
         ],
         sidebar: [
           {
-            title: "Recent Certificate Requests",
+            title: "Certificate Requests",
             element: <CertificateSidebar />,
           },
           {
-            title: "Recent Business Permit Requests",
+            title: "Business Permit Requests",
             element: <BusinessSidebar />,
           },
         ],
       },
       {
         dashboard: "DONATION",
-      },
-      {
-        dashboard: "WASTE",
         card: [cashDonations],
       },
       {
         dashboard: "WASTE",
-        card: [driverLoaders, wasteLoaders, collectionVehicles, garbPending, garbRejected, accepted, completed],
+        card: [totalPickup],
+        upcomingEvents: wasteUpcomingEvents,
+        sidebar: [
+          {
+            title: "Recent Garbage Pickup Requests",
+            element: <GarbagePickupSidebar />,
+          },
+        ]
       },
     ]
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import { Button } from "@/components/ui/button/button"
@@ -52,6 +52,16 @@ function WasteIllegalDumping() {
     getStatusParam(activeTab)
   );
 
+  //fetch number of reports depending on status
+  const { data: allReportsData } = useWasteReport(
+      1, // page
+      10000, // large page size to get all
+      "", // no search
+      "0", // all filters
+      "" // all statuses
+  );
+
+
   // Extract data from paginated response
   const fetchedData = wasteReportData.results || [];
   const totalCount = wasteReportData.count || 0;
@@ -68,6 +78,21 @@ function WasteIllegalDumping() {
   const pendingTotalPages = activeTab === "pending" ? Math.ceil(totalCount / pageSize) : 0;
   const resolvedTotalPages = activeTab === "resolved" ? Math.ceil(totalCount / pageSize) : 0;
   const cancelledTotalPages = activeTab === "cancelled" ? Math.ceil(totalCount / pageSize) : 0;
+
+
+  // Calculate counts from allReportsData
+  const statusCounts = React.useMemo(() => {
+      if (!allReportsData?.results) {
+          return { pending: 0, resolved: 0, cancelled: 0 };
+      }
+      
+      return {
+          pending: allReportsData.results.filter(report => report.rep_status === "pending").length,
+          resolved: allReportsData.results.filter(report => report.rep_status === "resolved").length,
+          cancelled: allReportsData.results.filter(report => report.rep_status === "cancelled").length
+      };
+  }, [allReportsData]);
+
 
   const filterOptions = [
     { id: "0", name: "All Report Matter" },
@@ -114,11 +139,13 @@ function WasteIllegalDumping() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="bg-blue-100 px-3 py-1 rounded-sm inline-block shadow-sm">
+        <div className="flex justify-center">
+          <div className="bg-blue-100 px-3 py-1 rounded-sm shadow-sm">
             <p className="text-primary text-xs font-bold tracking-wider uppercase">
-                {row.getValue("rep_id")}
+              {row.getValue("rep_id")}
             </p>
-        </div>             
+          </div>
+        </div>        
       ),
     },
     // {
@@ -144,42 +171,85 @@ function WasteIllegalDumping() {
     // },
     {
       accessorKey: "rep_matter",
-      header: "Report Matter",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Report Matter
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("rep_matter")}</div>
+      )   
     },
     {
       accessorKey: "sitio_name",
-      header: "Sitio",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Sitio
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("sitio_name")}</div>
+      )        
     },    
     {
       accessorKey: "rep_location",
-      header: "Location",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Location
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("rep_location")}</div>
+      )        
     },
     {
       accessorKey: "rep_violator",
-      header: "Violator",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Violator
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("rep_violator")}</div>
+      )        
     },
     {
       accessorKey: "rep_complainant",
-      header: "Complainant",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Complainant
+          </div>
+      ),
       cell: ({ row }) => {
         const isAnonymous = row.original.rep_anonymous;
-        return <div>{isAnonymous ? "Anonymous" : row.original.rep_complainant}</div>;
+        return <div className="text-center">{isAnonymous ? "Anonymous" : row.original.rep_complainant}</div>;
       },
     },
     {
       accessorKey: "rep_contact",
-      header: "Contact No.",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Contact No.
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("rep_contact")}</div>
+      )       
     },
     {
       accessorKey: "rep_image",
-      header: "Details",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Details
+          </div>
+      ),
       cell: ({row}) => (
         <TooltipLayout
           trigger={
             <DialogLayout
               trigger={
-                <div className="flex justify-center">
-                  <Button className="flex items-center text-primary bg-white shadow-none hover:bg-white group">
+                <div className="flex justify-center items-center">
+                  <Button className="flex items-center text-primary bg-transparent shadow-none hover:bg-white group">
                     <span className="text-sm font-medium group-hover:text-primary">View</span>
                     <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
                       <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />
@@ -285,15 +355,45 @@ function WasteIllegalDumping() {
           </div>
           {/* Tabs for Pending/Resolved/Cancelled */}
           <div className="pt-3">
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <div className='pl-5 pb-3'>
-                <TabsList className="grid w-full grid-cols-3 max-w-xs">
-                  <TabsTrigger value="pending">In progress</TabsTrigger>
-                  <TabsTrigger value="resolved">Resolved</TabsTrigger>
-                  <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-                </TabsList>
-              </div>
-            </Tabs>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <div className='pl-5 pb-3'>
+              <TabsList className="grid w-full grid-cols-3 max-w-sm">
+                <TabsTrigger value="pending">
+                  <div className="flex items-center gap-2">
+                    <span>In progress</span>
+                    <span className={`inline-flex items-center justify-center min-w-[24px] h-5 px-1.5 text-xs font-semibold rounded-full
+                      ${statusCounts.pending > 0 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-gray-100 text-gray-500'}`}>
+                      {statusCounts.pending}
+                    </span>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger value="resolved">
+                  <div className="flex items-center gap-2">
+                    <span>Resolved</span>
+                    <span className={`inline-flex items-center justify-center min-w-[24px] h-5 px-1.5 text-xs font-semibold rounded-full
+                      ${statusCounts.resolved > 0 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-500'}`}>
+                      {statusCounts.resolved}
+                    </span>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger value="cancelled">
+                  <div className="flex items-center gap-2">
+                    <span>Cancelled</span>
+                    <span className={`inline-flex items-center justify-center min-w-[24px] h-5 px-1.5 text-xs font-semibold rounded-full
+                      ${statusCounts.cancelled > 0 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-gray-100 text-gray-500'}`}>
+                      {statusCounts.cancelled}
+                    </span>
+                  </div>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </Tabs>
           </div>
         </div>  
 

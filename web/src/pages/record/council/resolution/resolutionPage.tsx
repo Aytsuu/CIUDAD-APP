@@ -46,7 +46,7 @@ export const getAreaFocusColor = (focus: string): string => {
     case "finance":
       return "bg-orange-100 text-orange-800"
     case "council":
-      return "bg-primary/10 text-primary"
+      return "bg-blue-100 text-blue-800"
     case "waste":
       return "bg-green-100 text-green-800"
     default:
@@ -211,13 +211,14 @@ function ResolutionPage() {
                     <ArrowUpDown size={15}/>
                 </div>
             ),
-            cell: ({row}) => (
-                // <div className="flex w-full justify-center items-center">{row.getValue("res_num")}</div>
-                <div className="bg-blue-100 px-3 py-1 rounded-sm inline-block shadow-sm">
-                    <p className="text-primary text-[13px] font-bold tracking-wider uppercase">
-                        {row.getValue("res_num")}
-                    </p>
-                </div>                 
+            cell: ({ row }) => (
+                <div className="w-full flex justify-center">
+                    <div className="bg-blue-100 px-3 py-1 rounded-sm inline-block shadow-sm text-center">
+                        <p className="text-primary text-[13px] font-bold tracking-wider uppercase">
+                            {row.getValue("res_num")}
+                        </p>
+                    </div>
+                </div>
             )
         },
         {
@@ -237,11 +238,22 @@ function ResolutionPage() {
         },
         {
             accessorKey: "res_title", 
-            header: "Resolution Title", 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Resolution Title
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="text-center">{row.getValue("res_title")}</div>
+            )            
         },
         {
         accessorKey: "res_area_of_focus",
-        header: "Area of Focus",
+        header: ({}) => (
+            <div className="flex w-full justify-center items-center">
+                Area of Focus
+            </div>
+        ),
         cell: ({ row }) => (
             <div className="flex flex-wrap justify-center gap-2">
             {row.original.res_area_of_focus?.map((focus: string, index: number) => (
@@ -257,7 +269,11 @@ function ResolutionPage() {
         },
         {
             accessorKey: "resolution_supp",
-            header: "Supporting Documents",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Supporting Documents
+                </div>
+            ),
             cell: ({row}) => {
                 const files = row.original.resolution_supp;
                 const hasFiles = files && files.length > 0;
@@ -307,7 +323,11 @@ function ResolutionPage() {
         ...commonColumns,
         {
             accessorKey: "action", 
-            header: "Action", 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({row}) => ( 
                 <div className="flex justify-center items-center gap-2 pr-3 max-full">
                     <TooltipLayout
@@ -374,7 +394,11 @@ function ResolutionPage() {
         ...commonColumns,
         {
             accessorKey: "action", 
-            header: "Action", 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({row}) => ( 
                 <div className="flex justify-center items-center gap-2 pr-3 max-full">
                     <TooltipLayout

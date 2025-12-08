@@ -50,7 +50,9 @@ export default function LivingSoloForm({
         {!isRegistrationTab && (
           <div className="grid gap-2">
             <div className="flex justify-between items-center">
-              <Label className="text-black/70">Resident</Label>
+              <Label className="text-black/70">Resident
+              <span className="ml-1 text-red-500">*</span>
+              </Label>
             </div>
             <Combobox
               options={residents}

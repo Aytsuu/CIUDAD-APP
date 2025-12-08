@@ -128,10 +128,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
             <span>{item.title}</span>
           </Link>
         ) : (
-          <div
-            className={baseStyles}
-            onClick={() => setActiveItem(item.title)}
-          >
+          <div className={baseStyles} onClick={() => setActiveItem(item.title)}>
             <span>{item.title}</span>
           </div>
         )}
@@ -144,13 +141,22 @@ export function AppSidebar() {
   const { user } = useAuth();
   const [activeItem, setActiveItem] = useState<string>("");
 
-  const featureValidator = (requiredFeature?: string) => {
-    if (!requiredFeature) return user?.staff?.pos.toLowerCase() == "admin";
+  const featureValidator = (
+    requiredFeatures?: string[],
+    exclude?: string[]
+  ) => {
+    if (!requiredFeatures || requiredFeatures.length == 0) 
+      return user?.staff?.pos.toLowerCase() == "admin";
 
-    return (
-      user?.staff?.assignments?.includes(requiredFeature?.toUpperCase()) ||
-      user?.staff?.pos.toLowerCase() == "admin"
+    if (user?.staff?.pos.toLowerCase() == "admin") {
+      return !exclude?.includes("admin");
+    }
+
+    const hasFeature = requiredFeatures.some((feat) =>
+      user?.staff?.assignments?.includes(feat?.toUpperCase())
     );
+
+    return hasFeature;
   };
 
   // BARANGAY FEATURES
@@ -159,27 +165,33 @@ export function AppSidebar() {
       title: "Calendar",
       url: "/calendar-page",
     },
-    ...(featureValidator("report")
+    ...(featureValidator(["report"], ["admin"])
       ? [
           {
             title: "Team",
             url: "/team",
           },
+        ]
+      : []),
+    ...(featureValidator(["report"])
+      ? [
           {
             title: "Report",
             url: "/",
             items: [
               {
+                title: "Resident",
+                url: "/report/resident",
+              },
+              {
+                title: "Securado",
+                url: "/report/securado",
+              },
+              {
                 title: "Incident",
                 url: "/report/incident",
-                items: [
-                  {
-                    title: "Securado",
-                    url: "/report/incident/securado",
-                  },
-                ],
               },
-              { title: "Acknowledgement", url: "/report/acknowledgement" },
+              { title: "Action", url: "/report/action" },
               {
                 title: "Weekly Accomplishment",
                 url: "/report/weekly-accomplishment",
@@ -188,7 +200,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("complaint")
+    ...(featureValidator(["complaint"])
       ? [
           {
             title: "Blotter",
@@ -196,7 +208,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("council mediation")
+    ...(featureValidator(["council mediation"])
       ? [
           {
             title: "Council Mediation",
@@ -208,7 +220,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("summon remarks")
+    ...(featureValidator(["summon remarks"])
       ? [
           {
             title: "Summon Remarks",
@@ -216,7 +228,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("conciliation proceedings")
+    ...(featureValidator(["conciliation proceedings"])
       ? [
           {
             title: "Conciliation Proceedings",
@@ -224,7 +236,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("gad")
+    ...(featureValidator(["gad"])
       ? [
           {
             title: "GAD",
@@ -240,23 +252,21 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("council")
+    ...(featureValidator(["council"])
       ? [
           {
             title: "Council",
             url: "/",
             items: [
-              // { title: "Council Events", url: "/calendar-page" },
               { title: "Attendance", url: "/attendance-page" },
               { title: "Ordinance", url: "/ord-page" },
               { title: "Resolution", url: "/res-page" },
               { title: "Minutes of Meeting", url: "/mom-page" },
-              { title: "Document Template", url: "/templates-main" },
             ],
           },
         ]
       : []),
-    ...(featureValidator("finance")
+    ...(featureValidator(["finance"])
       ? [
           {
             title: "Finance",
@@ -289,7 +299,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("waste")
+    ...(featureValidator(["waste"])
       ? [
           {
             title: "Waste",
@@ -315,7 +325,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("certificate & clearances")
+    ...(featureValidator(["certificate & clearances"])
       ? [
           {
             title: "Certificate & Clearances",
@@ -341,7 +351,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("donation")
+    ...(featureValidator(["donation"])
       ? [
           {
             title: "Donation",
@@ -349,10 +359,14 @@ export function AppSidebar() {
           },
         ]
       : []),
-    {
-      title: "Activity Log",
-      url: "/record/activity-log",
-    },
+    ...(featureValidator(["waste", "gad", "council", "finance"])
+      ? [
+          {
+            title: "Activity Log",
+            url: "/record/activity-log",
+          },
+        ]
+      : []),
   ];
 
   // HEALTH FEATURES
@@ -360,10 +374,10 @@ export function AppSidebar() {
     ...(user?.staff?.pos.toLowerCase() != "doctor"
       ? [{ title: "Daily Notes", url: "/bhw/notes" }]
       : []),
-    ...(featureValidator("patient records")
+    ...(featureValidator(["patient records"])
       ? [{ title: "Patient Records", url: "/patientrecords" }]
       : []),
-    ...(featureValidator("forwarded records")
+    ...(featureValidator(["forwarded records"])
       ? [
           {
             title: "Forwarded Records",
@@ -385,7 +399,7 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("referred patients")
+    ...(featureValidator(["referred patients"])
       ? [
           {
             title: "Referred Patients",
@@ -410,7 +424,7 @@ export function AppSidebar() {
         { title: "Vaccination", url: "/services/vaccination" },
       ],
     },
-    ...(featureValidator("inventory")
+    ...(featureValidator(["inventory"])
       ? [
           {
             title: "Inventory",
@@ -425,13 +439,13 @@ export function AppSidebar() {
           },
         ]
       : []),
-    ...(featureValidator("follow-up visits")
+    ...(featureValidator(["follow-up visits"])
       ? [{ title: "Follow-up Visits", url: "/scheduled/follow-ups" }]
       : []),
-    ...(featureValidator("service scheduler")
+    ...(featureValidator(["service scheduler"])
       ? [{ title: "Service Scheduler", url: "/scheduler" }]
       : []),
-    ...(featureValidator("reports")
+    ...(featureValidator(["reports"])
       ? [{ title: "Reports", url: "/reports" }]
       : []),
   ];
@@ -446,11 +460,10 @@ export function AppSidebar() {
           {
             title: "Administration",
             url: "/administration",
-            
           },
         ]
       : []),
-    ...(featureValidator("profiling")
+    ...(featureValidator(["profiling"])
       ? [
           {
             title: "Profiling",

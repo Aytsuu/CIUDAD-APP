@@ -7,7 +7,7 @@ import { BudgetPlanStep2Schema } from "@/form-schema/treasurer/budgetplan-schema
 
 const styles = {
   fieldStyle: "flex items-center p-2",
-  formfooter: "font-bold text-blue w-[16rem] justify-center flex",
+  formfooter: "font-bold text-primary w-[16rem] justify-center flex",
 }
 
 interface budgetPlanWithLimitsProps {

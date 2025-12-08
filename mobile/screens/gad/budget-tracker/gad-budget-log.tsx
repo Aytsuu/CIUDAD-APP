@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
-  ScrollView,
   RefreshControl,
   ActivityIndicator,
 } from "react-native";
@@ -30,14 +29,19 @@ const GADBudgetLogTable = () => {
 
   const [searchInputVal, setSearchInputVal] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [refreshing, setRefreshing] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const { 
-    data: logsData, 
+    data: logsData = { results: [], count: 0, next: null, previous: null }, 
     isLoading, 
     error, 
     refetch,
@@ -54,21 +58,56 @@ const GADBudgetLogTable = () => {
     setCurrentPage(1);
   };
 
-  // Extract data from paginated response
-  const logs = logsData?.results || [];
-  const totalCount = logsData?.count || 0;
-  const totalPages = Math.ceil(totalCount / pageSize);
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
   };
 
-  const renderItem = ({ item }: { item: BudgetLogTable }) => (
+  const handleLoadMore = () => {
+    const hasNext = logsData?.next;
+    if (isScrolling && hasNext && !isFetching && !isLoadMore) {
+      setIsLoadMore(true);
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setCurrentPage(1);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
+
+  const logs = logsData?.results || [];
+  const totalCount = logsData?.count || 0;
+  const hasNext = logsData?.next;
+
+  const renderItem = useCallback(({ item }: { item: BudgetLogTable }) => (
     <Card className="mb-4 border border-gray-200 bg-white">
       <CardHeader>
-        <CardTitle className="text-lg text-[#2a3a61]">
+        <CardTitle className="text-lg text-[#2a3a61] font-sans">
           {item.gbudl_created_at
             ? new Date(item.gbudl_created_at).toLocaleString([], {
                 month: "short",
@@ -82,20 +121,20 @@ const GADBudgetLogTable = () => {
       </CardHeader>
       <CardContent className="space-y-2">
         <View className="flex-row justify-between">
-          <Text className="text-gray-600">Project Name:</Text>
-          <Text className="font-medium">{item.gbud_exp_project || "N/A"}</Text>
+          <Text className="text-gray-600 font-sans">Project Name:</Text>
+          <Text className="font-medium font-sans">{item.gbud_exp_project || "N/A"}</Text>
         </View>
         <View className="flex-row justify-between">
-          <Text className="text-gray-600">Particulars:</Text>
-          <Text className="font-medium">
+          <Text className="text-gray-600 font-sans">Particulars:</Text>
+          <Text className="font-medium font-sans">
             {item.gbud_exp_particulars && item.gbud_exp_particulars.length > 0
               ? item.gbud_exp_particulars.map((item) => item.name).join(", ")
               : "-"}
           </Text>
         </View>
         <View className="flex-row justify-between">
-          <Text className="text-gray-600">Proposed Budget:</Text>
-          <Text className="font-medium">
+          <Text className="text-gray-600 font-sans">Proposed Budget:</Text>
+          <Text className="font-medium font-sans">
             {item.gbud_proposed_budget !== null
               ? `₱${item.gbud_proposed_budget.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -104,8 +143,8 @@ const GADBudgetLogTable = () => {
           </Text>
         </View>
         <View className="flex-row justify-between">
-          <Text className="text-gray-600">Actual Expense:</Text>
-          <Text className="font-medium">
+          <Text className="text-gray-600 font-sans">Actual Expense:</Text>
+          <Text className="font-medium font-sans">
             {item.gbudl_prev_amount !== null
               ? `₱${item.gbudl_prev_amount.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -114,9 +153,9 @@ const GADBudgetLogTable = () => {
           </Text>
         </View>
         <View className="flex-row justify-between">
-          <Text className="text-gray-600">Return/Excess:</Text>
+          <Text className="text-gray-600 font-sans">Return/Excess:</Text>
           <Text
-            className={`font-medium ${
+            className={`font-medium font-sans ${
               item.gbudl_amount_returned && item.gbudl_prev_amount
                 ? item.gbudl_amount_returned < 0
                   ? "text-red-500"
@@ -135,7 +174,7 @@ const GADBudgetLogTable = () => {
         </View>
       </CardContent>
     </Card>
-  );
+  ), []);
 
   if (error) {
     return (
@@ -145,7 +184,7 @@ const GADBudgetLogTable = () => {
             <ChevronLeft size={24} color="#2a3a61" />
           </TouchableOpacity>
         }
-        headerTitle={<Text className="text-gray-900 text-[13px]">{year} Budget Logs</Text>}
+        headerTitle={<Text className="text-gray-900 text-[13px] font-sans">{year} Budget Logs</Text>}
         rightAction={
           <TouchableOpacity 
             onPress={() => setShowSearch(!showSearch)} 
@@ -156,14 +195,14 @@ const GADBudgetLogTable = () => {
         }
       >
         <View className="flex-1 justify-center items-center p-4">
-          <Text className="text-red-500 text-center text-lg">
+          <Text className="text-red-500 text-center text-lg font-sans">
             Error loading budget logs: {error.message}
           </Text>
           <TouchableOpacity 
             className="mt-4 bg-primaryBlue px-4 py-2 rounded"
-            onPress={() => refetch()}
+            onPress={handleRefresh}
           >
-            <Text className="text-white">Try Again</Text>
+            <Text className="text-white font-sans">Try Again</Text>
           </TouchableOpacity>
         </View>
       </PageLayout>
@@ -177,7 +216,7 @@ const GADBudgetLogTable = () => {
           <ChevronLeft size={24} color="#2a3a61" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">{year} Budget Logs</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px] font-sans">{year} Budget Logs</Text>}
       rightAction={
         <TouchableOpacity 
           onPress={() => setShowSearch(!showSearch)} 
@@ -187,8 +226,7 @@ const GADBudgetLogTable = () => {
         </TouchableOpacity>
       }
     >
-      <View className="flex-1 bg-white">
-        {/* Search Bar */}
+      <View className="flex-1 bg-white p-2">
         {showSearch && (
           <SearchInput 
             value={searchInputVal}
@@ -197,82 +235,82 @@ const GADBudgetLogTable = () => {
           />
         )}
 
-        <ScrollView
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-          contentContainerStyle={{ paddingBottom: 100 }}
-        >
-          <View className="p-2 px-6">
-            {/* Loading State */}
-            {isLoading ? (
-              <View className="py-8">
-                <LoadingState/>
-              </View>
-            ) : (
-              <>
-                {/* Data List */}
-                <FlatList
-                  data={logs}
-                  renderItem={renderItem}
-                  keyExtractor={(item) =>
-                    item.gbudl_id?.toString() || Math.random().toString()
-                  }
-                  scrollEnabled={false}
-                  ListEmptyComponent={
-                    <View className="py-8">
-                      <Text className="text-center text-gray-500">
-                        {searchQuery
-                          ? "No budget logs found matching your search" 
-                          : "No budget logs found"
-                        }
-                      </Text>
-                    </View>
-                  }
-                />
+        {!isRefreshing && logs.length > 0 && (
+          <View className="mb-2 px-4">
+            <Text className="text-xs text-gray-500 font-sans">
+              Showing {logs.length} of {totalCount} logs
+              {hasNext && ` (Page ${currentPage})`}
+            </Text>
+          </View>
+        )}
 
-                {/* Pagination */}
-                <View className="flex-row justify-between items-center mt-4 px-2">
-                  <TouchableOpacity
-                    onPress={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className={`p-2 ${currentPage === 1 ? "opacity-50" : ""}`}
-                  >
-                    <Text className="text-primaryBlue font-bold">← Previous</Text>
-                  </TouchableOpacity>
-
-                  <View className="flex-row items-center">
-                    {isFetching && (
-                      <ActivityIndicator size="small" color="#2a3a61" className="mr-2" />
-                    )}
-                    <Text className="text-gray-500">
-                      Page {currentPage} of {totalPages}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages || totalCount === 0}
-                    className={`p-2 ${
-                      currentPage === totalPages || totalCount === 0 ? "opacity-50" : ""
-                    }`}
-                  >
-                    <Text className="text-primaryBlue font-bold">Next →</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Results Count */}
-                <View className="mt-2 px-2">
-                  <Text className="text-gray-500 text-sm text-center">
-                    Showing {logs.length} of {totalCount} logs
+        {isLoading && isInitialRender ? (
+          <View className="h-64 justify-center items-center">
+            <LoadingState/>
+          </View>
+        ) : (
+          <FlatList
+            data={logs}
+            renderItem={renderItem}
+            keyExtractor={(item) =>
+              item.gbudl_id?.toString() || Math.random().toString()
+            }
+            maxToRenderPerBatch={5}
+            overScrollMode="never"
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            initialNumToRender={5}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            onScroll={handleScroll}
+            windowSize={11}
+            removeClippedSubviews
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: 20,
+              flexGrow: 1,
+            }}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={["#00a8f0"]}
+              />
+            }
+            ListFooterComponent={() =>
+              isFetching && isLoadMore ? (
+                <View className="py-4 items-center">
+                  <ActivityIndicator size="small" color="#3B82F6" />
+                  <Text className="text-xs text-gray-500 mt-2 font-sans">
+                    Loading more logs...
                   </Text>
                 </View>
-              </>
-            )}
-          </View>
-        </ScrollView>
+              ) : (
+                !hasNext &&
+                logs.length > 0 && (
+                  <View className="py-4 items-center">
+                    <Text className="text-xs text-gray-400 font-sans">
+                      No more logs
+                    </Text>
+                  </View>
+                )
+              )
+            }
+            ListEmptyComponent={
+              !isLoading ? (
+                <View className="py-8">
+                  <Text className="text-center text-gray-500 font-sans">
+                    {searchQuery
+                      ? "No budget logs found matching your search" 
+                      : "No budget logs found"
+                    }
+                  </Text>
+                </View>
+              ) : null
+            }
+          />
+        )}
       </View>
     </PageLayout>
   );

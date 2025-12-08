@@ -92,9 +92,7 @@ function BudgetHeaderForm({ form, onSubmit, onBack }: BudgetHeaderFormProps) {
                 Back
               </Button>
             )}
-            <Button 
-             className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-             type="submit">
+            <Button type="submit">
                 Next
                 <ChevronRightIcon className="w-4 h-4" />
             </Button>

@@ -35,7 +35,7 @@ import { familyProfilingRoute } from './family-profiling-route';
 import { patientsRecordRouter } from './patients-record-router';
 import { summon_router } from './summon-router';
 import { clearances_router } from './clearances-router';
-import { team_router } from "./team_router";
+import { team_router } from "./team-router";
 import { activity_log_router } from './activity-log-router';
 import { ProtectedRoute } from "@/ProtectedRoutes";
 import { healthreports_router } from "./health-reports-router";
@@ -43,6 +43,7 @@ import { medicalConsultation } from "./med-consultation";
 import { NotificationRouter } from "./notification-router";
 import { bhw_daily_notes_router } from "./bhw-daily-notes-router";
 
+// Initializing routes with protection
 export const main_router: RouteObject[] = [
   {
     path: "/",
@@ -50,56 +51,56 @@ export const main_router: RouteObject[] = [
     children: withTransition([
       {
         path: "/",
-        element: <ProtectedRoute>
-          <Navigate to="/dashboard" />
-        </ProtectedRoute>,
+        element: (
+          <ProtectedRoute>
+            <Navigate to="/dashboard" />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "dashboard",
-        element: <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>,
+        element: (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "announcement",
-        element: <ProtectedRoute exclude={["DOCTOR"]}>
-          <AnnouncementDashboard />
-        </ProtectedRoute>,
+        element: (
+          <ProtectedRoute exclude={["DOCTOR"]}>
+            <AnnouncementDashboard />
+          </ProtectedRoute>
+        ),
       },
       ...administration_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute adminOnly>
             {route.element}
           </ProtectedRoute>
-        )
+        ),
       })),
       ...profiling_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute
-            requiredFeature="PROFILING"
-          >
+          <ProtectedRoute requiredFeatures={["PROFILING"]}>
             {route.element}
           </ProtectedRoute>
-        )
+        ),
       })),
       ...report_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute
-            requiredFeature="REPORT"
-          >
+          <ProtectedRoute requiredFeatures={["REPORT"]}>
             {route.element}
           </ProtectedRoute>
-        )
+        ),
       })),
       ...complaint_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute
-            requiredFeature="COMPLAINT"
-          >
+          <ProtectedRoute requiredFeatures={["COMPLAINT"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -107,7 +108,7 @@ export const main_router: RouteObject[] = [
       ...team_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requiredFeatures={["REPORT"]} exclude={["ADMIN"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -115,7 +116,7 @@ export const main_router: RouteObject[] = [
       ...ord_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute requiredFeatures={["COUNCIL"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -123,7 +124,7 @@ export const main_router: RouteObject[] = [
       ...res_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute requiredFeatures={["COUNCIL"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -131,7 +132,7 @@ export const main_router: RouteObject[] = [
       ...attendance_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute requiredFeatures={["COUNCIL"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -139,15 +140,16 @@ export const main_router: RouteObject[] = [
       ...mom_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute requiredFeatures={["COUNCIL"]}>
             {route.element}
           </ProtectedRoute>
         ),
       })),
+      // Wrapped this one (it was raw in your snippet)
       ...council_calendar_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="COUNCIL">
+          <ProtectedRoute>
             {route.element}
           </ProtectedRoute>
         ),
@@ -155,7 +157,7 @@ export const main_router: RouteObject[] = [
       ...donation_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="DONATION">
+          <ProtectedRoute requiredFeatures={["DONATION"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -163,7 +165,7 @@ export const main_router: RouteObject[] = [
       ...treasurer_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="FINANCE">
+          <ProtectedRoute requiredFeatures={["FINANCE"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -171,7 +173,7 @@ export const main_router: RouteObject[] = [
       ...waste_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="WASTE">
+          <ProtectedRoute requiredFeatures={["WASTE"]}>
             {route.element}
           </ProtectedRoute>
         ),
@@ -184,47 +186,111 @@ export const main_router: RouteObject[] = [
           </ProtectedRoute>
         ),
       })),
+      // Keep your special logic for clearances
       ...clearances_router.map((route) => ({
         ...route,
-        children: route.children.map((route) => ({
-          ...route,
+        children: route.children?.map((childRoute) => ({
+          ...childRoute,
           element: (
-            <ProtectedRoute requiredFeature="CERTIFICATION & CLEARANCES">
-              {route.element}
+            <ProtectedRoute requiredFeatures={["CERTIFICATION & CLEARANCES"]}>
+              {childRoute.element}
             </ProtectedRoute>
           ),
-        }))
+        })),
       })),
       ...maternal_router.map((route) => ({
         ...route,
         element: (
-          <ProtectedRoute requiredFeature="SERVICES">
+          <ProtectedRoute requiredFeatures={["SERVICES"]}>
             {route.element}
           </ProtectedRoute>
         ),
       })),
-      ...vaccination,
-      ...childHealthServices,
-      ...gad_router,
-      ...bites_route,
-      ...announcement_route,
-      ...famplanning_route,
-      ...healthinventory,
-      ...doctorRouting,
-      ...summon_router,
-      ...familyProfilingRoute,
-      ...patientsRecordRouter,
-      ...medicineRequest,
-      ...forwardedhealthrecord_router,
-      ...firstaid_router,
-      ...health_schedule_routes,
-      ...viewprofile_router,
-      ...template_router, 
-      ...healthreports_router,
-      ...medicalConsultation,
-      ...NotificationRouter,
-      ...bhw_daily_notes_router,
-      ...NotificationRouter,
-      ])
-    }
-]
+      // --- START OF NEWLY PROTECTED ROUTES ---
+      ...vaccination.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...childHealthServices.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...gad_router.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...bites_route.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...announcement_route.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...famplanning_route.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...healthinventory.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...doctorRouting.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...summon_router.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...familyProfilingRoute.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...patientsRecordRouter.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...medicineRequest.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...forwardedhealthrecord_router.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...firstaid_router.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...health_schedule_routes.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...viewprofile_router.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...template_router.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...healthreports_router.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...medicalConsultation.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...bhw_daily_notes_router.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+      ...NotificationRouter.map((route) => ({
+        ...route,
+        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+      })),
+    ]),
+  },
+];

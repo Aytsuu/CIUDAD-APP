@@ -173,7 +173,7 @@ export default function WeeklyAR() {
 
   return (
     <MainLayoutComponent
-      title="Weekly Accomplishment Report"
+      title="Weekly Accomplishment Reports"
       description="Manage and view weekly accomplishment reports"
     >
       <div className="flex flex-col sm:flex-row items-start justify-end sm:items-center gap-4 mb-6">

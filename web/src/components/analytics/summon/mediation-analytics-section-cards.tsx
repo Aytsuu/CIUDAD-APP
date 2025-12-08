@@ -51,24 +51,9 @@ MediationCards.displayName = "MediationCard";
 // Card configurations
 const conciliationCards = [
   {
-    title: "Waiting for Schedule",
+    title: "Mediation Cases",
     description: "",
-    dataKey: "waiting" as const,
-  },
-  {
-    title: "Ongoing",    
-    description: "",
-    dataKey: "ongoing" as const,
-  },
-  {
-    title: "Forwarded to Lupon",
-    description: "",
-    dataKey: "forwarded" as const,
-  },
-  {
-    title: "Resolved",
-    description: "",
-    dataKey: "resolved" as const,
+    dataKey: "total" as const,
   },
 ];
 
@@ -94,11 +79,7 @@ export const useMediationSectionCards = () => {
   ));
 
   return {
-    waiting: cards[0],
-    ongoing: cards[1],
-    forwarded: cards[2],
-    resolved: cards[3],
-    allCards: cards
+    mediationcases: cards[0],
   };
 };
 

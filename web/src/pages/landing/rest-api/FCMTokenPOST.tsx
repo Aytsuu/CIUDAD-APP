@@ -22,6 +22,6 @@ export const FCMTokenPOST = async (token: string) => {
 
     return res.data;
   } catch (error: any) {
-    console.error("Error posting FCM token: ", error.response?.data || error.message);
+    throw error;
   }
 };

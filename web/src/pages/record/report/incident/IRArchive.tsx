@@ -1,21 +1,30 @@
-import { DataTable } from "@/components/ui/table/data-table"
-import { FileText, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { IRColumns } from "../ReportColumns"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import React from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { useDebounce } from "@/hooks/use-debounce"
-import { useGetIncidentReport } from "../queries/reportFetch"
-import { LayoutWithBack } from "@/components/ui/layout/layout-with-back"
-import { Spinner } from "@/components/ui/spinner"
+import { DataTable } from "@/components/ui/table/data-table";
+import { FileText, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useGetIncidentReport } from "../queries/reportFetch";
+import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
+import { Spinner } from "@/components/ui/spinner";
+import { SelectLayout } from "@/components/ui/select/select-layout";
+import { ArchivedIRColumns } from "../ReportColumns";
 
 export default function IRArchive() {
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [severity, setSeverity] = React.useState<string>("all");
+  const [status, setStatus] = React.useState<string>("all");
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
@@ -25,7 +34,11 @@ export default function IRArchive() {
     currentPage,
     debouncedPageSize,
     debouncedSearchQuery,
-    true
+    true,
+    undefined,
+    severity,
+    true,
+    status
   );
 
   const IRList = IncidentReport?.results || [];
@@ -34,9 +47,11 @@ export default function IRArchive() {
 
   return (
     <LayoutWithBack
-      title={<>
-        Archive / <span className="text-gray-400">Incident Report</span>
-      </>}
+      title={
+        <>
+          Archive / <span className="text-gray-400">Incident Reports</span>
+        </>
+      }
       description="View all archived incident reports in your system"
     >
       <div className="flex w-full h-full gap-4">
@@ -53,27 +68,66 @@ export default function IRArchive() {
                     className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-              </div> 
+              </div>
+              <div className="flex items-center gap-2">
+                <SelectLayout
+                  value={severity}
+                  className="gap-4"
+                  onChange={(value) => {
+                    setCurrentPage(1);
+                    setSeverity(value);
+                  }}
+                  placeholder=""
+                  options={[
+                    { id: "all", name: "All Severities" },
+                    { id: "low", name: "Low" },
+                    { id: "medium", name: "Medium" },
+                    { id: "high", name: "High" },
+                  ]}
+                  withReset={false}
+                  valueLabel="Severity"
+                />
+
+                <SelectLayout
+                  value={status}
+                  className="gap-4"
+                  onChange={(value) => {
+                    setCurrentPage(1);
+                    setStatus(value);
+                  }}
+                  placeholder=""
+                  options={[
+                    { id: "all", name: "All Statuses" },
+                    { id: "in-progress", name: "In-Progress" },
+                    { id: "resolved", name: "Resolved" },
+                  ]}
+                  withReset={false}
+                  valueLabel="Status"
+                />
+              </div>
             </div>
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-sm font-medium text-gray-700">Show</span>
-                  <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
-                    <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm text-gray-600">entries</span>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => setPageSize(Number.parseInt(value))}
+                >
+                  <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600">entries</span>
               </div>
             </div>
 
@@ -85,21 +139,28 @@ export default function IRArchive() {
                   {searchQuery ? "No reports found" : "No reports yet"}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {searchQuery &&`No reports match "${searchQuery}". Try adjusting your search.`}
+                  {searchQuery &&
+                    `No reports match "${searchQuery}". Try adjusting your search.`}
                 </p>
               </div>
             )}
-            
+
             {/* Loading State */}
             {isLoadingIR && (
               <div className="flex items-center justify-center py-12">
-                <Spinner size="lg"/>
-                <span className="ml-2 text-gray-600">Loading incident reports...</span>
+                <Spinner size="lg" />
+                <span className="ml-2 text-gray-600">
+                  Loading incident reports...
+                </span>
               </div>
             )}
 
             {!isLoadingIR && IRList.length > 0 && (
-              <DataTable columns={IRColumns()} data={IRList} isLoading={isLoadingIR} />
+              <DataTable
+                columns={ArchivedIRColumns()}
+                data={IRList}
+                isLoading={isLoadingIR}
+              />
             )}
           </CardContent>
 
@@ -116,8 +177,13 @@ export default function IRArchive() {
                         Loading...
                       </div>
                     ) : (
-                      `Showing ${totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0} -
-                      ${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} entries`
+                      `Showing ${
+                        totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0
+                      } -
+                      ${Math.min(
+                        currentPage * pageSize,
+                        totalCount
+                      )} of ${totalCount} entries`
                     )}
                   </div>
 
@@ -133,5 +199,5 @@ export default function IRArchive() {
         </Card>
       </div>
     </LayoutWithBack>
-  )
+  );
 }

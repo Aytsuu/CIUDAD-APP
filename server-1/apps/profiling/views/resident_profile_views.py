@@ -177,12 +177,11 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
     
     def get_queryset(self):
         excluded_fam_id = self.kwargs.get('fam_id', None)
-        is_staff = self.request.query_params.get('is_staff', "false").lower() == "true"
+        is_staff = self.request.query_params.get('is_staff', 'false').lower() == "true"
         exclude_independent = self.request.query_params.get('exclude_independent', "false").lower() == "true"
         search = self.request.query_params.get('search', '').strip()
         is_search_only = self.request.query_params.get('is_search_only', "false").lower() == "true"
         deceased_only = self.request.query_params.get('deceased_only', "false").lower() == "true"
-
         queryset = ResidentProfile.objects.all()
         
         # Filter for deceased residents only if requested
@@ -198,8 +197,18 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
                 Q(per__per_mname__icontains=search)
             )
             
-            if is_search_only:
-                return queryset
+            # if is_search_only:
+            #     return queryset
+        
+        # For staff assignment, the list should not contain staff members
+        if is_staff:
+            from apps.administration.models import Staff
+            staffs = Staff.objects.all()
+            
+            return [
+                res for res in queryset 
+                if not staffs.filter(staff_id=res.rp_id)
+            ]
         
         # Fetch only what's being searched
         if is_search_only and not search:
@@ -208,22 +217,11 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
         # When adding new member to a family, the list shoud not contain members of the family
         if excluded_fam_id:
             queryset = queryset.filter(~Q(family_compositions__fam_id=excluded_fam_id))
-        
-        # For staff assignment, the list should not contain staff members
-        if is_staff:
-            from apps.administration.models import Staff
-            staffs = Staff.objects.all()
-            
-            queryset = [
-                res for res in queryset 
-                if res.rp_id not in
-                [staff.staff_id for staff in staffs]
-            ]
 
         # Family registration, living independently
         # Exclude those that are already registered as independent from the list
         if exclude_independent:
-            queryset = queryset.filter(~Q(family_compositions__fc_role='Independent'))
+            queryset = queryset.filter(~Q(family_compositions__fc_role='INDEPENDENT'))
         
         # Returns all residents by default if no parameters were provided 
         return queryset
@@ -285,7 +283,7 @@ class LinkVoterView(generics.UpdateAPIView):
         retrieved = {
             "voter": Voter.objects.filter(voter_name=name).first().voter_id
         }
-        print(retrieved)
+
         serializer = self.get_serializer(instance, data=retrieved, partial=True)
         if serializer.is_valid():
             serializer.save()

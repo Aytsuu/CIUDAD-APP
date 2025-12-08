@@ -43,9 +43,14 @@ export const getBudgetPlanInactive = async (page: number, pageSize: number, sear
 }
 
 
-export const getBudgetPlanHistory = async (planId: string) => {
+export const getBudgetPlanHistory = async (planId: string, page: number, pageSize: number) => {
     try{
-        const res = await api.get(`treasurer/budget-plan-history/${planId}/`)
+        const res = await api.get(`treasurer/budget-plan-history/${planId}/`, {
+            params: {
+                page,
+                page_size: pageSize,
+            }
+        })
         return res.data
     }catch(err){
         console.error(err)

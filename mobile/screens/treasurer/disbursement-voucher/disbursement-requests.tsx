@@ -7,7 +7,7 @@ export const getDisbursementVouchers = async (
   searchQuery?: string,
   year?: string,
   archive?: boolean
-): Promise<{ results: DisbursementVoucher[]; count: number }> => {
+): Promise<{ results: DisbursementVoucher[]; count: number; next: string | null; previous: string | null }> => {
   try {
     const params: any = {
       page,
@@ -20,23 +20,20 @@ export const getDisbursementVouchers = async (
     
     const res = await api.get('treasurer/disbursement-vouchers/', { params });
     
-    // Handle paginated response
-    if (res.data.results) {
-      return {
-        results: res.data.results || [],
-        count: res.data.count || 0
-      };
-    }
-    
-    // Handle non-paginated response (fallback)
-    const data = res.data?.data ?? res.data ?? [];
+    // Return the complete paginated response structure
     return {
-      results: Array.isArray(data) ? data : [],
-      count: Array.isArray(data) ? data.length : 0
+      results: res.data.results || [],
+      count: res.data.count || 0,
+      next: res.data.next || null,
+      previous: res.data.previous || null
     };
   } catch (err) {
-    // console.error('Error fetching disbursement vouchers:', err);
-    return { results: [], count: 0 };
+    return { 
+      results: [], 
+      count: 0,
+      next: null,
+      previous: null
+    };
   }
 };
 

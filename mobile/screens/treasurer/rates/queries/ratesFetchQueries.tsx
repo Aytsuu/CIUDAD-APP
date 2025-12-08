@@ -15,18 +15,22 @@ export type AnnualGrossSales = {
 }
 
 export const useGetAnnualGrossSalesActive = (page?: number, pageSize?: number, searchQuery?: string) => {
-    return useQuery<{results: AnnualGrossSales[], count: number}>({
+    return useQuery({
         queryKey: ["grossSalesActive", page, pageSize, searchQuery],  
         queryFn: () => getAnnualGrossSalesActive( page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
 export const useGetAllAnnualGrossSales = (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results: AnnualGrossSales[], count: number}>({
+    return useQuery({
         queryKey: ["allGrossSales", page, pageSize, searchQuery],  
         queryFn: () => getAllAnnualGrossSales( page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
@@ -49,18 +53,22 @@ export const useGetPurposeAndRate = () => {
 };
 
 export const useGetPurposeAndRatePersonalActive = (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results: PurposeAndRate[], count: number}>({
+    return useQuery({
         queryKey: ["personalActive", page, pageSize, searchQuery],  
         queryFn:() => getPurposeAndRatePersonalActive(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
 export const useGetPurposeAndRateAllPersonal= (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results: PurposeAndRate[], count: number}>({
+    return useQuery({
         queryKey: ["allPersonal", page, pageSize, searchQuery],  
         queryFn:() => getPurposeAndRateAllPersonal(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
@@ -73,10 +81,12 @@ export const useGetPurposeAndRateServiceChargeActive = (page: number, pageSize: 
 };
 
 export const useGetPurposeAndRateAllServiceCharge = (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results: PurposeAndRate[], count: number}>({
+    return useQuery({
         queryKey: ["allServiceCharge", page, pageSize, searchQuery],  
         queryFn:() => getPurposeAndRateAllServiceCharge(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 
@@ -89,10 +99,12 @@ export const useGetPurposeAndRateBarangayPermitActive = (page: number, pageSize:
 };
 
 export const useGetPurposeAndRateAllBarangayPermit = (page: number, pageSize: number, searchQuery: string) => {
-    return useQuery<{results: PurposeAndRate[], count: number}>({
+    return useQuery({
         queryKey: ["allBarangayPermit", page, pageSize, searchQuery],  
         queryFn:() => getPurposeAndRateAllBarangayPermit(page, pageSize, searchQuery),
         staleTime: 1000 * 60 * 30, 
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };
 

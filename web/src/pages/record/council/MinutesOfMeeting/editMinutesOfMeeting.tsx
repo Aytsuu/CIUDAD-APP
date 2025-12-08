@@ -57,6 +57,7 @@ export default function EditMinutesOfMeeting({mom_title, mom_agenda, mom_date, m
             meetingDate: mom_date,
             meetingAreaOfFocus: areas_of_focus,
             mom_id: mom_id,
+            momf_id: String(momf_id)
         },
     });
 
