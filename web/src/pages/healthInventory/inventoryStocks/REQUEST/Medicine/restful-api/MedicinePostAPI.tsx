@@ -36,7 +36,6 @@ export const addMedicineTransaction = async (data: Record<string, any>) => {try 
     }
     return null;
   }
+}
   
 
-
-  
