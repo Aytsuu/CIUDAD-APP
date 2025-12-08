@@ -247,7 +247,7 @@ function IncomeandExpenseCreateForm( { onSuccess, year}: IncomeandExpenseCreateF
                                     <FormControl>
                                         <Combobox
                                             options={particularSelector}
-                                            value={field.value}
+                                            value={field.value || ""}
                                             onChange={field.onChange}
                                             placeholder="Select Particulars"
                                             emptyMessage="No particulars found"

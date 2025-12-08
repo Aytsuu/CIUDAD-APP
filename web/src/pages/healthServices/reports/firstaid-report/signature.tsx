@@ -56,7 +56,9 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
     }
     setSignatureData(null);
     setIsEditing(false);
-    console.log("Signature cleared - notifying parent");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Signature cleared - notifying parent");
+    }
     onSignatureChange?.(null);
   };
 
@@ -74,7 +76,9 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
         try {
           dataURL = sigRef.current.getTrimmedCanvas().toDataURL("image/png");
         } catch (trimError) {
-          console.warn("getTrimmedCanvas failed, using regular toDataURL:", trimError);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn("getTrimmedCanvas failed, using regular toDataURL:", trimError);
+          }
           dataURL = sigRef.current.toDataURL("image/png");
         }
 
@@ -86,7 +90,9 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
         onSignatureChange?.(base64Only);
       }
     } catch (error) {
-      console.error("Failed to save signature:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to save signature:", error);
+      }
       onSignatureChange?.(null);
     }
   };
@@ -98,7 +104,9 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
       try {
         sigRef.current.fromDataURL(signatureData);
       } catch (error) {
-        console.error("Failed to load signature for editing:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Failed to load signature for editing:", error);
+        }
       }
     }
   };
@@ -125,7 +133,9 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
         // Return only base64 part
         return signatureData.split(",")[1];
       } catch (error) {
-        console.error("Failed to get signature:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Failed to get signature:", error);
+        }
         return null;
       }
     },
@@ -137,7 +147,9 @@ export const SignatureField = forwardRef<SignatureFieldRef, SignatureFieldProps>
           setSignatureData(dataURL);
           setIsEditing(false);
         } catch (error) {
-          console.error("Failed to set signature:", error);
+          if (process.env.NODE_ENV === 'development') {
+            console.error("Failed to set signature:", error);
+          }
         }
       }
     }

@@ -6,12 +6,14 @@ import { showErrorToast } from "@/components/ui/toast";
 export const getCombinedStock = async (page: number, pageSize: number, search?: string, filter?: any): Promise<any> => {
   try {
     const res = await api2.get("inventory/combined-stock-table/", {
-      params: { page, page_size: pageSize, search: search?.trim() || undefined, filter: filter || "all" }
+      params: { page, page_size: pageSize, search: search?.trim() || undefined, filter: filter || "all" },
     });
 
     return res.data;
   } catch (error) {
-    console.error("Combined Stock API Error:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Combined Stock API Error:", error);
+    }
     return [];
   }
 };
@@ -22,10 +24,14 @@ export const getImmunizationStocks = async () => {
     if (res.status == 200) {
       return res.data;
     }
-    console.error(res.status);
+    if (process.env.NODE_ENV === "development") {
+      console.error(res.status);
+    }
     return [];
   } catch (err) {
-    console.log(err);
+    if (process.env.NODE_ENV === "development") {
+      console.log(err);
+    }
     return [];
   }
 };
@@ -39,28 +45,35 @@ export const getSupplies = async () => {
       return res.data.results.map((supplies: any) => ({
         id: supplies.imz_id.toString(),
         name: supplies.imz_name,
-        category: supplies.category
+        category: supplies.category,
       }));
     }
-    console.error(res.status);
+    if (process.env.NODE_ENV === "development") {
+      console.error(res.status);
+    }
     return [];
   } catch (err) {
-    console.log(err);
+    if (process.env.NODE_ENV === "development") {
+      console.log(err);
+    }
     return [];
   }
 };
-
 
 export const getVaccineStocks = async () => {
   try {
     const res = await api2.get("inventory/vaccine_stocks/");
     if (res.status !== 200) {
-      console.error("Failed to fetch vaccine stocks:", res.status);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to fetch vaccine stocks:", res.status);
+      }
       return [];
     }
     return res.data;
   } catch (err) {
-    console.log(err);
+    if (process.env.NODE_ENV === "development") {
+      console.log(err);
+    }
     return [];
   }
 };
@@ -69,34 +82,33 @@ export const getVaccine = async () => {
   try {
     const res = await api2.get("inventory/vac_list/");
     if (res.status !== 200) {
-      console.error("Failed to fetch vaccines:", res.status);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Failed to fetch vaccines:", res.status);
+      }
       return [];
     }
     return res.data;
   } catch (err) {
-    console.error("Error fetching vaccines:", err);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error fetching vaccines:", err);
+    }
     return [];
   }
 };
-
-
 
 export const createVaccineStock = async (data: Record<string, any>) => {
   try {
     const response = await api2.post("inventory/vaccine_stock-create/", data);
     return response.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === "development") {
+      console.error(err);
+    }
     throw err;
   }
 };
 
-export const AntigenTransaction = async (
-  vacStck_id: number,
-  string_qty: string,
-  action: string,
-  staffId: string
-) => {
+export const AntigenTransaction = async (vacStck_id: number, string_qty: string, action: string, staffId: string) => {
   try {
     const res = await api2.post("inventory/antigens_stocks/transaction/", {
       antt_qty: string_qty,
@@ -106,12 +118,12 @@ export const AntigenTransaction = async (
     });
     return res.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === "development") {
+      console.error(err);
+    }
     throw err;
   }
 };
-
-
 
 export const useImzBatchNumber = () => {
   const [batchNumbers, setBatchNumbers] = useState<{ batchNumber: string }[]>([]);
@@ -123,14 +135,17 @@ export const useImzBatchNumber = () => {
         const stocks = await getImmunizationStocks();
         if (Array.isArray(stocks)) {
           const batches = stocks.map((stock: any) => ({
-            batchNumber: stock.batch_number || ""
+            batchNumber: stock.batch_number || "",
           }));
           setBatchNumbers(batches);
         } else {
           showErrorToast("Failed to fetch batch numbers");
           setBatchNumbers([]);
         }
-      } catch (error) {
+      } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching vaccines:", err);
+        }
         showErrorToast("Error fetching batch numbers");
         setBatchNumbers([]);
       } finally {
@@ -142,11 +157,9 @@ export const useImzBatchNumber = () => {
 
   return {
     batchNumbers,
-    isLoading
+    isLoading,
   };
 };
-
-
 
 export const useVacBatchNumber = () => {
   const [batchNumbers, setBatchNumbers] = useState<{ batchNumber: string }[]>([]);
@@ -159,14 +172,17 @@ export const useVacBatchNumber = () => {
 
         if (Array.isArray(stocks)) {
           const batches = stocks.map((stock: any) => ({
-            batchNumber: stock.batch_number || ""
+            batchNumber: stock.batch_number || "",
           }));
           setBatchNumbers(batches);
         } else {
           showErrorToast("Failed to fetch batch numbers");
           setBatchNumbers([]);
         }
-      } catch (error) {
+      } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error fetching vaccines:", err);
+        }
         showErrorToast("Error fetching batch numbers");
         setBatchNumbers([]);
       } finally {
@@ -179,6 +195,6 @@ export const useVacBatchNumber = () => {
 
   return {
     batchNumbers,
-    isLoading
+    isLoading,
   };
 };

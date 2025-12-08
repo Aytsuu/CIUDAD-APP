@@ -10,7 +10,7 @@ from apps.profiling.serializers.business_serializers import FileInputSerializer
 
 class ARBaseSerializer(serializers.ModelSerializer):
   class Meta:
-    model = AcknowledgementReport
+    model = ActionReport
     fields = '__all__'
 
 class ARFileBaseSerializer(serializers.ModelSerializer):
@@ -27,7 +27,7 @@ class ARTableSerializer(serializers.ModelSerializer):
   ar_time_completed = serializers.SerializerMethodField()
 
   class Meta:
-    model = AcknowledgementReport
+    model = ActionReport
     fields = ['id', 'ar_title', 'ar_action_taken', 'ar_date_started', 'ar_time_started', 'ar_date_completed',
               'ar_time_completed', 'ar_area', 'date', 'ar_files', 'status', 'ar_result']
   
@@ -59,7 +59,7 @@ class ARCreateSerializer(serializers.ModelSerializer):
   files = FileInputSerializer(write_only=True, required=False, many=True)
 
   class Meta:
-    model = AcknowledgementReport
+    model = ActionReport
     fields = ['ar_id', 'ar_title', 'ar_result', 'ar_date_started', 'ar_time_started', 'ar_date_completed', 'ar_created_at', 
               'ar_time_completed', 'ar_area', 'ar_action_taken', 'ir', 'staff', 'files'] 
     extra_kwargs = {
@@ -71,14 +71,14 @@ class ARCreateSerializer(serializers.ModelSerializer):
     files = validated_data.pop('files', [])
     ir = validated_data.get('ir', None)
 
-    instance = AcknowledgementReport(**validated_data)
+    instance = ActionReport(**validated_data)
     instance.save()
     
     if files:
       self._upload_files(instance, files)
 
     if ir:
-      ir.ir_is_archive = True
+      ir.ir_status = "RESOLVED"
       ir.save()
     
     return instance

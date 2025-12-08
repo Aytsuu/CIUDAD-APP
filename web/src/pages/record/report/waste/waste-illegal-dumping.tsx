@@ -114,11 +114,13 @@ function WasteIllegalDumping() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="bg-blue-100 px-3 py-1 rounded-sm inline-block shadow-sm">
+        <div className="flex justify-center">
+          <div className="bg-blue-100 px-3 py-1 rounded-sm shadow-sm">
             <p className="text-primary text-xs font-bold tracking-wider uppercase">
-                {row.getValue("rep_id")}
+              {row.getValue("rep_id")}
             </p>
-        </div>             
+          </div>
+        </div>        
       ),
     },
     // {
@@ -144,42 +146,85 @@ function WasteIllegalDumping() {
     // },
     {
       accessorKey: "rep_matter",
-      header: "Report Matter",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Report Matter
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("rep_matter")}</div>
+      )   
     },
     {
       accessorKey: "sitio_name",
-      header: "Sitio",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Sitio
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("sitio_name")}</div>
+      )        
     },    
     {
       accessorKey: "rep_location",
-      header: "Location",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Location
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("rep_location")}</div>
+      )        
     },
     {
       accessorKey: "rep_violator",
-      header: "Violator",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Violator
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("rep_violator")}</div>
+      )        
     },
     {
       accessorKey: "rep_complainant",
-      header: "Complainant",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Complainant
+          </div>
+      ),
       cell: ({ row }) => {
         const isAnonymous = row.original.rep_anonymous;
-        return <div>{isAnonymous ? "Anonymous" : row.original.rep_complainant}</div>;
+        return <div className="text-center">{isAnonymous ? "Anonymous" : row.original.rep_complainant}</div>;
       },
     },
     {
       accessorKey: "rep_contact",
-      header: "Contact No.",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Contact No.
+          </div>
+      ),
+      cell: ({ row }) => (
+          <div className="text-center">{row.getValue("rep_contact")}</div>
+      )       
     },
     {
       accessorKey: "rep_image",
-      header: "Details",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Details
+          </div>
+      ),
       cell: ({row}) => (
         <TooltipLayout
           trigger={
             <DialogLayout
               trigger={
-                <div className="flex justify-center">
-                  <Button className="flex items-center text-primary bg-white shadow-none hover:bg-white group">
+                <div className="flex justify-center items-center">
+                  <Button className="flex items-center text-primary bg-transparent shadow-none hover:bg-white group">
                     <span className="text-sm font-medium group-hover:text-primary">View</span>
                     <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center group-hover:bg-primary transition-colors">
                       <ChevronRight className="h-3 w-3 text-primary group-hover:text-white transition-colors" />

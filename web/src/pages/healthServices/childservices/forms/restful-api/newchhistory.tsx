@@ -21,7 +21,7 @@ export interface AddRecordResult {
  * Comprehensive function that sends all child health record data to the single API endpoint
  * This matches the backend UpdateChildHealthRecordAPIView structure
  */
-export async function updateChildHealthRecord({ submittedData, staff, todaysHistoricalRecord, originalRecord }: AddRecordArgs): Promise<AddRecordResult> {
+export async function updateChildHealthRecord({ submittedData, staff, todaysHistoricalRecord, originalRecord }: AddRecordArgs): Promise<any> {
   // Basic validation on frontend
   if (!submittedData.pat_id) {
     throw new Error("Patient ID is required");
@@ -130,18 +130,10 @@ export async function updateChildHealthRecord({ submittedData, staff, todaysHist
         },
       };
     } else {
-      throw new Error(`Unexpected response status: ${response.status}`);
+      if (process.env.NODE_ENV === 'development') console.error(`Unexpected response status: ${response.status}`, response);
     }
   } catch (error: any) {
-
-    // Handle different types of errors
-    if (error.response?.data?.error) {
-      throw new Error(error.response.data.error);
-    } else if (error instanceof Error) {
-      throw new Error(`Failed to update child health record: ${error.message}`);
-    } else {
-      throw new Error("Failed to update child health record: Unknown error occurred");
-    }
+    if (process.env.NODE_ENV === 'development') console.error(error);
   }
 }
 

@@ -31,16 +31,11 @@ export const CouncilEventsDashboard = () => {
   }
 
   if (upcomingEvents.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <Clock className="w-12 h-12 text-white/40 mb-3" />
-        <p className="text-white/80 text-sm">No upcoming events in the next 5 days</p>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+    <div className="space-y-3">
       {upcomingEvents.slice(0, 3).map((event: CouncilEvent) => (
         <div
           key={event.ce_id}

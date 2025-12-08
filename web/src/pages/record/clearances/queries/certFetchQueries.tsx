@@ -64,14 +64,14 @@ export type NonResidentCertificate = {
 };
 
 export type MarkCertificateVariables = {
-  cr_id: string;
+  cr_id?: string; // Optional - not needed for non-residents
   file_url?: string;
   staff_id?: string;
   is_nonresident?: boolean;
-  nrc_id?: string;
+  nrc_id?: string; // Required for non-residents
 };
 
-export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, purpose?: string, paymentStatus?: string, ordering?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
+export const getCertificates = async (search?: string, page?: number, pageSize?: number, status?: string, purpose?: string, paymentStatus?: string, ordering?: string, certificateType?: string): Promise<{results: Certificate[], count: number, next: string | null, previous: string | null}> => {
   try {
     // Build query parameters for the combined endpoint
     const params = new URLSearchParams();
@@ -81,6 +81,14 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
     if (status) params.append('status', status);
     if (purpose) params.append('purpose', purpose);
     if (paymentStatus) params.append('payment_status', paymentStatus);
+    if (certificateType && certificateType !== 'all') {
+      // Map frontend filterType to backend certificate_type parameter
+      if (certificateType === 'nonresident') {
+        params.append('certificate_type', 'nonresident');
+      } else if (certificateType === 'resident') {
+        params.append('certificate_type', 'resident');
+      }
+    }
     // Default to latest first (descending by request date)
     params.append('ordering', ordering || '-req_request_date');
     
@@ -100,13 +108,7 @@ export const getCertificates = async (search?: string, page?: number, pageSize?:
 };
 
 // Mark certificate as issued/printed
-export const markCertificateAsIssued = async (certificateData: {
-  cr_id: string;
-  file_url?: string;
-  staff_id?: string;
-  is_nonresident?: boolean;
-  nrc_id?: string;
-}): Promise<any> => {
+export const markCertificateAsIssued = async (certificateData: MarkCertificateVariables): Promise<any> => {
   try {
     const response = await api.post('/clerk/mark-certificate-issued/', certificateData);
     return response.data;

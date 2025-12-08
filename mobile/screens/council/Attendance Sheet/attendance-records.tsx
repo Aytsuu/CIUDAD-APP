@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   RefreshControl,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -24,43 +25,89 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Search } from "@/lib/icons/Search";
 import { SearchInput } from "@/components/ui/search-input";
 
+const INITIAL_PAGE_SIZE = 5;
+
 const AttendanceRecord = () => {
   const router = useRouter();
   const [searchInputVal, setSearchInputVal] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
-  const [refreshing, setRefreshing] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  
+  // Pagination states - matching receipt pattern
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   
   const debouncedSearchTerm = useDebounce(searchQuery, 500);
   const { data: availableYears = [] } = useGetCouncilEventYears();
 
-  // Fetch council events with backend search and filtering
+  // Fetch council events with pagination - page stays at 1, pageSize grows
   const {
     data: councilEventsData,
-    isLoading: isCouncilEventsLoading,
+    isLoading,
     error,
     refetch,
+    isFetching,
   } = useGetCouncilEvents(
-    1,
-    1000, 
+    1, // Always page 1
+    pageSize, // Growing page size
     debouncedSearchTerm,
     filter,
     false
   );
 
   const { data: attendanceSheets = [], isLoading: isSheetsLoading } =
-    useGetAttendanceSheets(false); // Only active sheets
-  const isLoading = isCouncilEventsLoading || isSheetsLoading;
+    useGetAttendanceSheets(false);
 
-  // Extract events from data structure
+  // Extract pagination data
   const councilEvents = councilEventsData?.results || [];
+  const totalCount = councilEventsData?.count || 0;
+  const hasNext = councilEventsData?.next;
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
+  // Reset pagination when search or filter changes
+  useEffect(() => {
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [debouncedSearchTerm, filter]);
+
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
   };
+
+  // Handle load more - increase pageSize
+  const handleLoadMore = () => {
+    if (isScrolling && hasNext && !isFetching && !isLoadMore) {
+      setIsLoadMore(true);
+      setPageSize((prev) => prev + 5);
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setPageSize(INITIAL_PAGE_SIZE);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Effects
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
 
   // Build table data from backend filtered results - only active records
   const tableData: AttendanceRecords[] = React.useMemo(() => {
@@ -83,7 +130,6 @@ const AttendanceRecord = () => {
     return data;
   }, [councilEvents, attendanceSheets]);
 
-  
   const filterOptions = [
     { label: "All Years", value: "all" },
     ...availableYears.map((year) => ({
@@ -159,9 +205,14 @@ const AttendanceRecord = () => {
     </TouchableOpacity>
   ));
 
+  const renderItem = React.useCallback(
+    ({ item }: { item: AttendanceRecords }) => <RenderAttendanceCard item={item} />,
+    []
+  );
+
   // Empty state component
   const renderEmptyState = () => {
-    const emptyMessage = searchQuery
+    const emptyMessage = searchQuery || filter !== "all"
       ? 'No records found. Try adjusting your search terms.'
       : 'No attendance records available yet.';
     
@@ -207,7 +258,7 @@ const AttendanceRecord = () => {
           </Text>
           <TouchableOpacity
             className="bg-primaryBlue px-6 py-3 rounded-lg"
-            onPress={() => refetch()}
+            onPress={handleRefresh}
           >
             <Text className="text-white text-base font-semibold">
               Try Again
@@ -251,7 +302,7 @@ const AttendanceRecord = () => {
           <View className="py-3">
             <SelectLayout
               options={filterOptions}
-              className="h-8"
+              className="h-8 mb-5"
               selectedValue={filter}
               onSelect={handleFilterChange}
               placeholder="Filter by year"
@@ -259,34 +310,67 @@ const AttendanceRecord = () => {
             />
           </View>
 
+          {/* Result Count */}
+          {!isRefreshing && tableData.length > 0 && (
+            <View className="mb-2">
+              <Text className="text-xs text-gray-500">
+                Showing {tableData.length} of {totalCount} records
+              </Text>
+            </View>
+          )}
+
           {/* Content Section */}
           <View className="flex-1">
             {isLoading ? (
               renderLoadingState()
+            ) : tableData.length === 0 ? (
+              renderEmptyState()
             ) : (
-              <View className="flex-1">
-                {tableData.length === 0 ? (
-                  renderEmptyState()
-                ) : (
-                  <FlatList
-                    data={tableData}
-                    renderItem={({ item }) => <RenderAttendanceCard item={item} />}
-                    keyExtractor={(item) => item.ceId.toString()}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        colors={['#00a8f0']}
-                      />
-                    }
-                    contentContainerStyle={{ 
-                      paddingBottom: 16,
-                      paddingTop: 16
-                    }}
+              <FlatList
+                data={tableData}
+                maxToRenderPerBatch={5}
+                overScrollMode="never"
+                showsVerticalScrollIndicator={false}
+                initialNumToRender={5}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                onScroll={handleScroll}
+                windowSize={11}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.ceId.toString()}
+                removeClippedSubviews
+                contentContainerStyle={{ 
+                  paddingBottom: 20,
+                  paddingTop: 8,
+                  flexGrow: 1,
+                }}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={isRefreshing}
+                    onRefresh={handleRefresh}
+                    colors={['#00a8f0']}
                   />
-                )}
-              </View>
+                }
+                ListFooterComponent={() =>
+                  isFetching && isLoadMore ? (
+                    <View className="py-4 items-center">
+                      <ActivityIndicator size="small" color="#3B82F6" />
+                      <Text className="text-xs text-gray-500 mt-2">
+                        Loading more records...
+                      </Text>
+                    </View>
+                  ) : (
+                    !hasNext &&
+                    tableData.length > 0 && (
+                      <View className="py-4 items-center">
+                        <Text className="text-xs text-gray-400">
+                          No more records
+                        </Text>
+                      </View>
+                    )
+                  )
+                }
+              />
             )}
           </View>
         </View>

@@ -121,7 +121,7 @@ const convertImageToBase64 = (imageSrc: string): Promise<string> => {
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.drawImage(img, 0, 0);
-        const base64 = canvas.toDataURL("image/jpeg");
+        const base64 = canvas.toDataURL("image/png");
         resolve(base64);
       } else {
         reject(new Error("Could not get canvas context"));

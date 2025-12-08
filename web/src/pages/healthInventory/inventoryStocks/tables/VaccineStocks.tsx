@@ -217,7 +217,9 @@ const prepareExportData = () => {
           hasAvailableStock: inventoryToArchive.hasAvailableStock
         });
       } catch (error) {
-        console.error("Failed to archive inventory:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to archive inventory:", error);
+        }
         showErrorToast("Failed to archive.");
       } finally {
         setInventoryToArchive(null);

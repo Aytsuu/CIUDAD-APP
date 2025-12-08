@@ -20,8 +20,10 @@ export const getMonthlySummaries = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly summaries:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly summaries:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -48,7 +50,9 @@ export const getMonthlyDetails = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly details:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly details:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

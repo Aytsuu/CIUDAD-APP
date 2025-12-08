@@ -6,10 +6,14 @@ export const  getCommodityStocks = async()=>{
       if(res.status==200){
         return res.data;
       }
-      console.error(res.status)
+      if (process.env.NODE_ENV === 'development') {
+        console.error(res.status)
+      }
       return[]
     }catch(err){
-      console.log(err)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(err)
+      }
       return[]
     }
   }
@@ -32,7 +36,9 @@ export const getCommodityStocksTable = async (
     });
     return res.data;
   } catch (error) {
-    console.error("Commodity Stock API Error:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Commodity Stock API Error:", error);
+    }
     return {
       results: [],
       count: 0,

@@ -96,7 +96,6 @@ export default function QuarterlyOPTDetails() {
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch yearly OPT records");
-      console.error("API Error:", error);
     }
   }, [error]);
 

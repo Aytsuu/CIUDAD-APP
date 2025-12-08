@@ -170,12 +170,12 @@ export default function HouseholdRegistration() {
       form.reset();
       router.back();
     } catch (error: any) {
-      console.error("=== Household Submission Error ===");
-      console.error("Error object:", error);
-      console.error("Error response:", error.response);
-      console.error("Error response data:", error.response?.data);
-      console.error("Error message:", error.message);
-      console.error("=================================");
+      // console.error("=== Household Submission Error ===");
+      // console.error("Error object:", error);
+      // console.error("Error response:", error.response);
+      // console.error("Error response data:", error.response?.data);
+      // console.error("Error message:", error.message);
+      // console.error("=================================");
 
       // Handle nested error objects from backend
       let errorMessage = "Failed to register household. Please try again.";

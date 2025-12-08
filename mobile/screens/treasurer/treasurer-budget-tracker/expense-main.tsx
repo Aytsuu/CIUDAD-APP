@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,8 @@ import {
   Modal,
   Image,
   ScrollView,
-  RefreshControl
+  RefreshControl,
+  ActivityIndicator
 } from 'react-native';
 import {
   X,
@@ -37,7 +38,6 @@ import PageLayout from '@/screens/_PageLayout';
 import { useDebounce } from '@/hooks/use-debounce';
 import { LoadingState } from "@/components/ui/loading-state";
 
-
 const monthOptions = [
   { id: "All", name: "All" },
   { id: "01", name: "January" },
@@ -54,44 +54,102 @@ const monthOptions = [
   { id: "12", name: "December" }
 ];
 
+const INITIAL_PAGE_SIZE = 10;
 
-const ExpenseTracking = () => {
+// Create a separate component for the expense card list screen (like ActiveMOMScreen)
+interface ExpenseListScreenProps {
+  searchQuery: string;
+  selectedMonth: string;
+  activeTab: 'active' | 'archive';
+  year: string;
+  onViewFiles: (files: { ief_url: string; ief_name: string }[]) => void; 
+}
+
+const ExpenseListScreen = ({ searchQuery, selectedMonth, activeTab, year, onViewFiles }: ExpenseListScreenProps) => {
   const router = useRouter();
-  const params = useLocalSearchParams();
-  const year = params.budYear as string;
-  const totInc = parseFloat(params.totalInc as string) || 0;
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const [activeTab, setActiveTab] = useState('active');
-  const [showSearch, setShowSearch] = useState<boolean>(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState('All');
-  const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<{ ief_url: string; ief_name: string }[]>([]);
-  const [currentZoomScale, setCurrentZoomScale] = useState(1);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedTab, setSelectedTab] = useState('expense');
-  const [isRefreshing, setIsRefreshing] = useState(false); 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
+  // Use proper pagination parameters
   const { 
     data: responseData = { results: [], count: 0 }, 
     isLoading, 
     isError, 
-    refetch 
+    refetch,
+    isFetching 
   } = useIncomeExpense(
-    1, // page
-    1000, // pageSize - large number to get all data
+    currentPage,
+    pageSize,
     year ? parseInt(year) : new Date().getFullYear(),
     debouncedSearchQuery,
     selectedMonth,
-    activeTab === 'archive' // Send archive status to backend
+    activeTab === 'archive'
   );
 
+  // Extract data like MOM does
+  const fetchedData = responseData?.results || [];
+  const totalCount = responseData?.count || 0;
+  const hasNext = responseData?.next;
 
-  // Extract the actual data array (backend already filtered it)
-  const fetchedData = responseData.results || [];
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [debouncedSearchQuery, selectedMonth, activeTab, year]);
 
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
 
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  // Handle load more
+  const handleLoadMore = () => {
+    if (isScrolling) {
+      setIsLoadMore(true);
+    }
+
+    if (hasNext && isScrolling) {
+      setPageSize((prev) => prev + 5);
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
+  };
+
+  // Effects similar to the MOM code
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
+
+  // Rest of your existing handlers...
   const { data: budgetItems = [] } = useBudgetItems(Number(year));
   const { data: fetchedMain = { results: [], count: 0 } } = useIncomeExpenseMainCard();
   const { mutate: archiveRestore, isPending: isArchivePending } = useArchiveOrRestoreExpense();
@@ -100,41 +158,6 @@ const ExpenseTracking = () => {
   const matchedYearData = fetchedMain.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
   const totBud = matchedYearData?.ie_remaining_bal ?? 0;
   const totExp = matchedYearData?.ie_main_exp ?? 0;
-
-
-  const trackingOptions = [
-    { label: 'Income', value: 'income' },
-    { label: 'Expense', value: 'expense' },
-  ];
-
-  const monthFilterOptions = monthOptions.map(month => ({
-    label: month.name,
-    value: month.id
-  }));
-
-
-  // Handle search input change
-  const handleSearchChange = (text: string) => {
-    setSearchQuery(text);
-  };
-
-  // Handle month change
-  const handleMonthChange = (option: { label: string; value: string }) => {
-    setSelectedMonth(option.value);
-  };
-
-  const handleTabSelect = (option: { label: string; value: string }) => {
-    setSelectedTab(option.value);
-    if (option.value === 'income') {
-      router.push({
-        pathname: '/(treasurer)/budget-tracker/budget-income-main',
-        params: {
-          budYear: year,
-          totalInc: totInc.toString(),
-        },
-      });
-    }
-  };
 
   const handleEdit = (item: any) => {
     router.push({
@@ -156,27 +179,6 @@ const ExpenseTracking = () => {
         files: JSON.stringify(item.files || [])
       }
     });
-  };
-
-  const handleViewFiles = (files: { ief_url: string; ief_name: string }[]) => {
-    setSelectedFiles(files);
-    setCurrentIndex(0);
-    setViewFilesModalVisible(true);
-  };
-
-  const handleCreate = () => {
-    router.push({
-      pathname: '/(treasurer)/budget-tracker/budget-expense-create',
-      params: {
-        budYear: year,
-        totalBud: totBud.toString(),
-        totalExp: totExp.toString(),
-      },
-    });
-  };
-
-  const handleDelete = async (item: any) => {
-    await deleteEntry(Number(item.iet_num));
   };
 
   const handleArchive = async (item: any) => {
@@ -249,22 +251,13 @@ const ExpenseTracking = () => {
     await archiveRestore(allValues);
   };
 
-
-  //Refresh the page
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
+  const handleDelete = async (item: any) => {
+    await deleteEntry(Number(item.iet_num));
   };
-  
-  // Loading state component
-  const renderLoadingState = () => (
-    <View className="h-64 justify-center items-center">
-      <LoadingState/>
-    </View>
-  );
 
-  const renderItem = ({ item }: { item: any }) => (
+
+  // Expense Card Component - Moved outside to memoize
+  const ExpenseCard = React.memo(({ item, onViewFiles }: { item: any; onViewFiles: (files: { ief_url: string; ief_name: string }[]) => void }) => (
     <Card className="mb-4 border border-gray-200 bg-white">
       <CardHeader className="flex-row justify-between items-center">
         <CardTitle className="text-lg text-[#2a3a61]">
@@ -347,7 +340,7 @@ const ExpenseTracking = () => {
         <View className="flex-row justify-between">
           <Text className="text-gray-600">Documents:</Text>
           {item.files?.length > 0 ? (
-            <TouchableOpacity onPress={() => handleViewFiles(item.files)}>
+            <TouchableOpacity onPress={() => onViewFiles(item.files)}>
               <Text className="text-blue-600 underline">{item.files.length} attached</Text>
             </TouchableOpacity>
           ) : (
@@ -359,36 +352,174 @@ const ExpenseTracking = () => {
         </View>
       </CardContent>
     </Card>
+  ));
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: any }) => <ExpenseCard item={item} onViewFiles={onViewFiles} />,
+    [activeTab, onViewFiles]
   );
 
-  if (isError) {
+  // Simple empty state component - EXACT SAME as MOM
+  const renderEmptyState = () => {
+    const message = searchQuery
+      ? "No records found matching your criteria."
+      : activeTab === 'active' 
+        ? "No active entries found." 
+        : "No archived entries found.";
+    
     return (
-      <PageLayout
-        leftAction={
-          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-            <ChevronLeft size={24} className="text-gray-700" />
-          </TouchableOpacity>
-        }
-        headerTitle={<Text className="text-gray-900 text-[13px]">Expense Tracking</Text>}
-        rightAction={
-          <View className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"></View>
-        }
-      >
-        <View className="flex-1 justify-center items-center">
-          <Text className="text-red-500 text-center mb-4">
-            Failed to load expense data.
-          </Text>
-          <TouchableOpacity
-            onPress={handleRefresh}
-            className="bg-[#2a3a61] px-4 py-2 rounded-lg"
-          >
-            <Text className="text-white">Try Again</Text>
-          </TouchableOpacity>
-        </View>
-      </PageLayout>
+      <View className="flex-1 justify-center items-center h-full">
+        <Text className="text-gray-500 text-sm">{message}</Text>
+      </View>
     );
+  };
+
+  // Loading state for initial load - check ALL loading states
+  if (isLoading || isArchivePending || isDeletePending) {
+    return <LoadingState />
   }
 
+  // ================= MAIN RENDER =================
+  return (
+    <View className="flex-1">
+      {/* Result Count - Only show when there are items */}
+      {!isRefreshing && fetchedData.length > 0 && (
+        <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${fetchedData.length} of ${totalCount} expense records`}</Text>
+      )}
+      
+      {/* Loading state during refresh */}
+      {isFetching && isRefreshing && !isLoadMore && <LoadingState />}
+
+      {/* Main Content - only render when not refreshing */}
+      {!isRefreshing && (
+        <FlatList
+          maxToRenderPerBatch={10}
+          overScrollMode="never"
+          data={fetchedData}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          initialNumToRender={10}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          onScroll={handleScroll}
+          windowSize={21}
+          renderItem={renderItem}
+          keyExtractor={(item) => `expense-${activeTab}-${item.iet_num}`}
+          removeClippedSubviews
+          contentContainerStyle={{
+            paddingHorizontal: 0,
+            paddingTop: 0,
+            paddingBottom: 20,
+            flexGrow: 1, // KEY: Makes empty state center properly
+          }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={["#00a8f0"]}
+            />
+          }
+          ListFooterComponent={() =>
+            isFetching ? (
+              <View className="py-4 items-center">
+                <ActivityIndicator size="small" color="#3B82F6" />
+                <Text className="text-xs text-gray-500 mt-2">
+                  Loading more...
+                </Text>
+              </View>
+            ) : (
+              !hasNext &&
+              fetchedData.length > 0 && (
+                <View className="py-4 items-center">
+                  <Text className="text-xs text-gray-400">
+                    No more records
+                  </Text>
+                </View>
+              )
+            )
+          }
+          ListEmptyComponent={renderEmptyState()}
+        />
+      )}
+    </View>
+  );
+};
+
+// Main Component
+const ExpenseTracking = () => {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const year = params.budYear as string;
+  const totInc = parseFloat(params.totalInc as string) || 0;
+
+  const [activeTab, setActiveTab] = useState<'active' | 'archive'>('active');
+  const [showSearch, setShowSearch] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('All');
+  
+  // Modal states
+  const [viewFilesModalVisible, setViewFilesModalVisible] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<{ ief_url: string; ief_name: string }[]>([]);
+  const [currentZoomScale, setCurrentZoomScale] = useState(1);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  const [selectedTab, setSelectedTab] = useState('expense');
+
+  const { data: fetchedMain = { results: [], count: 0 } } = useIncomeExpenseMainCard();
+  const matchedYearData = fetchedMain.results.find((item: IncomeExpenseCard) => Number(item.ie_main_year) === Number(year));
+  const totBud = matchedYearData?.ie_remaining_bal ?? 0;
+  const totExp = matchedYearData?.ie_main_exp ?? 0;
+
+  const trackingOptions = [
+    { label: 'Income', value: 'income' },
+    { label: 'Expense', value: 'expense' },
+  ];
+
+  const monthFilterOptions = monthOptions.map(month => ({
+    label: month.name,
+    value: month.id
+  }));
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+  };
+
+  const handleMonthChange = (option: { label: string; value: string }) => {
+    setSelectedMonth(option.value);
+  };
+
+  const handleTabSelect = (option: { label: string; value: string }) => {
+    setSelectedTab(option.value);
+    if (option.value === 'income') {
+      router.push({
+        pathname: '/(treasurer)/budget-tracker/budget-income-main',
+        params: {
+          budYear: year,
+          totalInc: totInc.toString(),
+        },
+      });
+    }
+  };
+
+  const handleCreate = () => {
+    router.push({
+      pathname: '/(treasurer)/budget-tracker/budget-expense-create',
+      params: {
+        budYear: year,
+        totalBud: totBud.toString(),
+        totalExp: totExp.toString(),
+      },
+    });
+  };
+
+  const handleViewFiles = (files: { ief_url: string; ief_name: string }[]) => {
+    setSelectedFiles(files);
+    setCurrentIndex(0);
+    setCurrentZoomScale(1);
+    setViewFilesModalVisible(true);
+  };
+
+  // Main render
   return (
     <PageLayout
       leftAction={
@@ -411,17 +542,17 @@ const ExpenseTracking = () => {
       }
       wrapScroll={false} 
     >
-      <View className="flex-1">
+      <View className="flex-1 bg-gray-50">
         {showSearch && (
           <SearchInput 
             value={searchQuery}
             onChange={setSearchQuery}
-            onSubmit={() => {}} // Can leave empty since you're using debounce
+            onSubmit={() => {}}
           />
         )}
 
         {/* Search and Filters */}
-        <View className="px-6 pb-4">
+        <View className="px-6 pb-4 bg-white">
           <View className="flex-row justify-between items-center gap-2 pb-6">
             <View className="flex-1">
               <SelectLayout
@@ -455,8 +586,8 @@ const ExpenseTracking = () => {
         </View>
 
         {/* Tabs */}
-        <View className="px-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <View className="flex-1 px-6 bg-white">
+          <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as 'active' | 'archive')} className="flex-1">
             <TabsList className="bg-blue-50 mb-3 mt-5 flex-row justify-between">
               <TabsTrigger 
                   value="active" 
@@ -487,90 +618,40 @@ const ExpenseTracking = () => {
               <TouchableOpacity
                 onPress={() => {
                   router.push({
-                    pathname: '/(treasurer)/budget-tracker/budget-expense-log', // Update this path to your actual route
+                    pathname: '/(treasurer)/budget-tracker/budget-expense-log',
                     params: {
-                      LogYear: year, // Pass any parameters you need
+                      LogYear: year,
                     }
                   });
                 }}
-                className="bg-primaryBlue px-3 py-2 rounded-md" // Different color to distinguish from Create
+                className="bg-primaryBlue px-3 py-2 rounded-md"
               >
                 <Text className="text-white text-[17px]">
-                  <ClipboardCheck size={14} color="white"/>   Logs
+                  <ClipboardCheck size={14} color="white"/>   Logs 
                 </Text>
               </TouchableOpacity>
             </View>         
 
             {/* Active Entries */}
-            <TabsContent value="active">
-              {isLoading || isArchivePending || isDeletePending ? (
-                // <View className="h-64 justify-center items-center">
-                //   <ActivityIndicator size="large" color="#2a3a61" />
-                //   <Text className="text-sm text-gray-500 mt-2">
-                //     {isArchivePending ? "Updating entry records..." : 
-                //     isDeletePending ? "Deleting entry..." : 
-                //     "Loading..."}
-                //   </Text>
-                // </View>
-                renderLoadingState() 
-              ) : (
-                <FlatList
-                  data={fetchedData} // No filtering needed - backend already sent active records
-                  renderItem={renderItem}
-                  keyExtractor={item => item.iet_num.toString()}
-                  contentContainerStyle={{ paddingBottom: 500 }}
-                  showsVerticalScrollIndicator={false} 
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={isRefreshing}
-                      onRefresh={handleRefresh}
-                      colors={['#00a8f0']}
-                      tintColor="#00a8f0"
-                    />
-                  }                  
-                  ListEmptyComponent={
-                    <Text className="text-center text-gray-500 py-4">
-                      No active entries found
-                    </Text>
-                  }               
-                />
-              )}
+            <TabsContent value="active" className="flex-1">
+              <ExpenseListScreen 
+                searchQuery={searchQuery}
+                selectedMonth={selectedMonth}
+                activeTab={activeTab}
+                year={year}
+                onViewFiles={handleViewFiles}
+              />
             </TabsContent>
 
             {/* Archived Entries */}
-            <TabsContent value="archive">
-              {isLoading || isArchivePending || isDeletePending ? (
-                // <View className="h-64 justify-center items-center">
-                //   <ActivityIndicator size="large" color="#2a3a61" />
-                //   <Text className="text-sm text-gray-500 mt-2">
-                //     {isArchivePending ? "Updating entry records..." : 
-                //     isDeletePending ? "Deleting entry..." : 
-                //     "Loading..."}
-                //   </Text>
-                // </View>
-                renderLoadingState() 
-              ) : (
-                <FlatList
-                  data={fetchedData} // No filtering needed - backend already sent archived records
-                  renderItem={renderItem}
-                  keyExtractor={item => item.iet_num.toString()}
-                  contentContainerStyle={{ paddingBottom: 500 }}
-                  showsVerticalScrollIndicator={false}   
-                  refreshControl={
-                    <RefreshControl
-                      refreshing={isRefreshing}
-                      onRefresh={handleRefresh}
-                      colors={['#00a8f0']}
-                      tintColor="#00a8f0"
-                    />
-                  }                                                    
-                  ListEmptyComponent={
-                    <Text className="text-center text-gray-500 py-4">
-                      No archived entries found
-                    </Text>
-                  }
-                />
-              )}              
+            <TabsContent value="archive" className="flex-1">
+              <ExpenseListScreen 
+                searchQuery={searchQuery}
+                selectedMonth={selectedMonth}
+                activeTab={activeTab}
+                year={year}
+                onViewFiles={handleViewFiles}                
+              />
             </TabsContent>
           </Tabs>
         </View>

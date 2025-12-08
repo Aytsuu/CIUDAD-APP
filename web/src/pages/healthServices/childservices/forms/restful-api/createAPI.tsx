@@ -8,7 +8,8 @@ export async function createChildHealthHistory(data: Record<string, any>) {
     }
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to create child health history: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (process.env.NODE_ENV === 'development') console.error(error);
+    return null;
   }
 }
 
@@ -20,7 +21,8 @@ export async function createChildHealthRecord(data: Record<string, any>) {
     }
     return response.data;
   } catch (error) {
-   throw new Error(`Failed to create child health record: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (process.env.NODE_ENV === 'development') console.error(error);
+    return null;
   }
 }
 
@@ -31,7 +33,8 @@ export async function createSupplementStatus(data: Record<string, any>) {
     const response = await api2.post("child-health/supplement-status/", data);
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to create ${data.status_type} status: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (process.env.NODE_ENV === 'development') console.error(error);
+    return null;
   }
 }
 
@@ -40,7 +43,8 @@ export async function createExclusiveBFCheck(data: Record<string, any>) {
     const response = await api2.post("child-health/exclusive-bf-check/", data);
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to create exclusive breastfeeding check: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (process.env.NODE_ENV === 'development') console.error(error);
+    return null;
   }
 }
 
@@ -53,7 +57,8 @@ export const createNutritionalStatus = async (data: Record<string, any>) => {
     }
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to create nutritional status: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (process.env.NODE_ENV === 'development') console.error(error);
+    return null;
   }
 };
 
@@ -66,7 +71,8 @@ export const createChildVitalSign = async (data: Record<string, any>) => {
     }
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to create vital signs record: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (process.env.NODE_ENV === 'development') console.error(error);
+    return null;
   }
 };
 
@@ -78,7 +84,8 @@ export const createChildHealthNotes = async (data: Record<string, any>) => {
     }
     return response.data;
   } catch (error) {
-    throw new Error(`Failed to create child health notes: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (process.env.NODE_ENV === 'development') console.error(error);
+    return null;
   }
 };
 

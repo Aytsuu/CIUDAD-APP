@@ -194,7 +194,9 @@ const prepareExportData = () => {
         queryClient.invalidateQueries({ queryKey: ["medicineStocks"] });
         showSuccessToast("Medicine archived successfully");
       } catch (error) {
-        console.error("Failed to archive medicine:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to archive medicine:", error);
+        }
         showErrorToast("Failed to archive medicine.");
       } finally {
         setMedicineToArchive(null);

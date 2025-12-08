@@ -194,7 +194,7 @@ export default function MedicineList() {
             </div>
           ) : error ? (
             <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-              <span className="ml-2">Error loading medicines. Please check console.</span>
+              <span className="ml-2">Error loading medicines.</span>
             </div>
           ) : displayData.length === 0 ? (
             <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">

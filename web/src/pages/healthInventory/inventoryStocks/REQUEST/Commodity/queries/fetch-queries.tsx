@@ -39,7 +39,9 @@ export const fetchCommodity = () => {
         };
       } catch (error) {
         showErrorToast("Failed to fetch commodities data");
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error(error);
+        }
       }
     },
   });

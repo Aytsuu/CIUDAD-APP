@@ -210,7 +210,7 @@ function IncomeEditForm({ inc_datetime, inc_num, inc_serial_num, inc_transac_num
                                     placeholder="Select a particular"
                                     label="Particulars"
                                     options={IncomeParticulars}
-                                    value={field.value}
+                                    value={field.value ?? ""}
                                     onChange={field.onChange}
                                     onAdd={(newParticular) => {
                                         handleAddParticular(newParticular, (newId) => {

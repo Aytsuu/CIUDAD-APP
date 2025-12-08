@@ -19,8 +19,10 @@ export const getFirstAidExpiredOutOfStockSummary = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching first aid expired/out-of-stock summary:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching first aid expired/out-of-stock summary:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -33,7 +35,9 @@ export const getMonthlyFirstAidExpiredOutOfStockDetail = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly first aid expired/out-of-stock detail:", error);
-    throw error;
-  };
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly first aid expired/out-of-stock detail:", error);
+    }
+    // Do not throw in production; only log in development
+  }
 };

@@ -15,9 +15,11 @@ export const fetchPatientRecords = async () => {
       }))
     };
   } catch (error) {
-    console.error("Error fetching patients:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching patients:", error);
+    }
     toast.error("Failed to load patient records");
-    throw error; // Re-throw the error if you want to handle it in the component
+    // Do not throw in production; only log in development
   }
 };
 

@@ -68,7 +68,12 @@ export const useAddBusinessPermit = (onSuccess?: () => void) => {
             onSuccess?.();
             router.back();
         },
-        onError: (err) => {
+        onError: (err: any) => {
+            console.error("[useAddBusinessPermit] Submission failed:", err);
+            console.error("[useAddBusinessPermit] Error message:", err?.message);
+            console.error("[useAddBusinessPermit] Error response:", err?.response);
+            console.error("[useAddBusinessPermit] Error response data:", err?.response?.data);
+            console.error("[useAddBusinessPermit] Error response status:", err?.response?.status);
             toast.error("Failed to submit request. Please check the input data and try again.");
         }
     });

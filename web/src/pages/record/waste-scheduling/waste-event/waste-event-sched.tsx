@@ -126,6 +126,60 @@ function WasteEventSched() {
             const selectedStaff = staffOptions.find((o: { id: string; name: string }) => String(o.id) === String(values.organizer));
             const organizerName = selectedStaff?.name || '';
 
+            // Format eventSubject to include location, date, and time
+            let formattedEventSubject = values.eventSubject || '';
+            if (values.selectedAnnouncements && values.selectedAnnouncements.length > 0) {
+                const eventDetails: string[] = [];
+                
+                // Always include location, date, and time in the announcement
+                if (sitioName) {
+                    eventDetails.push(`Location: ${sitioName}`);
+                }
+                
+                if (formattedDate) {
+                    // Format date to be more readable (e.g., "January 15, 2024")
+                    try {
+                        const dateObj = new Date(formattedDate + 'T00:00:00'); // Add time to avoid timezone issues
+                        const formattedDateStr = dateObj.toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        });
+                        eventDetails.push(`Date: ${formattedDateStr}`);
+                    } catch (e) {
+                        // Fallback to original date format if formatting fails
+                        eventDetails.push(`Date: ${formattedDate}`);
+                    }
+                }
+                
+                if (formattedTime) {
+                    // Format time to be more readable (e.g., "2:30 PM")
+                    try {
+                        const [hours, minutes] = formattedTime.split(':');
+                        const hour = parseInt(hours, 10);
+                        if (!isNaN(hour)) {
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            const displayHour = hour % 12 || 12;
+                            const formattedTimeStr = `${displayHour}:${minutes || '00'} ${ampm}`;
+                            eventDetails.push(`Time: ${formattedTimeStr}`);
+                        } else {
+                            eventDetails.push(`Time: ${formattedTime}`);
+                        }
+                    } catch (e) {
+                        // Fallback to original time format if formatting fails
+                        eventDetails.push(`Time: ${formattedTime}`);
+                    }
+                }
+                
+                // Combine user's subject with event details
+                // Always include location, date, and time even if user provided a subject
+                if (formattedEventSubject.trim()) {
+                    formattedEventSubject = `${formattedEventSubject}\n\n${eventDetails.join('\n')}`;
+                } else {
+                    formattedEventSubject = eventDetails.join('\n');
+                }
+            }
+
             const eventData: Omit<WasteEvent, 'we_num'> & { selectedAnnouncements?: string[]; eventSubject?: string } = {
                 we_name: values.eventName,
                 we_location: sitioName,
@@ -138,15 +192,18 @@ function WasteEventSched() {
                 staff: staffId,
                 // Include announcement data
                 selectedAnnouncements: values.selectedAnnouncements || [],
-                eventSubject: values.eventSubject || ''
+                eventSubject: formattedEventSubject
             };
 
             const response = await createWasteEvent(eventData);
             
             queryClient.invalidateQueries({ queryKey: ['wasteEvents'] });
+            queryClient.invalidateQueries({ queryKey: ['wasteEvents', false] });
             queryClient.invalidateQueries({ queryKey: ['announcements'] });
             
-            // Show appropriate success message
+    
+            await queryClient.refetchQueries({ queryKey: ['wasteEvents', false] });
+            
             if (response?.announcement_created) {
                 showSuccessToast("Event scheduled and announcement sent successfully!");
             } else {
@@ -331,15 +388,18 @@ function WasteEventSched() {
                                     name="eventSubject"
                                     render={({ field }) => (
                                         <FormItem className="mb-4">
-                                            <Label className="font-medium">Event Subject</Label>
+                                            <Label className="font-medium">Additional Message (Optional)</Label>
                                             <FormControl>
                                                 <Textarea 
-                                                    placeholder="Enter event subject for announcement" 
+                                                    placeholder="Enter additional message or subject for the announcement. Event details (location, date, time) will be automatically included." 
                                                     {...field} 
                                                     className="w-full" 
                                                 />
                                             </FormControl>
                                             <FormMessage />
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                This message will appear at the top of the announcement. Event location, date, time, and organizer will be automatically added below.
+                                            </p>
                                         </FormItem>
                                     )}
                                 />

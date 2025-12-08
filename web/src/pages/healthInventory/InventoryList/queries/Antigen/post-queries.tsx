@@ -12,8 +12,7 @@ export const useAddImzSupplies = () => {
       queryClient.invalidateQueries({ queryKey: ["ImzSupplies"] });
       showSuccessToast("Immunization supply added successfully");
     },
-    onError: (error: unknown) => {
-      console.error("Failed to add immunization supply:", error);
+    onError: () => {
       showErrorToast("Failed to add immunization supply");
     }
   });

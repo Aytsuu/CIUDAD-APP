@@ -7,7 +7,10 @@ export const fetchCommodityStock = async (cinv_id: number) => {
   );
   
   if (!existingCommodity) {
-    throw new Error("Commodity ID not found. Please check the ID.");
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Commodity ID not found. Please check the ID.");
+    }
+    return;
   }
   
   return existingCommodity;

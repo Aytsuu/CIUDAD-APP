@@ -36,7 +36,6 @@ export default function CreateBudgetPlanWithoutLimits({
         <Button
           type="button"
           onClick={addNewBudgetItem}
-          className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add Item

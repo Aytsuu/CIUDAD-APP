@@ -19,7 +19,9 @@ export const useUpdateScheduler = () => {
             })
         },
         onError: (error) => {
-            console.error("Error updating scheduler: ", error);
+            if (process.env.NODE_ENV === 'development') {
+                console.error("Error updating scheduler: ", error);
+            }
             toast.error("Failed to update scheduler", {
                 icon: <CircleX size={24} className="fill-red-500 stroke-white" />
             })

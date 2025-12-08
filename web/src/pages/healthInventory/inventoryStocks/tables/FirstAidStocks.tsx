@@ -193,7 +193,9 @@ export default function FirstAidStocks() {
         queryClient.invalidateQueries({ queryKey: ["firstAidStocks"] });
         showSuccessToast("First aid item archived successfully");
       } catch (error) {
-        console.error("Failed to archive first aid:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to archive first aid:", error);
+        }
         showErrorToast("Failed to archive first aid item.");
       } finally {
         setFirstAidToArchive(null);

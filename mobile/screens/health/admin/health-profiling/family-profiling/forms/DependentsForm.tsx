@@ -22,6 +22,7 @@ interface DependentsStepProps {
   form: UseFormReturn<HealthFamilyProfilingFormData>;
   onFamilyCreated: (famId: string) => void;
   staffId: string;
+  onBack?: () => void;
 }
 
 const RELATIONSHIP_OPTIONS = [
@@ -62,7 +63,7 @@ const EXCLUSIVE_BF_OPTIONS = [
   { label: 'No', value: 'No' },
 ];
 
-export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCreated, staffId }) => {
+export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCreated, staffId, onBack }) => {
   const [dependentsList, setDependentsList] = useState<DependentData[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showDOBPicker, setShowDOBPicker] = useState(false);
@@ -483,7 +484,7 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
       setShowSuccessModal(true);
       return famId;
     } catch (error: any) {
-      console.error('Family creation error:', error);
+      // console.error('Family creation error:', error);
       Alert.alert('Error', error?.response?.data?.message || 'Failed to create family. Please try again.');
       throw error;
     }
@@ -886,18 +887,34 @@ export const DependentsStep: React.FC<DependentsStepProps> = ({ form, onFamilyCr
 
       {/* Create Family Button */}
       {!showAddForm && (
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={isCreatingFamily}
-          className={`rounded-lg h-12 flex-row items-center justify-center shadow-sm ${
-            isCreatingFamily ? 'bg-green-400' : 'bg-green-600'
-          }`}
-        >
-          <UserPlus size={20} color="white" />
-          <Text className="text-white font-bold ml-2">
-            {isCreatingFamily ? 'Creating Family...' : 'Register Family & Continue'}
-          </Text>
-        </TouchableOpacity>
+        <View className="flex-row gap-3">
+          {/* Back Button */}
+          <TouchableOpacity
+            onPress={onBack}
+            disabled={isCreatingFamily}
+            className={`flex-1 rounded-lg h-12 flex-row items-center justify-center border border-gray-300 shadow-sm ${
+              isCreatingFamily ? 'bg-gray-100' : 'bg-white'
+            }`}
+          >
+            <Text className={`font-semibold ${isCreatingFamily ? 'text-gray-400' : 'text-gray-700'}`}>
+              Back
+            </Text>
+          </TouchableOpacity>
+
+          {/* Register Family Button */}
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={isCreatingFamily}
+            className={`flex-1 rounded-lg h-12 flex-row items-center justify-center shadow-sm ${
+              isCreatingFamily ? 'bg-green-400' : 'bg-green-600'
+            }`}
+          >
+            <UserPlus size={20} color="white" />
+            <Text className="text-white font-bold ml-2">
+              {isCreatingFamily ? 'Creating Family...' : 'Register Family'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {/* Confirmation Modal */}

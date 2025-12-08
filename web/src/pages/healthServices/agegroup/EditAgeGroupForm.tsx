@@ -34,14 +34,20 @@ export function EditAgeGroupForm({ ageGroup, onSubmitSuccess, onCancel }: AgeGro
   });
 
   const checkForDuplicate = async (data: AgeGroupType) => {
-    const existingAgeGroups = await queryClient.fetchQuery({
-      queryKey,
-      queryFn: getAgegroup
-    });
-
-    return existingAgeGroups.some(
-      (group: AgeGroupType & { id?: string }) => group.agegroup_name === data.agegroup_name && group.min_age === data.min_age && group.max_age === data.max_age && group.time_unit === data.time_unit && group.id !== ageGroup?.id // Exclude current age group from duplicate check
-    );
+    try {
+      const existingAgeGroups = await queryClient.fetchQuery({
+        queryKey,
+        queryFn: getAgegroup
+      });
+      return existingAgeGroups.some(
+        (group: AgeGroupType & { id?: string }) => group.agegroup_name === data.agegroup_name && group.min_age === data.min_age && group.max_age === data.max_age && group.time_unit === data.time_unit && group.id !== ageGroup?.id // Exclude current age group from duplicate check
+      );
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error checking for duplicates:", error);
+      }
+      return false;
+    }
   };
 
   const onSubmit = async (data: AgeGroupType) => {
@@ -63,7 +69,9 @@ export function EditAgeGroupForm({ ageGroup, onSubmitSuccess, onCancel }: AgeGro
       }
     } catch (error) {
       toast.error("An error occurred while updating the age group. Please try again.");
-      console.error("Submission error:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Submission error:", error);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -16,8 +16,10 @@ export const getFirstaidRecords = async (params?: { page?: number; page_size?: n
     const response = await api2.get(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching first aid records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching first aid records:", error);
+    }
+    return null;
   }
 };
 
@@ -34,12 +36,15 @@ export const getFirstaidRecords = async (params?: { page?: number; page_size?: n
 export const getFirstaidStocks = async () => {
   try {
     const response = await api2.get("/inventory/firstaidinventorylist/");
-    console.log(response.data)
-
+    if (process.env.NODE_ENV === 'development') {
+      console.log(response.data);
+    }
     return response.data;
   } catch (error) {
-    console.error("Error fetching Firstaid stocks:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching Firstaid stocks:", error);
+    }
+    return null;
   }
 }
 

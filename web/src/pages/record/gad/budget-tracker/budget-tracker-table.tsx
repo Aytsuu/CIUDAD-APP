@@ -36,11 +36,14 @@ import {
   useRestoreGADBudget,
   usePermanentDeleteGADBudget,
 } from "./queries/BTDeleteQueries";
-import { useGADBudgets, useGetBudgetAggregates  } from "./queries/BTFetchQueries";
+import {
+  useGADBudgets,
+  useGetBudgetAggregates,
+} from "./queries/BTFetchQueries";
 import { GADBudgetEntry } from "./budget-tracker-types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useLoading } from "@/context/LoadingContext"; 
+import { useLoading } from "@/context/LoadingContext";
 
 function BudgetTracker() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,7 +56,8 @@ function BudgetTracker() {
   const { mutate: archiveEntry } = useArchiveGADBudget();
   const { mutate: restoreEntry } = useRestoreGADBudget();
   const { mutate: permanentDeleteEntry } = usePermanentDeleteGADBudget();
-  const { data: aggregates, isLoading: aggregatesLoading } = useGetBudgetAggregates(gbudy_year || "");
+  const { data: aggregates, isLoading: aggregatesLoading } =
+    useGetBudgetAggregates(gbudy_year || "");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const { showLoading, hideLoading } = useLoading();
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -80,12 +84,7 @@ function BudgetTracker() {
     });
   };
 
- const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useGADBudgets(
+  const { data, isLoading, error, refetch } = useGADBudgets(
     gbudy_year || "",
     currentPage,
     pageSize,
@@ -128,23 +127,23 @@ function BudgetTracker() {
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleImageClick = (file: { gbf_url: string; gbf_name: string }) => {
     setSelectedImage({
       url: file.gbf_url,
-      name: file.gbf_name || "Supporting Document"
+      name: file.gbf_name || "Supporting Document",
     });
     setIsImageModalOpen(true);
   };
@@ -168,7 +167,7 @@ function BudgetTracker() {
         </div>
       ),
       cell: ({ row }) => (
-        <div className="">
+        <div className="text-center">
           {new Date(row.getValue("gbud_datetime")).toLocaleString(undefined, {
             year: "numeric",
             month: "short",
@@ -182,7 +181,11 @@ function BudgetTracker() {
     },
     {
       id: "particulars",
-      header: "Particular",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Particular(s)
+        </div>
+      ),
       cell: ({ row }) => {
         const { gbud_exp_particulars } = row.original;
         let displayParticulars = "";
@@ -216,14 +219,20 @@ function BudgetTracker() {
           displayParticulars = "No particulars";
         }
 
-        return <div className="flex-row items-center bg-blue-50 px-2 py-0.5 rounded-full border border-primary">
-              <div className="text-primary text-sm font-medium">{displayParticulars}</div>
-            </div>;
+        return (
+          <div className="flex-row items-center bg-blue-50 px-2 py-0.5 rounded-full border border-primary">
+            <div className="text-primary text-center text-sm font-medium">
+              {displayParticulars}
+            </div>
+          </div>
+        );
       },
     },
     {
       accessorKey: "gbud_amount",
-      header: "Amount",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Amount</div>
+      ),
       cell: ({ row }) => {
         const { gbud_actual_expense, gbud_proposed_budget } = row.original;
         const num = (val: any) =>
@@ -233,12 +242,16 @@ function BudgetTracker() {
         const actual = num(gbud_actual_expense);
         const proposed = num(gbud_proposed_budget);
         amount = actual && actual > 0 ? actual : proposed ?? 0;
-        return <div>Php {amount.toFixed(2)}</div>;
+        return <div className="text-center">Php {amount.toFixed(2)}</div>;
       },
     },
     {
       accessorKey: "files",
-      header: "Supporting Docs",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">
+          Supporting Documents
+        </div>
+      ),
       cell: ({ row }) => {
         const entry = row.original;
         const files = entry.files || [];
@@ -246,34 +259,36 @@ function BudgetTracker() {
         const hasFiles = files.length > 0;
 
         return (
-        <div className="flex justify-center gap-2">
-          {files.length > 0 ? (
-            <div
-              className="text-sky-500 underline cursor-pointer"
-              onClick={() => {
-                setSelectedRowFiles(files);
-                setIsSuppDocDialogOpen(true);
-              }}
-            >
-              View All Docs ({files.length})
-            </div>
-          ) : !hasReferenceNum || !hasFiles ? (
-            <span className="text-red-500">
-              Missing
-              {!hasReferenceNum && " Reference Number"}
-              {!hasReferenceNum && !hasFiles && " and"}
-              {!hasFiles && " Supporting Docs"}
-            </span>
-          ) : (
-            <span>No docs</span>
-          )}
-        </div>
-      );
+          <div className="flex justify-center gap-2">
+            {files.length > 0 ? (
+              <div
+                className="text-sky-500 underline cursor-pointer"
+                onClick={() => {
+                  setSelectedRowFiles(files);
+                  setIsSuppDocDialogOpen(true);
+                }}
+              >
+                View All Docs ({files.length})
+              </div>
+            ) : !hasReferenceNum || !hasFiles ? (
+              <span className="text-red-500 text-center">
+                Missing
+                {!hasReferenceNum && " Reference Number"}
+                {!hasReferenceNum && !hasFiles && " and"}
+                {!hasFiles && " Supporting Docs"}
+              </span>
+            ) : (
+              <span>No docs</span>
+            )}
+          </div>
+        );
       },
     },
     {
       id: "action",
-      header: "Action",
+      header: ({}) => (
+        <div className="flex w-full justify-center items-center">Action</div>
+      ),
       cell: ({ row }) => (
         <div className="flex justify-center gap-1">
           <TooltipLayout
@@ -368,13 +383,13 @@ function BudgetTracker() {
     return <div className="text-red-500">{error.message}</div>;
   }
 
-   useEffect(() => {
-      if (isLoading) {
-        showLoading();
-      } else {
-        hideLoading();
-      }
-    }, [isLoading, showLoading, hideLoading]);
+  useEffect(() => {
+    if (isLoading) {
+      showLoading();
+    } else {
+      hideLoading();
+    }
+  }, [isLoading, showLoading, hideLoading]);
 
   return (
     <div className="w-full h-full">
@@ -398,26 +413,38 @@ function BudgetTracker() {
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Whole Year Budget:</Label>
           <Label className="text-[#2563EB] text-md font-bold">
-            Php {aggregatesLoading ? "..." : Number(aggregates?.total_budget || 0).toFixed(2)}
+            Php{" "}
+            {aggregatesLoading
+              ? "..."
+              : Number(aggregates?.total_budget || 0).toFixed(2)}
           </Label>
         </div>
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Remaining Balance:</Label>
           <Label className="text-green-600 text-md font-bold">
-            Php {aggregatesLoading ? "..." : Number(aggregates?.remaining_balance || 0).toFixed(2)}
+            Php{" "}
+            {aggregatesLoading
+              ? "..."
+              : Number(aggregates?.remaining_balance || 0).toFixed(2)}
           </Label>
         </div>
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Total Expenses:</Label>
           <Label className="text-amber-600 text-md font-bold">
-            Php {aggregatesLoading ? "..." : Number(aggregates?.total_expenses || 0).toFixed(2)}
+            Php{" "}
+            {aggregatesLoading
+              ? "..."
+              : Number(aggregates?.total_expenses || 0).toFixed(2)}
           </Label>
         </div>
         {/* Add this new section for Pending Expenses */}
         <div className="flex flex-row gap-2">
           <Label className="w-35 text-md">Pending Expenses:</Label>
           <Label className="text-red-500 text-md font-bold">
-            Php {aggregatesLoading ? "..." : Number(aggregates?.pending_expenses || 0).toFixed(2)}
+            Php{" "}
+            {aggregatesLoading
+              ? "..."
+              : Number(aggregates?.pending_expenses || 0).toFixed(2)}
           </Label>
         </div>
       </div>
@@ -527,7 +554,8 @@ function BudgetTracker() {
       {!isLoading && (
         <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0">
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
-            Showing {budgetEntries.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            Showing{" "}
+            {budgetEntries.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
             {Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
           </p>
           <div className="w-full sm:w-auto flex justify-center">
@@ -582,7 +610,7 @@ function BudgetTracker() {
                           />
                         ) : (
                           // PDF or other files - opens in new tab
-                          <div 
+                          <div
                             className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-md cursor-pointer hover:bg-gray-200 p-4"
                             onClick={() => handleDocumentClick(file)}
                           >

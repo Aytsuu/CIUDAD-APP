@@ -136,13 +136,15 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
 
         // Debug logging (remove after testing)
         if (!address || !address.full_address) {
-          console.log("❌ Address not found for record:", {
-            record_type: row.original.record_type,
-            data_structure: row.original.data,
-            attempted_path: row.original.record_type === "child-health" 
-              ? "chrec_details.patrec_details.address"
-              : "patrec_details.patient_details.address"
-          });
+          if (process.env.NODE_ENV === 'development') {
+            console.log("❌ Address not found for record:", {
+              record_type: row.original.record_type,
+              data_structure: row.original.data,
+              attempted_path: row.original.record_type === "child-health" 
+                ? "chrec_details.patrec_details.address"
+                : "patrec_details.patient_details.address"
+            });
+          }
         }
 
         return <div className="w-[200px] break-words text-sm">{address?.full_address || "No address provided"}</div>;

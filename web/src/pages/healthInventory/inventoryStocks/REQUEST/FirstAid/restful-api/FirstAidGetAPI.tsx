@@ -10,7 +10,9 @@ export const getFirstAidStocksList = async () => {
       const res = await api2.get("inventory/firstaidinventorylist/");
       return res.data ;
     } catch (err) {
-      console.error(err)
+      if (process.env.NODE_ENV === 'development') {
+        console.error(err)
+      }
       return []
   }
   };
@@ -38,7 +40,9 @@ export const getFirstAidStocksTable= async (
     // console.log("First Aid Stock API Response:", res.data);
     return res.data;
   } catch (error) {
-    console.error("First Aid Stock API Error:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("First Aid Stock API Error:", error);
+    }
     return {
       results: [],
       count: 0,
@@ -75,7 +79,9 @@ export const FetchFirstAid = () => {
         };
       } catch (error) {
         showErrorToast("Failed to fetch first aid data");
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error(error);
+        }
       }
     }
   });

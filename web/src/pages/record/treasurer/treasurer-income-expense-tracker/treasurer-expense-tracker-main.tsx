@@ -259,32 +259,52 @@ function IncomeandExpenseTracking() {
         },
         { 
             accessorKey: "exp_budget_item", 
-            header: "Particulars",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Particulars
+                </div>
+            ),
             cell: ({row}) => (
-                <div>{row.getValue("exp_budget_item")}</div>
+                <div className="justify-center items-center text-center">{row.getValue("exp_budget_item")}</div>
             )
         },
         { 
             accessorKey: "iet_amount", 
-            header: "Proposed Budget" ,
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Proposed Budget
+                </div>
+            ),
             cell: ({row}) => (
-                <div>₱{row.getValue("iet_amount")}</div>
+                <div className="text-center">₱{row.getValue("iet_amount")}</div>
             )
         },
         { 
             accessorKey: "iet_actual_amount", 
-            header: "Actual Expense" ,
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Actual Expense
+                </div>
+            ),
             cell: ({row}) => (
-                <div>₱{row.getValue("iet_actual_amount")}</div>
+                <div className="text-center">₱{row.getValue("iet_actual_amount")}</div>
             )
         },        
         {
             accessorKey: "staff_name",
-            header: "Assigned Staff",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Assigned Staff
+                </div>
+            ),
         },
         {
             accessorKey: "files",
-            header: "Supporting Documents",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Supporting Documents
+                </div>
+            ),
             cell: ({row}) => {
                 const files = row.original.files;
                 const hasFiles = files && files.length > 0;
@@ -293,7 +313,7 @@ function IncomeandExpenseTracking() {
                     <div className="flex justify-center">
                         {hasFiles ? (
                             <DialogLayout
-                                trigger={<div className="bg-white hover:bg-[#f3f2f2] cursor-pointer text-[#1273B8] text-[12px] underline"> 
+                                trigger={<div className="cursor-pointer text-[#1273B8] text-[12px] underline"> 
                                     View ({files.length})
                                 </div>}
                                 className="max-w-md max-h-[60%] overflow-auto p-6 flex flex-col"
@@ -335,7 +355,11 @@ function IncomeandExpenseTracking() {
         ...commonColumns,
         { 
             accessorKey: "actions", 
-            header: "Action", 
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({row}) => (
                 <div className="flex justify-center gap-2">
                     <TooltipLayout
@@ -404,7 +428,11 @@ function IncomeandExpenseTracking() {
         ...commonColumns,
  {
             accessorKey: "action", 
-            header: "Action",
+            header: ({}) => (
+                <div className="flex w-full justify-center items-center">
+                    Action
+                </div>
+            ),
             cell: ({ row }) => {
                 return (
                     <div className="flex justify-center gap-2">

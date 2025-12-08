@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "expo-router";
-import { useState} from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Text,
   View,
@@ -39,13 +39,22 @@ import { LoadingState } from "@/components/ui/loading-state";
 import { Search } from "@/lib/icons/Search";
 import { SearchInput } from "@/components/ui/search-input";
 
+const INITIAL_PAGE_SIZE = 10;
+
 export default function WastePersonnelMain() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [selectedRole, setSelectedRole] = useState<Role>("LOADER");
   const [truckViewMode, setTruckViewMode] = useState<"active" | "archive">("active");
-  const [currentPage, setCurrentPage] = useState(1);
   const [showSearch, setShowSearch] = useState(false);
+  
+  // Pagination states
+  const [pageSize, setPageSize] = useState<number>(INITIAL_PAGE_SIZE);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [isLoadMore, setIsLoadMore] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const {
     control: searchControl,
@@ -62,13 +71,13 @@ export default function WastePersonnelMain() {
   const debouncedSearchTerm = useDebounce(searchQuery, 500);
 
   const { 
-    data: personnelData = { results: [], count: 0 }, 
+    data: personnelData = { results: [], count: 0, next: null, previous: null }, 
     isLoading: isPersonnelLoading, 
     isFetching: isPersonnelFetching,
     refetch: refetchPersonnel 
   } = useGetAllPersonnel(
-    currentPage,
-    10, 
+    1, // Always page 1 since we load more by increasing pageSize
+    pageSize, // This controls how many items to fetch
     debouncedSearchTerm,
     selectedRole !== "Trucks" ? selectedRole : undefined,
     {
@@ -77,13 +86,13 @@ export default function WastePersonnelMain() {
   );
 
   const { 
-    data: trucksData = { results: [], count: 0 }, 
+    data: trucksData = { results: [], count: 0, next: null, previous: null }, 
     isLoading: isTrucksLoading, 
     isFetching: isTrucksFetching,
     refetch: refetchTrucks 
   } = useGetTrucks(
-    selectedRole === "Trucks" ? currentPage : 1,
-    selectedRole === "Trucks" ? 10 : 100, 
+    1, // Always page 1 since we load more by increasing pageSize
+    pageSize, // This controls how many items to fetch
     selectedRole === "Trucks" ? debouncedSearchTerm : "",
     truckViewMode === "archive",
     { enabled: selectedRole === "Trucks" }
@@ -91,24 +100,75 @@ export default function WastePersonnelMain() {
 
   const deleteTruckMutation = useDeleteTruck();
   const restoreTruckMutation = useRestoreTruck();
-  const [refreshing, setRefreshing] = useState(false)
 
-  const isSearching = (selectedRole === "Trucks" && isTrucksFetching && searchQuery !== debouncedSearchTerm) || 
-                     (selectedRole !== "Trucks" && isPersonnelFetching && searchQuery !== debouncedSearchTerm);
+  // Reset pagination when role, search, or view mode changes
+  useEffect(() => {
+    setPageSize(INITIAL_PAGE_SIZE);
+  }, [debouncedSearchTerm, selectedRole, truckViewMode]);
 
-  const onRefresh = async () => {
-    setRefreshing(true)
-    if (selectedRole === "Trucks") {
-      await refetchTrucks()
-    } else {
-      await refetchPersonnel()
+  // Handle scrolling timeout
+  const handleScroll = () => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
     }
-    setRefreshing(false)
-  }
+
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 150);
+  };
+
+  // Handle load more - increment pageSize
+  const handleLoadMore = () => {
+    if (!isScrolling || isFetching || isLoadMore) return;
+    
+    const currentData = selectedRole === "Trucks" ? trucksData : personnelData;
+    const currentItems = selectedRole === "Trucks" ? filteredTrucks : filteredPersonnel;
+    const totalCount = currentData.count || 0;
+    
+    if (currentItems.length < totalCount) {
+      setIsLoadMore(true);
+      setPageSize((prev) => prev + 5); // Load 5 more items
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setPageSize(INITIAL_PAGE_SIZE);
+    
+    if (selectedRole === "Trucks") {
+      await refetchTrucks();
+    } else {
+      await refetchPersonnel();
+    }
+    
+    setIsRefreshing(false);
+  };
+
+
+
+  const isFetching = selectedRole === "Trucks" ? isTrucksFetching : isPersonnelFetching;
+  const isLoading = selectedRole === "Trucks" ? isTrucksLoading : isPersonnelLoading;
 
   const filteredTrucks = trucksData.results || [];
+  const truckTotalCount = trucksData.count || 0;
+  
   const filteredPersonnel = personnelData.results || [];
+  const personnelTotalCount = personnelData.count || 0;
 
+  useEffect(() => {
+    if (!isFetching && isRefreshing) setIsRefreshing(false);
+  }, [isFetching, isRefreshing]);
+
+  useEffect(() => {
+    if (!isLoading && isInitialRender) setIsInitialRender(false);
+  }, [isLoading, isInitialRender]);
+
+  useEffect(() => {
+    if (!isFetching && isLoadMore) setIsLoadMore(false);
+  }, [isFetching, isLoadMore]);
+  
   const handleEditTruck = (truck: TruckData) => {
     router.push({
       pathname: "/(waste)/waste-personnel/waste-truck-edit",
@@ -156,7 +216,7 @@ export default function WastePersonnelMain() {
   const handleRoleChange = (role: Role) => {
     setSelectedRole(role);
     setSearchValue("searchQuery", "");
-    setCurrentPage(1);
+    setPageSize(INITIAL_PAGE_SIZE);
   };
 
   const preparePersonnelItem = (personnel: WastePersonnel): PersonnelItem => {
@@ -179,7 +239,7 @@ export default function WastePersonnelMain() {
   const preparedPersonnel = filteredPersonnel.map(preparePersonnelItem);
 
   // Render Truck Card (styled like Budget Plan)
-  const RenderTruckCard = ({ truck }: { truck: TruckData }) => (
+  const RenderTruckCard = useCallback(({ truck }: { truck: TruckData }) => (
     <TouchableOpacity
       onPress={() => handleEditTruck(truck)}
       activeOpacity={0.8}
@@ -189,16 +249,16 @@ export default function WastePersonnelMain() {
         <CardHeader className="pb-3">
           <View className="flex-row justify-between items-start">
             <View className="flex-1">
-              <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+              <Text className="font-semibold text-lg text-[#1a2332] mb-1 font-sans">
                 {truck.truck_plate_num}
               </Text>
-              <Text className="text-sm text-gray-500">
+              <Text className="text-sm text-gray-500 font-sans">
                 {truck.truck_model}
               </Text>
             </View>
             <View className="flex-row items-center">
               <Text
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                className={`px-2 py-1 rounded-full text-xs font-medium font-sans ${
                   truck.truck_status === "Operational"
                     ? "bg-green-100 text-green-800"
                     : "bg-yellow-100 text-yellow-800"
@@ -240,56 +300,43 @@ export default function WastePersonnelMain() {
                   loading={deleteTruckMutation.isPending}
                 />
               )}
-              {/* {truckViewMode === "archive" && (
-                <ConfirmationModal
-                  trigger={
-                    <TouchableOpacity className="bg-red-50 p-2 rounded-lg">
-                      <Ban size={16} color="#ef4444" />
-                    </TouchableOpacity>
-                  }
-                  title="Confirm Permanent Delete"
-                  description={`Permanently delete truck ${truck.truck_plate_num}? This cannot be undone.`}
-                  actionLabel="Delete"
-                  variant="destructive"
-                  onPress={() => handlePermanentDeleteTruck(truck)}
-                  loading={deleteTruckMutation.isPending}
-                />
-              )} */}
             </View>
           </View>
         </CardContent>
       </Card>
     </TouchableOpacity>
-  );
+  ), []);
 
   // Render Personnel Card (styled like Budget Plan)
-  const RenderPersonnelCard = ({ item }: { item: PersonnelItem }) => (
+  const RenderPersonnelCard = useCallback(({ item }: { item: PersonnelItem }) => (
     <Card className="border-2 border-gray-200 shadow-sm bg-white mb-3">
       <CardHeader className="pb-3">
         <View className="flex-row justify-between items-start">
           <View className="flex-1">
-            <Text className="font-semibold text-lg text-[#1a2332] mb-1">
+            <Text className="font-semibold text-lg text-[#1a2332] mb-1 font-sans">
               {item.name}
             </Text>
-            {/* <Text className="text-sm text-gray-500">
-              {item.position}
-            </Text> */}
           </View>
         </View>
       </CardHeader>
 
       <CardContent className="pt-3 border-t border-gray-200">
         <View className="flex-row justify-between items-center">
-          <Text className="text-sm text-gray-600">Contact:</Text>
-          <Text className="text-sm font-medium text-black">
+          <Text className="text-sm text-gray-600 font-sans">Contact:</Text>
+          <Text className="text-sm font-medium text-black font-sans">
             {item.contact}
+          </Text>
+        </View>
+        <View className="flex-row justify-between items-center mt-2">
+          <Text className="text-sm text-gray-600 font-sans">Position:</Text>
+          <Text className="text-sm font-medium text-black font-sans">
+            {item.position}
           </Text>
         </View>
       </CardContent>
     </Card>
-  );
+  ), []);
 
-  const isLoading = (selectedRole === "Trucks" ? isTrucksLoading : isPersonnelLoading);
   const isMutationLoading = deleteTruckMutation.isPending || restoreTruckMutation.isPending;
 
   const getLoadingMessage = () => {
@@ -314,173 +361,257 @@ export default function WastePersonnelMain() {
   // Loading state component
   const renderLoadingState = () => (
     <View className="h-64 justify-center items-center">
-      <ActivityIndicator size="large" color="#2a3a61" />
-      <Text className="text-sm text-gray-500 mt-2">
-        Loading {selectedRole === "Trucks" ? "trucks" : "personnel"}...
-      </Text>
+      <LoadingState/>
     </View>
   );
 
-return (
-  <>
-    <PageLayout
-      leftAction={
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
-          <ChevronLeft size={24} className="text-gray-700" />
-        </TouchableOpacity>
-      }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Waste Personnel & Vehicles</Text>}
-      rightAction={
-        <TouchableOpacity 
-          onPress={() => setShowSearch(!showSearch)} 
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <Search size={22} className="text-gray-700" />
-        </TouchableOpacity>
-      }
-      wrapScroll={false}
-    >
-      <View className="flex-1 bg-gray-50">
-        {/* Search Bar */}
-        {showSearch && (
-          <SearchInput 
-            value={searchQuery}
-            onChange={(text) => {
-              setSearchValue("searchQuery", text);
-              setCurrentPage(1);
-            }}
-            onSubmit={() => {}} // No additional submission needed since it's debounced
-          />
-        )}
+  // Render function for FlatList
+  const renderTruckItem = useCallback(
+    ({ item }: { item: TruckData }) => <RenderTruckCard truck={item} />,
+    []
+  );
 
-        {/* Role Selection Buttons */}
-        <View className="bg-white border-b border-gray-300">
-          <View className="flex-row justify-between items-center gap-x-2 px-6 py-3">
-            {buttonData.map((item, index) => (
-              <View key={index} className="flex-1">
-                <TouchableOpacity
-                  className={`items-center justify-center rounded-lg py-3 px-1 ${
-                    selectedRole === item.label ? "bg-gray-100" : "bg-white"
-                  }`}
-                  onPress={() => handleRoleChange(item.label as Role)}
-                  activeOpacity={0.7}
-                >
-                  {item.icon}
-                  <Text
-                    className={`font-medium mt-1 text-black text-center ${
-                      width < 400 ? "text-xs" : "text-sm"
+  const renderPersonnelItem = useCallback(
+    ({ item }: { item: PersonnelItem }) => <RenderPersonnelCard item={item} />,
+    []
+  );
+
+  // Result count component
+  const renderResultCount = () => {
+    const currentItems = selectedRole === "Trucks" ? filteredTrucks : preparedPersonnel;
+    const totalCount = selectedRole === "Trucks" ? truckTotalCount : personnelTotalCount;
+    
+    if (!isRefreshing && currentItems.length > 0) {
+      return (
+        <View className="mb-2">
+          <Text className="text-xs text-gray-500 font-sans">
+            Showing {currentItems.length} of {totalCount} {selectedRole === "Trucks" ? "trucks" : "personnel"}
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <>
+      <PageLayout
+        leftAction={
+          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center">
+            <ChevronLeft size={24} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        headerTitle={<Text className="text-gray-900 text-[13px] font-sans">Waste Personnel & Vehicles</Text>}
+        rightAction={
+          <TouchableOpacity 
+            onPress={() => setShowSearch(!showSearch)} 
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        }
+        wrapScroll={false}
+      >
+        <View className="flex-1 bg-white">
+          {/* Search Bar */}
+          {showSearch && (
+            <SearchInput 
+              value={searchQuery}
+              onChange={(text) => {
+                setSearchValue("searchQuery", text);
+                setPageSize(INITIAL_PAGE_SIZE);
+              }}
+              onSubmit={() => {}} // No additional submission needed since it's debounced
+            />
+          )}
+
+          {/* Role Selection Buttons */}
+          <View className="bg-white border-b border-gray-300">
+            <View className="flex-row justify-between items-center gap-x-2 px-6 py-3">
+              {buttonData.map((item, index) => (
+                <View key={index} className="flex-1">
+                  <TouchableOpacity
+                    className={`items-center justify-center rounded-lg py-3 px-1 ${
+                      selectedRole === item.label ? "bg-gray-100" : "bg-white"
                     }`}
+                    onPress={() => handleRoleChange(item.label as Role)}
+                    activeOpacity={0.7}
                   >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
+                    {item.icon}
+                    <Text
+                      className={`font-medium mt-1 text-black text-center font-sans ${
+                        width < 400 ? "text-xs" : "text-sm"
+                      }`}
+                    >
+                      {item.label}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Truck Tabs and Add Button */}
+          <View className="px-6 pt-4 pb-3 bg-white">
+            {/* Truck Tabs - Styled like Budget Plan */}
+            {selectedRole === "Trucks" && (
+              <View className="pb-3">
+                <Tabs value={truckViewMode} onValueChange={val => setTruckViewMode(val as "active" | "archive")}>
+                  <TabsList className="bg-blue-50 flex-row justify-between">
+                    <TabsTrigger 
+                      value="active" 
+                      className={`flex-1 mx-1 ${truckViewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+                    >
+                      <Text className={`font-sans text-[13px] ${truckViewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                        Active
+                      </Text>
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="archive" 
+                      className={`flex-1 mx-1 ${truckViewMode === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
+                    >
+                      <Text className={`font-sans text-[13px] ${truckViewMode === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
+                        Disposed
+                      </Text>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </View>
-            ))}
+            )}
+
+            {/* Add Truck Button - Styled like Resolution */}
+            {selectedRole === "Trucks" && truckViewMode === "active" && (
+              <Button 
+                onPress={handleAddTruck} 
+                className="bg-primaryBlue rounded-xl"
+              >
+                <Text className="text-white text-[13px] font-bold font-sans">Add Truck Record</Text>
+              </Button>
+            )}
+          </View>
+
+          {/* Content Area */}
+          <View className="flex-1 px-6">
+            {isLoading && isInitialRender ? (
+              <View className="flex-1 justify-center items-center">
+                <LoadingState/>
+              </View>
+            ) : (
+              <View className="flex-1">
+                {/* Result Count */}
+                {renderResultCount()}
+                
+                {selectedRole === "Trucks" ? (
+                  filteredTrucks.length === 0 ? (
+                    renderEmptyState()
+                  ) : (
+                    <FlatList
+                      data={filteredTrucks}
+                      renderItem={renderTruckItem}
+                      keyExtractor={(item) => item.truck_id.toString()}
+                      maxToRenderPerBatch={5}
+                      overScrollMode="never"
+                      showsVerticalScrollIndicator={false}
+                      showsHorizontalScrollIndicator={false}
+                      initialNumToRender={5}
+                      onEndReached={handleLoadMore}
+                      onEndReachedThreshold={0.5}
+                      onScroll={handleScroll}
+                      windowSize={11}
+                      removeClippedSubviews
+                      refreshControl={
+                        <RefreshControl
+                          refreshing={isRefreshing}
+                          onRefresh={handleRefresh}
+                          colors={['#00a8f0']}
+                        />
+                      }
+                      contentContainerStyle={{ 
+                        paddingBottom: 20,
+                        paddingTop: 8,
+                        flexGrow: 1,
+                      }}
+                      ListFooterComponent={() =>
+                        isFetching && isLoadMore ? (
+                          <View className="py-4 items-center">
+                            <ActivityIndicator size="small" color="#3B82F6" />
+                            <Text className="text-xs text-gray-500 mt-2 font-sans">
+                              Loading more trucks...
+                            </Text>
+                          </View>
+                        ) : (
+                          filteredTrucks.length > 0 && filteredTrucks.length >= truckTotalCount && (
+                            <View className="py-4 items-center">
+                              <Text className="text-xs text-gray-400 font-sans">
+                                No more trucks
+                              </Text>
+                            </View>
+                          )
+                        )
+                      }
+                    />
+                  )
+                ) : (
+                  preparedPersonnel.length === 0 ? (
+                    renderEmptyState()
+                  ) : (
+                    <FlatList
+                      data={preparedPersonnel}
+                      renderItem={renderPersonnelItem}
+                      keyExtractor={(item) => item.id}
+                      maxToRenderPerBatch={5}
+                      overScrollMode="never"
+                      showsVerticalScrollIndicator={false}
+                      showsHorizontalScrollIndicator={false}
+                      initialNumToRender={5}
+                      onEndReached={handleLoadMore}
+                      onEndReachedThreshold={0.5}
+                      onScroll={handleScroll}
+                      windowSize={11}
+                      removeClippedSubviews
+                      refreshControl={
+                        <RefreshControl
+                          refreshing={isRefreshing}
+                          onRefresh={handleRefresh}
+                          colors={['#00a8f0']}
+                        />
+                      }
+                      contentContainerStyle={{ 
+                        paddingBottom: 20,
+                        paddingTop: 8,
+                        flexGrow: 1,
+                      }}
+                      ListFooterComponent={() =>
+                        isFetching && isLoadMore ? (
+                          <View className="py-4 items-center">
+                            <ActivityIndicator size="small" color="#3B82F6" />
+                            <Text className="text-xs text-gray-500 mt-2 font-sans">
+                              Loading more personnel...
+                            </Text>
+                          </View>
+                        ) : (
+                          preparedPersonnel.length > 0 && preparedPersonnel.length >= personnelTotalCount && (
+                            <View className="py-4 items-center">
+                              <Text className="text-xs text-gray-400 font-sans">
+                                No more personnel
+                              </Text>
+                            </View>
+                          )
+                        )
+                      }
+                    />
+                  )
+                )}
+              </View>
+            )}
           </View>
         </View>
+      </PageLayout>
 
-        {/* Truck Tabs and Add Button */}
-        <View className="px-6 pt-4 pb-3 bg-white">
-          {/* Truck Tabs - Styled like Budget Plan */}
-          {selectedRole === "Trucks" && (
-            <View className="pb-3">
-              <Tabs value={truckViewMode} onValueChange={val => setTruckViewMode(val as "active" | "archive")}>
-                <TabsList className="bg-blue-50 flex-row justify-between">
-                  <TabsTrigger 
-                    value="active" 
-                    className={`flex-1 mx-1 ${truckViewMode === 'active' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-                  >
-                    <Text className={`${truckViewMode === 'active' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                      Active
-                    </Text>
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="archive" 
-                    className={`flex-1 mx-1 ${truckViewMode === 'archive' ? 'bg-white border-b-2 border-primaryBlue' : ''}`}
-                  >
-                    <Text className={`${truckViewMode === 'archive' ? 'text-primaryBlue font-medium' : 'text-gray-500'}`}>
-                      Disposed
-                    </Text>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </View>
-          )}
-
-          {/* Add Truck Button - Styled like Resolution */}
-          {selectedRole === "Trucks" && truckViewMode === "active" && (
-            <Button 
-              onPress={handleAddTruck} 
-              className="bg-primaryBlue rounded-xl"
-            >
-              <Text className="text-white text-[13px] font-bold">Add Truck Record</Text>
-            </Button>
-          )}
-        </View>
-
-        {/* Content Area */}
-        <View className="flex-1 px-6">
-          {isLoading ? (
-            <View className="flex-1 justify-center items-center">
-              <LoadingState/>
-            </View>
-          ) : (
-            <View className="flex-1">
-              {selectedRole === "Trucks" ? (
-                filteredTrucks.length === 0 ? (
-                  renderEmptyState()
-                ) : (
-                  <FlatList
-                    data={filteredTrucks}
-                    renderItem={({ item }) => <RenderTruckCard truck={item} />}
-                    keyExtractor={(item) => item.truck_id.toString()}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        colors={['#00a8f0']}
-                      />
-                    }
-                    contentContainerStyle={{ 
-                      paddingBottom: 16,
-                      paddingTop: 16
-                    }}
-                  />
-                )
-              ) : (
-                preparedPersonnel.length === 0 ? (
-                  renderEmptyState()
-                ) : (
-                  <FlatList
-                    data={preparedPersonnel}
-                    renderItem={({ item }) => <RenderPersonnelCard item={item} />}
-                    keyExtractor={(item) => item.id}
-                    showsVerticalScrollIndicator={false}
-                    refreshControl={
-                      <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        colors={['#00a8f0']}
-                      />
-                    }
-                    contentContainerStyle={{ 
-                      paddingBottom: 16,
-                      paddingTop: 16
-                    }}
-                  />
-                )
-              )}
-            </View>
-          )}
-        </View>
-      </View>
-    </PageLayout>
-
-    {/* Loading Modal only for mutations (delete, restore) */}
-    <LoadingModal 
-      visible={deleteTruckMutation.isPending || restoreTruckMutation.isPending} 
-    />
-  </>
-);
+      {/* Loading Modal only for mutations (delete, restore) */}
+      <LoadingModal 
+        visible={deleteTruckMutation.isPending || restoreTruckMutation.isPending} 
+      />
+    </>
+  );
 }

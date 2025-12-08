@@ -74,7 +74,7 @@ export default function ComplaintSidebar() {
   ).length || 0;
 
   return (
-    <Card className="w-full bg-white h-full flex flex-col border-none">
+    <Card className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm mb-4">
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (

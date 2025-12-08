@@ -11,8 +11,10 @@ export const updateImzSuppliesList = async (imz_id: number, imz_name: string) =>
 
     return res.data;
   } catch (err) {
-    // console.log(err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.log(err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -33,8 +35,10 @@ export const updateVaccineDetails = async (vaccineId: number, formData: any) => 
     const res = await api2.patch(`inventory/vac_list/${vaccineId}/`, updatePayload);
     return res.data;
   } catch (err) {
-    // console.log(err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.log(err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -61,8 +65,10 @@ export const updateRoutineFrequency = async (vaccineId: number, formData: any) =
       return res.data;
     }
   } catch (err) {
-    // console.log(err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.log(err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 
@@ -78,12 +84,16 @@ export const updateVaccineIntervals = async (vaccineId: number, formData: any) =
     const existingIntervals = await api2.get(`inventory/vac_intervals/`, {
       params: { vac_id: vaccineId }
     });
-    // console.log(`Fetched intervals for vac_id=${vaccineId}:`, existingIntervals.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Fetched intervals for vac_id=${vaccineId}:`, existingIntervals.data);
+    }
 
     // Validate intervals belong to the correct vaccine
     const validIntervals = existingIntervals.data.filter((interval: { vacInt_id: number; vac_id: number }) => interval.vac_id === vaccineId);
     if (validIntervals.length !== existingIntervals.data.length) {
-      console.warn(`Found ${existingIntervals.data.length - validIntervals.length} invalid intervals for vac_id=${vaccineId}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`Found ${existingIntervals.data.length - validIntervals.length} invalid intervals for vac_id=${vaccineId}`);
+      }
     }
 
     // Delete all existing intervals
@@ -117,9 +127,13 @@ export const updateVaccineIntervals = async (vaccineId: number, formData: any) =
     }
 
     await Promise.all(intervalPromises);
-    // console.log(`Successfully updated intervals for vac_id=${vaccineId}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Successfully updated intervals for vac_id=${vaccineId}`);
+    }
   } catch (err) {
-    console.error("Error updating vaccine intervals:", err);
-    throw err;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error updating vaccine intervals:", err);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };

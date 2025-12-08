@@ -71,32 +71,44 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
   const { data: phHistoryData } = useMedConPHHistory(patientData?.pat_id || "");
   const { data: famHistoryData } = useFamHistory(patientData?.pat_id || "");
 
-  console.log("consultation data:", consultation);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("consultation data:", consultation);
+  }
 
   // Get selected physical exam option IDs from the consultation data
   const selectedPhysicalExamOptions = useMemo(() => {
     if (!consultation?.find_details?.pe_results) {
-      console.log("No PE results found in consultation");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("No PE results found in consultation");
+      }
       return [];
     }
 
     const selectedIds = consultation.find_details.pe_results.map((result: any) => {
-      console.log("PE Result:", result);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("PE Result:", result);
+      }
       return result.pe_option;
     });
 
-    console.log("Selected PE option IDs:", selectedIds);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Selected PE option IDs:", selectedIds);
+    }
     return selectedIds;
   }, [consultation]);
 
   // Process exam sections to match original format
   const examSections = useMemo(() => {
     if (!sectionsQuery.data || !optionsQuery.data) {
-      console.log("No sections or options data available");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("No sections or options data available");
+      }
       return [];
     }
 
-    console.log("All PE options from database:", optionsQuery.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("All PE options from database:", optionsQuery.data);
+    }
 
     const sections = sectionsQuery.data.map((section: any) => ({
       pe_section_id: section.pe_section_id,
@@ -109,8 +121,9 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
       if (section) {
         // Convert both to numbers for comparison to avoid type issues
         const isSelected = selectedPhysicalExamOptions.includes(Number(option.pe_option_id));
-        console.log(`Option ${option.pe_option_id} (${option.text}) is selected: ${isSelected}`);
-
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Option ${option.pe_option_id} (${option.text}) is selected: ${isSelected}`);
+        }
         section.options.push({
           pe_option_id: option.pe_option_id,
           text: option.text,
@@ -118,7 +131,9 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
         });
       }
     });
-    console.log("Processed exam sections:", sections);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Processed exam sections:", sections);
+    }
     return sections;
   }, [sectionsQuery.data, optionsQuery.data, selectedPhysicalExamOptions]);
 
@@ -174,7 +189,9 @@ export default function CurrentConsultationCard({ consultation, patientData, cur
       // Clean up the URL object after use
       setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error generating PDF:", error);
+      }
     } finally {
       setIsGeneratingPDF(false);
     }

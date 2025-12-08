@@ -19,9 +19,10 @@ export const fetchPatientInfo = async (patId: string): Promise<PatientInfo> => {
     const response = await api2.get(`/patient-info/${patId}/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching patient info:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching patient info:", error);
+    }
     toast.error("Failed to load patient information");
-    throw error;
   }
 };
 
@@ -47,9 +48,10 @@ export const fetchPatientRecords = async () => {
       }))
     };
   } catch (error) {
-    console.error("Error fetching patients:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching patients:", error);
+    }
     toast.error("Failed to load patient records");
-    throw error;
   }
 };
 
@@ -79,7 +81,9 @@ export const fetchPatient5yearsbelow = async () => {
 
         return months <= 60; // 5 years * 12 months = 60 months
       } catch (e) {
-        console.error(`Error calculating age for patient ${patient.pat_id}:`, e);
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`Error calculating age for patient ${patient.pat_id}:`, e);
+        }
         return false;
       }
     });
@@ -101,9 +105,10 @@ export const fetchPatient5yearsbelow = async () => {
       }))
     };
   } catch (error) {
-    console.error("Error fetching patients:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching patients:", error);
+    }
     toast.error("Failed to load patient records");
-    throw error;
   }
 };
 

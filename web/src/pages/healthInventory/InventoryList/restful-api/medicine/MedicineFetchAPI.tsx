@@ -5,7 +5,9 @@ export const getMedicinesTable = async (page?: number, pageSize?: number, search
     const res = await api2.get("inventory/medicinetable/", {
       params: { page, page_size: pageSize, search: search?.trim() || undefined }
     });
-    // console.log("Medicine API Response:", res.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Medicine API Response:", res.data);
+    }
     return res.data;
   } catch (error) {
     console.error("Medicine API Error:", error);

@@ -14,7 +14,6 @@ export type Receipt = {
     inv_payor: string; // Added this field
     inv_discount_reason: string;
     inv_change?: string | number;
-    // Keep these if you need them separately
     payor_lname?: string;
     payor_fname?: string;
 };
@@ -25,9 +24,11 @@ export const useInvoiceQuery = (
     searchQuery?: string, 
     natureFilter?: string
 ) => {
-    return useQuery<{ results: Receipt[]; count: number }>({
+    return useQuery({
         queryKey: ["invoices", page, pageSize, searchQuery, natureFilter],
         queryFn: () => getInvoice(page, pageSize, searchQuery, natureFilter),
         staleTime: 1000 * 60 * 30,
+        placeholderData: (previous) => previous,
+        retry: false,
     });
 };

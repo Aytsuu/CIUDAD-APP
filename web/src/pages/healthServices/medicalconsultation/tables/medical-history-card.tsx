@@ -75,7 +75,9 @@ export const MedicalHistoryTab: React.FC<MedicalHistoryTabProps> = ({
     }
 
     if (isMedHistoryError) {
-      console.error("Error fetching medical history:", medHistoryError);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error fetching medical history:", medHistoryError);
+      }
       return [
         {
           id: "error-card",

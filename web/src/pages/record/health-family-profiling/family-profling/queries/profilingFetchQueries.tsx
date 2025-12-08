@@ -139,7 +139,7 @@ export const useFamilyDataHealth = (familyId: string | null) => {
     queryKey: ["familyDataHealth", familyId],
     queryFn: () => getFamilyDataHealth(familyId!),
     enabled: !!familyId, // Only run when familyId exists
-    staleTime: 30000, // Increase stale time to 30 seconds for better performance
+    staleTime: 5000, // Increase stale time to 30 seconds for better performance
   })
 }
 

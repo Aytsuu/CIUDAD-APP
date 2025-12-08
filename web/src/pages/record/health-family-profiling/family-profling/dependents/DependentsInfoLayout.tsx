@@ -21,8 +21,8 @@ import {
   addPerAdditionalDetailsHealth, 
   addMotherHealthInfo, 
   createDependentUnderFive,
-  getFamilyMembersHealth
 } from "../restful-api/profiingPostAPI";
+import { getFamilyMembersHealth } from "@/pages/record/profiling/restful-api/profiingPostAPI"; 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoadButton } from "@/components/ui/button/load-button";
 

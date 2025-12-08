@@ -15,22 +15,26 @@ export const useAddService = () => {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: addService,
-		onSuccess: (service) => {
-			queryClient.invalidateQueries({
-				queryKey: ['services']
-			})
+		   onSuccess: (service) => {
+			   queryClient.invalidateQueries({
+				   queryKey: ['services']
+			   })
 
-			toast("New service created successfully", {
-				icon: (
-					<CircleCheck size={24} className="fill-green-500 stroke-white" />
-				),	
-			});
-			console.log("Successfully added service ID: ", service)
-		},
-		onError: (error: Error) => {
-			console.error('Service error: ', error.message)
-			toast.error("Failed to create service. Please try again.")
-		}
+			   toast("New service created successfully", {
+				   icon: (
+					   <CircleCheck size={24} className="fill-green-500 stroke-white" />
+				   ),  
+			   });
+			   if (process.env.NODE_ENV === 'development') {
+				   console.log("Successfully added service ID: ", service)
+			   }
+		   },
+		   onError: (error: Error) => {
+			   if (process.env.NODE_ENV === 'development') {
+				   console.error('Service error: ', error.message)
+			   }
+			   toast.error("Failed to create service. Please try again.")
+		   }
 	})
 }
 
@@ -39,21 +43,25 @@ export const useAddDay = () => {
 
 	return useMutation({
 		mutationFn: addDay,
-		onSuccess: (day) => {
-			queryClient.invalidateQueries({
-				queryKey: ['days']
-			}),
-			toast("New day created successfully", {
-				icon: (
-					<CircleCheck size={24} className="fill-green-500 stroke-white" />
-				),	
-			});
-			console.log("Successfully added day ID: ", day)
-		},
-		onError: (error: Error) => {
-			console.error('Day error: ', error.message)
-			toast.error("Failed to create day. Please try again.")
-		}
+		   onSuccess: (day) => {
+			   queryClient.invalidateQueries({
+				   queryKey: ['days']
+			   }),
+			   toast("New day created successfully", {
+				   icon: (
+					   <CircleCheck size={24} className="fill-green-500 stroke-white" />
+				   ),  
+			   });
+			   if (process.env.NODE_ENV === 'development') {
+				   console.log("Successfully added day ID: ", day)
+			   }
+		   },
+		   onError: (error: Error) => {
+			   if (process.env.NODE_ENV === 'development') {
+				   console.error('Day error: ', error.message)
+			   }
+			   toast.error("Failed to create day. Please try again.")
+		   }
 	})
 }
 
@@ -62,20 +70,24 @@ export const useAddScheduler = () => {
 
 	return useMutation({
 		mutationFn: addScheduler,
-		onSuccess: (ss_id) => {
-			queryClient.invalidateQueries({
-				queryKey: ['schedulers']
-			})
+		   onSuccess: (ss_id) => {
+			   queryClient.invalidateQueries({
+				   queryKey: ['schedulers']
+			   })
 
-			toast("New schedule created successfully", {
-				icon: (
-					<CircleCheck size={24} className="fill-green-500 stroke-white" />
-				),	
-			});
-			console.log("Successfully added scheduler ID: ", ss_id)
-		},
-		onError: (error: Error) => {
-			console.error('Scheduler error: ', error.message)
-		}
+			   toast("New schedule created successfully", {
+				   icon: (
+					   <CircleCheck size={24} className="fill-green-500 stroke-white" />
+				   ),  
+			   });
+			   if (process.env.NODE_ENV === 'development') {
+				   console.log("Successfully added scheduler ID: ", ss_id)
+			   }
+		   },
+		   onError: (error: Error) => {
+			   if (process.env.NODE_ENV === 'development') {
+				   console.error('Scheduler error: ', error.message)
+			   }
+		   }
 	})
 }

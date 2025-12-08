@@ -15,7 +15,6 @@ export const useUpdateCommodity = () => {
       showSuccessToast("updated successfully!");
     },
     onError: (error: any) => {
-      console.error("Error updating commodity:", error);
       showErrorToast("Failed to update. Please try again.");
       throw error; // Re-throw to be caught in the component
 

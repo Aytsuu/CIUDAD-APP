@@ -2,14 +2,13 @@ import React from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
-import { Check, FileDown, FileText, Plus, Search } from "lucide-react";
+import { Check, FileText, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { ARColumns } from "../ReportColumns";
 import {
   useGetAcknowledgementReport,
   useGetWeeklyAR,
 } from "../queries/reportFetch";
-import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { LoadButton } from "@/components/ui/button/load-button";
 import { useAddWAR, useAddWARComp } from "../queries/reportAdd";
 import { useAuth } from "@/context/AuthContext";
@@ -17,7 +16,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatDate, getWeekNumber } from "@/helpers/dateHelper";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useLoading } from "@/context/LoadingContext";
 import {
   Select,
@@ -39,7 +38,8 @@ export default function ARRecords() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const [selectedRows, setSelectedRows] = React.useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
   const [isCreatingWeeklyAR, setIsCreatingWeeklyAR] =
@@ -106,7 +106,17 @@ export default function ARRecords() {
     }
   }, [warThisMonth]);
 
+  // Reset to page 1 when search changes
+    React.useEffect(() => {
+      if(debouncedSearchQuery == "") return;
+      handlePageChange(1);
+    }, [debouncedSearchQuery]);
+
   // =================== HANDLERS ===================
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page) });
+  };
+
   const onSelectedRowsChange = React.useCallback((rows: any[]) => {
     setSelectedRows(rows);
   }, []);
@@ -155,8 +165,8 @@ export default function ARRecords() {
   // =================== RENDER ===================
   return (
     <MainLayoutComponent
-      title="Action Report"
-      description="Manage and view all acknowledgement reports in your system"
+      title="Action Reports"
+      description="Manage and view all action reports in your system"
     >
       {isCreatingWeeklyAR && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between mb-4">
@@ -204,7 +214,7 @@ export default function ARRecords() {
                     className="gap-4 focus:ring-0"
                     onChange={(value) => {
                       setStatus(value);
-                      setCurrentPage(1);
+                      handlePageChange(1);
                     }}
                     placeholder=""
                     options={[
@@ -292,21 +302,6 @@ export default function ARRecords() {
                 </Select>
                 <span className="text-sm text-gray-600">entries</span>
               </div>
-              <div className="flex items-center gap-1">
-                <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="shadow-none">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
-                  options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
-                  ]}
-                />
-              </div>
             </div>
 
             {/* Empty State */}
@@ -330,7 +325,7 @@ export default function ARRecords() {
               <div className="flex items-center justify-center py-12">
                 <Spinner size="lg" />
                 <span className="ml-2 text-gray-600">
-                  Loading acknowledgement reports...
+                  Loading action reports...
                 </span>
               </div>
             )}
@@ -371,7 +366,7 @@ export default function ARRecords() {
                   <PaginationLayout
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage}
+                    onPageChange={handlePageChange}
                   />
                 </div>
               </div>

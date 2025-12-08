@@ -9,11 +9,16 @@ export const useSubmitImmunizationStock = () => {
 
   return useMutation({
     mutationFn: async ({ data }: { data: any }) => {
-      console.log("Data being submitted:", data);
-      
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Data being submitted:", data);
+      }
+
       const imz_id = Number(data.imz_id);
       if (isNaN(imz_id)) {
-        throw new Error("Invalid immunization supply selection");
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Invalid immunization supply selection");
+        }
+        return;
       }
 
       const atomicData = { ...data, imz_id };
@@ -25,14 +30,18 @@ export const useSubmitImmunizationStock = () => {
       queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
       queryClient.invalidateQueries({ queryKey: ["antigen_transactions"] });
       queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
-      
+
       navigate(-1);
       showSuccessToast("Added successfully");
-      
-      console.log("Created records:", data.data);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Created records:", data.data);
+      }
     },
     onError: (error) => {
-      console.error("Failed to add immunization stock:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to add immunization stock:", error);
+      }
       showErrorToast(error.message || "Failed to Add");
     },
   });

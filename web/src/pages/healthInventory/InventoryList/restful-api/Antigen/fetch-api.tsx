@@ -10,7 +10,7 @@ export const getImzSupTables = async (page: number, pageSize: number, search?: s
       }
     });
     return res.data;
-  } catch (err) {
+  } catch  {
     // console.log(err);
     return { results: [], pagination: { total_count: 0, total_pages: 0, current_page: 1 } };
   }
@@ -21,7 +21,9 @@ export const getImzSuplist = async () => {
     const res = await api2.get("inventory/imz_supplieslist-view/");
     return res.data;
   } catch (err) {
-    console.error("Error fetching IMZ supplies data:", err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching IMZ supplies data:", err);
+    }
     return [];
   }
 };
@@ -31,7 +33,9 @@ export const getVaccineList = async () => {
     const res = await api2.get("inventory/vac_list/");
     return res.data; // Return the actual data
   } catch (err) {
-    console.error("Error fetching vaccine data:", err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching vaccine data:", err);
+    }
     return [];
   }
 };
@@ -47,7 +51,9 @@ export const getVaccineListCombine = async (page: number, pageSize: number, sear
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching combined vaccine data:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching combined vaccine data:", error);
+    }
     return [];
   }
 };

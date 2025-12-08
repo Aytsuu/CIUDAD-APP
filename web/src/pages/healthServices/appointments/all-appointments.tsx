@@ -94,14 +94,15 @@ export default function ScheduleRecords() {
         try {
           const patientDetails = visit.patient_details;
           if (!patientDetails) {
-            console.warn("No patient details found for visit:", visit);
+            if (process.env.NODE_ENV === "development") {
+              console.warn("No patient details found for visit:", visit);
+            }
             return null;
           }
 
-        const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
-        const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patientInfo.per_dob || "")
-        const address = patientDetails.address || {}
-
+          const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
+          const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patientInfo.per_dob || "")
+          const address = patientDetails.address || {}
 
           const formatDate = (dateStr: string) => {
             if (!dateStr) return new Date().toISOString().split("T")[0];
@@ -112,30 +113,32 @@ export default function ScheduleRecords() {
             }
           };
 
-        const record: ScheduleRecord = {
-          id: visit.followv_id || visit.id || 0,
-          patient: {
-            firstName: patientInfo.per_fname || "",
-            lastName: patientInfo.per_lname || "",
-            middleName: patientInfo.per_mname || "",
-            gender: patientInfo.per_sex || "",
-            age: ageInfo,
-            ageTime: ageUnit,
-            patientId: patientDetails.pat_id || patientInfo.pat_id || "",
-          },
-          scheduledDate: formatDate(visit.followv_date || visit.date),
-          purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
-          status: visit.followv_status || "Pending",
-          sitio: address.add_sitio || "",
-          type: patientDetails.pat_type || "",
-          patrecType: patientDetails.patrec_type || "",
-        }
+          const record: ScheduleRecord = {
+            id: visit.followv_id || visit.id || 0,
+            patient: {
+              firstName: patientInfo.per_fname || "",
+              lastName: patientInfo.per_lname || "",
+              middleName: patientInfo.per_mname || "",
+              gender: patientInfo.per_sex || "",
+              age: ageInfo,
+              ageTime: ageUnit,
+              patientId: patientDetails.pat_id || patientInfo.pat_id || "",
+            },
+            scheduledDate: formatDate(visit.followv_date || visit.date),
+            purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
+            status: visit.followv_status || "Pending",
+            sitio: address.add_sitio || "",
+            type: patientDetails.pat_type || "",
+            patrecType: patientDetails.patrec_type || "",
+          }
 
-        return record
-      } catch (error) {
-        console.error("Error transforming visit data:", error, visit)
-        return null
-      }
+          return record
+        } catch (error) {
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error transforming visit data:", error, visit)
+          }
+          return null
+        }
     }).filter(Boolean) // Remove null values
   }, [paginatedData])
 

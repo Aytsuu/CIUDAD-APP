@@ -28,7 +28,10 @@ export const useResidentsTable = (page: number, pageSize: number, searchQuery: s
           params: { 
             page, 
             page_size: pageSize,
-            search: searchQuery
+            search: searchQuery,
+            age: 'all',
+            voter: 'all',
+            disable: 'all'
           }
         });
         

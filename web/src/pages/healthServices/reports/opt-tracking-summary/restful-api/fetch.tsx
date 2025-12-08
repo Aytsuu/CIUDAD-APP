@@ -17,8 +17,9 @@ export const getOPTSummaries = async (page: number, pageSize: number, searchQuer
 
     return response.data;
   } catch (error) {
-    console.error("Error fetching OPT summaries:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching OPT summaries:", error);
+    }
   }
 };
 
@@ -27,8 +28,9 @@ export const getOPTMonthlyReport = async (month: string, sitio?: string): Promis
     const response = await api2.get<OPTMonthlyDetailsResponse>(`/reports/opt-tracking/summary/${month}/`, { params: { sitio } });
     return response.data;
   } catch (error) {
-    console.error("Error fetching OPT monthly report:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching OPT monthly report:", error);
+    }
   }
 };
 

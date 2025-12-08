@@ -7,35 +7,27 @@ export const getIncomeExpenseMainCard = async (
     page: number = 1, 
     pageSize: number = 10,
     searchQuery?: string
-): Promise<{ results: IncomeExpenseCard[]; count: number }> => {
+): Promise<any> => {
     try {
         const params: any = { page, page_size: pageSize };
         if (searchQuery) params.search = searchQuery;
         
         const res = await api.get('treasurer/income-expense-main/', { params });
         
-        // Handle paginated response
-        if (res.data.results !== undefined) {
-            return {
-                results: res.data.results || [],
-                count: res.data.count || 0
-            };
-        }
-        
-        // Fallback for non-paginated response
-        return {
-            results: Array.isArray(res.data) ? res.data : [],
-            count: Array.isArray(res.data) ? res.data.length : 0
-        };
+        return res.data;
     } catch (_err) {
-        // console.error(err);
-        return { results: [], count: 0 };
+        return { 
+            results: [], 
+            count: 0,
+            next: null,
+            previous: null
+        };
     }
 };
 
 
 
-//RETRIEVE EXPENSES
+// RETRIEVE EXPENSES
 export const getIncomeExpense = async ( 
     page: number = 1, 
     pageSize: number = 10,
@@ -43,7 +35,7 @@ export const getIncomeExpense = async (
     searchQuery?: string,
     selectedMonth?: string,
     isArchive?: boolean
-): Promise<{ results: IncomeExpense[]; count: number }> => {
+): Promise<any> => { // Use `any` or omit type like MOM
     try {
         const params: any = { page, page_size: pageSize };
         
@@ -54,20 +46,15 @@ export const getIncomeExpense = async (
         
         const res = await api.get('treasurer/income-expense-tracking/', { params });
         
-        if (res.data.results !== undefined) {
-            return {
-                results: res.data.results || [],
-                count: res.data.count || 0
-            };
-        }
-        
-        return {
-            results: Array.isArray(res.data) ? res.data : [],
-            count: Array.isArray(res.data) ? res.data.length : 0
-        };
+        return res.data; 
     } catch (_err) {
-        // console.error(err);
-        return { results: [], count: 0 };
+        // Return empty structure like your current code
+        return { 
+            results: [], 
+            count: 0,
+            next: null,
+            previous: null
+        };
     }
 };
 
@@ -92,7 +79,7 @@ export const getExpenseLog = async (
     year?: number, 
     searchQuery?: string, 
     selectedMonth?: string
-): Promise<{ results: ExpenseLog[]; count: number }> => {
+): Promise<any> => {
     try {
         const params: any = { page, page_size: pageSize };
         if (year) params.year = year;
@@ -101,22 +88,14 @@ export const getExpenseLog = async (
         
         const res = await api.get('treasurer/expense-log/', { params });
         
-        // Handle paginated response
-        if (res.data.results !== undefined) {
-            return {
-                results: res.data.results || [],
-                count: res.data.count || 0
-            };
-        }
-        
-        // Fallback for non-paginated response
-        return {
-            results: Array.isArray(res.data) ? res.data : [],
-            count: Array.isArray(res.data) ? res.data.length : 0
-        };
+        return res.data;
     } catch (_err) {
-        // console.error(err);
-        return { results: [], count: 0 };
+        return { 
+            results: [], 
+            count: 0,
+            next: null,
+            previous: null
+        };
     }
 };
 
@@ -124,38 +103,33 @@ export const getExpenseLog = async (
 // ================================== INCOMEEEE =================================
 
 
-export const getIncomeData = async (
+
+export const getIncomeData = async ( 
     page: number = 1, 
     pageSize: number = 10,
-    year?: number, 
-    searchQuery?: string, 
+    year?: number,
+    searchQuery?: string,
     selectedMonth?: string,
     isArchive?: boolean
-): Promise<{ results: Income[]; count: number }> => {
+): Promise<any> => { // Use `any` like expense
     try {
         const params: any = { page, page_size: pageSize };
+        
         if (year) params.year = year;
         if (searchQuery) params.search = searchQuery;
         if (selectedMonth && selectedMonth !== "All") params.month = selectedMonth;
-        if (isArchive !== undefined) params.is_archive = isArchive; // Add archive filter
+        if (isArchive !== undefined) params.is_archive = isArchive; 
         
         const res = await api.get('treasurer/income-tracking/', { params });
         
-        // Handle paginated response
-        if (res.data.results !== undefined) {
-            return {
-                results: res.data.results || [],
-                count: res.data.count || 0
-            };
-        }
-        
-        // Fallback for non-paginated response
-        return {
-            results: Array.isArray(res.data) ? res.data : [],
-            count: Array.isArray(res.data) ? res.data.length : 0
-        };
+        return res.data; // Just return the raw data like expense
     } catch (_err) {
-        // console.error(err);
-        return { results: [], count: 0 };
+        // Return empty structure like expense
+        return { 
+            results: [], 
+            count: 0,
+            next: null,
+            previous: null
+        };
     }
 };

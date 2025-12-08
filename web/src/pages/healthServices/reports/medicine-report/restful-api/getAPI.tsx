@@ -13,8 +13,9 @@ export const getMedicineMonthly = async (page: number, pageSize: number, search?
     const response = await api2.get<any>(`/reports/medicine-records/monthly/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching medicine records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching medicine records:", error);
+    }
   }
 };
 
@@ -34,27 +35,31 @@ export const getMedicineDetailedReports = async (
 
     const url = `/reports/medicine-reports/${month}/?${params.toString()}`;
     const response = await api2.get<any>(url);
-    console.log("Medicine Reports Response:", response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Medicine Reports Response:", response.data);
+    }
     return response.data;
   } catch (error) {
-    console.error("Error fetching Medicine records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching Medicine records:", error);
+    }
   }
 };
 
 
 
 export  const getMedicineChart = async(month:string)=>{
-  try
-  {
+  try {
     const url = `/reports/medicines-request/monthly/chart/${month}/`;
     const response = await api2.get<any>(url);
-    console.log("Chart Response:", response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Chart Response:", response.data);
+    }
     return response.data;
-  }
-  catch (error) {
-    console.error("Error fetching Vaccination Chart:", error);
-    throw error;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching Vaccination Chart:", error);
+    }
   }
 
 

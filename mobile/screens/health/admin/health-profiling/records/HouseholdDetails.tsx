@@ -24,7 +24,7 @@ export default function HouseholdDetails() {
     try {
       return JSON.parse(params.household as string);
     } catch (error) {
-      console.error("Error parsing household data:", error);
+      // console.error("Error parsing household data:", error);
       return null;
     }
   }, [params.household]);

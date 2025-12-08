@@ -6,7 +6,9 @@ export const handleDeleteMedicineList = async (id: string) => {
   
     return res.data;
   } catch (error: any) {
-    console.error("Error deleting medicine:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error deleting medicine:", error);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };

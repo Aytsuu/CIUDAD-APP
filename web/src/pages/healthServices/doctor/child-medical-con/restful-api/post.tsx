@@ -4,13 +4,13 @@ export const createchildSoapForm = async (data: Record<string, any>) => {
   try {
     const response = await api2.post("medical-consultation/create-soap-form/childhealth/", data);
     if (!response.data ) {
-      throw new Error("Failed to retrieve the SOAP ID from the response");
+      if (process.env.NODE_ENV === 'development') console.error("Failed to retrieve the SOAP ID from the response", response);
+      return null;
     }
-    console.log("Child SOAP form created successfully:", response.data);
 
     return response.data; // Return the response data
   } catch (error) {
-    console.error("Error creating child SOAP form:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') console.error("Error creating child SOAP form:", error);
+    return null;
   }
 };

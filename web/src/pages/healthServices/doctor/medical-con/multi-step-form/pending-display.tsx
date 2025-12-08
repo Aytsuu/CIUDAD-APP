@@ -14,7 +14,9 @@ export default function PendingDisplayMedicalConsultation({ patientData, Medical
     return MedicalConsultation;
   }, [MedicalConsultation]);
 
-  console.log("Current Consultation:", currentConsultation);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Current Consultation:", currentConsultation);
+  }
 
   return (
     <div className="">

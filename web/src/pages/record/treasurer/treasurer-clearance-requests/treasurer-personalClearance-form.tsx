@@ -195,7 +195,7 @@ function PersonalClearanceForm({ onSuccess }: PersonalClearanceFormProps) {
                                         <FormLabel>Requester:</FormLabel>
                                         <FormControl>
                                             <ComboboxInput
-                                                value={field.value}
+                                                value={field.value || ""}
                                                 options={residents}
                                                 isLoading={residentLoading}
                                                 label=""

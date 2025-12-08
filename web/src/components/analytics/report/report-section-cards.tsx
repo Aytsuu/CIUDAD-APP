@@ -56,11 +56,11 @@ export const useReportSectionCards = () => {
     ),
     acknowledgementReports: (
       <ReportCard 
-        title="Acknowledgement Reports" 
+        title="Action Reports" 
         value={reportCardAnalytics?.acknowledgementReports} 
         isLoading={isLoading}
         onClick={() => {
-          navigate("/report/acknowledgement")
+          navigate("/report/action")
         }}
       />
     ),

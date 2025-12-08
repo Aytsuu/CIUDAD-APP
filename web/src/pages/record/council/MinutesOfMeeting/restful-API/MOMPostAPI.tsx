@@ -1,6 +1,6 @@
 import { api } from "@/api/api";
 
-export const createMOMFile = async (data: { mom_id: number;
+export const createMOMFile = async (data: {
     file_data: {
         name: string | undefined;
         type: string | undefined;
@@ -8,7 +8,6 @@ export const createMOMFile = async (data: { mom_id: number;
 }}) => {
        
         const payload = {
-            mom_id: data.mom_id,
             files: [{
                 name: data.file_data.name,
                 type: data.file_data.type,
@@ -18,20 +17,20 @@ export const createMOMFile = async (data: { mom_id: number;
 
         const res = await api.post('council/mom-file/', payload);
 
-        return res.data;
+        return res.data.momf_id;
 
 }
 
-export const insertMinutesOfMeeting = async (momInfo: Record<string, any>) => {
+export const insertMinutesOfMeeting = async (momInfo: Record<string, any>, momf_id: string) => {
     try {
-
         const momResponse = await api.post('council/minutes-of-meeting-active/', {
             mom_date: momInfo.meetingDate,
             mom_title: momInfo.meetingTitle,
             mom_agenda: momInfo.meetingAgenda,
             mom_area_of_focus: momInfo.meetingAreaOfFocus,  
             mom_is_archive: false,
-            staff_id: momInfo.staff_id
+            staff_id: momInfo.staff_id,
+            momf_id: momf_id
         });
 
         return momResponse.data.mom_id;

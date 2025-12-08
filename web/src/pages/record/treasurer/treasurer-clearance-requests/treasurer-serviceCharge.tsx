@@ -38,10 +38,10 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
             </div>
         )
     },
-    {accessorKey: "complainant_name", header: "Complainant Name"},
+    {accessorKey: "complainant_name", header: () => <div className="text-center">Complainant Name</div>, cell: ({ row }: { row: any }) => <div className="text-center">{row.getValue("complainant_name")}</div>},
     {
         accessorKey: "accused_names",
-        header: "Respondent",
+        header: () => <div className="text-center">Respondent</div>,
         cell: ({ row }: { row: any }) => {
             const accusedNames = row.original.accused_names as string[] | null | undefined;
             if (!accusedNames || accusedNames.length === 0) {
@@ -57,7 +57,7 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
         }
     },
     {accessorKey: "sr_type", 
-        header: "Type",
+        header: () => <div className="text-center">Type</div>,
         cell: ({ row }) => {
             const value = row.getValue("sr_type") as string;
             const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
@@ -107,14 +107,14 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
                 day: 'numeric'
             }) : '';
             return (
-                <div className="">{formattedDate}</div>
+                <div className="text-center">{formattedDate}</div>
             );
         }
     },
     
     ...(activeTab === "unpaid" ? [{
         accessorKey: "sr_req_status" as const, 
-        header: "Request Status",
+        header: () => <div className="text-center">Request Status</div>,
         cell: ({ row }: { row: any }) => {
             const value = row.getValue("sr_req_status") as string;
             const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
@@ -153,7 +153,7 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
     // Conditionally show Reason for Decline column only for declined tab
     ...(activeTab === "declined" ? [{
         accessorKey: "pay_reason" as const,
-        header: "Reason for Decline",
+        header: () => <div className="text-center">Reason for Decline</div>,
         cell: ({ row }: { row: any }) => {
             const reason = row.original.pay_reason as string | null | undefined;
             return (
@@ -168,7 +168,7 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
     // Conditionally show Action column only for unpaid tab
     ...(activeTab === "unpaid" ? [{
         accessorKey: "action" as const, 
-        header: "Action",
+        header: () => <div className="text-center">Action</div>,
         cell: ({ row }: { row: any }) =>(
           <div className="flex justify-center gap-1">
               <TooltipLayout

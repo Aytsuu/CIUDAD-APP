@@ -40,7 +40,9 @@ export const useFetchVaccines = () => {
         };
       } catch (error) {
         showErrorToast("Failed to fetch vaccines data");
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error(error);
+        }
       }
     }
   });
@@ -58,7 +60,9 @@ export const useFetchBatchNumbers = () => {
         }));
       } catch (error) {
         showErrorToast("Failed to fetch batch numbers");
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error(error);
+        }
       }
     }
   });
@@ -88,7 +92,9 @@ export const useFetchImmunizationSupplies = () => {
         };
       } catch (error) {
         showErrorToast("Failed to fetch immunization supplies data");
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error(error);
+        }
       }
     }
   });
@@ -136,7 +142,9 @@ export const useFetchImmunizationSuppliesWithStock = () => {
         };
       } catch (error) {
         showErrorToast("Failed to fetch immunization supplies with stock");
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error(error);
+        }
       }
     }
   });

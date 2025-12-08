@@ -5,7 +5,9 @@ export const createMedicalConsultation = async (data: Record<string, any>) => {
     const response = await api2.post("medical-consultation/medical-consultation-record/", data);
     return response.data;
   } catch (error) {
-    console.error("Error creating medical consultation:", error);
-    throw error; // Re-throw for calling code
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error creating medical consultation:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

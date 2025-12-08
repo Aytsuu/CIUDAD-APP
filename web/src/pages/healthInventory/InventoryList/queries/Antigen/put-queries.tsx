@@ -14,8 +14,7 @@ export const useUpdateImzSupply = () => {
       queryClient.invalidateQueries({ queryKey: ["ImzSupplies"] });
       showSuccessToast("updated successfully");
     },
-    onError: (error: Error) => {
-      console.error("Error updating IMZ supply:", error);
+    onError: () => {
       showErrorToast("Failed to update  ");
     }
   });

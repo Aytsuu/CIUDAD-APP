@@ -1,14 +1,8 @@
 import React from "react";
-import {
-  Search,
-  Plus,
-  Building2,
-  ClockArrowUp,
-  Paperclip,
-} from "lucide-react";
+import { Search, Plus, Building2, ClockArrowUp, Paperclip } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button/button";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { DataTable } from "@/components/ui/table/data-table";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { activeColumns } from "./BusinessColumns";
@@ -38,14 +32,20 @@ export default function BusinessRecords() {
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const [size, setSize] = React.useState<string>("all");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
   const { data: modificationRequests, isLoading: isLoadingRequests } =
     useModificationRequests();
   const { data: activeBusinesses, isLoading: isLoadingBusinesses } =
-    useActiveBusinesses(currentPage, debouncedPageSize, debouncedSearchQuery, size);
+    useActiveBusinesses(
+      currentPage,
+      debouncedPageSize,
+      debouncedSearchQuery,
+      size
+    );
 
   const businessList = activeBusinesses?.results || [];
   const totalCount = activeBusinesses?.count || 0;
@@ -53,28 +53,22 @@ export default function BusinessRecords() {
 
   const formattedRequest = formatModificationRequests(modificationRequests);
 
-  console.log(businessList)
-
   // ----------------- SIDE EFFECTS --------------------
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    if(debouncedSearchQuery == "") return;
+    handlePageChange(1);
+  }, [debouncedSearchQuery]);
+
   React.useEffect(() => {
     if (isLoadingBusinesses || isLoadingRequests) showLoading();
     else hideLoading();
   }, [isLoadingBusinesses, isLoadingRequests]);
 
-  // ----------------- HANDLERS --------------------
-  // const handleExport = (type: "csv" | "excel" | "pdf") => {
-  //   switch (type) {
-  //     case "csv":
-  //       // exportToCSV(filteredBusinesses)
-  //       break;
-  //     case "excel":
-  //       // exportToExcel(filteredBusinesses)
-  //       break;
-  //     case "pdf":
-  //       // exportToPDF(filteredBusinesses)
-  //       break;
-  //   }
-  // };
+  // ================== HANDLERS ==================
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page) });
+  };
 
   return (
     // ----------------- RENDER --------------------
@@ -108,8 +102,8 @@ export default function BusinessRecords() {
                   valueLabel="Size"
                   className="gap-4"
                   onChange={(value) => {
-                    setSize(value)
-                    setCurrentPage(1);
+                    setSize(value);
+                    handlePageChange(1);
                   }}
                   placeholder=""
                   options={[
@@ -260,7 +254,7 @@ export default function BusinessRecords() {
               <PaginationLayout
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                onPageChange={handlePageChange}
               />
             )}
           </div>

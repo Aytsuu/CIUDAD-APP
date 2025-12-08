@@ -3,7 +3,6 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { UseFormReturn } from "react-hook-form";
 import { FormSelect } from "@/components/ui/form/form-select";
-import { SubmitButton } from "@/components/ui/button/submit-button";
 import { Plus } from "@/lib/icons/Plus";
 import { X } from "@/lib/icons/X";
 import { HousePlus } from "lucide-react-native";

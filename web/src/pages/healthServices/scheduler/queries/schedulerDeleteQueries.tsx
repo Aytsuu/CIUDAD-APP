@@ -17,12 +17,14 @@ export const useDeleteService = () => {
 				icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
 			});
 		},
-		onError: (error) => {
-			console.log("Error deleting service:", error);
-			toast.error('Failed to delete service. ', {
-				icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-			});
-		},
+		   onError: (error) => {
+			   if (process.env.NODE_ENV === 'development') {
+				   console.error("Error deleting service:", error);
+			   }
+			   toast.error('Failed to delete service. ', {
+				   icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
+			   });
+		   },
 	})
 }
 
@@ -40,12 +42,14 @@ export const useDeleteDay = () => {
 				icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
 			});
 		},
-		onError: (error) => {
-			console.log("Error deleteing day:", error);
-			toast.error('Failed to delete day.', {
-				icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-			})
-		}
+		   onError: (error) => {
+			   if (process.env.NODE_ENV === 'development') {
+				   console.error("Error deleting day:", error);
+			   }
+			   toast.error('Failed to delete day.', {
+				   icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
+			   })
+		   }
 	})
 }
 
@@ -61,11 +65,13 @@ export const useDeleteScheduler = () => {
 				icon: <CircleCheck size={24} className="fill-green-500 stroke-white" />,
 			});
 		},
-		onError: (error) => {
-			console.log("Error deleting scheduler:", error);
-			toast.error('Failed to delete scheduler.', {
-				icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
-			});
-		}
+		   onError: (error) => {
+			   if (process.env.NODE_ENV === 'development') {
+				   console.error("Error deleting scheduler:", error);
+			   }
+			   toast.error('Failed to delete scheduler.', {
+				   icon: <CircleX size={24} className="fill-red-500 stroke-white" />,
+			   });
+		   }
 	})
 }

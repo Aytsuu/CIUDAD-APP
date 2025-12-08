@@ -5,8 +5,10 @@ export const handleDeleteCommodityList = async (id: string) => {
     const res = await api2.delete(`inventory/commoditylist/${id}/`); // API call
     return res.data;
   } catch (error) {
-    console.error("Error deleting medicine:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error deleting medicine:", error);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };
 

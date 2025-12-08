@@ -6,7 +6,9 @@ export const createImmunizationStock = async (data: Record<string, any>) => {
     const response = await api2.post("inventory/immunization_stock-create/", data);
     return response?.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
     throw err; 
   }
 };
@@ -16,7 +18,9 @@ export const addAntigenTransaction = async (data:Record<any,string>) => {
     const res = await api2.post("inventory/antigens_stocks/transaction/",data);
     return res.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
     throw err;
   }
 };
@@ -27,7 +31,9 @@ export const createVaccineStock = async (data: Record<string, any>) => {
     const response = await api2.post("inventory/vaccine_stock-create/", data);
     return response.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
     throw err;
   }
 };
@@ -47,7 +53,9 @@ export const AntigenTransaction = async (
     });
     return res.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
     throw err;
   }
 };

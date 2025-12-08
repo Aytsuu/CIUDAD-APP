@@ -13,7 +13,9 @@ export const getCommodity = async (page?: number, pageSize?: number, search?: st
     // console.log("Commodity API Response:", res.data);
     return res.data;
   } catch (error) {
-    console.error("Commodity API Error:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Commodity API Error:", error);
+    }
+    // DEVELOPMENT MODE ONLY: No throw in production
   }
 };

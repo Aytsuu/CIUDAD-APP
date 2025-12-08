@@ -16,8 +16,10 @@ export const getDewormingYears = async (
     const response = await api2.get<DewormingYearsResponse>(`/reports/deworming-records/yearly/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching deworming years:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching deworming years:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -38,7 +40,9 @@ export const getDewormingRecords = async (
     const response = await api2.get<DewormingDetailResponse>(`/reports/deworming-reports/${year}/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching deworming records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching deworming records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

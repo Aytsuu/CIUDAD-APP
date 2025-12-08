@@ -132,7 +132,7 @@ export default function MedicineArchiveTable() {
             <TableLoading/>
           ) : error ? (
             <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-              <span className="ml-2">Error loading medicine archive data. Please check console.</span>
+              <span className="ml-2">Error loading medicine archive data.</span>
             </div>
           ) : stockData.length === 0 ? (
             <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">

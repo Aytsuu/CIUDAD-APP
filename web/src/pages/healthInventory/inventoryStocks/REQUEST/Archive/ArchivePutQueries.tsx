@@ -15,7 +15,9 @@ export const useArchiveCommodityStocks = () => {
         });
         return response.data;
       } catch (error) {
-        console.error("Error archiving commodity inventory:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error archiving commodity inventory:", error);
+        }
         throw error;
       }
     },
@@ -26,7 +28,9 @@ export const useArchiveCommodityStocks = () => {
     },
 
     onError: (error: Error) => {
-      console.error("Error archiving commodity inventory:", error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error archiving commodity inventory:", error.message);
+      }
       showErrorToast("Failed to archive the item.");
     }
   });
@@ -44,7 +48,9 @@ export const useArchiveAntigenStocks = () => {
         });
         return response.data;
       } catch (error) {
-        console.error("Error archiving commodity inventory:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error archiving commodity inventory:", error);
+        }
         throw error;
       }
     },
@@ -56,7 +62,9 @@ export const useArchiveAntigenStocks = () => {
     },
 
     onError: (error: Error) => {
-      console.error("Error archiving commodity inventory:", error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error archiving commodity inventory:", error.message);
+      }
     }
   });
 };
@@ -73,7 +81,9 @@ export const useArchiveFirstAidInventory = () => {
         });
         return response.data;
       } catch (error) {
-        console.error("Error archiving first aid inventory:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error archiving first aid inventory:", error);
+        }
         throw error;
       }
     },
@@ -83,7 +93,9 @@ export const useArchiveFirstAidInventory = () => {
     },
 
     onError: (error: Error) => {
-      console.error("Error archiving first aid inventory:", error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error archiving first aid inventory:", error.message);
+      }
     }
   });
 };
@@ -100,7 +112,9 @@ export const useArchiveMedicineStocks = () => {
         });
         return response.data;
       } catch (error) {
-        console.error("Error archiving medicine inventory:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error archiving medicine inventory:", error);
+        }
         throw error;
       }
     },
@@ -110,7 +124,9 @@ export const useArchiveMedicineStocks = () => {
     },
 
     onError: (error: Error) => {
-      console.error("Error archiving medicine inventory:", error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error archiving medicine inventory:", error.message);
+      }
     }
   });
 };

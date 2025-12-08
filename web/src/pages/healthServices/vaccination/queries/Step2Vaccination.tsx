@@ -52,7 +52,9 @@ export const useStep2VaccinationMutation = () => {
       showSuccessToast("Vaccination record saved successfully");
     },
     onError: (error) => {
-      console.error("Failed to save vaccination record:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to save vaccination record:", error);
+      }
       showErrorToast("Failed to save vaccination record. Please try again.");
     }
   });

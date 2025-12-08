@@ -1,6 +1,6 @@
 // Update your MedicalConsultationFlow component
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import PendingDisplayMedicalConsultation from "./pending-display";
 import SoapForm from "./soap-form";
@@ -100,9 +100,7 @@ export default function MedicalConsultationFlow() {
     })
   );
 
-  useEffect(() => {  
-    console.log("Current form data:", formData)
-  }, [formData])
+ 
 
   // Unified data update handler with string conversion
   const updateFormData = useCallback((updates: Partial<FormData>) => {

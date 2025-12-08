@@ -3,12 +3,15 @@ import { api } from "@/api/api";
 
 export type IssuedCertificate = {
   ic_id: string;
-  cr_id: string;
+  cr_id?: string; // For resident certificates
+  nrc_id?: string; // For non-resident certificates
   requester: string;
   dateIssued: string;
   purpose: string;
+  is_nonresident?: boolean; // Flag to indicate if this is a non-resident certificate
   original_certificate?: {
-    cr_id: string;
+    cr_id?: string;
+    nrc_id?: string;
     req_purpose: string;
     req_type: string;
     req_request_date: string;
@@ -16,6 +19,7 @@ export type IssuedCertificate = {
     req_pay_method: string;
     req_payment_status: string;
     req_transac_id: string;
+    is_nonresident?: boolean;
   };
 };
 
@@ -78,14 +82,34 @@ export const getIssuedCertificates = async (
       ? payload.data
       : [];
 
-    const normalized: IssuedCertificate[] = rawItems.map((item: any) => ({
-      ic_id: String(item.ic_id ?? item.id ?? ''),
-      cr_id: String(item.cr_id ?? item.original_certificate?.cr_id ?? ''),
-      requester: item.requester ?? item.requester_name ?? item.name ?? '',
-      dateIssued: item.dateIssued ?? item.ic_date_of_issuance ?? item.date_issued ?? '',
-      purpose: item.purpose ?? item.pr_purpose ?? item.req_purpose ?? '',
-      original_certificate: item.original_certificate,
-    }));
+    const normalized: IssuedCertificate[] = rawItems.map((item: any) => {
+      // Check if this is a non-resident certificate
+      const isNonResident = item.is_nonresident || 
+                           !!item.nrc_id || 
+                           !item.cr_id ||
+                           (item.cr_id && item.cr_id.toUpperCase().startsWith("NRC"));
+      
+      return {
+        ic_id: String(item.ic_id ?? item.id ?? ''),
+        // For non-residents, use nrc_id; for residents, use cr_id
+        ...(isNonResident 
+          ? { nrc_id: String(item.nrc_id ?? item.cr_id ?? item.original_certificate?.nrc_id ?? '') }
+          : { cr_id: String(item.cr_id ?? item.original_certificate?.cr_id ?? '') }
+        ),
+        requester: item.requester ?? item.requester_name ?? item.name ?? '',
+        dateIssued: item.dateIssued ?? item.ic_date_of_issuance ?? item.date_issued ?? '',
+        purpose: item.purpose ?? item.pr_purpose ?? item.req_purpose ?? '',
+        is_nonresident: isNonResident,
+        original_certificate: item.original_certificate ? {
+          ...item.original_certificate,
+          ...(isNonResident 
+            ? { nrc_id: item.original_certificate.nrc_id ?? item.original_certificate.cr_id }
+            : { cr_id: item.original_certificate.cr_id }
+          ),
+          is_nonresident: isNonResident,
+        } : undefined,
+      };
+    });
 
     const count = payload?.count ?? normalized.length;
     const next = payload?.next ?? null;
@@ -106,14 +130,34 @@ export const getIssuedCertificates = async (
           ? payload.data
           : [];
 
-        const normalized: IssuedCertificate[] = rawItems.map((item: any) => ({
-          ic_id: String(item.ic_id ?? item.id ?? ''),
-          cr_id: String(item.cr_id ?? item.original_certificate?.cr_id ?? ''),
-          requester: item.requester ?? item.requester_name ?? item.name ?? '',
-          dateIssued: item.dateIssued ?? item.ic_date_of_issuance ?? item.date_issued ?? '',
-          purpose: item.purpose ?? item.pr_purpose ?? item.req_purpose ?? '',
-          original_certificate: item.original_certificate,
-        }));
+        const normalized: IssuedCertificate[] = rawItems.map((item: any) => {
+          // Check if this is a non-resident certificate
+          const isNonResident = item.is_nonresident || 
+                               !!item.nrc_id || 
+                               !item.cr_id ||
+                               (item.cr_id && item.cr_id.toUpperCase().startsWith("NRC"));
+          
+          return {
+            ic_id: String(item.ic_id ?? item.id ?? ''),
+            // For non-residents, use nrc_id; for residents, use cr_id
+            ...(isNonResident 
+              ? { nrc_id: String(item.nrc_id ?? item.cr_id ?? item.original_certificate?.nrc_id ?? '') }
+              : { cr_id: String(item.cr_id ?? item.original_certificate?.cr_id ?? '') }
+            ),
+            requester: item.requester ?? item.requester_name ?? item.name ?? '',
+            dateIssued: item.dateIssued ?? item.ic_date_of_issuance ?? item.date_issued ?? '',
+            purpose: item.purpose ?? item.pr_purpose ?? item.req_purpose ?? '',
+            is_nonresident: isNonResident,
+            original_certificate: item.original_certificate ? {
+              ...item.original_certificate,
+              ...(isNonResident 
+                ? { nrc_id: item.original_certificate.nrc_id ?? item.original_certificate.cr_id }
+                : { cr_id: item.original_certificate.cr_id }
+              ),
+              is_nonresident: isNonResident,
+            } : undefined,
+          };
+        });
 
         return {
           results: normalized,

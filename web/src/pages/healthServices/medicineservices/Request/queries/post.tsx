@@ -29,7 +29,9 @@ export const useUpdateMedicineRequestItem = () => {
     },
 
     onError: (error: Error) => {
-      console.error("Update failed:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Update failed:", error);
+      }
       showErrorToast("Failed to update document");
     }
   });
@@ -57,12 +59,16 @@ export const useCreateMedicineAllocation = () => {
       queryClient.invalidateQueries({ queryKey: ["individualMedicineRecords", data.pat_id] });
 
 
-      console.log("Allocation successful:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Allocation successful:", data);
+      }
       showSuccessToast("Allocation processed successfully");
       navigate(-1);
     },
     onError: (error: Error) => {
-      console.error("Allocation error:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Allocation error:", error);
+      }
       showErrorToast("Failed to process allocation");
     }
   });

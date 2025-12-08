@@ -10,7 +10,9 @@ export const getChildHealthHistoryRecordRecords = async (assigned_to: string, se
     const response = await api2.get(`/child-health/child-immunization-status-table/${assigned_to}/?${params}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching records:", error);
+    }
+    return null;
   }
 };
