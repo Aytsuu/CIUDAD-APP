@@ -181,12 +181,12 @@ const Overall: React.FC = () => {
     {
       accessorKey: "patient_id",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient ID 
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
+        <div className="flex min-w-[120px] px-2">
           <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
         </div>
       )
@@ -194,14 +194,14 @@ const Overall: React.FC = () => {
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient 
         </div>
       ),
       cell: ({ row }) => {
         const p = row.original;
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex justify-start min-w-[200px]">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{`${p.lname}, ${p.fname}`.trim()}</div>
               <div className="text-sm text-darkGray">
