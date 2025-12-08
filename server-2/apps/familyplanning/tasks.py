@@ -9,7 +9,6 @@ def run_followup_check():
     print(f"[{timezone.now().strftime('%Y-%m-%d %H:%M:%S')}] Running Family Planning follow-up status check...")
     
     try:
-        # EXECUTES THE LOGIC: The 'check_followups' management command
         call_command('check_followups')
         print("Family Planning follow-up check completed successfully.")
     except Exception as e:
