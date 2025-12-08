@@ -43,6 +43,7 @@ export const firstAidColumns: ColumnDef<any>[] = [
         <span>Address</span> <ArrowUpDown size={15} />
       </div>
     ),
+    size: 300,
     cell: ({ row }) => (
       <div className="py-2 px-4 whitespace-pre-wrap break-words">
         {toTitleCase(row.original.address || "No address provided")}
@@ -53,7 +54,7 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "sitio",
     header: "Sitio",
     cell: ({ row }) => (
-      <div className="flex min-w-[120px] px-2">
+      <div className="flex min-w-[120px]">
         <div className="w-full">{toTitleCase(row.original.sitio || "N/A")}</div>
       </div>
     )
@@ -62,7 +63,7 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "pat_type",
     header: "Type",
     cell: ({ row }) => (
-      <div className="flex min-w-[100px] px-2">
+      <div className="flex min-w-[100px]">
         <div className={getPatType(row.original.pat_type)}>
           {toTitleCase(row.original.pat_type)}
         </div>

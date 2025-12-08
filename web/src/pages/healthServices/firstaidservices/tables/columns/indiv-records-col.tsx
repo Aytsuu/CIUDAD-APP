@@ -19,12 +19,12 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "firstaid_item",
     header: "First Aid Item",
     cell: ({ row }) => (
-      <div className="flex min-w-[200px] px-2">
+      <div className="flex min-w-[200px] ">
         <div className="font-medium">
           {row.original.finv_details?.fa_detail?.fa_name || "Unknown"}
-          <div className="text-xs text-gray-500">
+          {/* <div className="text-xs text-gray-500">
             Category: {row.original.finv_details?.fa_detail?.catlist || "N/A"}
-          </div>
+          </div> */}
         </div>
       </div>
     )

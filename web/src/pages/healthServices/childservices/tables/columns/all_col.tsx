@@ -10,7 +10,7 @@ export const childColumns: ColumnDef<any>[] = [
     accessorKey: "pat_id",
     header: "Patient ID",
     cell: ({ row }) => (
-      <div className="flex w-full px-2 py-3">
+      <div className="flex  py-3">
         <div className="bg-lightBlue text-darkBlue1 px-2 sm:px-3 py-1 rounded-md font-semibold text-xs sm:text-sm">{row.original.pat_id || ""}</div>
       </div>
     ),
@@ -26,7 +26,7 @@ export const childColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
-        <div className="flex px-2 py-3">
+        <div className="flex  py-3">
           <div className="flex flex-col space-y-1">
             <div className="font-medium text-xs sm:text-sm break-words leading-tight">{toTitleCase(fullName)}</div>
             <div className="text-xs text-darkGray">
@@ -65,7 +65,7 @@ export const childColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const fullName = `${row.original.father_lname || ""}, ${row.original.father_fname || ""} ${row.original.father_mname || ""}`.trim();
       return (
-        <div className="flex min-w-[120px] sm:min-w-[180px] px-2 py-3">
+        <div className="flex min-w-[120px] sm:min-w-[180px]  py-3">
           <div className="font-medium text-xs sm:text-sm break-words leading-tight">{toTitleCase(fullName) || "N/A"}</div>
         </div>
       );
@@ -81,21 +81,20 @@ export const childColumns: ColumnDef<any>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex px-2 py-3">
+      <div className="flex  py-3">
         <div className="w-[160px] sm:w-[250px] text-xs sm:text-sm break-words leading-relaxed">{toTitleCase(row.original.address || "UNKNOWN")}</div>
       </div>
     ),
   },
   {
     accessorKey: "sitio",
-    size: 80,
     header: () => (
       <div className="flex w-full py-2">
         <span className="text-xs sm:text-sm font-medium">Sitio</span>
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex px-2 py-3">
+      <div className="flex  py-3">
         <div className="text-xs sm:text-sm">{toTitleCase(row.original.sitio || "N/A")}</div>
       </div>
     ),

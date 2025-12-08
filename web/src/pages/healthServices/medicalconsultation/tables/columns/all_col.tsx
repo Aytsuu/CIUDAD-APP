@@ -23,14 +23,14 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div className="flex gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex gap-2 cursor-pointer py-2 " onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           <span>Patient</span> <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
         const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
         return (
-          <div className="py-2 px-4">
+          <div className="py-2">
             <div className="font-medium break-words">{toTitleCase(fullName)}</div>
             <div className="text-sm text-darkGray">
               {toTitleCase(row.original.sex || "")}, {row.original.age}
@@ -46,6 +46,7 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
           <span>Address</span> <ArrowUpDown size={15} />
         </div>
       ),
+      size: 300,
       cell: ({ row }) => (
         <div className="py-2 px-4 whitespace-pre-wrap break-words">
           {toTitleCase(row.original.address || "No address provided")}
@@ -56,7 +57,7 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
       accessorKey: "sitio",
       header: "Sitio",
       cell: ({ row }) => (
-        <div className="flex min-w-[120px] px-2">
+        <div className="flex min-w-[120px]">
           <div className="w-full">{toTitleCase(row.original.sitio || "N/A")}</div>
         </div>
       )
@@ -65,7 +66,7 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
       accessorKey: "pat_type",
       header: "Type",
       cell: ({ row }) => (
-        <div className="flex min-w-[100px] px-2">
+        <div className="flex min-w-[100px]">
           <div className={getPatType(row.original.pat_type)}>
             {toTitleCase(row.original.pat_type)}
           </div>
@@ -83,7 +84,7 @@ export const getAllMedicalRecordsColumns = (): ColumnDef<any>[] => {
     },
     {
       accessorKey: "latest_consultation_date",
-      header: "Latest Consultation Date",
+      header: "Latest Record Date",
       cell: ({ row }) => (
         <div className="flex min-w-[150px] px-2">
           <div className="w-full">
