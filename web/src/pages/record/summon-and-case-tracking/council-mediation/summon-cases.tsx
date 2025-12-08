@@ -1,5 +1,5 @@
 import CardLayout from "@/components/ui/card/card-layout";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Search, Clock, AlertTriangle, ArrowRightLeft, CheckCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -11,6 +11,8 @@ import { useLoading } from "@/context/LoadingContext";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useSearchParams } from "react-router-dom";
+import React from "react";
 
 const styles = {
     cardContent: "font-semibold text-[12px]",
@@ -97,13 +99,19 @@ const formatNames = (data: string[] | string | null | undefined): string => {
 
 function SummonCases(){  
     const { showLoading, hideLoading } = useLoading();
+    const location = useLocation();
     
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedFilter, setSelectedFilter] = useState("All");
     const [pageSize, setPageSize] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    const handlePageChange = (page: number) => {
+        setSearchParams({ page: String(page) });
+    };
 
     const filterOptions = [
         { id: "All", name: "All" },
@@ -138,10 +146,20 @@ function SummonCases(){
         }
     }, [isLoading, showLoading, hideLoading]);
 
-    // Reset to first page when filters change
+    // Set initial loading state
     useEffect(() => {
-        setCurrentPage(1);
-    }, [debouncedSearchQuery, selectedFilter, pageSize]);
+        if (summonCaseData.results !== undefined) {
+            setIsInitialLoading(false);
+        }
+    }, [summonCaseData]);
+
+    // Reset to first page when filters change
+    React.useEffect(() => {
+        if (debouncedSearchQuery === "" && searchQuery !== "") return;
+        if (selectedFilter !== "All") {
+            handlePageChange(1);
+        }
+    }, [debouncedSearchQuery, selectedFilter]);
 
     const hasResidentComplainant = (item: SummonCaseList) => {
         if (!item.complainant_rp_ids) return false;
@@ -152,6 +170,16 @@ function SummonCases(){
         
         return item.complainant_rp_ids != null;
     };
+
+    // Show only initial loading spinner, not during searches
+    if (isInitialLoading && !searchQuery) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Spinner size="md" />
+                <span className="ml-2 text-gray-600">Loading cases...</span>
+            </div>
+        );
+    }
 
     return(
         <div className="w-full h-full flex flex-col">
@@ -212,6 +240,11 @@ function SummonCases(){
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
+                            {isLoadingCases && searchQuery && (
+                                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                    <Spinner size="sm" />
+                                </div>
+                            )}
                         </div>
 
                         {/* Status Filter */}
@@ -222,7 +255,10 @@ function SummonCases(){
                                 options={filterOptions}
                                 value={selectedFilter}
                                 label=""
-                                onChange={(value) => setSelectedFilter(value)}
+                                onChange={(value) => {
+                                    handlePageChange(1);
+                                    setSelectedFilter(value);
+                                }}
                             />
                         </div>
                     </div>
@@ -234,7 +270,7 @@ function SummonCases(){
                             value={pageSize.toString()} 
                             onValueChange={(value) => {
                                 setPageSize(Number.parseInt(value))
-                                setCurrentPage(1)
+                                handlePageChange(1)
                             }}
                         >
                             <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
@@ -255,14 +291,17 @@ function SummonCases(){
 
             {/* Content Area - Shows loading or data */}
             <div className="flex-1 overflow-y-auto">
-                {isLoading ? (
-                    // Loading state - shows spinner but keeps header and filters visible
+                {isLoadingCases ? (
+                    // ALWAYS show loading spinner when isLoadingCases is true
+                    // This covers: initial load, page changes, filter changes, etc.
                     <div className="flex items-center justify-center py-12">
                         <Spinner size="md" />
-                        <span className="ml-2 text-gray-600">Loading cases...</span>
+                        <span className="ml-2 text-gray-600">
+                            {searchQuery ? "Searching cases..." : "Loading cases..."}
+                        </span>
                     </div>
                 ) : totalItems === 0 ? (
-                    // Empty state
+                    // Empty state - only show when NOT loading
                     <div className="flex flex-col items-center justify-center py-10">
                         <p className="text-gray-500 text-lg">No summon cases found</p>
                         <p className="text-sm text-gray-400 mt-2">
@@ -273,7 +312,7 @@ function SummonCases(){
                         </p>
                     </div>
                 ) : (
-                    // Data state
+                    // Data state - only show when data is loaded and has items
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-6"> 
                             {summonCases.map((item: SummonCaseList) => (
@@ -296,7 +335,11 @@ function SummonCases(){
                                         accused_addresses: Array.isArray(item.accused_addresses) 
                                             ? item.accused_addresses 
                                             : [item.accused_addresses || "N/A"],
-                                        complainant_rp_ids: item.complainant_rp_ids
+                                        complainant_rp_ids: item.complainant_rp_ids,
+                                        // Preserve current page state for back navigation
+                                        fromPage: currentPage,
+                                        fromPath: location.pathname,
+                                        fromSearchParams: Object.fromEntries(searchParams.entries())
                                     }} 
                                     className="hover:shadow-lg transition-shadow"
                                 >
@@ -361,7 +404,7 @@ function SummonCases(){
                                 <PaginationLayout 
                                     currentPage={currentPage} 
                                     totalPages={totalPages} 
-                                    onPageChange={setCurrentPage} 
+                                    onPageChange={handlePageChange} 
                                 />
                             )}
                         </div>
