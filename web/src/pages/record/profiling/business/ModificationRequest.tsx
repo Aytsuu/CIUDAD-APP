@@ -51,25 +51,22 @@ export default function ModificationRequest({ data } : {
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
   const handleApprove = async () => {
-    setIsSubmitting(true);
     const { current_details, ...updated } = data;
     const current_name = current_details.bus_name;
     const current_gs = current_details.bus_gross_sales;
-    const current_sitio = current_details.sitio.toLowerCase();
-    const current_street = current_details.bus_street;
+    const current_loc= current_details.bus_location;
     const updated_name = updated.bm_updated_name;
     const updated_gs = updated.bm_updated_gs;
-    const updated_sitio = updated.sitio.toLowerCase();
-    const updated_street = updated.bus_street;
+    const updated_loc = updated.bm_updated_loc
 
     try {
+      setIsSubmitting(true);
       await updateBusiness(
         {
           data: {
             ...(current_name !== updated_name && { bus_name: updated_name }),
             ...(current_gs !== updated_gs && { bus_gross_sales: updated_gs }),
-            ...((current_sitio !== updated_sitio ||
-              current_street !== updated_street) && { bus_name: updated.add }),
+            ...(current_loc !== updated_loc && { bus_name: updated_loc }),
             modification_files: updated.files,
             staff: user?.staff?.staff_id,
           },
@@ -172,8 +169,8 @@ export default function ModificationRequest({ data } : {
                   >
                     <X/> Reject
                   </Button>}
-                  title="Confirm Approval"
-                  description="Review the changes thoroughly before proceeding. Once rejected, this action cannot be reversed."
+                  title="Confirm Rejection"
+                  description="Are you sure you want to reject this request. Once rejected, this action cannot be reversed."
                   onClick={handleReject}
                   actionLabel="Confirm"
                   variant="destructive"

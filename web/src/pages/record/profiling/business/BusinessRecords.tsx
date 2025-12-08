@@ -25,6 +25,7 @@ import { formatModificationRequests } from "../ProfilingFormats";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
+import { Badge } from "@/components/ui/badge";
 
 export default function BusinessRecords() {
   // ----------------- STATE INITIALIZATION --------------------
@@ -38,7 +39,7 @@ export default function BusinessRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
   const { data: modificationRequests, isLoading: isLoadingRequests } =
-    useModificationRequests();
+    useModificationRequests("pending");
   const { data: activeBusinesses, isLoading: isLoadingBusinesses } =
     useActiveBusinesses(
       currentPage,
@@ -53,10 +54,13 @@ export default function BusinessRecords() {
 
   const formattedRequest = formatModificationRequests(modificationRequests);
 
+  // Checker
+  const hasModificationRequest = modificationRequests?.length > 0;
+
   // ----------------- SIDE EFFECTS --------------------
   // Reset to page 1 when search changes
   React.useEffect(() => {
-    if(debouncedSearchQuery == "") return;
+    if (debouncedSearchQuery == "") return;
     handlePageChange(1);
   }, [debouncedSearchQuery]);
 
@@ -114,20 +118,6 @@ export default function BusinessRecords() {
                     { id: "large", name: "Large" },
                   ]}
                 />
-                {/* <DropdownLayout
-                  trigger={
-                    <Button variant="outline" className="gap-2 border">
-                      <FileDown className="h-4 w-4" />
-                      Export
-                    </Button>
-                  }
-                  options={[
-                    { id: "csv", name: "Export as CSV" },
-                    { id: "excel", name: "Export as Excel" },
-                    { id: "pdf", name: "Export as PDF" },
-                  ]}
-                  onSelect={(type: any) => handleExport(type)}
-                /> */}
               </div>
 
               <Link to="pending" className="flex-1 sm:flex-none">
@@ -145,6 +135,11 @@ export default function BusinessRecords() {
                     <Button variant="outline" className="w-full sm:w-auto">
                       <Paperclip className="cursor-pointer" />
                       Edit Request
+                      {hasModificationRequest && (
+                        <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 hover:text-orange-700">
+                          {modificationRequests?.length}
+                        </Badge>
+                      )}
                     </Button>
                   }
                   onChange={(value) => {

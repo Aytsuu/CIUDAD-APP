@@ -1,27 +1,35 @@
 import { View, Text } from "react-native";
 import { router } from "expo-router";
 import React from "react";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/helpers/dateHelpers";
 import { Card } from "@/components/ui/card";
 import { CircleCheck } from "@/lib/icons/CircleCheck";
 
-export default function BusinessDetails({ business, modReq = [] }: {
-  business: Record<string, any>,
-  modReq: Record<string, any>[]
+export default function BusinessDetails({
+  business,
+  modReq = [],
+}: {
+  business: Record<string, any>;
+  modReq: Record<string, any>[];
 }) {
-
   // =========== STATE INITIALIZATION ===========
-  const pending = modReq.filter(req => !req.bm_status);
-  const approved = modReq.filter(req => req.bm_status.toLowerCase() == "approved")
-  const rejected = modReq.filter(req => req.bm_status.toLowerCase() == "rejected")
+  const pending = modReq?.filter((req) => req.bm_status?.toLowerCase() == "pending");
+  const approved = modReq?.filter(
+    (req) => req.bm_status?.toLowerCase() == "approved"
+  );
+  const rejected = modReq?.filter(
+    (req) => req.bm_status?.toLowerCase() == "rejected"
+  );
+
+  console.log(pending)
 
   // =========== RENDER ===========
   return (
     <Card className="rounded-2xl shadow-xl overflow-hidden">
       <LinearGradient
-        colors={['#0035b1', '#0054db', '#0036b4']} // Enhanced gradient
+        colors={["#0035b1", "#0054db", "#0036b4"]} // Enhanced gradient
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ flex: 1 }}
@@ -30,9 +38,11 @@ export default function BusinessDetails({ business, modReq = [] }: {
         <View className="px-6 pt-6">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
-              <Text className="text-gray-300 bg-[#0035b1] text-xs font-medium">
-                No. {business?.bus_id}
-              </Text>
+              <View className="flex-row">
+                <Text className="text-gray-300 bg-[#0035b1] text-xs font-medium px-3 py-1 rounded-full">
+                  No. {business?.bus_id}
+                </Text>
+              </View>
               <Text className="text-white text-2xl font-PoppinsSemiBold mt-1">
                 {business?.bus_name}
               </Text>

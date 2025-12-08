@@ -286,12 +286,13 @@ class BusinessCreateUpdateSerializer(serializers.ModelSerializer):
       # Delete the current files attached to the business
       files_to_delete = BusinessFile.objects.filter(bus=instance)
       for file in files_to_delete:
-        folder = "images" if file['type'].split("/")[0] == "image" else "documents"
+        folder = "images" if file.bf_type.split("/")[0] == "image" else "documents"
         remove_from_storage('business-bucket', f'{folder}/{file.bf_path}')
       files_to_delete.delete()
 
       # Attach the files from the new update
       for file_data in modification_request_files:
+        print('FILE_DATA---------', file_data['name'])
         file = BusinessFile.objects.filter(bf_name=file_data['name']).first()
         file.bus = instance
         file.save()
@@ -387,7 +388,7 @@ class BusinessModificationListSerializer(serializers.ModelSerializer):
   def get_respondent(self, obj):
     if obj.bus.br:
       return f"{obj.bus.br.br_lname}, {obj.bus.br.br_fname} " \
-             f"{obj.bus.br.br_mname}" if obj.bus.br_mname else None
+             f"{obj.bus.br.br_mname}" if obj.bus.br.br_mname else None
     
     if obj.bus.rp:
       return f"{obj.bus.rp.per.per_lname}, {obj.bus.rp.per.per_fname} " \
