@@ -116,7 +116,7 @@ const CertPermit: React.FC = () => {
       const business = businessData[0];
 
       setBusinessName(prev => prev || business.bus_name || "");
-      setBusinessAddress(prev => prev || business.bus_location || "Address not available");
+      setBusinessAddress(prev => prev || `${business.bus_street}, ${business.sitio}` || "Address not available");
       setGrossSales(prev => prev || business.bus_gross_sales?.toString() || "");
       setIsBusinessOld(!!business.bus_date_verified);
     }
@@ -372,6 +372,12 @@ const CertPermit: React.FC = () => {
       }
       if (assessmentImages.length === 0) {
         setError("Assessment image is required");
+        return;
+      }
+    } else if (permitType === 'Business Clearance' && businessData.length === 0) {
+      // For new businesses requesting Business Clearance
+      if (!assessmentImage) {
+        setError("Assessment document is required for new businesses");
         return;
       }
     }
