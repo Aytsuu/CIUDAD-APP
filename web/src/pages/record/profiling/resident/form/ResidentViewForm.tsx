@@ -123,8 +123,8 @@ export default function ResidentViewForm({ params }: { params: any }) {
         residentId: params?.data.residentId,
         familyId: params?.data.familyId,
       },
-    }
-  }
+    },
+  };
 
   const MenuItems = [
     {
@@ -133,7 +133,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
       description: "Personal Information",
       icon: UserRound,
       route: "personal",
-      state
+      state,
     },
     {
       id: "family",
@@ -141,7 +141,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
       description: "Family Information",
       icon: UsersRound,
       route: "family",
-      state
+      state,
     },
     ...((ownedHouses?.length > 0
       ? [
@@ -151,7 +151,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
             description: "House Information",
             icon: Building,
             route: "house",
-            state
+            state,
           },
         ]
       : []) as any),
@@ -163,7 +163,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
             description: "Business Information",
             icon: Building,
             route: "business",
-            state
+            state,
           },
         ]
       : []) as any),
@@ -194,7 +194,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
     isLoadingPersonalInfo,
     isLoadingBusinesses,
     isLoadingPersonalHistory,
-    isLoadingOwnedHouses
+    isLoadingOwnedHouses,
   ]);
 
   React.useEffect(() => {
@@ -338,7 +338,6 @@ export default function ResidentViewForm({ params }: { params: any }) {
     });
   };
 
-
   // ==================== RENDER HELPERS ====================
   // Render Family Card Content
   const renderFamilyContent = () => {
@@ -411,7 +410,12 @@ export default function ResidentViewForm({ params }: { params: any }) {
   // ==================== RENDER ====================
   return (
     <LayoutWithBack
-      title="Resident Details"
+      title={
+        <div className="flex items-center gap-4">
+          <p>Resident Details</p>
+          <Badge className="bg-blue-600 hover:bg-blue-600">ID: {params.data.residentId}</Badge>
+        </div>
+      }
       description="Information is displayed in a clear, organized, and secure manner."
     >
       <div className="flex gap-4">
@@ -585,7 +589,7 @@ export default function ResidentViewForm({ params }: { params: any }) {
                 </div>
                 {family.length > 0 && (
                   <Button
-                    variant={"ghost"}
+                    variant={"link"}
                     onClick={() => {
                       navigate("/profiling/family/view", {
                         state: {
@@ -603,17 +607,17 @@ export default function ResidentViewForm({ params }: { params: any }) {
 
               {personalInfo?.fam_id && (
                 <div className="flex items-center gap-8 mt-8">
-                <Label className="text-gray-500">
-                  Family Number:{" "}
-                  <span className="text-primary">{personalInfo?.fam_id}</span>
-                </Label>
-                <Label className="text-gray-500">
-                  Household Number:{" "}
-                  <span className="text-primary">
-                    {personalInfo?.household_no}
-                  </span>
-                </Label>
-              </div>
+                  <Label className="text-gray-500">
+                    Family Number:{" "}
+                    <span className="text-primary">{personalInfo?.fam_id}</span>
+                  </Label>
+                  <Label className="text-gray-500">
+                    Household Number:{" "}
+                    <span className="text-primary">
+                      {personalInfo?.household_no}
+                    </span>
+                  </Label>
+                </div>
               )}
 
               {renderFamilyContent()}

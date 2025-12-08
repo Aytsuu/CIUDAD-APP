@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
 import { Search, Home, UserCog, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom"; // Added useSearchParams
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { ExportButton } from "@/components/ui/export";
@@ -56,11 +56,14 @@ const Overall: React.FC = () => {
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
 
+  // --- PAGINATION: URL PARAMS HANDLING ---
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+
   // State management
   const [patients, setPatients] = useState<UniquePatientDisplay[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [filterValue, setFilterValue] = useState("all");
   const [isReferralFormOpen, setIsReferralFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -75,9 +78,14 @@ const Overall: React.FC = () => {
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Reset to first page when filters change
+  // Reset to first page when filters change (only if not already on page 1)
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+       // Only trigger reset if filters are actually active/changed to avoid initial mount loops
+       if (debouncedSearchQuery || filterValue !== "all" || selectedSitios.length > 0) {
+          setSearchParams({ page: "1" });
+       }
+    }
   }, [debouncedSearchQuery, filterValue, selectedSitios]);
 
   const fetchAnimalBiteRecords = async () => {
@@ -425,7 +433,7 @@ const Overall: React.FC = () => {
                 onChange={(e) => {
                   const value = +e.target.value;
                   setPageSize(value >= 1 ? value : 1);
-                  setCurrentPage(1);
+                  setSearchParams({ page: "1" }); // Reset to page 1 via URL
                 }}
                 min="1"
               />
@@ -433,7 +441,6 @@ const Overall: React.FC = () => {
             </div>
             <div>
               <div>
-              {/* FIXED: Removed wrapping DropdownMenu, used ExportButton directly */}
               <ExportButton 
                 data={patients} 
                 filename="animal-bite-records" 
@@ -465,7 +472,7 @@ const Overall: React.FC = () => {
               <PaginationLayout 
                 currentPage={currentPage} 
                 totalPages={totalPages} 
-                onPageChange={(page) => setCurrentPage(page)} 
+                onPageChange={(page) => setSearchParams({ page: String(page) })} 
               />
             </div>
           </div>

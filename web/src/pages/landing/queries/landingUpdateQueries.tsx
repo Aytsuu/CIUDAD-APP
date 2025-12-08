@@ -9,7 +9,6 @@ export const useUpdateLandingPage = () => {
         const res = await api.patch(`landing/update/1/`, data)
         return res.data;
       } catch (err) {
-        console.error(err)
         throw err
       }
     },

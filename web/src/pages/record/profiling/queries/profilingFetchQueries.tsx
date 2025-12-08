@@ -62,24 +62,24 @@ export const usePersonalHistory = (per_id: string) => {
   })
 }
 
-export const usePersonalModification = (per_id?: string) => {
-  return useQuery({
-    queryKey: ['personalModification', per_id],
-    queryFn: async () => {
-      try {
-        const res = await api.get("profiling/personal/modification-list/", {
-          params: {
-            per: per_id
-          }
-        });
-        return res.data;
-      } catch (err) {
-        throw err;
-      }
-    },
-    staleTime: 5000
-  })
-}
+// export const usePersonalModification = (per_id?: string) => {
+//   return useQuery({
+//     queryKey: ['personalModification', per_id],
+//     queryFn: async () => {
+//       try {
+//         const res = await api.get("profiling/personal/modification-list/", {
+//           params: {
+//             per: per_id
+//           }
+//         });
+//         return res.data;
+//       } catch (err) {
+//         throw err;
+//       }
+//     },
+//     staleTime: 5000
+//   })
+// }
 
 export const useDeceasedResidentsList = () => {
   return useQuery({
