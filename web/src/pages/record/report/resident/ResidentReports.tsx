@@ -1,47 +1,67 @@
-import { DataTable } from "@/components/ui/table/data-table"
-import { Search, Archive, FileText } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import PaginationLayout from "@/components/ui/pagination/pagination-layout"
-import { ResidentReportColumns } from "../ReportColumns"
-import { Button } from "@/components/ui/button/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import React from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
-import { useDebounce } from "@/hooks/use-debounce"
-import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component"
-import { useGetIncidentReport } from "../queries/reportFetch"
-import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
-import { useNavigate } from "react-router"
-import { Spinner } from "@/components/ui/spinner"
-import { SelectLayout } from "@/components/ui/select/select-layout"
+import { DataTable } from "@/components/ui/table/data-table";
+import { Search, Archive, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import PaginationLayout from "@/components/ui/pagination/pagination-layout";
+import { ResidentReportColumns } from "../ReportColumns";
+import { Button } from "@/components/ui/button/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select/select";
+import { useDebounce } from "@/hooks/use-debounce";
+import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
+import { useGetIncidentReport } from "../queries/reportFetch";
+import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
+import { useNavigate, useSearchParams } from "react-router";
+import { Spinner } from "@/components/ui/spinner";
+import { SelectLayout } from "@/components/ui/select/select-layout";
 
 export default function ResidentReports() {
   // ================ STATE INITIALIZATION ================
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const [severity, setSeverity] = React.useState<string>("all");
 
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
 
   // Fetch active reports
-  const { data: incidentReports, isLoading: isLoadingIR } = useGetIncidentReport(
-    currentPage,
-    debouncedPageSize,
-    debouncedSearchQuery,
-    false,
-    false,
-    severity,
-    false
-  );
+  const { data: incidentReports, isLoading: isLoadingIR } =
+    useGetIncidentReport(
+      currentPage,
+      debouncedPageSize,
+      debouncedSearchQuery,
+      false,
+      false,
+      severity,
+      false
+    );
 
   const IRList = incidentReports?.results || [];
   const totalCount = incidentReports?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
-  
+
+  // ================== SIDE EFFECTS ==================
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    if(debouncedSearchQuery == "") return;
+    handlePageChange(1);
+  }, [debouncedSearchQuery]);
+
+  // ================== HANDLERS ==================
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page) });
+  };
+
   // ================ RENDER ================
   return (
     <MainLayoutComponent
@@ -62,32 +82,33 @@ export default function ResidentReports() {
                     className="pl-10 bg-white border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
-              </div> 
+              </div>
 
               <div className="flex items-center gap-2">
-                <SelectLayout 
+                <SelectLayout
                   value={severity}
                   className="gap-4"
                   onChange={(value) => {
-                    setCurrentPage(1)
-                    setSeverity(value)
+                    handlePageChange(1);
+                    setSeverity(value);
                   }}
                   placeholder="Severity"
                   options={[
-                    {id: "all", name: "All"},
-                    {id: "low", name: "Low"},
-                    {id: "medium", name: "Medium"},
-                    {id: "high", name: "High"}
+                    { id: "all", name: "All" },
+                    { id: "low", name: "Low" },
+                    { id: "medium", name: "Medium" },
+                    { id: "high", name: "High" },
                   ]}
                   withReset={false}
                   valueLabel="Severity"
                 />
 
-                <TooltipLayout 
+                <TooltipLayout
                   trigger={
-                    <Button variant={"outline"}
+                    <Button
+                      variant={"outline"}
                       onClick={() => {
-                        navigate('archive');
+                        navigate("archive");
                       }}
                     >
                       <Archive className="text-gray-700" />
@@ -95,7 +116,7 @@ export default function ResidentReports() {
                   }
                   content="Archive"
                 />
-              </div>  
+              </div>
             </div>
           </CardHeader>
 
@@ -103,19 +124,22 @@ export default function ResidentReports() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 border-b">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="text-sm font-medium text-gray-700">Show</span>
-                  <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
-                    <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm text-gray-600">entries</span>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => setPageSize(Number.parseInt(value))}
+                >
+                  <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-600">entries</span>
               </div>
             </div>
 
@@ -127,21 +151,28 @@ export default function ResidentReports() {
                   {searchQuery ? "No reports found" : "No reports yet"}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  {searchQuery &&`No reports match "${searchQuery}". Try adjusting your search.`}
+                  {searchQuery &&
+                    `No reports match "${searchQuery}". Try adjusting your search.`}
                 </p>
               </div>
             )}
-            
+
             {/* Loading State */}
             {isLoadingIR && (
               <div className="flex items-center justify-center py-12">
-                <Spinner size="lg"/>
-                <span className="ml-2 text-gray-600">Loading incident reports...</span>
+                <Spinner size="lg" />
+                <span className="ml-2 text-gray-600">
+                  Loading incident reports...
+                </span>
               </div>
             )}
 
             {!isLoadingIR && IRList.length > 0 && (
-              <DataTable columns={ResidentReportColumns()} data={IRList} isLoading={isLoadingIR} />
+              <DataTable
+                columns={ResidentReportColumns()}
+                data={IRList}
+                isLoading={isLoadingIR}
+              />
             )}
           </CardContent>
 
@@ -158,15 +189,20 @@ export default function ResidentReports() {
                         Loading...
                       </div>
                     ) : (
-                      `Showing ${totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0} -
-                      ${Math.min(currentPage * pageSize, totalCount)} of ${totalCount} entries`
+                      `Showing ${
+                        totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0
+                      } -
+                      ${Math.min(
+                        currentPage * pageSize,
+                        totalCount
+                      )} of ${totalCount} entries`
                     )}
                   </div>
 
                   <PaginationLayout
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage}
+                    onPageChange={handlePageChange}
                   />
                 </div>
               </div>
@@ -175,5 +211,5 @@ export default function ResidentReports() {
         </Card>
       </div>
     </MainLayoutComponent>
-  )
+  );
 }
