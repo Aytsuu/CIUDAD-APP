@@ -13,17 +13,6 @@ export const createVaccinationHistory = async (
     {process.env.NODE_ENV === 'development' && console.error("Error creating vaccination history:", error);}
   }
 };
-  try {
-    const response = await api2.post("vaccination/vaccination-history/", data
-    
-  
-  );
-    return response.data;
-  } catch (error) {
-   console.error("Error creating vaccination history:", error);
-    throw error; // Re-throw for calling code
-  }
-};
 
 
 export const createVitalSigns = async (data: Record<string, any>) => {
