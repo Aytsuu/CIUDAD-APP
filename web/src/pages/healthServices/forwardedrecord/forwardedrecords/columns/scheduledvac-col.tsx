@@ -19,7 +19,7 @@ export const useScheduledVaccinationColumns = (): ColumnDef<any>[] => {
         const patient = row.original.patient?.personal_info;
         const fullName = `${patient?.per_lname || ""}, ${patient?.per_fname || ""} ${patient?.per_mname || ""}`.trim();
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex justify-start min-w-[200px] ">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{fullName}</div>
               <div className="text-sm text-gray-500">
@@ -27,6 +27,21 @@ export const useScheduledVaccinationColumns = (): ColumnDef<any>[] => {
               </div>
               <div className="text-xs text-gray-400">{row.original.patient?.personal_info?.per_id || ""}</div>
             </div>
+          </div>
+        );
+      }
+    }, {
+      accessorKey: "address",
+      header: "Address",
+      cell: ({ row }) => {
+        const address = row.original.patient?.address;
+        const fullAddress = [address?.add_street, address?.add_barangay, address?.add_city, address?.add_province]
+          .filter(Boolean)
+          .join(", ") || "No address provided";
+        
+        return (
+          <div className="flex justify-start ">
+            <div className="w-[200px] break-words">{fullAddress}</div>
           </div>
         );
       }
@@ -40,27 +55,14 @@ export const useScheduledVaccinationColumns = (): ColumnDef<any>[] => {
         </div>
       )
     },
-    {
-      accessorKey: "dose",
-      header: "Dose",
-      cell: ({ row }) => {
-        const doseNo = String(row.original.vachist_doseNo);
-        const doseText = doseNo === "1" ? "1st dose" : doseNo === "2" ? "2nd dose" : doseNo === "3" ? "3rd dose" : `${doseNo}th dose`;
-        
-        return (
-          <div className="flex flex-col">
-            <div className="text-sm text-gray-500">{doseText}</div>
-          </div>
-        );
-      }
-    },
+   
     {
       accessorKey: "vital_signs",
       header: "Vital Signs",
       cell: ({ row }) => {
         const vital = row.original.vital_signs || {};
         return (
-          <div className="grid grid-cols-2 gap-1 text-sm min-w-[200px]">
+          <div className="grid grid-cols-2 gap-1 text-sm ">
             <div>
               BP: {vital.vital_bp_systolic || "N/A"}/{vital.vital_bp_diastolic || "N/A"}
             </div>
@@ -71,27 +73,25 @@ export const useScheduledVaccinationColumns = (): ColumnDef<any>[] => {
         );
       }
     },
-    {
-      accessorKey: "address",
-      header: "Address",
+
+     {
+      accessorKey: "dose",
+      header: "Dose",
       cell: ({ row }) => {
-        const address = row.original.patient?.address;
-        const fullAddress = [address?.add_street, address?.add_barangay, address?.add_city, address?.add_province]
-          .filter(Boolean)
-          .join(", ") || "No address provided";
+        const doseNo = String(row.original.vachist_doseNo);
+        const doseText = doseNo === "1" ? "1st dose" : doseNo === "2" ? "2nd dose" : doseNo === "3" ? "3rd dose" : `${doseNo}th dose`;
         
         return (
-          <div className="flex justify-start px-2">
-            <div className="w-[200px] break-words">{fullAddress}</div>
-          </div>
+            <div className="text-sm text-gray-500">{doseText}</div>
         );
       }
     },
+   
     {
       accessorKey: "sitio",
       header: "Sitio",
       cell: ({ row }) => (
-        <div className="flex px-2">
+        <div className="flex ">
           <div>{row.original.patient?.address?.add_sitio || "No address provided"}</div>
         </div>
       )
