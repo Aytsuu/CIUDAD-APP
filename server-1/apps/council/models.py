@@ -236,7 +236,7 @@ class MinutesOfMeeting(models.Model):
     )
     momf_id = models.ForeignKey(
         'MOMFile',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         db_column='momf_id'
