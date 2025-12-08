@@ -8,7 +8,6 @@ export const useSendOTP = () => {
         const res = await api.post("account/phone-verification/", data)
         return res.data
       } catch (err) {
-        console.error(err);
         throw err
       }
     }

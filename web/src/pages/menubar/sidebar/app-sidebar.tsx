@@ -145,11 +145,12 @@ export function AppSidebar() {
     requiredFeatures?: string[],
     exclude?: string[]
   ) => {
-    if (
-      !requiredFeatures || requiredFeatures.length == 0  
-    )
-      return user?.staff?.pos.toLowerCase() == "admin" && 
-              !exclude?.includes("admin");
+    if (!requiredFeatures || requiredFeatures.length == 0) 
+      return user?.staff?.pos.toLowerCase() == "admin";
+
+    if (user?.staff?.pos.toLowerCase() == "admin") {
+      return !exclude?.includes("admin");
+    }
 
     const hasFeature = requiredFeatures.some((feat) =>
       user?.staff?.assignments?.includes(feat?.toUpperCase())
