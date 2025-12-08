@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom"; // Added useSearchParams
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -38,6 +38,7 @@ interface FPRecord {
 interface ExtendedGetFPRecordsParams extends GetFPRecordsParams {
   sitio?: string;
 }
+
 const getFPRecordsList = async (params: ExtendedGetFPRecordsParams = {}): Promise<PaginatedFPRecords> => {
   try {
     const response = await api2.get("familyplanning/overall-records/", { params });
@@ -49,8 +50,12 @@ const getFPRecordsList = async (params: ExtendedGetFPRecordsParams = {}): Promis
 
 export default function FamPlanningTable() {
   const navigate = useNavigate();
+  
+  // --- PAGINATION: URL PARAMS HANDLING ---
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+
   const [pageSize, setPageSize] = React.useState<number>(10);
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClientType, setSelectedClientType] = useState("all");
   const [selectedPatientType, setSelectedPatientType] = useState("all"); 
@@ -72,8 +77,11 @@ export default function FamPlanningTable() {
     };
   }, [searchQuery]);
 
+  // Reset to Page 1 when filters change (only if not already on page 1)
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+      setSearchParams({ page: "1" });
+    }
   }, [selectedClientType, selectedPatientType, selectedSitios, debouncedSearchQuery]);
 
   // Use useQuery to fetch paginated FP records
@@ -81,9 +89,9 @@ export default function FamPlanningTable() {
     data: paginatedFpRecords,
     isLoading,
     isError,
-    error
+    error,
   } = useQuery({
-    queryKey: ["fpRecordsList", currentPage, pageSize, debouncedSearchQuery, selectedClientType, selectedPatientType,selectedSitios],
+    queryKey: ["fpRecordsList", currentPage, pageSize, debouncedSearchQuery, selectedClientType, selectedPatientType, selectedSitios],
     queryFn: () =>
       getFPRecordsList({
         page: currentPage,
@@ -92,7 +100,10 @@ export default function FamPlanningTable() {
         client_type: selectedClientType === "all" ? undefined : selectedClientType,
         patient_type: selectedPatientType === "all" ? undefined : selectedPatientType,
         sitio: selectedSitios.length > 0 ? selectedSitios.join(",") : undefined,
-      })
+      }),
+      refetchOnMount: true,       // Refetches every time you visit this page
+    refetchOnWindowFocus: true, // Refetches if you switch tabs and come back
+    staleTime: 0,
   });
 
   const fpRecords = paginatedFpRecords?.results || [];
@@ -113,24 +124,25 @@ export default function FamPlanningTable() {
   const totalPages = Math.ceil(totalRecordsCount / pageSize);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setSearchParams({ page: String(page) });
   };
 
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value) || 10;
     setPageSize(newSize);
-    setCurrentPage(1); 
+    setSearchParams({ page: "1" }); 
   };
 
   const handleClientTypeChange = (value: string) => {
     setSelectedClientType(value);
-    setCurrentPage(1);
+    // useEffect handles the page reset
   };
 
   const handlePatientTypeChange = (value: string) => {
     setSelectedPatientType(value);
-    setCurrentPage(1);
+    // useEffect handles the page reset
   };
+
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
     if (checked) {
       setSelectedSitios([...selectedSitios, sitio_name]);
@@ -179,10 +191,10 @@ export default function FamPlanningTable() {
         header: "Patient ID",
         cell: ({ row }) => (
           <div className="flex w-full">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
-            {row.original.patient_id}
+            <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+              {row.original.patient_id}
+            </div>
           </div>
-        </div>
         )
       },
       {
