@@ -336,7 +336,7 @@ class ForSpecificOwnerSerializer(serializers.ModelSerializer):
   class Meta:
     model = Business
     fields = ['bus_id', 'bus_name', 'bus_status', 'bus_gross_sales', 'bus_location', 
-              'bus_date_verified', 'rp_id', 'br_id']
+              'bus_date_verified']
 
 class BusinessModificationCreateSerializer(serializers.ModelSerializer):
   files = FileInputSerializer(write_only=True, many=True, required=False)

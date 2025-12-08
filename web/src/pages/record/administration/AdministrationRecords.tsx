@@ -3,7 +3,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import {
   Search,
   UserRoundCog,
@@ -36,7 +36,8 @@ export default function AdministrationRecords() {
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [pageSize, setPageSize] = React.useState<number>(10);
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
 
@@ -57,6 +58,16 @@ export default function AdministrationRecords() {
     else hideLoading();
   }, [isLoadingStaffs]);
 
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    if (debouncedSearchQuery == "") return;
+    handlePageChange(1);
+  }, [debouncedSearchQuery]);
+
+  // ================== HANDLERS ==================
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page) });
+  };
 
   return (
     // ----------------- RENDER --------------------
@@ -83,14 +94,16 @@ export default function AdministrationRecords() {
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3">
-              <DialogLayout 
-                trigger={<Button variant={"outline"}>
-                  <MapPin  className="mr-1"/>
-                  Sitio
-                </Button>}
+              <DialogLayout
+                trigger={
+                  <Button variant={"outline"}>
+                    <MapPin className="mr-1" />
+                    Sitio
+                  </Button>
+                }
                 title="Sitio"
                 description="List of Sitio in Barangay San Roque (CIUDAD)"
-                mainContent={<SitioManagement/>}
+                mainContent={<SitioManagement />}
               />
 
               <Link to="role">
@@ -126,7 +139,10 @@ export default function AdministrationRecords() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 border-b">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>Show</span>
-            <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number.parseInt(value))}>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => setPageSize(Number.parseInt(value))}
+            >
               <SelectTrigger className="w-20 h-8">
                 <SelectValue />
               </SelectTrigger>
@@ -193,7 +209,7 @@ export default function AdministrationRecords() {
                 <PaginationLayout
                   currentPage={currentPage}
                   totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+                  onPageChange={handlePageChange}
                 />
               )}
             </div>
@@ -203,7 +219,8 @@ export default function AdministrationRecords() {
       <div className="flex items-center gap-2 pb-8">
         <CircleAlert size={18} />
         <p className="text-sm">
-          Staff with <span className="font-bold text-blue-500">ADMIN </span>position cannot be modified.
+          Staff with <span className="font-bold text-blue-500">ADMIN </span>
+          position cannot be modified.
         </p>
       </div>
     </MainLayoutComponent>
