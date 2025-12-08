@@ -145,7 +145,6 @@ export default function SignIn() {
         serverOtp: response.pv_otp || "",
       }));
     } catch (error: any) {
-      console.error("Resend error:", error);
 
       let errorMessage = "Failed to resend OTP. Please try again.";
 

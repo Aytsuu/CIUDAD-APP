@@ -154,39 +154,6 @@ export default function ResidentRecords() {
                   </Button>
                 </Link>
 
-                {/* <div>
-                  <Combobox
-                    options={formattedPersonalModification}
-                    value={""}
-                    customTrigger={
-                      <Button variant="outline" className="w-full sm:w-auto">
-                        <Paperclip className="cursor-pointer"/>
-                        Edit Request
-                      </Button>
-                    }
-                    onChange={(value) => {
-                      const rp_id = value?.split(" ")[0]
-                      const fam_id = value?.split(" ")[1]
-                      navigate('view/personal', {
-                        state: {
-                          params: {
-                            type: "viewing",
-                            data: {
-                              residentId: rp_id,
-                              familyId: fam_id
-                            }
-                          }
-                        }
-                      })
-                    }}
-                    staticVal={true}
-                    variant="modal"
-                    placeholder="Search request by resident no, name..."
-                    modalTitle="Profile Edit Requests"
-                    emptyMessage={"No modification requests."}
-                  />
-                </div> */}
-
                 <Link
                   to="/profiling/resident/registration"
                   state={{
