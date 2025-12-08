@@ -11,10 +11,6 @@ export const useUpdateComplaint = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["complaints"] });
     },
-
-    onError: (error: any) => {
-      console.error("Failed to update complaint:", error);
-    },
   });
 };
 

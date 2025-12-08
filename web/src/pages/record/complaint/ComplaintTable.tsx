@@ -14,6 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { showErrorToast } from "@/components/ui/toast";
+import { string } from "zod";
 
 interface ComplaintTableProps {
   data: any[];
@@ -71,13 +73,12 @@ export default function ComplaintTable({
         // Reset selection after successful archive
         setRowSelection({});
       } else {
-        console.log("Archive these complaint IDs:", complaintIds);
-        // Example: await archiveComplaintsMutation.mutateAsync(complaintIds);
+        // api archive goes here
       }
       
       setShowArchiveDialog(false);
     } catch (error) {
-      console.error("Failed to archive complaints:", error);
+      showErrorToast(`Error: ${error instanceof Error ? error.message : String(error)}`)
     } finally {
       setIsArchiving(false);
     }

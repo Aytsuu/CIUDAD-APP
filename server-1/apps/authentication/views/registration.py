@@ -13,7 +13,7 @@ from django.http import JsonResponse
 from apps.account.models import Account, PhoneVerification
 from apps.profiling.models import ResidentProfile, BusinessRespondent
 from apps.administration.models import Staff, Assignment
-from ..serializers import UserAccountSerializer, EmailTokenObtainPairSerializer
+from ..serializers import UserAccountSerializer
 import random
 from django.core.mail import send_mail
 import requests

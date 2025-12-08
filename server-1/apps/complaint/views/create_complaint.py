@@ -143,7 +143,7 @@ class ComplaintCreateView(APIView):
                         cpnt_number=c_data.get("cpnt_number"),
                         cpnt_relation_to_respondent=c_data.get("cpnt_relation_to_respondent"),
                         cpnt_address=c_data.get("cpnt_address", "N/A"),
-                        rp_id=c_data.get("rp_id")  # This is now a ResidentProfile instance or None
+                        rp_id=c_data.get("rp_id") 
                     )
                     complainant_instances.append(complainant)
                 
@@ -157,7 +157,7 @@ class ComplaintCreateView(APIView):
                         acsd_gender=a_data.get("acsd_gender"),
                         acsd_description=a_data.get("acsd_description"),
                         acsd_address=a_data.get("acsd_address", "N/A"),
-                        rp_id=a_data.get("rp_id")  # This is now a ResidentProfile instance or None
+                        rp_id=a_data.get("rp_id")
                     )
                     accused_instances.append(accused)
                 
@@ -204,7 +204,7 @@ class ComplaintCreateView(APIView):
                 # Create notification
                 try:
                     # Get all staff with ADMIN position
-                    staff = Staff.objects.filter(staff_staff_type="BARANGAY STAFF", pos__pos_title="ADMIN").select_related("rp")
+                    staff = Staff.objects.filter(staff_type="BARANGAY STAFF", pos__pos_title="ADMIN").select_related("rp")
                     recipients = []
                     
                     for staff in staff:

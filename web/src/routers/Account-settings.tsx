@@ -22,7 +22,7 @@ export const viewprofile_router = [
         element: <YourActivity /> 
     },
     {
-        path: 'account/about',
+        path: 'manage/about',
         element: <About/>,
     }
 ]

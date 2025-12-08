@@ -25,6 +25,7 @@ export default function AccountProfile(): JSX.Element {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+  const [showUserOption, setShowUserOption] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -42,13 +43,20 @@ export default function AccountProfile(): JSX.Element {
       id: "view-profile",
       name: "Manage your Account",
       icons: <User size={20} />,
-      action: () => navigate("/manage/profile"),
+      action: () => {
+        navigate("/manage/profile");
+        setShowUserOption(false);
+      },
     },
     {
       id: "sign-out",
       name: "Sign out",
       icons: <LogOut size={20} />,
-      action: () => setShowLogoutAlert(true),
+      action: () => 
+        {
+          setShowLogoutAlert(true);
+          setShowUserOption(false);
+        },
     },
   ];
 
@@ -73,7 +81,7 @@ export default function AccountProfile(): JSX.Element {
       <img
         src={user?.profile_image || sanRoqueLogo}
         alt="Profile Picture"
-        className="h-10 w-10 rounded-full flex-shrink-0 object-cover"
+        className="h-10 w-10 rounded-full flex-shrink-0 object-cover "
       />
       <div className="flex flex-col max-w-[180px]">
         <p className="font-medium truncate">
@@ -86,7 +94,7 @@ export default function AccountProfile(): JSX.Element {
 
   return (
     <div>
-      <Popover>
+      <Popover open={showUserOption} onOpenChange={setShowUserOption}>
         <PopoverTrigger className="flex items-center space-x-2">
           <img
             src={user?.profile_image || sanRoqueLogo}

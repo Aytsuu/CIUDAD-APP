@@ -19,7 +19,6 @@ export const useGetComplaintById = (comp_id: string) =>
     queryFn: async () => {
       try {
         const res = await api.post("complaint/view/", { comp_id });
-        console.log(res.data)
         return res.data;
       } catch (error) {
         throw error;
@@ -62,10 +61,8 @@ export const useSearchComplainants = (query: string) => {
         const response = await api.get(
           `/complaint/complainant/search/?q=${encodeURIComponent(query)}`
         );
-        console.log("Search response:", response.data);
         return response.data;
       } catch (error) {
-        console.error("Search error:", error);
         return [];
       }
     },

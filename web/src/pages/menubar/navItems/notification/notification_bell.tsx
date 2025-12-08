@@ -6,7 +6,7 @@ import { Bell, MoreHorizontal, Eye, CheckCheck, ExternalLink, Settings, FileText
 import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 import { fetchNotification } from "../../queries/fetchNotificationQueries";
 import { listenForMessages } from "@/firebase";
-import { showNotificationToast } from "@/components/ui/toast";
+import { showErrorToast, showNotificationToast } from "@/components/ui/toast";
 import { useUpdateBulkNotification, useUpdateNotification } from "../../queries/updateNotificationQueries";
 import { MdNotificationAdd } from "react-icons/md";
 import { Button } from "@/components/ui/button/button";
@@ -92,15 +92,6 @@ export const NotificationBell: React.FC = () => {
     return () => clearInterval(interval);
   }, [refetch]);
   
-  // Request notification permission on mount
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        console.log('Notification permission:', permission);
-      });
-    }
-  }, []);
-  
   useEffect(() => {
     if (data) {
       setNotifications(data);
@@ -110,11 +101,7 @@ export const NotificationBell: React.FC = () => {
 
   // Listen for live FCM push notifications in foreground
   useEffect(() => {
-    console.log('Setting up FCM listener...');
-    
     const unsubscribe = listenForMessages((payload) => {
-      console.log('📩 FCM message received:', JSON.stringify(payload, null, 2));
-      
       try {
         let redirectUrl = undefined;
         
@@ -133,8 +120,8 @@ export const NotificationBell: React.FC = () => {
               path: payload.data.web_route,
               params: params
             };
-          } catch (e) {
-            console.error("Failed to parse web params:", e);
+          } catch (error) {
+            showErrorToast(`Error: ${error instanceof Error ? error.message : String(error)}`)
           }
         }
         
@@ -154,7 +141,6 @@ export const NotificationBell: React.FC = () => {
 
         // Update state first
         setNotifications((prev) => {
-          console.log('📝 Adding notification to state. Current count:', prev.length);
           return [newNotif, ...prev];
         });
         setUnreadCount((prev) => prev + 1);
@@ -168,7 +154,6 @@ export const NotificationBell: React.FC = () => {
           notif_type: notifType, // Pass the notification type for proper icon display
           onClick: redirectUrl ? () => {
             const { path, params } = redirectUrl;
-            console.log('🔗 Navigating to:', path, 'with params:', params);
             navigate(path, {
               state: {
                 params: params
@@ -181,12 +166,11 @@ export const NotificationBell: React.FC = () => {
         setTimeout(() => refetch(), 1000);
         
       } catch (error) {
-        console.error('❌ Error processing notification:', error);
+        showErrorToast(`Error processing notification: ${error instanceof Error ? error.message : String(error)}`);
       }
     });
 
     return () => {
-      console.log('Cleaning up FCM listener');
       unsubscribe();
     };
   }, [navigate, refetch]);
@@ -224,7 +208,6 @@ export const NotificationBell: React.FC = () => {
     // Navigate using the redirect_url
     if (notification.redirect_url) {
       const { path, params } = notification.redirect_url;
-      console.log('🔗 Navigating to:', path, 'with params:', params);
       navigate(path, {
         state: {
           params: params
@@ -245,7 +228,6 @@ export const NotificationBell: React.FC = () => {
       case "view":
         if (notification?.redirect_url) {
           const { path, params } = notification.redirect_url;
-          console.log('🔗 Navigating to:', path, 'with params:', params);
           navigate(path, {
             state: {
               params: params

@@ -50,7 +50,8 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
         # Serialize staff data
         staff_data = StaffAccountSerializer(staff_record).data
-        return staff_data
+        
+        return staff_data if staff_data['assignments'] else None
 
     def get_personal(self, obj):
         personal = None
@@ -84,29 +85,3 @@ class AuthResponseSerializer(serializers.Serializer):
         required=False,
         allow_null=True
     )
-    
-    
-class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
-    username_field = "email"  # tell JWT to use email
-
-    def validate(self, attrs):
-        email = attrs.get("email")
-        password = attrs.get("password")
-
-        if email and password:
-            user = authenticate(request=self.context.get("request"), email=email, password=password)
-
-            if not user:
-                raise serializers.ValidationError("Invalid email or password")
-
-        refresh = self.get_token(user)
-
-        return {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-            "user": {
-                "id": user.acc_id,
-                "email": user.email,
-                "username": user.username,
-            }
-        }

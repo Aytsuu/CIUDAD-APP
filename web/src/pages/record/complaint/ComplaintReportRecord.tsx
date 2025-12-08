@@ -103,7 +103,6 @@ export function ComplaintViewRecord() {
       setIsModalOpen(false);
       await refetch();
     } catch (error) {
-      console.error("Error processing action:", error);
       toast.error(`Failed to ${currentAction} complaint. Please try again.`);
     }
   };

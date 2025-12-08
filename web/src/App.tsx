@@ -10,6 +10,9 @@ import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { queryClient } from "./lib/queryClient";
 import { PersistGate } from "redux-persist/integration/react";
+import { IdleProvider } from "./context/IdleContext";
+import { IdleModal } from "./IdleModal";
+import { useAuth } from "./context/AuthContext";
 
 const router = createBrowserRouter([
   ...landing_router,
@@ -17,17 +20,28 @@ const router = createBrowserRouter([
   { path: "*", element: <NotFound /> },
 ]);
 
+function AppContent() {
+  const { logout, isAuthenticated } = useAuth();
+  
+  return (
+    <IdleProvider onLogout={logout} isAuthenticated={isAuthenticated}>
+      <LoadingProvider>
+        <LinearLoader />
+        <AnimatePresence mode="wait">
+          <RouterProvider router={router} />
+        </AnimatePresence>
+        <IdleModal />
+      </LoadingProvider>
+    </IdleProvider>
+  );
+}
+
 function App() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <QueryClientProvider client={queryClient}>
-            <LoadingProvider>
-              <LinearLoader />
-              <AnimatePresence mode="wait">
-                <RouterProvider router={router} />
-              </AnimatePresence>
-            </LoadingProvider>
+          <AppContent />
         </QueryClientProvider>
       </PersistGate>
     </Provider>

@@ -195,7 +195,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': False,  
@@ -214,6 +214,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     'ciudad-app-server-1.onrender.com',
+    '192.168.1.16'
 ]
 
 CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool) # disable in production
@@ -230,7 +231,7 @@ CORS_ALLOWED_ORIGINS=[
     "http://localhost:5173",
 
     # Physical Mobile Device Host IP
-    "http://192.168.1.52:8000",
+    "http://192.168.1.16:8000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

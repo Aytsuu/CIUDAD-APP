@@ -91,7 +91,6 @@ export const useLogoutMutation = () => {
     onSettled: () => {
       dispatch(clearAuthState());
       dispatch(setLoading(false));
-      
       // Clear all React Query cache on logout
       queryClient.clear();
     },

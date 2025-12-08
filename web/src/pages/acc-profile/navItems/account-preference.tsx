@@ -15,8 +15,6 @@ export default function Preferences() {
   // Toggle states
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
-  const [marketingEmails, setMarketingEmails] = useState(false);
-  const [profileVisibility, setProfileVisibility] = useState(true);
   const [dataCollection, setDataCollection] = useState(true);
 
   // Custom toggle button component
@@ -98,18 +96,6 @@ export default function Preferences() {
 
           <Separator />
 
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Marketing Emails</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive updates about new features and promotions
-              </p>
-            </div>
-            <ToggleButton
-              enabled={marketingEmails}
-              onToggle={() => setMarketingEmails(!marketingEmails)}
-            />
-          </div>
         </CardContent>
       </Card>
 
@@ -124,21 +110,6 @@ export default function Preferences() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Profile Visibility</Label>
-              <p className="text-sm text-muted-foreground">
-                Allow others to see your profile information
-              </p>
-            </div>
-            <ToggleButton
-              enabled={profileVisibility}
-              onToggle={() => setProfileVisibility(!profileVisibility)}
-            />
-          </div>
-
-          <Separator />
-
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label>Data Collection</Label>
