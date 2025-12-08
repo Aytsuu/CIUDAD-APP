@@ -76,7 +76,7 @@ export const healthinventory = [
               { path: "medicine", element: <MedicineStocks /> },
               { path: "antigen", element: <VaccineStocks /> },
               { path: "commodity", element: <CommodityStocks /> },
-              { path: "firstaid", element: <FirstAidStocks /> }
+              { path: "first-aid", element: <FirstAidStocks /> }
             ]
           },
           {
@@ -86,7 +86,7 @@ export const healthinventory = [
               { path: "medicine", element: <MedicineArchiveTable /> },
               { path: "antigen", element: <CombinedStockTableArchive /> },
               { path: "commodity", element: <CommodityArchiveTable /> },
-              { path: "firstaid", element: <FirstAidArchiveTable /> }
+              { path: "first-aid", element: <FirstAidArchiveTable /> }
             ]
           },
           {
@@ -96,7 +96,7 @@ export const healthinventory = [
               { path: "medicine", element: <MedicineTransactionTable /> },
               { path: "antigen", element: <AntigenTransactionTable /> },
               { path: "commodity", element: <CommodityTransactionTable /> },
-              { path: "firstaid", element: <FirstAidTransactionTable /> }
+              { path: "first-aid", element: <FirstAidTransactionTable /> }
             ]
           }
         ]

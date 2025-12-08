@@ -8,7 +8,7 @@ const TransactionTabConfig = [
   { id: "medicine", icon: Pill, label: "Medicine", path: "medicine" },
   { id: "antigen", icon: Syringe, label: "Antigen", path: "antigen" },
   { id: "commodity", icon: Package, label: "Commodity", path: "commodity" },
-  { id: "firstaid", icon: Bandage, label: "First Aid", path: "firstaid" },
+  { id: "firstaid", icon: Bandage, label: "First Aid", path: "first-aid" },
 ];
 
 export default function TransactionMainInventoryList() {

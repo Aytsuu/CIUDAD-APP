@@ -27,7 +27,7 @@ const TabConfig = [
     id: "firstaid",
     icon: Bandage,
     label: "First Aid",
-    path: "firstaid"
+    path: "first-aid"
   }
 ] as const;
 
