@@ -14,7 +14,7 @@ export const vaccinationColumns: ColumnDef<any>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex min-w-[120px] px-2">
+      <div className="flex min-w-[120px] ">
         <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.pat_id}</div>
       </div>
     )
@@ -22,14 +22,14 @@ export const vaccinationColumns: ColumnDef<any>[] = [
   {
     accessorKey: "patient",
     header: ({ column }) => (
-      <div className="flex gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex gap-2 cursor-pointer py-2" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <span>Patient</span> <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => {
       const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
-        <div className="py-2 px-4">
+        <div className="py-2">
           <div className="font-medium break-words">{toTitleCase(fullName)}</div>
           <div className="text-sm text-darkGray">
             {toTitleCase(row.original.sex || "")}, {row.original.age}
@@ -40,8 +40,9 @@ export const vaccinationColumns: ColumnDef<any>[] = [
   },
   {
     accessorKey: "address",
+    size: 300,
     header: ({ column }) => (
-      <div className="flex gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex gap-2 cursor-pointer py-2 " onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <span>Address</span> <ArrowUpDown size={15} />
       </div>
     ),
@@ -55,7 +56,7 @@ export const vaccinationColumns: ColumnDef<any>[] = [
     accessorKey: "sitio",
     header: "Sitio",
     cell: ({ row }) => (
-      <div className="flex min-w-[120px] px-2">
+      <div className="flex min-w-[120px]">
         <div className="w-full">{toTitleCase(row.original.sitio || "N/A")}</div>
       </div>
     )
@@ -64,7 +65,7 @@ export const vaccinationColumns: ColumnDef<any>[] = [
     accessorKey: "pat_type",
     header: "Type",
     cell: ({ row }) => (
-      <div className="flex min-w-[100px] px-2">
+      <div className="flex min-w-[100px]">
         <div className={getPatType(row.original.pat_type)}>
           {toTitleCase(row.original.pat_type)}
         </div>
@@ -75,16 +76,16 @@ export const vaccinationColumns: ColumnDef<any>[] = [
     accessorKey: "vaccination_count",
     header: "No of Records",
     cell: ({ row }) => (
-      <div className="flex min-w-[100px] px-2">
+      <div className="flex min-w-[100px]">
         <div className="w-full">{row.original.vaccination_count}</div>
       </div>
     )
   },
   {
     accessorKey: "latest_vaccination_date",
-    header: "Latest Vaccination Date",
+    header: "Latest Record Date",
     cell: ({ row }) => (
-      <div className="flex min-w-[120px] px-2">
+      <div className="flex min-w-[120px] ">
         <div className="w-full">
           {row.original.latest_vaccination_date
             ? new Date(row.original.latest_vaccination_date).toLocaleDateString("en-US", {
