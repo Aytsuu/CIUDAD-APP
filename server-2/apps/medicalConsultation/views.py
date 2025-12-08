@@ -1016,7 +1016,7 @@ class SoapFormSubmissionView(APIView):
                         'medreq_id': med_request.medreq_id,
                         'status': 'confirmed',
                         'created_at': timezone.now(),
-                        'action_by': staff,
+                        'action_by': staff_id,
                         'confirmed_at': timezone.now()
                     }
                     logger.debug(f"Medicine item data: {medicine_item_data}")
