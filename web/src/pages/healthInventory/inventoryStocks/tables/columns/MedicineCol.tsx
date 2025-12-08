@@ -11,15 +11,15 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
       const dateString = row.original.created_at;
 
       if (!dateString) {
-        return <div className="text-center text-gray-400">N/A</div>;
+        return <div className="text-gray-400">N/A</div>;
       }
 
       try {
         const date = new Date(dateString);
         return (
         
-          <div className="flex justify-center">
-              <div className="text-center w-[90px]">
+          <div className="flex justify-start">
+              <div className="w-[90px]">
             {date.toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
@@ -28,18 +28,18 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
           </div>
           </div>
         );
-      } catch (error) {
+      } catch {
         if (process.env.NODE_ENV === "development") {
           console.error("Invalid date format:", dateString);
         }
-        return <div className="text-center text-red-400">Invalid Date</div>;
+        return <div className="text-red-400">Invalid Date</div>;
       }
     }
   },
   {
     accessorKey: "inv_id",
     header: "ID",
-    cell: ({ row }) => <div className="text-center bg-snow p-2 rounded-md text-gray-700">{row.original.inv_id || "N/A"}</div>
+    cell: ({ row }) => <div className="bg-primary p-1 rounded-md text-white w-fit">{row.original.inv_id || "N/A"}</div>
   },
 
   {
@@ -50,11 +50,11 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
       const expired = row.original.isExpired;
       return (
         <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <div className={`font-medium text-center ${expired ? "line-through" : ""}`}>
+          <div className={`font-medium ${expired ? "line-through" : ""}`}>
             {item?.medicineName || "Unknown Medicine"}
             {expired && " (Expired)"}
           </div>
-          <div className={`text-sm text-center ${expired ? "text-red-500" : "text-gray-600"}`}>
+          <div className={`text-sm ${expired ? "text-red-500" : "text-gray-600"}`}>
             {item?.dosage || ""} {item?.dsgUnit || ""}, {item?.form || ""}
           </div>
         </div>
@@ -84,7 +84,7 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
 
       if (unit.toLowerCase() === "boxes" && pcs > 1) {
         return (
-          <div className={`text-center ${expired ? "text-red-600 line-through" : ""}`}>
+          <div className={`${expired ? "text-red-600 line-through" : ""}`}>
             {qty} boxes ({qty * pcs} pcs)
             {expired && " (Expired)"}
           </div>
@@ -92,7 +92,7 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
       }
 
       return (
-        <div className={`text-center ${expired ? "text-red-600 line-through" : ""}`}>
+        <div className={`${expired ? "text-red-600 line-through" : ""}`}>
           {qty} {unit}
           {expired && " (Expired)"}
         </div>
@@ -117,7 +117,7 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
         const remainingPcs = availablePcs % pcs;
 
         return (
-          <div className={`flex flex-col items-center ${expired ? "text-red-600" : ""}`}>
+          <div className={`flex flex-col items-start ${expired ? "text-red-600" : ""}`}>
             <span className={expired ? "line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}>
               {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
               {expired && " (Expired)"}
@@ -130,7 +130,7 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
       }
 
       return (
-        <div className={`text-center ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-green-600"}`}>
+        <div className={`${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-green-600"}`}>
           {record.availableStock} {unit}
           {expired && " (Expired)"}
           {isOutOfStock && !expired && " (Out of Stock)"}
@@ -147,7 +147,7 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
     header: "Qty Used",
     cell: ({ row }) => {
       const expired = row.original.isExpired;
-      return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.qty_used}</div>;
+      return <div className={`${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.qty_used}</div>;
     }
   },
   {
@@ -155,7 +155,7 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
     header: "Qty Wasted",
     cell: ({ row }) => {
       const expired = row.original.isExpired;
-      return <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.wasted}</div>;
+      return <div className={`${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.wasted}</div>;
     }
   },
   {
@@ -167,8 +167,8 @@ export const getColumns = (handleArchiveInventory: (inv_id: string) => void, onO
       const expired = row.original.isExpired;
 
       return (
-        <div className={`flex justify-center min-w-[120px] px-2 ${expired ? "text-red-600" : ""}`}>
-          <div className={`text-center w-full ${expired ? "font-bold line-through" : isNear ? "text-orange-500 font-medium" : ""}`}>
+        <div className={`flex justify-start min-w-[120px] px-2 ${expired ? "text-red-600" : ""}`}>
+          <div className={`w-full ${expired ? "font-bold line-through" : isNear ? "text-orange-500 font-medium" : ""}`}>
             {expiryDate ? new Date(expiryDate).toLocaleDateString() : "N/A"}
             {expired ? " (Expired)" : isNear ? " (Near Expiry)" : ""}
           </div>

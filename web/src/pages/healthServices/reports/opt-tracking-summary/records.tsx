@@ -264,8 +264,6 @@ export default function OPTMonthlyDetails() {
               style={{ 
                 tableLayout: "fixed", 
                 fontSize: "10px",
-                minWidth: "1200px", // Fixed minimum width to prevent responsiveness
-                width: "auto" // Let table expand naturally
               }}
             >
               {/* Table Headers */}
@@ -441,13 +439,13 @@ export default function OPTMonthlyDetails() {
                 {/* Grand Summary Row */}
                 <tr className="font-bold bg-gray-100">
                   <td className="border border-black p-1 text-xs" style={{ width: '80px' }}>GRAND TOTAL</td>
-                  <td colSpan={9} className="border border-black px-1 py-6 text-center text-xs">
+                  <td colSpan={10} className="border border-black px-1 py-6 text-center text-xs">
                     <span className="font-bold">WFA: {wfaTotals.Male + wfaTotals.Female}</span>
                   </td>
-                  <td colSpan={9} className="border border-black px-1 py-6 text-center text-xs">
+                  <td colSpan={10} className="border border-black px-1 py-6 text-center text-xs">
                     <span className="font-bold">HFA: {hfaTotals.Male + hfaTotals.Female}</span>
                   </td>
-                  <td colSpan={7} className="border border-black px-1 py-6 text-center text-xs">
+                  <td colSpan={8} className="border border-black px-1 py-6 text-center text-xs">
                     <span className="font-bold">WFH: {wfhTotals.Male + wfhTotals.Female}</span>
                   </td>
                 </tr>

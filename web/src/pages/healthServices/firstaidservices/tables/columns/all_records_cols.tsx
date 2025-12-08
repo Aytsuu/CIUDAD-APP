@@ -20,14 +20,14 @@ export const firstAidColumns: ColumnDef<any>[] = [
   {
     accessorKey: "patient",
     header: ({ column }) => (
-      <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        <span className="text-center">Patient</span> <ArrowUpDown size={15} />
+      <div className="flex gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <span>Patient</span> <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => {
       const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
       return (
-        <div className="text-center py-2 px-4">
+        <div className="py-2 px-4">
           <div className="font-medium break-words">{toTitleCase(fullName)}</div>
           <div className="text-sm text-darkGray">
             {toTitleCase(row.original.sex || "")}, {row.original.age}
@@ -39,12 +39,12 @@ export const firstAidColumns: ColumnDef<any>[] = [
   {
     accessorKey: "address",
     header: ({ column }) => (
-      <div className="flex justify-center items-center gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-        <span className="text-center">Address</span> <ArrowUpDown size={15} />
+      <div className="flex gap-2 cursor-pointer py-2 px-4" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <span>Address</span> <ArrowUpDown size={15} />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="text-center py-2 px-4 whitespace-pre-wrap break-words">
+      <div className="py-2 px-4 whitespace-pre-wrap break-words">
         {toTitleCase(row.original.address || "No address provided")}
       </div>
     )
@@ -53,8 +53,8 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "sitio",
     header: "Sitio",
     cell: ({ row }) => (
-      <div className="flex justify-center min-w-[120px] px-2">
-        <div className="text-center w-full">{toTitleCase(row.original.sitio || "N/A")}</div>
+      <div className="flex min-w-[120px] px-2">
+        <div className="w-full">{toTitleCase(row.original.sitio || "N/A")}</div>
       </div>
     )
   },
@@ -62,7 +62,7 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "pat_type",
     header: "Type",
     cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
+      <div className="flex min-w-[100px] px-2">
         <div className={getPatType(row.original.pat_type)}>
           {toTitleCase(row.original.pat_type)}
         </div>
@@ -73,8 +73,8 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "firstaid_count",
     header: "No of Records",
     cell: ({ row }) => (
-      <div className="flex justify-center min-w-[100px] px-2">
-        <div className="text-center w-full">{row.original.firstaid_count}</div>
+      <div className="flex min-w-[100px] px-2">
+        <div className="w-full">{row.original.firstaid_count}</div>
       </div>
     )
   },
@@ -82,8 +82,8 @@ export const firstAidColumns: ColumnDef<any>[] = [
     accessorKey: "latest_firstaid_date",
     header: "Latest Record Date",
     cell: ({ row }) => (
-      <div className="flex justify-center min-w-[150px] px-2">
-        <div className="text-center w-full">
+      <div className="flex min-w-[150px] px-2">
+        <div className="w-full">
           {row.original.latest_firstaid_date
             ? new Date(row.original.latest_firstaid_date).toLocaleDateString("en-US", {
                 year: "2-digit",

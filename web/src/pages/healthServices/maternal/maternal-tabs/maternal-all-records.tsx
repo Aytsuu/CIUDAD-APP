@@ -230,10 +230,10 @@ export default function MaternalAllRecords() {
   const columns: ColumnDef<maternalRecords>[] = [
     {
       accessorKey: "pat_id",
-      header: () => <div className="flex justify-center">Patient ID</div>,
+      header: "Patient ID",
       cell: ({ row }) => (
-        <div className="flex w-full justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+        <div>
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md font-semibold">
             {row.original.pat_id}
           </div>
         </div>
@@ -243,7 +243,7 @@ export default function MaternalAllRecords() {
       accessorKey: "patient",
       header: ({ column }) => (
         <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          className="flex w-full items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Patient <ArrowUpDown size={15} />
@@ -256,10 +256,10 @@ export default function MaternalAllRecords() {
           `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname}`.trim();
 
         return (
-          <div className="flex justify-center w-full">
+          <div className="flex w-full">
             <div className="flex flex-col">
               <div className="font-medium truncate">{capitalize(fullName)}</div>
-              <div className="text-sm text-center text-darkGray">
+              <div className="text-sm text-darkGray">
                 {capitalize(patient.per_sex)}, {age} {patient.ageTime} old
               </div>
             </div>

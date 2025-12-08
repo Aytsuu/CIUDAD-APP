@@ -21,7 +21,7 @@ export const SupplyColumns = (
       const record = row.original;
 
       return (
-        <div className="flex justify-center gap-2">
+        <div className="flex  gap-2">
           <Button 
             variant="outline" 
             size="sm"

@@ -4,11 +4,7 @@ export const MedTransactioncolumns = (): ColumnDef<any>[] => [
   {
     accessorKey: "inv_id",
     header: "ID",
-    cell: ({ row }) => (
-      <div className="text-center bg-snow p-2 rounded-md text-gray-700">
-        {row.original.mdt_id}
-      </div>
-    ),
+    cell: ({ row }) => <div className="bg-primary p-1 rounded-md text-white w-fit"> {row.original.mdt_id}</div>,
   },
   {
     accessorKey: "med_name",
@@ -27,28 +23,28 @@ export const MedTransactioncolumns = (): ColumnDef<any>[] => [
       );
     },
   },
-  { 
-    accessorKey: "mdt_qty", 
-    header: "Quantity" 
-  },
-  { 
-    accessorKey: "mdt_action", 
-    header: "Action" 
+  {
+    accessorKey: "mdt_qty",
+    header: "Quantity",
   },
   {
-    accessorKey: "staff", 
+    accessorKey: "mdt_action",
+    header: "Action",
+  },
+  {
+    accessorKey: "staff",
     header: "Staff",
     cell: ({ row }) => {
       const staffName = row.original.staff;
       return toTitleCase(staffName);
-    }
+    },
   },
-  { 
-    accessorKey: "created_at", 
+  {
+    accessorKey: "created_at",
     header: "Created At",
     cell: ({ row }) => {
       const createdAt = row.original.created_at;
       return createdAt ? new Date(createdAt).toLocaleString() : "N/A";
-    }
+    },
   },
 ];

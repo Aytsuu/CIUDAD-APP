@@ -13,13 +13,13 @@ export const getStockColumns = (
       const dateString = row.original.created_at;
 
       if (!dateString) {
-        return <div className="text-center text-gray-400">N/A</div>;
+        return <div className=" text-gray-400">N/A</div>;
       }
 
       try {
         const date = new Date(dateString);
         return (
-          <div className="text-center ">
+          <div >
             {date.toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
@@ -27,11 +27,11 @@ export const getStockColumns = (
             })}
           </div>
         );
-      } catch (error) {
+      } catch{
         if (process.env.NODE_ENV === "development") {
           console.error("Invalid date format:", dateString);
         }
-        return <div className="text-center text-red-400">Invalid Date</div>;
+        return <div className=" text-red-400">Invalid Date</div>;
       }
     }
   },
@@ -39,7 +39,7 @@ export const getStockColumns = (
   {
     accessorKey: "batchNumber",
     header: "Batch Number",
-    cell: ({ row }) => <div className="text-center">{row.original.batchNumber || "N/A"}</div>
+    cell: ({ row }) => <div className="bg-primary text-white p-1 rounded-sm w-fit">{row.original.batchNumber || "N/A"}</div>
   },
   {
     accessorKey: "item",
@@ -49,12 +49,12 @@ export const getStockColumns = (
       const expired = row.original.isExpired;
       return (
         <div className={`flex flex-col ${expired ? "text-red-600" : ""}`}>
-          <div className={`font-medium text-center ${expired ? "line-through" : ""}`}>
+          <div className={`font-medium  ${expired ? "line-through" : ""}`}>
             {item?.antigen || "Unknown Item"}
             {expired && " (Expired)"}
           </div>
           {row.original.type === "vaccine" && (
-            <div className={`text-sm text-center ${expired ? "text-red-500" : "text-gray-600"}`}>
+            <div className={`text-sm  ${expired ? "text-red-500" : "text-gray-600"}`}>
               {item?.dosage || 0} {item?.unit || ""}
             </div>
           )}
@@ -68,7 +68,7 @@ export const getStockColumns = (
     cell: ({ row }) => {
       const expired = row.original.isExpired;
       return (
-        <div className={`text-center ${expired ? "text-red-600 line-through" : ""}`}>
+        <div className={` ${expired ? "text-red-600 line-through" : ""}`}>
           {row.original.qty || "0"}
           {expired && " (Expired)"}
         </div>
@@ -87,7 +87,7 @@ export const getStockColumns = (
       if (record.type === "vaccine") {
         if (record.solvent?.toLowerCase() === "diluent") {
           return (
-            <div className={`text-center ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}`}>
+            <div className={` ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}`}>
               {record.availableStock} containers
               {expired && " (Expired)"}
               {!isOutOfStock && isLow && record.availableStock > 0 && " (Low Stock)"}
@@ -101,8 +101,8 @@ export const getStockColumns = (
           const fullVials = Math.ceil(availableDoses / dosesPerVial);
         
           return (
-            <div className={`flex flex-col items-center ${expired ? "text-red-600" : ""}`}>
-            <span className={`text-center ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}`}>
+            <div className={`flex flex-col  ${expired ? "text-red-600" : ""}`}>
+            <span className={` ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}`}>
             {fullVials} vial{fullVials !== 1 ? "s" : ""}
               {expired && " (Expired)"}
               {!isOutOfStock && isLow && availableDoses > 0 && " (Low Stock)"}
@@ -123,7 +123,7 @@ export const getStockColumns = (
           const remainingPcs = availablePcs % pcsPerBox;
   
           return (
-            <div className={`flex flex-col items-center ${expired ? "text-red-600" : ""}`}>
+            <div className={`flex flex-col  ${expired ? "text-red-600" : ""}`}>
               <span className={expired ? "line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-black"}>
                 {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
                 {expired && " (Expired)"}
@@ -138,7 +138,7 @@ export const getStockColumns = (
         }
   
         return (
-          <div className={`text-center ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-green-600"}`}>
+          <div className={` ${expired ? "text-red-600 line-through" : isOutOfStock ? "text-red-600 font-bold" : isLow ? "text-yellow-600" : "text-green-600"}`}>
             {record.availableStock} pc{record.availableStock !== 1 ? "s" : ""}
             {expired && " (Expired)"}
             {isOutOfStock && !expired && " (Out of Stock)"}
@@ -148,7 +148,7 @@ export const getStockColumns = (
       }
   
       return (
-        <div className={`text-center ${expired ? "text-red-600 line-through" : isLow ? "text-yellow-600" : "text-green-600"}`}>
+        <div className={` ${expired ? "text-red-600 line-through" : isLow ? "text-yellow-600" : "text-green-600"}`}>
           {record.availableStock}
           {expired && " (Expired)"}
           {isLow && " (Low Stock)"}
@@ -165,7 +165,7 @@ export const getStockColumns = (
     
 
         return (
-        <div className={`text-center ${expired ? "text-red-600 line-through" : "text-red-600"}`}>
+        <div className={` ${expired ? "text-red-600 line-through" : "text-red-600"}`}>
           {row.original.administered || 0}
         </div>
         );
@@ -177,7 +177,7 @@ export const getStockColumns = (
     cell: ({ row }) => {
       const expired = row.original.isExpired;
       return (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex  gap-2">
           <span className={`text-sm ${expired ? "text-red-600 line-through" : "text-red-600"}`}>{row.original.wastedDose || 0}</span>
         </div>
       );
@@ -192,8 +192,8 @@ export const getStockColumns = (
       const expired = row.original.isExpired;
 
       return (
-        <div className={`flex justify-center min-w-[120px] px-2 ${expired ? "text-red-600" : ""}`}>
-          <div className={`text-center w-full ${expired ? "font-bold line-through" : isNear ? "text-orange-500 font-medium" : ""}`}>
+        <div className={`flex min-w-[120px] px-2 ${expired ? "text-red-600" : ""}`}>
+          <div className={` w-full ${expired ? "font-bold line-through" : isNear ? "text-orange-500 font-medium" : ""}`}>
             {expiryDate}
             {expired ? " (Expired)" : isNear ? " (Near Expiry)" : ""}
           </div>

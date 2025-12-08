@@ -23,16 +23,16 @@ export const noteColumns: ColumnDef<Note>[] = [
       accessorKey: "name",
       header: "Barangay Health Worker",
       cell: ({ row }) => (
-         <div className="flex items-center">
-            <div className="w-60 bg-blue-600 rounded-md text-center text-white p-2">{row.original.name}</div>
+         <div className="flex">
+            <div className="w-60 bg-blue-600 rounded-md text-white p-2">{row.original.name}</div>
          </div> 
       )
    },
    {
       accessorKey: "actions",
-      header: () => <div className="flex justify-center">Action</div>,
+      header: "Action",
       cell: ({ row }) => (
-         <div className="flex justify-center gap-2">
+         <div className="flex gap-2">
             <Link to={`/bhw/view/${row.original.bhwdn_id}`}>
                <Button variant="outline" title="View details">
                   <Eye size={16}/>

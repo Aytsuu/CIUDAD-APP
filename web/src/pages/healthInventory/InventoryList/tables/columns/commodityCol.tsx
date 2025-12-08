@@ -31,7 +31,7 @@ export const CommodityColumns = (
     accessorKey: "com_name",
     header: ({ column }) => (
       <div
-        className="flex w-full justify-center items-center gap-2 cursor-pointer"
+        className="flex w-full gap-2 cursor-pointer"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Commodity Name <ArrowUpDown size={15} />
@@ -50,7 +50,7 @@ export const CommodityColumns = (
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
+      <div className="flex gap-2">
         <Button 
           variant="outline"
           onClick={() => {

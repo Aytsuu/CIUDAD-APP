@@ -28,7 +28,7 @@ export const FirstAidColumns = ({
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => (
-      <div className="flex justify-center gap-2">
+      <div className="flex  gap-2">
         <Button 
           variant="outline"
           onClick={() => onEdit(row.original)}

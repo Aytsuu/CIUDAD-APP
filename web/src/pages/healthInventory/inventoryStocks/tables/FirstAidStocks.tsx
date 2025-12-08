@@ -1,6 +1,7 @@
 // FirstAidStocks.tsx
 "use client";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +24,11 @@ type StockFilter = "all" | "low_stock" | "out_of_stock" | "near_expiry" | "expir
 
 export default function FirstAidStocks() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
   const [firstAidToArchive, setFirstAidToArchive] = useState<{
     inv_id: string;
@@ -53,8 +55,14 @@ export default function FirstAidStocks() {
   const counts = apiResponse?.filter_counts || { out_of_stock: 0, low_stock: 0, near_expiry: 0, expired: 0, total: 0 };
 
   useEffect(() => {
-    setCurrentPage(1);
+    setSearchParams({ page: "1" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, stockFilter]);
+
+  // ================== HANDLERS ==================
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: String(page) });
+  };
 
   const handleArchiveInventory = (firstAid: any) => {
     const hasAvailableStock = firstAid.availableStock > 0;
@@ -292,7 +300,7 @@ export default function FirstAidStocks() {
               onChange={(e) => {
                 const value = +e.target.value;
                 setPageSize(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
-                setCurrentPage(1);
+                handlePageChange(1);
               }}
               min="1"
               max="50"
@@ -327,7 +335,7 @@ export default function FirstAidStocks() {
           <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
             Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} items
           </p>
-          <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          <PaginationLayout currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
         </div>
       </div>
 

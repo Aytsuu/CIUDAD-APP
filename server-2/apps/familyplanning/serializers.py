@@ -44,25 +44,25 @@ class FPAssessmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'fprecord_id': {'required': False}}
 
-    def update(self, instance, validated_data):
-        old_status = instance.followv.followv_status if instance.followv else None
+    # def update(self, instance, validated_data):
+    #     old_status = instance.followv.followv_status if instance.followv else None
         
-        # Call parent update
-        instance = super().update(instance, validated_data)
+    #     # Call parent update
+    #     instance = super().update(instance, validated_data)
         
-        # Check if follow-up status changed to 'missed'
-        if (instance.followv and 
-            instance.followv.followv_status == 'missed' and 
-            old_status != 'missed'):
+    #     # Check if follow-up status changed to 'missed'
+    #     if (instance.followv and 
+    #         instance.followv.followv_status == 'missed' and 
+    #         old_status != 'missed'):
             
-            create_fp_followup_notification(
-                instance.fprecord,
-                instance.followv.followv_date,
-                "missed",
-                self.context['request'].user if 'request' in self.context else None
-            )
+    #         create_fp_followup_notification(
+    #             instance.fprecord,
+    #             instance.followv.followv_date,
+    #             "missed",
+    #             self.context['request'].user if 'request' in self.context else None
+    #         )
         
-        return instance
+    #     return instance
     
     
 class PelvicExamSerializer(serializers.ModelSerializer):

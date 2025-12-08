@@ -6,8 +6,8 @@ export const AntigenTransactionColumns = (): ColumnDef<any>[] => [
     accessorKey: "id",
     header: "#",
     cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md  text-center font-semibold">
+      <div className="flex justify-start">
+      <div className="bg-primary p-1 rounded-md text-white w-fit">
           {row.original.antt_id}
         </div>
       </div>
@@ -24,7 +24,7 @@ export const AntigenTransactionColumns = (): ColumnDef<any>[] => [
       <div>
         <div>{item?.item_name || "N/A"}</div>
         {row.original.item_type === "Vaccine" && (
-        <div className="text-sm text-center text-gray-600">
+        <div className="text-sm text-gray-600">
           {item?.dose_ml || 0} {item?.unit || ""}
         </div>
         )}

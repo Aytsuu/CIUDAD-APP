@@ -18,6 +18,7 @@ import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFil
 import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
 import { useSitioList } from "../../profiling/queries/profilingFetchQueries";
 import { ExportButton } from "@/components/ui/export";
+import { getPatType } from "../patientsRecord/PatientsRecordMain";
 
 interface FPRecord {
   fprecord_id: number;
@@ -203,17 +204,13 @@ export default function FamPlanningTable() {
       },
       {
         accessorKey: "patient_type",
-        header: "Patient Type",
+        header: "Type",
         cell: ({ row }) => {
           const patientType = row.original.patient_type;
-          const isResident = patientType === "Resident";
           return (
-            <span
-              className={`px-2 py-1 rounded-full text-sm font-medium 
-                          ${isResident ? "bg-green-100 text-green-800" : "bg-purple-100 text-purple-800"}`}
-            >
-              {patientType || "N/A"}
-            </span>
+           <div className="flex">
+              <div className={getPatType(patientType)}>{patientType}</div>
+            </div>
           );
         }
       },

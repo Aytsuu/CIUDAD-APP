@@ -14,7 +14,7 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
       accessorKey: "patient",
       size: 250,
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
@@ -36,8 +36,8 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
       accessorKey: "record",
       header: () => <div className="flex justify-center">Record</div>,
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.record || "N/A"}</div>
+        <div className="flex min-w-[100px] px-2">
+          <div className="w-full">{row.original.record || "N/A"}</div>
         </div>
       )
     },
@@ -45,8 +45,8 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
       accessorKey: "pat_type",
       header: () => <div className="flex justify-center">Patient Type</div>,
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full capitalize">{row.original.pat_type?.toLowerCase() || "N/A"}</div>
+        <div className="flex min-w-[100px] px-2">
+          <div className="w-full capitalize">{row.original.pat_type?.toLowerCase() || "N/A"}</div>
         </div>
       )
     },
@@ -54,12 +54,12 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
       accessorKey: "address",
       size: 300,
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Address <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center items-center px-2">
+        <div className="flex px-2">
           <div className="break-words">{capitalize(row.original.address)}</div>
         </div>
       )
@@ -68,7 +68,7 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
       accessorKey: "action",
       header: () => <div className="flex justify-center">Action</div>,
       cell: ({ }) => (
-        <div className="flex justify-center gap-2">
+        <div className="flex gap-2">
           <div className="text-black px-3 py-1.5 rounded cursor-pointer">
             <ViewButton
               onClick={() => {

@@ -59,7 +59,7 @@ class VaccineStockSerializer(serializers.ModelSerializer):
     
     def get_is_conditional(self, obj):
         """Check if this vaccine is marked as conditional"""
-        return ConditionalVaccine.objects.filter(vac_id=obj.vac_id).exists()
+        return obj.vac_id.vac_type_choices.lower() == 'conditional'
 
         
 class ImmnunizationStockSuppliesSerializer(serializers.ModelSerializer):

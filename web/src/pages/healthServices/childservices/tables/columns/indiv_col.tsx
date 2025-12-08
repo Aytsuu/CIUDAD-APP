@@ -121,8 +121,8 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
     accessorKey: "id",
     header: "#",
     cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">{row.original.id}</div>
+      <div className="flex">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 font-semibold">{row.original.id}</div>
       </div>
     ),
   },
@@ -130,7 +130,7 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
     accessorKey: "age",
     header: "Age",
     cell: ({ row }) => (
-      <div className="w-full flex justify-center">
+      <div className="w-full flex">
         <div className="w-10">{row.original.age || "N/A"}</div>
       </div>
     ),
@@ -141,13 +141,13 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
     cell: ({ row }) => {
       const weight = row.original.wt;
       const height = row.original.ht;
-      return <div className="text-center">{weight && height ? `${weight} kg / ${height} cm` : "N/A"}</div>;
+      return <div>{weight && height ? `${weight} kg / ${height} cm` : "N/A"}</div>;
     },
   },
   {
     accessorKey: "temp",
     header: "Temp (°C)",
-    cell: ({ row }) => <div className="text-center">{row.original.temp || "N/A"}</div>,
+    cell: ({ row }) => <div>{row.original.temp || "N/A"}</div>,
   },
   {
     accessorKey: "findings",
@@ -164,13 +164,13 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
     cell: ({ row }) => {
       const record = row.original;
       return (
-        <div className="flex justify-center">
+        <div className="flex">
           <div className="w-[300px] px-2">
             {record.latestNote ? <p className="text-sm mb-2 line-clamp-3">{record.latestNote}</p> : <p className="text-gray-500 text-sm mb-2">No notes</p>}
 
             {(record.followUpDescription || record.followUpDate) && (
               <div className="border-t pt-2 mt-2">
-                <div className="flex flex-col items-center gap-2 mb-1">
+                <div className="flex flex-col gap-2 mb-1">
                   <span className="text-xs font-medium text-gray-600">Follow-up:</span>
                   <span
                     className={`text-xs px-2 py-1 rounded ${
@@ -208,7 +208,7 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
     accessorKey: "updatedAt",
     header: "Date Visited",
     cell: ({ row }) => (
-      <div className="w-full flex justify-center text-center">
+      <div className="w-full flex">
         <div className="w-16">{row.original.updatedAt}</div>
       </div>
     ),
@@ -222,7 +222,7 @@ export const getChildHealthColumns = (childData: any, nutritionalStatusData: any
       const isCompleted = status === "recorded";
       
       return (
-        <div className="w-full flex justify-center">
+        <div className="w-full flex">
           <span 
             className={`text-xs px-2 py-1 rounded capitalize ${
               isCompleted 

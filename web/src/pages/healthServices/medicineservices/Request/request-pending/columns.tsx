@@ -14,29 +14,29 @@ import { toTitleCase } from "@/helpers/ToTitleCase";
 export const medicineRequestPendingColumns: ColumnDef<any>[] = [
   {
     id: "index",
-    header: () => <div className="text-center">#</div>,
+    header: () => <div>#</div>,
     size: 50,
     cell: ({ row, table }) => {
-      return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
+      return <div>{table.getRowModel().rows.indexOf(row) + 1}</div>;
     }
   },
   {
     accessorKey: "medreq_id",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Request ID <ArrowUpDown size={15} />
       </div>
     ),
     size: 120,
     cell: ({ row }) => (
-      <div className="flex justify-center px-2 py-2">
-        <div className="text-center font-medium">{row.original.medreq_id.toString().padStart(5, "0")}</div>
+      <div className="flex px-2 py-2">
+        <div className="font-medium">{row.original.medreq_id.toString().padStart(5, "0")}</div>
       </div>
     )
   },
   {
     accessorKey: "personal_info",
-    header: () => <div className="text-center">Patient Information</div>,
+    header: () => <div>Patient Information</div>,
     size: 220,
     cell: ({ row }) => {
       const personalInfo = row.original.personal_info || {};
@@ -46,7 +46,7 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
 
       return (
         <div className="px-2 py-2">
-          <div className="text-center space-y-1">
+          <div className="space-y-1">
             <div className="font-medium text-gray-900 break-words whitespace-normal" title={fullName}>
               {fullName}
             </div>
@@ -60,14 +60,14 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
   },
   {
     accessorKey: "address",
-    header: () => <div className="text-center">Address</div>,
+    header: () => <div>Address</div>,
     size: 250,
     cell: ({ row }) => {
       const address = row.original.address;
       const addressText = address ? [address.add_street, address.add_sitio, address.add_barangay, address.add_city, address.add_province].filter(Boolean).join(", ") : "No address provided";
       return (
         <div className="px-2 py-2">
-          <div className="text-sm text-gray-700 break-words whitespace-normal text-center leading-relaxed" title={addressText}>
+          <div className="text-sm text-gray-700 break-words whitespace-normal leading-relaxed" title={addressText}>
             {addressText}
           </div>
         </div>
@@ -87,7 +87,7 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
   {
     accessorKey: "requested_at",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Requested On <ArrowUpDown size={15} />
       </div>
     ),
@@ -95,7 +95,7 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       const { date, time } = formatDateTime(row.original.requested_at);
       return (
-        <div className="text-center py-2">
+        <div className="py-2">
           <div className="font-medium text-gray-900 text-sm">{date}</div>
           {time && <div className="text-xs text-gray-500 mt-1">{time}</div>}
         </div>
@@ -104,14 +104,14 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
   },
   {
     id: "actions",
-    header: () => <div className="text-center">Actions</div>,
+    header: () => <div>Actions</div>,
     size: 100,
     cell: ({ row }) => {
       const navigate = useNavigate();
       const address = row.original.address || {};
 
       return (
-        <div className="flex justify-center py-2">
+        <div className="flex py-2">
           <ViewButton
             onClick={() => {
               navigate(`/medicine-request/pending-items`, {
@@ -153,15 +153,15 @@ export const medicineRequestPendingColumns: ColumnDef<any>[] = [
 export const pendingItemsColumns: ColumnDef<any>[] = [
   {
     id: "index",
-    header: () => <div className="text-center">#</div>,
+    header: () => <div>#</div>,
     size: 50,
     cell: ({ row, table }) => {
-      return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
+      return <div>{table.getRowModel().rows.indexOf(row) + 1}</div>;
     }
   },
   {
     accessorKey: "medicine",
-    header: () => <div className="text-center">Medicine Details</div>,
+    header: () => <div>Medicine Details</div>,
     size: 300,
     cell: ({ row }) => {
       // Use formatted_med_name which includes dosage and form (e.g., "Paracetamol 500mg Tablet")
@@ -181,7 +181,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
 
       return (
         <div className="px-3 py-2">
-          <div className="text-center space-y-1">
+          <div className="space-y-1">
             <div className="font-semibold text-gray-900">{formattedName}</div>
             {(dosageInfo || formInfo) && (
               <div className="text-xs text-gray-500">
@@ -198,17 +198,17 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
   },
   {
     accessorKey: "reason",
-    header: () => <div className="text-center">Reason</div>,
+    header: () => <div>Reason</div>,
     size: 250,
     cell: ({ row }) => (
       <div className="px-3 py-2">
-        <div className="text-sm text-gray-700 break-words whitespace-normal text-center leading-relaxed line-clamp-3">{row.original.reason || "No reason provided"}</div>
+        <div className="text-sm text-gray-700 break-words whitespace-normal leading-relaxed line-clamp-3">{row.original.reason || "No reason provided"}</div>
       </div>
     )
   },
   {
     id: "documents",
-    header: () => <div className="text-center">Documents</div>,
+    header: () => <div>Documents</div>,
     size: 120,
     cell: ({ row }) => {
       const [isModalOpen, setIsModalOpen] = useState(false);
@@ -217,7 +217,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
       const isPrescription = med_type === "Prescription";
 
       return (
-        <div className="px-3 py-2 text-center">
+        <div className="px-3 py-2">
           {isPrescription ? (
             files.length > 0 ? (
               <>
@@ -238,7 +238,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
   },
   {
     id: "status",
-    header: () => <div className="text-center">Status</div>,
+    header: () => <div>Status</div>,
     size: 120,
     cell: ({ row }) => {
       const status = row.original.status;
@@ -255,7 +255,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
       };
 
       return (
-        <div className="flex justify-center py-2">
+        <div className="flex py-2">
           <Badge variant="outline" className={`px-3 py-1 text-xs font-medium ${config.color}`}>
             {config.label}
           </Badge>
@@ -265,7 +265,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
   },
   {
     id: "actions",
-    header: () => <div className="text-center">Actions</div>,
+    header: () => <div>Actions</div>,
     size: 200,
     cell: ({ row }) => {
       const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -277,7 +277,7 @@ export const pendingItemsColumns: ColumnDef<any>[] = [
       const hasDocuments = med_type === "Prescription" && files.length > 0;
 
       return (
-        <div className="flex justify-center gap-2 py-2">
+        <div className="flex gap-2 py-2">
           {status === "pending" ? (
             <>
               <Button size="sm" variant="outline" onClick={() => setIsReferOpen(true)} className="text-xs">

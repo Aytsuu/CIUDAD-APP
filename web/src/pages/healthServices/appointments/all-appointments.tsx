@@ -186,9 +186,9 @@ const handleTimeFrameChange = (timeFrame: string) => {
     {
       accessorKey: "no",
       size: 80,
-      header: () => <div className="flex justify-center">No.</div>,
+      header: "No.",
       cell: ({ row }) => (
-        <div className="flex justify-center">
+        <div>
           <div className="flex justify-center items-center gap-2 cursor-pointer bg-blue-100 text-blue-800 px-3 py-1 rounded-md w-8 text-center font-semibold">
             {row.index + 1}
           </div>
@@ -199,7 +199,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
       accessorKey: "patient",
       size: 250,
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
@@ -210,8 +210,8 @@ const handleTimeFrameChange = (timeFrame: string) => {
         return (
           <div className="flex justify-start">
             <div className="flex flex-col w-full">
-              <div className="font-medium text-center">{fullName}</div>
-              <div className="text-center text-sm text-gray-600">
+              <div className="font-medium">{fullName}</div>
+              <div className="text-sm text-gray-600">
                 {patient.gender}, {patient.age} {patient.ageTime} old
               </div>
             </div>
@@ -222,13 +222,13 @@ const handleTimeFrameChange = (timeFrame: string) => {
     {
       accessorKey: "scheduledDate",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Scheduled Date <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="text-center">
+        <div className="flex">
+          <div>
             <div className="font-medium">{row.original.scheduledDate}</div>
           </div>
         </div>

@@ -45,7 +45,7 @@ export const VaccineColumns = (
     accessorKey: "doses",
     header: "Total Doses",
     cell: ({ row }) => {
-      return <div className="text-center">{String(row.getValue("doses"))}</div>;
+      return <div >{String(row.getValue("doses"))}</div>;
     },
   },
   {
@@ -90,7 +90,7 @@ export const VaccineColumns = (
       const record = row.original;
 
       return (
-        <div className="flex justify-center gap-2">
+        <div className="flex gap-2">
           <Button 
             variant="outline" 
             size="sm"

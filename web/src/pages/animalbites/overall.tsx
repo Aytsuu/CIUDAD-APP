@@ -24,6 +24,7 @@ import { ProtectedComponent } from "@/ProtectedComponent";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
 import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFiltersChipsProps ";
+import { getPatType } from "../record/health/patientsRecord/PatientsRecordMain";
 
 // TYPES
 type UniquePatientDisplay = {
@@ -215,12 +216,12 @@ const Overall: React.FC = () => {
       accessorKey: "patientType",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient Type 
+          Type 
         </div>
       ),
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.patientType}</div>
+          <div className={getPatType(row.original.patientType)}>{row.original.patientType}</div>
         </div>
       )
     },

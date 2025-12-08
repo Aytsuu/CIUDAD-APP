@@ -91,7 +91,7 @@ export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <div className="flex items-center gap-2">
           <span>Patient No.</span>
           <ArrowUpDown size={14} />
@@ -99,7 +99,7 @@ export const columns: ColumnDef<Report>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex w-full justify-center">
+      <div className="flex w-full">
         <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
       </div>
     )
@@ -108,16 +108,16 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "fullName",
     size: 250,
     header: () => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
+      <div className="flex w-full items-center gap-2 cursor-pointer">
         <div className="flex items-center gap-2">
-          <span>Name</span>
+          <span>Patient Name</span>
         </div>
       </div>
     ),
     cell: ({ row }) => {
       const fullNameObj = row.getValue("fullName") as { lastName: string; firstName: string; mi: string } | undefined;
       return (
-        <div className="flex justify-center">
+        <div className="flex">
           {`${(fullNameObj?.lastName)}, ${(fullNameObj?.firstName)} ${fullNameObj?.mi}`}
         </div>
       )
@@ -126,13 +126,13 @@ export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "sitio",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Sitio
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex justify-center uppercase">
+      <div className="flex uppercase">
         {row.getValue("sitio")}
       </div>
     ),
@@ -140,54 +140,54 @@ export const columns: ColumnDef<Report>[] = [
   
   {
     accessorKey: "age",
-    header: () => <div className="flex justify-center">Age</div>,
+    header: "Age",
     cell: ({ row }) => {
       const ageObj = row.getValue("age") as { ageNumber: number; ageUnit: string };
-      return <div className="flex justify-center">{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
+      return <div>{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
     }
   },
   {
     accessorKey: "type",
-    header: () => <div className="flex justify-center">Type</div>,
+    header: "Type",
     cell: ({ row }) => (
-      <div className="flex items-center justify-center">
+      <div className="flex items-center">
         <div className={getPatType(row.getValue("type"))}>{row.getValue("type")}</div>
       </div>
     )
   },
   {
     accessorKey: "noOfRecords",
-    size: 100,
-    header: () => <div className="flex justify-center">No. of Records</div>,
-    cell: ({ row }) => <div className="flex justify-center"><PatientRecordCount patientId={row.getValue("id")} /></div>
+    size: 120,
+    header: "No. of Records",
+    cell: ({ row }) => <div className="flex"><PatientRecordCount patientId={row.getValue("id")} /></div>
   },
   {
     accessorKey: "status",
-    header: () => <div className="flex justify-center">Status</div>,
+    header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
       const displayStatus = status === "Transfer of Residency" ? "TOR" : status;
-      return <div className="flex justify-center">{displayStatus}</div>;
+      return <div className="flex">{displayStatus}</div>;
     }
   },
   {
     accessorKey: "dateRegistered",
     header: () => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
+      <div className="flex w-full items-center cursor-pointer">
         Date Registered
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex justify-center">
+      <div>
         {formatDate(row.getValue("dateRegistered"), 'short')}
       </div>
     ),
   },
   {
     accessorKey: "action",
-    header: () => <div className="flex justify-center">Action</div>,
+    header: "Action",
     cell: ({ row }) => (
-      <div className="flex justify-center">
+      <div>
         <Link
           to="/patientrecords/view"
           state={

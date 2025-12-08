@@ -6,22 +6,14 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
     header: "Archived Date",
     cell: ({ row }) => {
       const archivedDate = row.original.archivedDate;
-      return (
-        <div className="text-center">
-          {archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}
-        </div>
-      );
+      return <div>{archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"}</div>;
     },
   },
   {
     accessorKey: "batchNumber",
     header: "Batch Number",
     cell: ({ row }) => {
-      return (
-        <div className="text-center">
-          {row.original.batchNumber}
-        </div>
-      );
+      return <div className="bg-primary p-1 rounded-md text-white w-fit"> {row.original.batchNumber}</div>;
     },
   },
   {
@@ -31,11 +23,9 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
       const item = row.original.item;
       return (
         <div className="flex flex-col">
-          <div className="font-medium text-center">
-            {item.antigen}
-          </div>
-          
-          <div className="text-sm text-center text-gray-600">
+          <div className="font-medium">{item.antigen}</div>
+
+          <div className="text-sm text-gray-600">
             {item.dosage} {item.unit}
           </div>
         </div>
@@ -46,11 +36,7 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
     accessorKey: "qty",
     header: "Total Qty",
     cell: ({ row }) => {
-      return (
-        <div className="text-center">
-          {row.original.qty}
-        </div>
-      );
+      return <div>{row.original.qty}</div>;
     },
   },
   {
@@ -58,41 +44,37 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
     header: "Available Stock",
     cell: ({ row }) => {
       const record = row.original;
-  
+
       if (record.type === "vaccine") {
         if (record.solvent?.toLowerCase() === "diluent") {
-          return (
-            <div className="text-center">
-              {record.availableStock} containers
-            </div>
-          );
+          return <div>{record.availableStock} containers</div>;
         }
-  
+
         const dosesPerVial = record.dose_ml || 1;
         const availableDoses = record.availableStock;
         const fullVials = Math.ceil(availableDoses / dosesPerVial);
-  
+
         return (
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-start">
             <span>
               {fullVials} vial{fullVials !== 1 ? "s" : ""}
             </span>
-            <span className="">
+            <span>
               ({availableDoses} dose{availableDoses !== 1 ? "s" : ""})
             </span>
           </div>
         );
       }
-  
+
       if (record.type === "supply") {
         if (record.imzStck_unit === "boxes") {
           const pcsPerBox = record.imzStck_pcs || 1;
           const availablePcs = record.availableStock;
           const fullBoxes = Math.floor(availablePcs / pcsPerBox);
           const remainingPcs = availablePcs % pcsPerBox;
-  
+
           return (
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-start">
               <span>
                 {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
               </span>
@@ -102,41 +84,29 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
             </div>
           );
         }
-  
+
         return (
-          <div className="text-center">
+          <div>
             {record.availableStock} pc{record.availableStock !== 1 ? "s" : ""}
           </div>
         );
       }
-  
-      return (
-        <div className="text-center">
-          {record.availableStock}
-        </div>
-      );
+
+      return <div>{record.availableStock}</div>;
     },
   },
   {
     accessorKey: "administered",
     header: "Qty Used",
     cell: ({ row }) => {
-      return (
-        <div className="text-center ">
-          {row.original.administered}
-        </div>
-      );
+      return <div>{row.original.administered}</div>;
     },
   },
   {
     accessorKey: "wastedDose",
     header: "Wasted Units",
     cell: ({ row }) => {
-      return (
-        <div className="text-center">
-          {row.original.wastedDose}
-        </div>
-      );
+      return <div>{row.original.wastedDose}</div>;
     },
   },
   {
@@ -144,11 +114,7 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
     header: "Expiry Date",
     cell: ({ row }) => {
       const expiryDate = row.original.expiryDate;
-      return (
-        <div className="text-center">
-          {expiryDate !== "N/A" ? new Date(expiryDate).toLocaleDateString() : "N/A"}
-        </div>
-      );
+      return <div>{expiryDate !== "N/A" ? new Date(expiryDate).toLocaleDateString() : "N/A"}</div>;
     },
   },
 
@@ -158,14 +124,8 @@ export const getArchivedStockColumns = (): ColumnDef<any>[] => [
     cell: ({ row }) => {
       const reason = row.original.reason;
       return (
-        <div className="text-center">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            reason === "Expired" 
-              ? "bg-red-100 text-red-800" 
-              : "bg-yellow-100 text-yellow-800"
-          }`}>
-            {reason}
-          </span>
+        <div>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${reason === "Expired" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}`}>{reason}</span>
         </div>
       );
     },
