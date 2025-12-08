@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Plus, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown, UserRoundX } from "lucide-react";
 import { Link } from "react-router";
 import { useAuth } from "@/context/AuthContext";
+import { useSearchParams } from "react-router";
 
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -228,12 +229,13 @@ function getBestAgeUnit(dob: string): { value: number; unit: string } {
 // main component
 export default function PatientsRecord() {
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
 
+  const searchTerm = searchParams.get("search") || "";
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const user = useAuth();
 
@@ -241,10 +243,17 @@ export default function PatientsRecord() {
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
   const sitios = sitioData || [];
 
+  // Keep local page state in sync with URL params
+  useEffect(() => {
+    const pageFromParams = parseInt(searchParams.get("page") || "1", 10);
+    setPage(Number.isNaN(pageFromParams) ? 1 : pageFromParams);
+  }, [searchParams]);
+
   // Reset to first page when filters change
   useEffect(() => {
-    setPage(1);
-  }, [debouncedSearchTerm, selectedFilter, selectedSitios]);
+    if (debouncedSearchTerm == "") return;
+    handlePageChange(1);
+  }, [debouncedSearchTerm, selectedFilter, selectedSitios, searchTerm, setSearchParams]);
 
   // Build the combined search query that includes selected sitios
   const combinedSearchQuery = useMemo(() => {
@@ -277,11 +286,22 @@ export default function PatientsRecord() {
   // searching and pagination handlers
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("page", String(newPage));
+      if (searchTerm) next.set("search", searchTerm); else next.delete("search");
+      return next;
+    });
   };
 
   const handleSearch = (search: string) => {
-    setSearchTerm(search);
     setPage(1);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("page", "1");
+      if (search.trim()) next.set("search", search.trim()); else next.delete("search");
+      return next;
+    });
   };
 
   const handleFilterChange = (filter: string) => {
@@ -374,8 +394,14 @@ export default function PatientsRecord() {
 
   const residents = patientCount?.resident || 0;
   const transients = patientCount?.transient || 0;
+  const tor = patientCount?.tor || 0;
   const residentPercentage = totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
   const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
+  const torPercentage = totalPatients > 0 ? Math.round((tor / totalPatients) * 100) : 0;
+
+  console.log("tor: ", tor);
+  console.log("torPercentage: ", torPercentage);
+
 
   if(user.user == null){
     return (
@@ -387,7 +413,6 @@ export default function PatientsRecord() {
       </MainLayoutComponent>
     )
   }
-  console.log("User Role:", user);
 
   return (
     <MainLayoutComponent
@@ -396,7 +421,7 @@ export default function PatientsRecord() {
     >
       <div className="w-full">
         {/* Stats Cards with simplified design */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <CardLayout
             title="Total Patients"
             description="All registered patients"
@@ -452,6 +477,28 @@ export default function PatientsRecord() {
                 </div>
                 <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
                   <UserCog className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            }
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
+
+          <CardLayout
+            title="Transferred-out Patients"
+            description="Patients who have transferred residency"
+            content={
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold">{tor}</span>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    {torPercentage > residentPercentage ? <ArrowUp className="h-3 w-3 mr-1 text-green-500" /> : <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />}
+                    <span>{torPercentage}% of total</span>
+                  </div>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                  <UserRoundX className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
             }

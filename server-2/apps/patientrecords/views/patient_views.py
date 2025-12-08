@@ -47,13 +47,14 @@ class PatientCountView(APIView):
         total = Patient.objects.filter(pat_status='Active').count()
         resident = Patient.objects.filter(rp_id__isnull=False, pat_status='Active').count()
         transient = Patient.objects.filter(rp_id__isnull=True, pat_status='Active').count()
+        tor = Patient.objects.filter(pat_status='Transfer of Residency').count()
 
-        # If a specific pat_type is requested, return only that count
         if pat_type == 'Resident':
             return Response({
                 'total': resident,
                 'resident': resident,
                 'transient': 0,
+                'tor': 0,
                 'type': 'Resident'
             }, status=status.HTTP_200_OK)
         elif pat_type == 'Transient':
@@ -61,6 +62,7 @@ class PatientCountView(APIView):
                 'total': transient,
                 'resident': 0,
                 'transient': transient,
+                'tor': 0,
                 'type': 'Transient'
             }, status=status.HTTP_200_OK)
 
@@ -68,7 +70,8 @@ class PatientCountView(APIView):
         return Response({
             'total': total,
             'resident': resident,
-            'transient': transient
+            'transient': transient,
+            'tor': tor,
         }, status=status.HTTP_200_OK)
 
 # for displaying patients in comobox

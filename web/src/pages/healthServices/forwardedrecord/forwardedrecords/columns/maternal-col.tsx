@@ -23,8 +23,8 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
         return (
           <div className="flex justify-start min-w-[200px] px-2">
             <div className="flex flex-col w-full">
-              <div className="font-medium truncate ">{capitalize(fullName)}</div>
-              <div className="text-xs text-darkGray">
+              <div className="font-medium text-center ">{capitalize(fullName)}</div>
+              <div className="text-xs text-center text-darkGray">
                 {row.original.sex}, {row.original.age}
               </div>
             </div>
@@ -34,7 +34,7 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
     },
     {
       accessorKey: "record",
-      header: "Record",
+      header: () => <div className="flex justify-center">Record</div>,
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">{row.original.record || "N/A"}</div>
@@ -43,7 +43,7 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
     },
     {
       accessorKey: "pat_type",
-      header: "Patient Type",
+      header: () => <div className="flex justify-center">Patient Type</div>,
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full capitalize">{row.original.pat_type?.toLowerCase() || "N/A"}</div>
@@ -66,7 +66,7 @@ export const useMaternalColumns = (): ColumnDef<any>[] => {
     },
     {
       accessorKey: "action",
-      header: "Action",
+      header: () => <div className="flex justify-center">Action</div>,
       cell: ({ }) => (
         <div className="flex justify-center gap-2">
           <div className="text-black px-3 py-1.5 rounded cursor-pointer">

@@ -186,7 +186,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
     {
       accessorKey: "no",
       size: 80,
-      header: "No.",
+      header: () => <div className="flex justify-center">No.</div>,
       cell: ({ row }) => (
         <div className="flex justify-center">
           <div className="flex justify-center items-center gap-2 cursor-pointer bg-blue-100 text-blue-800 px-3 py-1 rounded-md w-8 text-center font-semibold">
@@ -210,8 +210,8 @@ const handleTimeFrameChange = (timeFrame: string) => {
         return (
           <div className="flex justify-start">
             <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
-              <div className="text-sm text-gray-600">
+              <div className="font-medium text-center">{fullName}</div>
+              <div className="text-center text-sm text-gray-600">
                 {patient.gender}, {patient.age} {patient.ageTime} old
               </div>
             </div>
@@ -258,7 +258,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
         }
 
         return (
-          <div className="flex justify-center">
+          <div>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[actualStatus as keyof typeof statusColors]}`}>{actualStatus}</span>
           </div>
         );
@@ -269,9 +269,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
       // size: 80,
       header: "Sitio",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px]">
-          <div className="text-center w-full">{row.original.sitio}</div>
-        </div>
+        <div>{row.original.sitio}</div>
       )
     },
     {
@@ -283,31 +281,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
           <div className="w-full">{row.original.type}</div>
         </div>
       )
-    }, 
-    // {
-    //   accessorKey: "action",
-    //   size: 100,
-    //   header: "Action",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center">
-    //       <TooltipProvider> 
-    //         <TooltipLayout
-    //           trigger={
-    //             <div
-    //               className="bg-white hover:bg-gray-50 text-black px-4 py- rounded cursor-pointer"
-    //               onClick={() => {
-    //                 console.log("View patient:", row.original.patient.patientId)
-    //               }}
-    //             >
-    //               <ViewButton onClick={() => {}} />
-    //             </div>
-    //           }
-    //           content="View Schedule Details"
-    //         />
-    //       </TooltipProvider>
-    //     </div>
-    //   )
-    // }
+    }
   ], [getAppointmentStatus]);
 
   const filter = [
