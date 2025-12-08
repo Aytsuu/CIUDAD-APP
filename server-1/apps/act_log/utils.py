@@ -166,6 +166,10 @@ def create_activity_log(
         logger.error(f"Failed to create activity log: {str(e)}")
         raise e
 
+def format_model_name(model_name):
+    """Format model name by replacing underscores with spaces."""
+    return model_name.replace('_', ' ')
+
 def log_model_change(model_instance, action, staff, description=None, **kwargs):
     # Check if staff is None - don't log if no staff
     if staff is None:
@@ -191,18 +195,19 @@ def log_model_change(model_instance, action, staff, description=None, **kwargs):
     # If we get here, staff exists and has a valid staff_id - proceed with logging
 
     model_name = model_instance.__class__.__name__
+    formatted_model_name = format_model_name(model_name)
     model_id = getattr(model_instance, 'pk', None)
     
     # Auto-generate description if not provided
     if not description:
         if action == 'create':
-            description = f"{model_name} record created"
+            description = f"{formatted_model_name} record created"
         elif action == 'update':
-            description = f"{model_name} record updated"
+            description = f"{formatted_model_name} record updated"
         elif action == 'delete':
-            description = f"{model_name} record deleted"
+            description = f"{formatted_model_name} record deleted"
         else:
-            description = f"{model_name} record {action}"
+            description = f"{formatted_model_name} record {action}"
    
     return create_activity_log(
         act_type=f"{model_name} {action.title()}",

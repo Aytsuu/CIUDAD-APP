@@ -1000,6 +1000,23 @@ class GADDevelopmentPlanListCreate(generics.ListCreateAPIView):
                 Q(dev_indicator__icontains=search)
             )
         
+        # Filter by mandated status
+        dev_mandated = self.request.query_params.get('dev_mandated', None)
+        if dev_mandated is not None:
+            is_mandated = dev_mandated.lower() == 'true'
+            qs = qs.filter(dev_mandated=is_mandated)
+        
+        # Filter by plans with project proposals
+        has_proposal = self.request.query_params.get('has_proposal', None)
+        if has_proposal is not None and has_proposal.lower() == 'true':
+            qs = qs.filter(proposals__isnull=False).distinct()
+        
+        # Filter by plans with resolutions (through project proposals)
+        # Resolution model has gpr_id FK to ProjectProposal, so we use proposals__resolution__isnull
+        has_resolution = self.request.query_params.get('has_resolution', None)
+        if has_resolution is not None and has_resolution.lower() == 'true':
+            qs = qs.filter(proposals__resolution__isnull=False).distinct()
+        
         # Support dynamic ordering
         ordering = self.request.query_params.get('ordering', '-dev_date')
         return qs.order_by(ordering)

@@ -610,7 +610,7 @@ function CalendarPage() {
   const [viewWasteEvent, setViewWasteEvent] = useState<WasteEvent | null>(null);
   const [_actionInProgress, setActionInProgress] = useState(false);
   const isSecretary = ["admin", "secretary"].includes(user?.staff?.pos?.toLowerCase());
-  const isWaste = user?.staff?.pos?.toLowerCase() === "waste" || user?.staff?.pos?.toLowerCase() === "admin";
+  const isWaste = user?.staff?.pos?.toLowerCase() === "waste head" || user?.staff?.pos?.toLowerCase() === "admin";
   const isLuponTagapamayapa = user?.staff?.pos?.toLowerCase() === "lupon secretary" || user?.staff?.pos?.toLowerCase() === "lupon tagapamayapa secretary" || user?.staff?.pos?.toLowerCase() === "admin";
   const isClerk = user?.staff?.pos?.toLowerCase().includes("clerk");
   const showMediation = isSecretary || isClerk;

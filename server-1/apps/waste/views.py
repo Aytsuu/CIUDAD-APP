@@ -251,19 +251,13 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                     
                     ann_details_content += "\n"
                 
-                # Add event subject if provided (as introduction/header)
+                # Add event subject if provided (already contains Location, Date, Time, Organizer)
                 if event_subject and event_subject.strip():
-                    ann_details_content += f"{event_subject}\n\n"
-                
-                # Always include structured event details
-                ann_details_content += f"EVENT: {event_name}\n\n"
-                ann_details_content += f"LOCATION: {event_location}\n"
-                ann_details_content += f"WHEN: {formatted_date} at {formatted_time}\n"
-                ann_details_content += f" ORGANIZER: {event_organizer}\n"
+                    ann_details_content += f"{event_subject}\n"
                 
                 # Add description if available
                 if event_description and event_description.strip():
-                    ann_details_content += f"\nDESCRIPTION:\n{event_description}"
+                    ann_details_content += f"\nDescription: {event_description}"
                 
                 # Create announcement for the event
                 announcement = Announcement.objects.create(
