@@ -26,22 +26,15 @@ const handleSendCode = async (data: SendCodeData) => {
   setErrorMessage("");
 
   try {
-    const response = await api.post('authentication/forgot-password/send-code/', {
+    await api.post('authentication/forgot-password/send-code/', {
       email: data.email
     });
-    
-    const result: ApiResponse = response.data;
     
     // Store email for subsequent steps
     setEmail(data.email);
     setCurrentStep('verification');
     
-    // Optional: Show success message
-    console.log(result.message || "Reset code sent successfully");
-    
   } catch (error: any) {
-    console.error("Send code error:", error);
-    
     // Handle different error scenarios
     if (error.response?.status === 400) {
       setErrorMessage("Please enter a valid email address");
@@ -79,9 +72,7 @@ const handleVerifyCode = async (data: VerifyCodeData) => {
       throw new Error("No reset token received");
     }
     
-  } catch (error: any) {
-    console.error("Verify code error:", error);
-    
+  } catch (error: any) { 
     // Handle different error scenarios
     if (error.response?.status === 400) {
       const errorMsg = error.response?.data?.error;
@@ -122,23 +113,17 @@ const handleResetPassword = async (data: ResetPasswordData) => {
   }
 
   try {
-    const response = await api.post('authentication/forgot-password/reset/', {
+    await api.post('authentication/forgot-password/reset/', {
       email: email,
       reset_token: resetToken,
       new_password: data.password
     });
     
-    const result: ApiResponse = response.data;
-    
     // Clear sensitive data
     setResetToken(null);
     setCurrentStep('success');
     
-    console.log(result.message || "Password reset successfully");
-    
-  } catch (error: any) {
-    console.error("Reset password error:", error);
-    
+  } catch (error: any) { 
     // Handle different error scenarios
     if (error.response?.status === 400) {
       const errorMsg = error.response?.data?.error;
@@ -171,22 +156,15 @@ const handleResendCode = async () => {
   setErrorMessage("");
 
   try {
-    const response = await api.post('authentication/forgot-password/resend-code/', {
+    await api.post('authentication/forgot-password/resend-code/', {
       email: email
     });
-    
-    const result: ApiResponse = response.data;
-    
-    // Show success message (you might want to use a toast notification instead)
-    console.log(result.message || "Code resent successfully");
     
     // Optional: Show temporary success message in UI
     setSuccessMessage("Code resent successfully!");
     setTimeout(() => setSuccessMessage(""), 3000);
     
   } catch (error: any) {
-    console.error("Resend code error:", error);
-    
     // Handle rate limiting
     if (error.response?.status === 429) {
       setErrorMessage("Please wait before requesting another code");

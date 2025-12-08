@@ -111,11 +111,9 @@ export default function OTPVerification({
             const fcmToken = await getToken(messaging, { vapidKey });
 
             if (fcmToken) {
-              console.log("Token generated in frontend: ", fcmToken);
               await FCMTokenPOST(fcmToken);
             }
           } catch (err) {
-            console.error("Error fetching FCM token: ", err);
           }
         } else {
           toast.info("Notifications blocked by user");
@@ -128,7 +126,6 @@ export default function OTPVerification({
         resetOtp();
       }
     } catch (error: any) {
-      console.error("OTP verification error:", error);
       setErrorMessage(
         error?.response?.data?.error ||
           error?.response?.data?.message ||
@@ -160,7 +157,6 @@ export default function OTPVerification({
         `New OTP sent to your ${method === "phone" ? "phone" : "email"}!`
       );
     } catch (error: any) {
-      console.error("Resend error:", error);
       setErrorMessage(
         error?.response?.data?.message ||
           error?.response?.data?.error ||
