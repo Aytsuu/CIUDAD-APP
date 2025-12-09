@@ -66,7 +66,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry,
+          isNearExpiry: item.isNearExpiry
         });
       }
     });
@@ -92,7 +92,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry,
+          isNearExpiry: item.isNearExpiry
         });
       }
     });
@@ -118,7 +118,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry,
+          isNearExpiry: item.isNearExpiry
         });
       }
     });
@@ -142,7 +142,7 @@ export function InventoryAlertsSidebar() {
           details: item.category || "",
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry,
+          isNearExpiry: item.isNearExpiry
         });
       }
     });
@@ -152,7 +152,7 @@ export function InventoryAlertsSidebar() {
       const priority: Record<StockStatus, number> = {
         out_of_stock: 3,
         low_stock: 2,
-        near_expiry: 1,
+        near_expiry: 1
       };
       return priority[b.status] - priority[a.status];
     });
@@ -166,23 +166,18 @@ export function InventoryAlertsSidebar() {
     commodity: [],
     firstaid: []
   };
-  allAlertItems.forEach(item => {
+  allAlertItems.forEach((item) => {
     if (groupedByType[item.type]) {
       groupedByType[item.type].push(item);
     }
   });
-  const itemsToShow = [
-    ...groupedByType.antigen.slice(0, 2),
-    ...groupedByType.medicine.slice(0, 2),
-    ...groupedByType.commodity.slice(0, 2),
-    ...groupedByType.firstaid.slice(0, 2)
-  ];
+  const itemsToShow = [...groupedByType.antigen.slice(0, 2), ...groupedByType.medicine.slice(0, 2), ...groupedByType.commodity.slice(0, 2), ...groupedByType.firstaid.slice(0, 2)];
 
   // Calculate total counts - count all statuses independently
   const totalCounts = {
     out_of_stock: allAlertItems.filter((item) => item.isOutOfStock).length,
     low_stock: allAlertItems.filter((item) => item.isLowStock).length,
-    near_expiry: allAlertItems.filter((item) => item.isNearExpiry).length,
+    near_expiry: allAlertItems.filter((item) => item.isNearExpiry).length
   };
 
   // Count by type
@@ -190,7 +185,7 @@ export function InventoryAlertsSidebar() {
     antigen: allAlertItems.filter((item) => item.type === "antigen").length,
     medicine: allAlertItems.filter((item) => item.type === "medicine").length,
     commodity: allAlertItems.filter((item) => item.type === "commodity").length,
-    firstaid: allAlertItems.filter((item) => item.type === "firstaid").length,
+    firstaid: allAlertItems.filter((item) => item.type === "firstaid").length
   };
 
   const getStatusIcon = (status: StockStatus) => {
@@ -299,7 +294,7 @@ export function InventoryAlertsSidebar() {
       return new Date(dateString).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-        year: "numeric",
+        year: "numeric"
       });
     } catch {
       return "Invalid Date";
@@ -328,7 +323,9 @@ export function InventoryAlertsSidebar() {
   const hasAlerts = totalCounts.out_of_stock > 0 || totalCounts.low_stock > 0 || totalCounts.near_expiry > 0;
 
   return (
-    <Card className="rounded-lg shadow-sm border-0">
+    <Card className="rounded-lg ">
+      <h1 className="px-4 py-4 font-bold text-xl  text-primary border-b">Inventory Alert</h1>
+
       <CardHeader className="pb-3 space-y-2">
         <div className="flex flex-wrap gap-2">
           {totalCounts.out_of_stock > 0 && (
@@ -371,16 +368,10 @@ export function InventoryAlertsSidebar() {
                       <div className="flex-shrink-0 mt-0.5">{getStatusIcon(item.status)}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                           <div className="flex flex-row items-center gap-1 min-w-0">
-                            <h4 className="text-sm font-semibold  items-center text-gray-900 truncate leading-tight">
-                              {item.name}
-                            </h4>
+                          <div className="flex flex-row items-center gap-1 min-w-0">
+                            <h4 className="text-sm font-semibold  items-center text-gray-900 truncate leading-tight">{item.name}</h4>
                             {/* Item details */}
-                            {item.details && (
-                              <p className="text-[11px] text-gray-600 mt-0.5 leading-relaxed truncate">
-                                {item.details}
-                              </p>
-                            )}
+                            {item.details && <p className="text-[11px] text-gray-600 mt-0.5 leading-relaxed truncate">{item.details}</p>}
                           </div>
 
                           <Badge variant="outline" className={`text-[10px] px-1.5 py-0.5 flex-shrink-0 font-medium ${getTypeColor(item.type)}`}>

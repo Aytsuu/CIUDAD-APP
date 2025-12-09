@@ -57,13 +57,13 @@ export const useHandleWaste = () => {
     mutationFn: async ({ record, data }: { record: any; data: { wastedAmount: number; staff_id?: string; action_type: string } }) => {
       return handleSupplyWaste(record, data);
     },
-    onSuccess: (variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["combinedStocks"] });
       queryClient.invalidateQueries({ queryKey: ["inventorylist"] });
       queryClient.invalidateQueries({ queryKey: ["supply_stocks"] });
       queryClient.invalidateQueries({ queryKey: ["waste_records"] });
       
-      const actionType = variables.data.action_type;
+      // const actionType = variables.data.action_type;
      
       showSuccessToast("Successfully recorded ");
     },

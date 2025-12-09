@@ -5,7 +5,7 @@ export const getOPTYears = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<OPTYearsResponse> => {
+): Promise<OPTYearsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (searchQuery) params.append('search', searchQuery);
@@ -28,7 +28,7 @@ export const getSemiAnnualOPTRecords = async (
   sitio?: string,
   nutritional_status?: string,
   
-): Promise<SemiAnnualDetailResponse> => {
+): Promise<SemiAnnualDetailResponse | undefined> => {
   try {
     const response = await api2.get<SemiAnnualDetailResponse>(`/reports/opt-tracking/semi-annual-report/${year}/`, {
       params: {

@@ -97,7 +97,8 @@ export const ReferredPatientsSidebar = () => {
 
   return (
     <Card className="w-full bg-white h-full flex flex-col border-none">
-      
+            <h1 className="px-4 py-4 font-bold text-xl text-primary border-b">Referred Patients</h1>
+
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">

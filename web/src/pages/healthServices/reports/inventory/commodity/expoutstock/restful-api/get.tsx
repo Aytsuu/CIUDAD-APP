@@ -8,7 +8,7 @@ import { api2 } from "@/api/api";
 export const getCommodityExpiredOutOfStockSummary = async (
   page: number,
   pageSize: number,
-): Promise<CommodityExpiredOutOfStockSummaryResponse> => {
+): Promise<CommodityExpiredOutOfStockSummaryResponse| undefined> => {
   try {
     const params = new URLSearchParams();
     params.append('page', page.toString());
@@ -28,7 +28,7 @@ export const getCommodityExpiredOutOfStockSummary = async (
 
 export const getMonthlyCommodityExpiredOutOfStockDetail = async (
   month: string,
-): Promise<CommodityExpiredOutOfStockDetailResponse> => {
+): Promise<CommodityExpiredOutOfStockDetailResponse | undefined> => {
   try {
     const response = await api2.get<CommodityExpiredOutOfStockDetailResponse>(
       `/inventory/commodity-expired-out-of-stock-detail/${month}/`

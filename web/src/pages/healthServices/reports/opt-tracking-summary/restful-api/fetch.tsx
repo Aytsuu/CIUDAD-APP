@@ -1,7 +1,7 @@
 import { api2 } from "@/api/api";
 import { OPTSummaryResponse, OPTMonthlyDetailsResponse } from "../types";
 
-export const getOPTSummaries = async (page: number, pageSize: number, searchQuery?: string): Promise<OPTSummaryResponse> => {
+export const getOPTSummaries = async (page: number, pageSize: number, searchQuery?: string): Promise<OPTSummaryResponse | any> => {
   try {
     const params = new URLSearchParams();
     params.append("page", page.toString());
@@ -23,7 +23,7 @@ export const getOPTSummaries = async (page: number, pageSize: number, searchQuer
   }
 };
 
-export const getOPTMonthlyReport = async (month: string, sitio?: string): Promise<OPTMonthlyDetailsResponse> => {
+export const getOPTMonthlyReport = async (month: string, sitio?: string): Promise<OPTMonthlyDetailsResponse | any> => {
   try {
     const response = await api2.get<OPTMonthlyDetailsResponse>(`/reports/opt-tracking/summary/${month}/`, { params: { sitio } });
     return response.data;

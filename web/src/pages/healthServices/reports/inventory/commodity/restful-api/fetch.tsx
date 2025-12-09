@@ -10,7 +10,7 @@ export const getCommodityMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<CommodityMonthsResponse> => {
+): Promise<CommodityMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== "all") params.append("year", year);
@@ -35,7 +35,7 @@ export const getMonthlyCommodityRecords = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<CommodityMonthlyDetailResponse> => {
+): Promise<CommodityMonthlyDetailResponse | undefined> => {
   try {
     const response = await api2.get<CommodityMonthlyDetailResponse>(
       `/inventory/commodity/records/${month}/`,

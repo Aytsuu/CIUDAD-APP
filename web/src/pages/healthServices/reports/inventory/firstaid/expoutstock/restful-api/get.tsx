@@ -8,7 +8,7 @@ import { api2 } from "@/api/api";
 export const getFirstAidExpiredOutOfStockSummary = async (
   page: number,
   pageSize: number,
-): Promise<FirstAidExpiredOutOfStockSummaryResponse> => {
+): Promise<FirstAidExpiredOutOfStockSummaryResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     params.append('page', page.toString());
@@ -28,7 +28,7 @@ export const getFirstAidExpiredOutOfStockSummary = async (
 
 export const getMonthlyFirstAidExpiredOutOfStockDetail = async (
   month: string,
-): Promise<FirstAidExpiredOutOfStockDetailResponse> => {
+): Promise<FirstAidExpiredOutOfStockDetailResponse | undefined> => {
   try {
     const response = await api2.get<FirstAidExpiredOutOfStockDetailResponse>(
       `/inventory/firstaid-expired-out-of-stock-detail/${month}/`

@@ -6,7 +6,7 @@ export const getFirstAidMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<FirstAidMonthsResponse> => {
+): Promise<FirstAidMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== 'all') params.append('year', year);
@@ -29,7 +29,7 @@ export const getMonthlyFirstAidRecords = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<FirstAidMonthlyDetailResponse> => {
+): Promise<FirstAidMonthlyDetailResponse | undefined> => {
   try {
     const response = await api2.get<FirstAidMonthlyDetailResponse>(`/inventory/firstaid/records/${month}/`, {
       params: {

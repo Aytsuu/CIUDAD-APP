@@ -5,7 +5,7 @@ import { PopulationReportResponse } from "../types";
 export const fetchPopulationStructureReport = async (
   year?: string,
   sitio?: string
-): Promise<PopulationReportResponse> => {
+): Promise<PopulationReportResponse |undefined > => {
   try {
     const params: Record<string, string> = {};
     if (year && year !== "all") params.year = year;

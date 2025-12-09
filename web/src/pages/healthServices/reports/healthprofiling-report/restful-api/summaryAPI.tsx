@@ -5,7 +5,7 @@ import type { HealthProfilingSummaryResponse } from "../summary-types";
 export const fetchHealthProfilingSummary = async (
   year?: string,
   sitio?: string
-): Promise<HealthProfilingSummaryResponse> => {
+): Promise<HealthProfilingSummaryResponse | undefined> => {
   try {
     const params: Record<string, string> = {};
     if (year && year !== "all") params.year = year;
