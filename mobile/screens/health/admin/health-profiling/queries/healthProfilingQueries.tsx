@@ -19,7 +19,9 @@ export const useGetHouseholds = () => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -40,7 +42,9 @@ export const useHouseholdTable = (page: number, pageSize: number, searchQuery: s
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -56,7 +60,9 @@ export const useGetHouseholdData = (householdId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!householdId
   });
 };
@@ -73,7 +79,9 @@ export const useGetResidents = (params?: any) => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -89,7 +97,9 @@ export const useGetResidentPersonalInfo = (rpId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!rpId
   });
 
@@ -129,7 +139,9 @@ export const useGetResidentsExcludingFamily = (famId: string) => {
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -148,7 +160,9 @@ export const useGetFamilyMembers = (famId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 
@@ -188,7 +202,9 @@ export const useGetFamilyData = (famId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -219,7 +235,9 @@ export const useGetFamilyList = (page?: number, pageSize?: number, searchQuery?:
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -235,7 +253,9 @@ export const useGetWaterSupplyOptions = () => {
         throw err;
       }
     },
-    staleTime: Infinity
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -250,7 +270,9 @@ export const useGetEnvironmentalData = (hhId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!hhId
   });
 };
@@ -267,7 +289,9 @@ export const useGetNCDByFamily = (famId: string) => {
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -284,7 +308,9 @@ export const useGetTBByFamily = (famId: string) => {
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -301,7 +327,9 @@ export const useGetSurveyByFamily = (famId: string) => {
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -319,7 +347,9 @@ export const useGetFamilyHealthProfiling = (famId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 
@@ -359,7 +389,9 @@ export const useGetFamilyHealthProfilingSummary = () => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 

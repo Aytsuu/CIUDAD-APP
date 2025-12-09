@@ -195,7 +195,10 @@ export default function ResidentCreateForm({ params }: {
           isSubmitting={isSubmitting}
           submit={submit}
           origin={params?.origin ? params.origin : ""}
-          isReadOnly={form.watch('per_id') ? true : false}
+          isReadOnly={params?.isRegistrationTab ? 
+            (params?.form.watch('per_id') ? true : false) :
+            (form.watch('per_id') ? true : false)
+          }
           isAllowSubmit={isAllowSubmit}
           buttonIsVisible={!params?.isRegistrationTab}
           setAddresses={setAddresses}

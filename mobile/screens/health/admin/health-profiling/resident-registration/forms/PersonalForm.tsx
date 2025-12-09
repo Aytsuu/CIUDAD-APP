@@ -181,8 +181,8 @@ export default function PersonalForm({ form, onNext }: PersonalFormProps) {
   };
 
   const handleBack = () => {
-    // Navigate back to previous step (Account form - step 1)
-    onNext(0, false); // Step 0 is the Account form
+    // Navigate back to previous step (Account form - step 0)
+    onNext(0, false); // Pass step 0 to navigate back to Account form
   };
 
   return (
