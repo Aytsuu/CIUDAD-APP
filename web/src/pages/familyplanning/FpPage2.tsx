@@ -104,6 +104,7 @@ const { setValue, getValues } = form
         })
         .catch((error) => {
           //  console.error("Error fetching last pregnancy data:", error)
+          {process.env.NODE_ENV === 'development' && console.error(error)}  
         })
     }
   }, [formData.pat_id, form])

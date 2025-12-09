@@ -16,6 +16,10 @@ export const useChildHealthSupplementsReport = (
     queryKey: ["childHealthSupplementsReport", search, page, pageSize],
     queryFn: () => getChildHealthSupplementsReport(search, page, pageSize),
     select: (data): ChildHealthSupplementsReportResponse => {
+      // Handle undefined data
+      if (!data) {
+        return { count: 0, next: null, previous: null, results: [] };
+      }
       // Ensure we always return the paginated format for the main view
       if ('results' in data && 'count' in data && !('export' in data)) {
         return data as ChildHealthSupplementsReportResponse;
