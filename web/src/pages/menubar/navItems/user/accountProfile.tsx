@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import HeaderUserSkeleton from "./user-skeleton";
+import { Badge } from "@/components/ui/badge";
 
 export default function AccountProfile(): JSX.Element {
   const { user, logout } = useAuth();
@@ -52,11 +53,10 @@ export default function AccountProfile(): JSX.Element {
       id: "sign-out",
       name: "Sign out",
       icons: <LogOut size={20} />,
-      action: () => 
-        {
-          setShowLogoutAlert(true);
-          setShowUserOption(false);
-        },
+      action: () => {
+        setShowLogoutAlert(true);
+        setShowUserOption(false);
+      },
     },
   ];
 
@@ -99,11 +99,16 @@ export default function AccountProfile(): JSX.Element {
           <img
             src={user?.profile_image || sanRoqueLogo}
             alt="Profile"
-            className="w-8 h-8 rounded-full"
+            className="w-10 h-10 rounded-full border-2"
           />
-          <h2 className="hidden sm:block text-sm font-medium">
-            {`${user?.personal?.per_fname} ${user?.personal?.per_lname}`}
-          </h2>
+          <div className="flex-col">
+            <h2 className="hidden sm:block text-sm font-medium">
+              {`${user?.personal?.per_fname} ${user?.personal?.per_lname}`}
+            </h2>
+            <p className="text-xs text-start">
+              {user?.staff?.pos}
+            </p>
+          </div>
         </PopoverTrigger>
         <PopoverContent className="absolute right-0 top-2 p-0 w-64 z-50 bg-white rounded-md shadow-lg">
           <CardLayout

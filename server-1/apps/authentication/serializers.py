@@ -41,7 +41,7 @@ class UserAccountSerializer(serializers.ModelSerializer):
         # Check if resident profile is associated with any staff record
         staff_record = Staff.objects.filter(staff_id=rp.rp_id).first()
         if not staff_record:
-            return None
+            return "None"
 
         # Get staff position
         staff_position = staff_record.pos

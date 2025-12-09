@@ -151,19 +151,16 @@ def _send_push(notification, recipient_accounts):
     for acc in recipient_accounts:
         logger.info(f"🔍 Looking for FCM tokens for account ID: {acc.acc_id}")
         
-        # CORRECTED: Filter by account object directly
         tokens = FCMToken.objects.filter(acc=acc)
         token_count = tokens.count()
         logger.info(f"📱 Found {token_count} FCM tokens for account {acc.acc_id}")
         
         for token_obj in tokens:
-            logger.info(f"🔑 Token found - Device ID: {token_obj.fcm_device_id}, Token: {token_obj.fcm_token[:20]}...")
+            logger.info(f"Token found - Device ID: {token_obj.fcm_device_id}, Token: {token_obj.fcm_token[:20]}...")
             if token_obj.fcm_device_id and token_obj.fcm_device_id not in device_tokens:
                 device_tokens[token_obj.fcm_device_id] = token_obj.fcm_token
             else:
                 logger.warning(f"⚠️ Duplicate device ID skipped: {token_obj.fcm_device_id}")
-
-    logger.info(f"📊 Total unique device tokens collected: {len(device_tokens)}")
 
     if not device_tokens:
         logger.warning("❌ No FCM tokens found for any recipients")

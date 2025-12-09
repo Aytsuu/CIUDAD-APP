@@ -332,7 +332,7 @@ export default function ComplaintFilterBar({
           {/* New Report Button */}
           {buttons.newReport && (
             <Link to="/complaint/report" className="sm:ml-auto">
-              <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs hover:shadow-sm transition-all duration-200 flex items-center gap-2 h-9 px-4 rounded-lg">
+              <Button className="bg-primary text-white shadow-xs hover:shadow-sm transition-all duration-200 flex items-center gap-2 h-9 px-4 rounded-lg">
                 <PlusCircle />
                 <span className="hidden sm:inline">New Report</span>
               </Button>

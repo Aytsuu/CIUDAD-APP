@@ -6,23 +6,23 @@ export const mapApi = axios.create({
   baseURL: Constants.expoConfig?.extra?.apiUrl,
 })
 
-export const api = axios.create({
-  baseURL: "http://192.168.1.16:8000",
-  withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-  },
-});
-
 // export const api = axios.create({
-//   baseURL: Constants.expoConfig?.extra?.apiUrl,
+//   baseURL: "http://192.168.1.16:8000",
 //   withCredentials: true,
 //   headers: {
 //     "Content-Type": "application/json",
 //     "Accept": "application/json",
 //   },
 // });
+
+export const api = axios.create({
+  baseURL: Constants.expoConfig?.extra?.apiUrl,
+  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+  },
+});
 
 
 // export const api2 = axios.create({

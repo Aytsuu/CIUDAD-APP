@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from apps.account.models import PhoneVerification
+from apps.profiling.models import ResidentProfile
 from django.core.cache import cache
 from django.core.mail import send_mail
 from rest_framework import status
@@ -89,6 +90,12 @@ class ValidateOTPWebView(APIView):
         except Account.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         
+        try:
+            resident_profile = ResidentProfile.objects.get(rp_id=user.rp.rp_id)
+        except (AttributeError, ResidentProfile.DoesNotExist):
+            return Response({'error': 'Authorized User Only!'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+            
         serializer = UserAccountSerializer(user)
         
         if not serializer.data.get('rp'):

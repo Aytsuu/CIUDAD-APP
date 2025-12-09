@@ -125,7 +125,7 @@ export default function Profile() {
                   </div>
                   <div>
                     <p className="text-sm text-white">Email Address</p>
-                    <p className="font-medium text-white">{user?.email}</p>
+                    <p className="font-medium text-white">{user?.email ? user?.email : "Not provided"}</p>
                   </div>
                 </div>
                 <Button

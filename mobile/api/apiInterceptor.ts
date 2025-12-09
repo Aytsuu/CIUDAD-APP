@@ -85,7 +85,6 @@ export const setupApiInterceptor = (apiInstance: typeof api) => {
                     const refreshToken = await KeychainService.getRefreshToken();
                     
                     if (!refreshToken) {
-                        console.log('🚫 No refresh token found, redirecting to login');
                         throw new Error('No refresh token available');
                     }
 
