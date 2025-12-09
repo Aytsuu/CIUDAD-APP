@@ -298,71 +298,6 @@ def get_fp_records_for_patient(request, patient_id):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-# @api_view(["GET"])
-# def get_obstetrical_history(request, pat_id):
-#     try:
-#         if not pat_id or pat_id == "undefined":
-#             raise ValueError("Invalid patient ID provided")
-
-#         patient = get_object_or_404(Patient, pat_id=pat_id)
-#         patient_records = PatientRecord.objects.filter(pat_id=patient)
-
-#         # Get summary obstetrical history
-#         obstetrical_summary_history = (
-#             Obstetrical_History.objects.filter(patrec_id__in=patient_records)  # Use 'patrec_id__in'
-#             .order_by("-patrec_id__created_at").first()  # Order by PatientRecord's created_at
-#         )
-
-#         # Get latest previous pregnancy (using direct FK to PatientRecord)
-#         latest_previous_pregnancy = (
-#             Previous_Pregnancy.objects.filter(patrec_id__in=patient_records)  # Use 'patrec_id__in'
-#             .order_by("-date_of_delivery", "-pfpp_id").first()  # Order to get the absolute latest
-#         )
-
-#         response_data = {
-#             "g_pregnancies": 0,
-#             "p_pregnancies": 0,
-#             "fullTerm": 0,
-#             "premature": 0,
-#             "abortion": 0,
-#             "livingChildren": 0,
-#             "lastDeliveryDate": None,
-#             "typeOfLastDelivery": None,
-#         }
-
-#         if obstetrical_summary_history:
-#             response_data.update({
-#                 "g_pregnancies": obstetrical_summary_history.obs_gravida or 0,
-#                 "p_pregnancies": obstetrical_summary_history.obs_para or 0,
-#                 "fullTerm": obstetrical_summary_history.obs_fullterm or 0,
-#                 "premature": obstetrical_summary_history.obs_preterm or 0,
-#                 "abortion": obstetrical_summary_history.obs_abortion or 0,
-#                 "livingChildren": obstetrical_summary_history.obs_living_ch or 0,
-#             })
-        
-#         if latest_previous_pregnancy:
-#             response_data.update({
-#                 "lastDeliveryDate": (
-#                     latest_previous_pregnancy.date_of_delivery.isoformat()
-#                     if latest_previous_pregnancy.date_of_delivery else None
-#                 ),
-#                 "typeOfLastDelivery": latest_previous_pregnancy.type_of_delivery or None,
-#             })
-            
-#         return Response(response_data, status=200)
-
-#     except ValueError as ve:
-#         logger.error(f"ValueError in get_obstetrical_history: {str(ve)}")
-#         return Response({"error": str(ve)}, status=400)
-#     except Http404:
-#         logger.error(f"Patient not found for pat_id: {pat_id}")
-#         return Response({"error": "Patient not found."}, status=404)
-#     except Exception as e:
-#         logger.error(f"Error in get_obstetrical_history: {str(e)}")
-#         traceback.print_exc()
-#         return Response({"error": str(e)}, status=500)
-    
-    
 @api_view(["GET"])
 def get_patient_details_data(request, patient_id):
     try:
@@ -969,14 +904,7 @@ def get_complete_fp_record(request, fprecord_id):
             complete_data["fp_pelvic_exam"] = display_values  
             print("Display values: ", display_values)
             print("Raw values: ", pelvic_exam_serialized_data)
-            # complete_data.update({
-            #     "pelvic_exam": display_values["pelvicExamination"],
-            #     "cervical_consistency": display_values["cervicalConsistency"],
-            #     "cervical_tenderness": display_values["cervicalTenderness"],
-            #     "cervical_adnexal": display_values["cervicalAdnexal"],
-            #     "uterine_position": display_values["uterinePosition"],
-            #     "uterine_depth": display_values["uterineDepth"],
-            # })
+         
         except FP_Pelvic_Exam.DoesNotExist:
             complete_data["fp_pelvic_exam"] = None
             complete_data["pelvicExamination"] = None
@@ -1977,16 +1905,10 @@ def _create_fp_records_core(data, patient_record_instance, staff_id_from_request
                 logger.info(f"Created new MedicalHistory record {medhist.medhist_id}")
             
             # Check for duplicate FP medical history snapshot
-            existing_fp_medhist = FP_MedicalHistory.objects.filter(
-                fprecord=current_fp_record,
-                medhist=medhist
-            ).first()
+            existing_fp_medhist = FP_MedicalHistory.objects.filter(fprecord=current_fp_record,medhist=medhist).first()
             
             if not existing_fp_medhist:
-                fp_medhist = FP_MedicalHistory.objects.create(
-                    fprecord=current_fp_record,
-                    medhist=medhist
-                )
+                fp_medhist = FP_MedicalHistory.objects.create(fprecord=current_fp_record,medhist=medhist)
                 created_instances['fp_medical_history'] = created_instances.get('fp_medical_history', []) + [fp_medhist]
 
         # 4. Check for duplicate FP Type

@@ -259,7 +259,7 @@ export default function Dashboard() {
                           <div className="flex items-center justify-between">
                             <div>
                               <h3 className="text-lg font-bold text-white">{component.title}</h3>
-                              <p className="text-xs text-white mt-1">Latest updates and activity</p>
+                              <p className="text-xs text-white mt-1">Latest requests and statuses</p>
                             </div>
                           </div>
                         </div>

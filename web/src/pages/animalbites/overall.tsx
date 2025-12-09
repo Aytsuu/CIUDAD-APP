@@ -186,126 +186,146 @@ const Overall: React.FC = () => {
   };
 
   const columns: ColumnDef<UniquePatientDisplay>[] = [
-    {
-      accessorKey: "patient_id",
-      header: ({ column }) => (
-        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient ID 
+  {
+    accessorKey: "patient_id",
+    header: ({ column }) => (
+      <div 
+        className="flex w-full items-center gap-2 cursor-pointer" 
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Patient ID 
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex min-w-[120px]">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+          {row.original.id}
         </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex min-w-[120px] px-2">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "patient",
-      header: ({ column }) => (
-        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient 
-        </div>
-      ),
-      cell: ({ row }) => {
-        const p = row.original;
-        return (
-          <div className="flex justify-start min-w-[200px]">
-            <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{`${p.lname}, ${p.fname}`.trim()}</div>
-              <div className="text-sm text-darkGray">
-                {p.gender}, {p.age} years old
-              </div>
+      </div>
+    )
+  },
+  {
+    accessorKey: "patient",
+    header: ({ column }) => (
+      <div 
+        className="flex w-full items-center gap-2 cursor-pointer" 
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Patient 
+      </div>
+    ),
+    cell: ({ row }) => {
+      const p = row.original;
+      return (
+        <div className="flex justify-start min-w-[200px]">
+          <div className="flex flex-col w-full">
+            <div className="font-medium truncate">{`${p.lname}, ${p.fname}`.trim()}</div>
+            <div className="text-sm text-darkGray">
+              {p.gender}, {p.age} years old
             </div>
           </div>
-        );
-      }
-    },
-    {
-      accessorKey: "patientType",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Type 
         </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className={getPatType(row.original.patientType)}>{row.original.patientType}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "bitingAnimal",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Biting Animal 
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px] px-2">
-          <div className="text-center w-full">{row.original.bitingAnimal}</div>
-        </div>
-      )
-    },
-    {
-      accessorKey: "actions_taken",
-      header: () => (
-        <div className="flex w-full justify-center items-center">
-          Actions Taken
-        </div>
-      ),
-      cell: ({ row }) => {
-        const actions = row.original.actions_taken;
-        return (
-          <div className="flex justify-center max-w-full px-2">
-            <div className="text-center w-full">{actions && actions.length > 30 ? `${actions.substring(0, 30)}...` : actions}</div>
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: "norecords",
-      header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          No of Records 
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center min-w-[80px] px-2">
-          <span className="text-center w-full">{row.original.recordCount}</span>
-        </div>
-      )
-    },
-    {
-      accessorKey: "action",
-      header: "Action",
-      cell: ({ row }) => {
-        const p = row.original;
-        return (
-          <ViewButton
-            onClick={() => {
-              // 1. Prepare data - Include address if available in 'p' (update getUniqueAnimalbitePatients serializer to return address if needed)
-              const patientData = {
-                pat_id: p.id,
-                pat_type: p.patientType,
-                age: p.age,
-                personal_info: {
-                  per_fname: p.fname,
-                  per_lname: p.lname,
-                  per_sex: p.gender
-                }
-              };
-              navigate("/services/animalbites/records", {
-                state: {
-                  patientId: p.id,
-                  patientData
-                }
-              });
-            }}
-          />
-        );
-      }
+      );
     }
-  ];
+  },
+  {
+    accessorKey: "patientType",
+    header: ({ column }) => (
+      <div 
+        className="flex w-full items-center gap-2 cursor-pointer" 
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Type 
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-start min-w-[100px]">
+        <div className={getPatType(row.original.patientType)}>
+          {row.original.patientType}
+        </div>
+      </div>
+    )
+  },
+  {
+    accessorKey: "bitingAnimal",
+    header: ({ column }) => (
+      <div 
+        className="flex w-full items-center gap-2 cursor-pointer" 
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Biting Animal 
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-start min-w-[120px]">
+        <div className="text-left w-full">{row.original.bitingAnimal}</div>
+      </div>
+    )
+  },
+  {
+    accessorKey: "actions_taken",
+    header: () => (
+      <div className="flex w-full items-center">
+        Actions Taken
+      </div>
+    ),
+    cell: ({ row }) => {
+      const actions = row.original.actions_taken;
+      return (
+        <div className="flex justify-start max-w-full">
+          <div className="text-left w-full">
+            {actions && actions.length > 30 ? `${actions.substring(0, 30)}...` : actions}
+          </div>
+        </div>
+      );
+    }
+  },
+  {
+    accessorKey: "norecords",
+    header: ({ column }) => (
+      <div 
+        className="flex w-full items-center gap-2 cursor-pointer" 
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        No of Records 
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-start min-w-[80px]">
+        <span className="text-left w-full">{row.original.recordCount}</span>
+      </div>
+    )
+  },
+  {
+    accessorKey: "action",
+    header: "Action",
+    cell: ({ row }) => {
+      const p = row.original;
+      return (
+        <ViewButton
+          onClick={() => {
+            const patientData = {
+              pat_id: p.id,
+              pat_type: p.patientType,
+              age: p.age,
+              personal_info: {
+                per_fname: p.fname,
+                per_lname: p.lname,
+                per_sex: p.gender
+              }
+            };
+            navigate("/services/animalbites/records", {
+              state: {
+                patientId: p.id,
+                patientData
+              }
+            });
+          }}
+        />
+      );
+    }
+  }
+];
 
   const exportColumns = [
     { key: "fname", header: "First Name" },
@@ -451,7 +471,7 @@ const Overall: React.FC = () => {
           </div>
 
           {/* Data Table */}
-          <div className="bg-white w-full overflow-x-auto border">
+          <div className="bg-white w-full text-left overflow-x-auto border">
             {loading ? (
               <LoadingState/>
             ) : error ? (
