@@ -2,7 +2,7 @@ import ciudadLogo from "@/assets/images/ciudad_logo.svg"
 import AccountProfile from "./navItems/user/accountProfile";
 import { NotificationBell } from "./navItems/notification/notification_bell";
 import { useNavigate } from "react-router";
-import { FloatingGuide } from "@/components/ui/floating-guide";
+import { UserGuideNav } from "@/components/ui/user-guide-nav";
 
 export function Header() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export function Header() {
         
 
         <div className="flex items-center space-x-4">
-          <FloatingGuide />
+          <UserGuideNav />
           <NotificationBell />
           <AccountProfile />
         </div>

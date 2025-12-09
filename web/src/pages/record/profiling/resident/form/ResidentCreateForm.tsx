@@ -234,7 +234,7 @@ export default function ResidentCreateForm({ params }: {
             {MainContent}
             <div className="flex justify-end">
               <Button onClick={handleContinue}>
-                Continue <MoveRight/>
+                Next <MoveRight/>
               </Button>
             </div>
           </div>

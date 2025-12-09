@@ -10,8 +10,10 @@ import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { queryClient } from "./lib/queryClient";
 import { PersistGate } from "redux-persist/integration/react";
+import { user_guide_router } from "./routers/user-guide-router";
 
 const router = createBrowserRouter([
+  ...user_guide_router,
   ...landing_router,
   ...main_router,
   { path: "*", element: <NotFound /> },
