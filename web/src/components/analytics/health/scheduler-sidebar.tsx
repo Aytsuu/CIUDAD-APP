@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useGetScheduler, useGetDays } from "@/pages/healthServices/scheduler/queries/schedulerFetchQueries";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { CardHeader } from "@mui/material";
+// import { CardHeader } from "@mui/material";
 
 const COLORS = [
   "#3b82f6", // Blue
