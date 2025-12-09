@@ -119,8 +119,9 @@ export function OPTStatusChart({
     ? Object.entries(data.report[category].age_groups).map(
         ([ageGroup, statusData]) => {
           const result: Record<string, string | number> = { ageGroup };
+          const typedStatusData = statusData as AgeGroupData;
           statusTypes.forEach((status) => {
-            const statusValue = statusData[status] as StatusData;
+            const statusValue = typedStatusData[status] as StatusData;
             result[status] =
               (statusValue?.Male || 0) + (statusValue?.Female || 0);
           });
