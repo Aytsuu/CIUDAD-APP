@@ -245,6 +245,40 @@ class SitioSerializer(serializers.ModelSerializer):
         model = Sitio
         fields = ['sitio_id', 'sitio_name']
 
+class RecentGarbagePickupRequestSerializer(serializers.ModelSerializer):
+    garb_requester = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
+    sitio_name = serializers.SerializerMethodField()
+    garb_req_status_display = serializers.CharField(source='get_garb_req_status_display', read_only=True)
+
+    class Meta:
+        model = Garbage_Pickup_Request
+        fields = [
+            'garb_id',
+            'garb_location',
+            'garb_waste_type',
+            'garb_pref_date',
+            'garb_pref_time',
+            'garb_req_status',
+            'garb_req_status_display',
+            'garb_additional_notes',
+            'garb_created_at',
+            'garb_requester',
+            'file_url',
+            'sitio_name'
+        ]
+
+    def get_garb_requester(self, obj):
+        if obj.rp and obj.rp.per:
+            return f"{obj.rp.per.per_fname} {obj.rp.per.per_lname}".strip()
+        return "Unknown"
+
+    def get_file_url(self, obj):
+        return obj.gprf.gprf_url if obj.gprf else ""
+
+    def get_sitio_name(self, obj):
+        return obj.sitio_id.sitio_name if obj.sitio_id else ""
+
 class GarbagePickupFileSerializer(serializers.ModelSerializer):
     files = FileInputSerializer(write_only=True, required=False, many=True)
 

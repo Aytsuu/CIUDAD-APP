@@ -4,10 +4,32 @@ import PendingTable from "./tables/pending-table";
 import AcceptedTable from "./tables/accepted-table";
 import CompletedTable from "./tables/completed-table";
 import RejectedTable from "./tables/rejected-table";
-
+import { useGetGarbageCardAnalytics } from "@/components/analytics/waste/garbage-pickup-analytics-queries";
+import { useLoading } from "@/context/LoadingContext"
+import { Spinner } from "@/components/ui/spinner"
+import { useEffect } from "react";
 
 function GarbagePickupRequestMain() {
+  const { showLoading, hideLoading } = useLoading();
+  const {data: garbageCardData, isLoading: isGarbageCardLoading} = useGetGarbageCardAnalytics();
   const [_activeTab, setActiveTab] = useState<"pending" | "accepted" | "completed" | "rejected">("pending");
+
+  useEffect(() => {
+    if (isGarbageCardLoading) {
+      showLoading()
+    } else {
+      hideLoading()
+    }
+  }, [isGarbageCardLoading, showLoading, hideLoading])
+
+  if (isGarbageCardLoading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <Spinner size="md" />
+          <span className="ml-2 text-gray-600">Loading requests...</span>
+        </div>
+      )
+    }
 
   return (
     <div className="w-full h-full">
@@ -30,28 +52,28 @@ function GarbagePickupRequestMain() {
             onClick={() => setActiveTab("pending")} 
             className="data-[state=active]:bg-yellow-100 data-[state=active]:text-yellow-800 data-[state=active]:border-yellow-300 hover:bg-yellow-50 hover:text-yellow-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
           >
-            Pending 
+            Pending ({garbageCardData?.pending ?? '...'})
           </TabsTrigger>
           <TabsTrigger 
             value="accepted" 
             onClick={() => setActiveTab("accepted")} 
             className="data-[state=active]:bg-[#5B72CF]/20 data-[state=active]:text-[#5B72CF] data-[state=active]:border-[#5B72CF] hover:bg-[#5B72CF]/10 hover:text-[#5B72CF] transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
           >
-            Accepted 
+            Accepted ({garbageCardData?.accepted ?? '...'})
           </TabsTrigger>
           <TabsTrigger 
             value="completed" 
             onClick={() => setActiveTab("completed")} 
             className="data-[state=active]:bg-green-100 data-[state=active]:text-green-800 data-[state=active]:border-green-300 hover:bg-green-50 hover:text-green-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
           >
-            Completed 
+            Completed ({garbageCardData?.completed ?? '...'})
           </TabsTrigger>
           <TabsTrigger 
             value="rejected" 
             onClick={() => setActiveTab("rejected")} 
             className="data-[state=active]:bg-red-100 data-[state=active]:text-red-800 data-[state=active]:border-red-300 hover:bg-red-50 hover:text-red-700 transition-colors duration-200 py-2 px-4 rounded-md border border-transparent font-medium text-sm flex items-center justify-center"
           >
-            Rejected 
+            Rejected ({garbageCardData?.rejected ?? '...'})
           </TabsTrigger>
         </TabsList>
 

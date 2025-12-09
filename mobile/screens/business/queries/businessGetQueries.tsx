@@ -75,11 +75,10 @@ export const useModificationRequests = () => {
         const res = await api.get('profiling/business/modification/request-list/');
         return res.data
       } catch (err) {
-        console.error(err);
         throw(err);
       }
     },
-    staleTime: Infinity
+    staleTime: 5000
   })
 
   React.useEffect(() => {

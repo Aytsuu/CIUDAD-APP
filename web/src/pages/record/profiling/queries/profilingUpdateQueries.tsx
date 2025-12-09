@@ -36,7 +36,6 @@ export const useUpdateFamilyRole = () => {
       queryClient.setQueryData(['familyMembers', familyId], (old: any) => ({
         ...old,
         results: old.results?.map((member: any) => {
-          console.log(member.rp_id, residentId)
           if(member.rp_id == residentId) {
             return {
               ...member,
@@ -97,7 +96,6 @@ export const useUpdateBusiness = () => {
       businessId: string;
     }) => updateBusiness(data, businessId),
     onSuccess: (newData) => {
-      console.log(newData)
       queryclient.setQueryData(['businessInfo'], (old: any) => ({
         ...(old || {}),
         ...newData
@@ -121,7 +119,6 @@ export const useUpdateBusinessModification = () => {
         const res = await api.patch(`profiling/business/modification/${bm_id}/result/`, data);
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     }, 
@@ -130,6 +127,7 @@ export const useUpdateBusinessModification = () => {
       queryClient.setQueryData(['modificationRequests'], (old: any[] = []) => 
         old.filter((req: any) => req.bm_id != bm_id)
       )
+      queryClient.invalidateQueries({queryKey: ['modificationRequests']})
       queryClient.invalidateQueries({queryKey: ['businessHistory']})
     }
   })
@@ -160,7 +158,6 @@ export const useLinkToVoter = () => {
         const res = await api.patch(`profiling/resident/${residentId}/link-to-voter/`);
         return res.data;
       } catch (err) {
-        console.error(err)
         throw err;
       }
     },

@@ -251,19 +251,13 @@ class WasteEventView(ActivityLogMixin, generics.ListCreateAPIView):
                     
                     ann_details_content += "\n"
                 
-                # Add event subject if provided (as introduction/header)
+                # Add event subject if provided (already contains Location, Date, Time, Organizer)
                 if event_subject and event_subject.strip():
-                    ann_details_content += f"{event_subject}\n\n"
-                
-                # Always include structured event details
-                ann_details_content += f"EVENT: {event_name}\n\n"
-                ann_details_content += f"LOCATION: {event_location}\n"
-                ann_details_content += f"WHEN: {formatted_date} at {formatted_time}\n"
-                ann_details_content += f" ORGANIZER: {event_organizer}\n"
+                    ann_details_content += f"{event_subject}\n"
                 
                 # Add description if available
                 if event_description and event_description.strip():
-                    ann_details_content += f"\nDESCRIPTION:\n{event_description}"
+                    ann_details_content += f"\nDescription: {event_description}"
                 
                 # Create announcement for the event
                 announcement = Announcement.objects.create(
@@ -719,7 +713,7 @@ class CreateCollectionRemindersView(APIView):
             # Check if announcement already exists for today
             existing_announcement = Announcement.objects.filter(
                 ann_title=f"WASTE COLLECTION: SITIO {sitio_name}",
-                ann_details=f"WHEN: {schedule.wc_day.upper()} AT {time_str}\nLOCATION: SITIO {sitio_name.upper()}",
+                ann_details=f"WHEN: {schedule.wc_day} AT {time_str}\nLOCATION: SITIO {sitio_name.upper()}",
                 ann_created_at__date=today,
                 ann_type="GENERAL"
             ).first()
@@ -1402,10 +1396,18 @@ class GarbagePickupRequestAnalyticsView(APIView):
             'accepted': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='accepted').count(),
             'rejected': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='rejected').count(),
             'completed': Garbage_Pickup_Request.objects.filter(garb_req_status__iexact='completed').count(),
-            'total': Garbage_Pickup_Request.objects.count()
+            'totalPickup': Garbage_Pickup_Request.objects.count()
         }
         
         return Response(counts, status=status.HTTP_200_OK)
+
+class GarbagePickupSidebarAnalyticsView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, format=None):
+        recent_requests = Garbage_Pickup_Request.objects.all().order_by('-garb_created_at')
+        serializer = RecentGarbagePickupRequestSerializer(recent_requests, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
 
 class GarbagePickupFileView(generics.ListCreateAPIView):

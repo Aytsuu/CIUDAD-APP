@@ -352,7 +352,6 @@ export const useBusinessHistory = (busId: string) => {
         });
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     },
@@ -394,15 +393,18 @@ export const useRespondentInfo = (respondentId: string) => {
   })
 }
 
-export const useModificationRequests = () => {
+export const useModificationRequests = (status?: string) => {
   return useQuery({
-    queryKey: ['modificationRequests'],
+    queryKey: ['modificationRequests', status],
     queryFn: async () => {
       try {
-        const res = await api.get('profiling/business/modification/request-list/');
+        const res = await api.get('profiling/business/modification/request-list/', {
+          params: {
+            status
+          }
+        });
         return res.data
       } catch (err) {
-        console.error(err);
         throw(err);
       }
     },
@@ -481,7 +483,6 @@ export const useVoterTable = (
         });
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     }

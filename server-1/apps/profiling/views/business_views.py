@@ -231,8 +231,17 @@ class BusinessModificationCreateView(generics.CreateAPIView):
 class BusinessModificationListView(generics.ListAPIView):
   permission_classes = [AllowAny]
   serializer_class = BusinessModificationListSerializer
-  queryset = BusinessModification.objects.all()
+  
+  def get_queryset(self):
+    status = self.request.query_params.get('status', None)
 
+    queryset = BusinessModification.objects.all()
+
+    if status:
+      queryset = queryset.filter(bm_status__iexact=status)
+
+    return queryset
+  
 class BusinessModificationDeleteView(generics.DestroyAPIView):
   permission_classes = [AllowAny]
   serializer_class = BusinessModificationBaseSerializer

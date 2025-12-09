@@ -25,8 +25,8 @@ export default () => {
   const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [pageSize, setPageSize] = React.useState<number>(20);
   const debouncedPageSize = useDebounce(pageSize, 100)
-  const { data: modificationRequests, isLoading: isLoadingRequests } = useModificationRequests();
-  const { data: ownedBusinesses, isLoading: isLoadingBusinesses, refetch } = useOwnedBusinesses({
+  const { data: modificationRequests, isLoading: isLoadingRequests, refetch: refetchRequests } = useModificationRequests();
+  const { data: ownedBusinesses, isLoading: isLoadingBusinesses, refetch: refetchBusinesses } = useOwnedBusinesses({
     page: currentPage,
     page_size: debouncedPageSize,
     search: searchQuery,
@@ -54,7 +54,8 @@ export default () => {
   // =================== HANDLERS ===================  
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refetch();
+    await refetchRequests();
+    await refetchBusinesses();
     setIsRefreshing(false);
   }
 

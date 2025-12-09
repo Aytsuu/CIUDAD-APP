@@ -7,7 +7,7 @@ import { useComplaintSectionCards } from "@/components/analytics/complaint/compl
 import { useAdminSectionCards } from "@/components/analytics/administration/admin-section-cards";
 import { useReportSectionCards } from "@/components/analytics/report/report-section-cards";
 import { useHealthServicesSectionCards } from "@/components/analytics/health/services-count-cards";
-import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
+// import { useWastePersonnelSectionCards } from "@/components/analytics/waste/wastepersonnel-section-cards";
 import { useDonationSectionCards } from "@/components/analytics/donation/donation-cash-section-cards";
 import { useCertificateSectionCards } from "@/components/analytics/certificate/certificate-section-cards";
 import { useGarbagePickupSectionCards } from "@/components/analytics/waste/garbage-picukup-section-cards";
@@ -31,7 +31,7 @@ export default function Dashboard() {
   const adminCards = useAdminSectionCards();
   const reportCards = useReportSectionCards();
   const healthCards = useHealthServicesSectionCards();
-  const wasteCards = useWastePersonnelSectionCards();
+  // const wasteCards = useWastePersonnelSectionCards();
   const garbCards = useGarbagePickupSectionCards();
   const donationCards = useDonationSectionCards();
   const certificateCards = useCertificateSectionCards();
@@ -43,8 +43,8 @@ export default function Dashboard() {
   const gadActivities = useGADUpcomingActivities();
   const wasteEvents = useWasteUpcomingEvents();
   const instance = React.useMemo(
-    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards, gadActivities, wasteEvents),
-    [profilingCards, adminCards, reportCards, healthCards, wasteCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards, gadActivities, wasteEvents]
+    () => getItemsConfig(profilingCards, adminCards, reportCards, healthCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards, gadActivities, wasteEvents),
+    [profilingCards, adminCards, reportCards, healthCards, donationCards, garbCards, certificateCards, conciliationCards, mediationCards, remarkCard, councilEvents, complaintCards, gadActivities, wasteEvents]
   );
   
 
@@ -142,7 +142,19 @@ export default function Dashboard() {
               <div className="mb-4">
                 <Label className="text-white text-xl font-medium">Upcoming Events</Label>
               </div>
-              {instance.find(item => item.upcomingEvents)?.upcomingEvents}
+              <div className="space-y-4">
+                {instance
+                .filter(item => item.upcomingEvents && validateFeature(item.dashboard))
+                .map((item, index) => (
+                  <React.Fragment key={`events-${item.dashboard}-${index}`}>
+                    {item.upcomingEvents}
+                  </React.Fragment>
+                ))}
+              
+              {instance.filter(item => item.upcomingEvents && validateFeature(item.dashboard)).length === 0 && (
+                <p className="text-white/60 text-sm">No upcoming events scheduled</p>
+              )}
+              </div>
             </div>
             {cardsWithAccess.length > 0 && (
               <div className="bg-white rounded-lg border p-6 shadow-sm w-full">

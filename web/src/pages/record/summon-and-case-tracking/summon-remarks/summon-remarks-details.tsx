@@ -75,30 +75,46 @@ export default function SummonRemarksDetails() {
   const columns: ColumnDef<HearingSchedule>[] = [
     {
       accessorKey: "summon_date.sd_date",
-      header: "Hearing Date",
-      cell: ({ row }) => <span>{formatDate(row.original.summon_date.sd_date, "long")}</span>,
+       header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Hearing Date
+          </div>
+      ),
+      cell: ({ row }) => <div className='text-center'>{formatDate(row.original.summon_date.sd_date, "long")}</div>,
     },
     {
       accessorKey: "summon_time.st_start_time",
-      header: "Hearing Time",
-      cell: ({ row }) => <span>{formatTime(row.original.summon_time.st_start_time)}</span>,
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Hearing Time
+          </div>
+      ),
+      cell: ({ row }) => <div className='text-center'>{formatTime(row.original.summon_time.st_start_time)}</div>,
     },
     {
       accessorKey: "hs_level",
-      header: "Mediation Level",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Hearing Level
+          </div>
+      ),
       cell: ({ row }) => (
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+        <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium text-center">
           {row.original.hs_level}
-        </span>
+        </div>
       ),
     },
     {
       accessorKey: "hs_is_closed",
-      header: "Status",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+             Status
+          </div>
+      ),
       cell: ({ row }) => {
         const isClosed = row.original.hs_is_closed
         return (
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center gap-2 text-center">
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium ${
                 isClosed
@@ -114,7 +130,11 @@ export default function SummonRemarksDetails() {
     },
     {
       accessorKey: "remark",
-      header: "Remarks",
+      header: ({}) => (
+          <div className="flex w-full justify-center items-center">
+              Remarks
+          </div>
+      ),
       cell: ({ row }) => {
         const remark = row.original.remark;
         
@@ -123,7 +143,7 @@ export default function SummonRemarksDetails() {
             <DialogLayout
               className="w-[90vw] h-[80vh] max-w-[1800px] max-h-[1000px]"
               trigger={
-                <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline">
+                <div className="bg-white cursor-pointer hover:text-[#0e5a97] text-[#1273B8] text-[12px] underline text-center">
                   View Remarks  
                 </div>
               }
@@ -143,7 +163,7 @@ export default function SummonRemarksDetails() {
           return (
             <DialogLayout
               trigger={
-                <div className="text-red-500 flex items-center gap-1 justify-center underline cursor-pointer">
+                <div className="text-red-500 flex items-center gap-1 justify-center underline cursor-pointer text-center">
                   <CircleAlert size={16} />
                   <span className="text-xs">No remarks available</span>
                 </div>

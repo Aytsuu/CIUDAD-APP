@@ -60,6 +60,7 @@ urlpatterns = [
     # Staff and Resident
     path('all-trucks/', WasteAllTruckView.as_view(), name='all-truck'),
     path('garbage-pickup-request-analytics/', GarbagePickupRequestAnalyticsView.as_view(), name='agarbage-pickup-request-analytics'),
+    path('garbage-pickup-sidebar-analytics/', GarbagePickupSidebarAnalyticsView.as_view(), name='garbage-pickup-sidebar-analytics'),
     path('garbage-pickup-file/', GarbagePickupFileView.as_view(), name='garbage-pickup-file'),
     path('garbage-pickup-request-pending/', GarbagePickupRequestPendingView.as_view(), name='garbage-pickup-request-pending'), #retrieve pending requests
     path('garbage-pickup-view-pending/<str:garb_id>/', GarbagePickupRequestPendingDetailView.as_view(), name='garbage-pickup-view-pending'), #retrieve pending request details

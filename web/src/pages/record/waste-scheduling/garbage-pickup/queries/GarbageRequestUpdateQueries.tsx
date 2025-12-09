@@ -15,7 +15,8 @@ export const useUpdateGarbageRequestStatus = (onSuccess?: () => void) => {
     onSuccess: () => {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ['garbageAcceptedRequest'] }),
-        queryClient.invalidateQueries({ queryKey: ['garbageCompletedRequest'] })
+        queryClient.invalidateQueries({ queryKey: ['garbageCompletedRequest'] }),
+        queryClient.invalidateQueries({ queryKey: ['garbagePickupSidebarAnalytics'] })
       ]);
 
       toast.success('Request marked as completed', {

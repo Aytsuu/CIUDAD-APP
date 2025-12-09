@@ -10,8 +10,10 @@ import { Provider } from "react-redux";
 import { store, persistor } from "./redux/store";
 import { queryClient } from "./lib/queryClient";
 import { PersistGate } from "redux-persist/integration/react";
+import { user_guide_router } from "./routers/user-guide-router";
 
 const router = createBrowserRouter([
+  ...user_guide_router,
   ...landing_router,
   ...main_router,
   { path: "*", element: <NotFound /> },
@@ -22,12 +24,12 @@ function App() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <QueryClientProvider client={queryClient}>
-            <LoadingProvider>
-              <LinearLoader />
-              <AnimatePresence mode="wait">
-                <RouterProvider router={router} />
-              </AnimatePresence>
-            </LoadingProvider>
+          <LoadingProvider>
+            <LinearLoader />
+            <AnimatePresence mode="wait">
+              <RouterProvider router={router} />
+            </AnimatePresence>
+          </LoadingProvider>
         </QueryClientProvider>
       </PersistGate>
     </Provider>

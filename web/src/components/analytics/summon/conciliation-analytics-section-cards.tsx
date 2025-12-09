@@ -51,24 +51,9 @@ ConciliationCards.displayName = "ConciliationCard";
 // Card configurations
 const conciliationCards = [
   {
-    title: "Waiting for Schedule",
+    title: "Conciliation Proceedings Cases",
     description: "",
-    dataKey: "waiting" as const,
-  },
-  {
-    title: "Ongoing",    
-    description: "",
-    dataKey: "ongoing" as const,
-  },
-  {
-    title: "Escalated",
-    description: "",
-    dataKey: "escalated" as const,
-  },
-  {
-    title: "Resolved",
-    description: "",
-    dataKey: "resolved" as const,
+    dataKey: "total" as const,
   },
 ];
 
@@ -94,11 +79,7 @@ export const useConciliationSectionCards = () => {
   ));
 
   return {
-    waiting: cards[0],
-    ongoing: cards[1],
-    escalated: cards[2],
-    resolved: cards[3],
-    allCards: cards
+    conciliationCases: cards[0],
   };
 };
 

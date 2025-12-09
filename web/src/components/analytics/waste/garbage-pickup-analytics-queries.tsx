@@ -15,3 +15,19 @@ export const useGetGarbageCardAnalytics = () => {
         staleTime: 5000
     })
 }
+
+
+export const useGetGarbageSidebarAnalytics = () => {
+    return useQuery({
+        queryKey: ['garbagePickupSidebarAnalytics'],
+        queryFn: async () => {
+            try {
+                const res = await api.get('waste/garbage-pickup-sidebar-analytics/');
+                return res.data;
+            } catch (err) {
+                throw err;
+            }
+        },
+        staleTime: 5000
+    })
+}

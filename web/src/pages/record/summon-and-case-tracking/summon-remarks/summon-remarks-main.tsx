@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Search, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button/button";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useSearchParams } from "react-router-dom";
 
 // Status color mapping
 const getStatusColor = (status: string | null | undefined) => {
@@ -63,13 +64,20 @@ const formatNamesAsCommaSeparated = (data: string[] | string | null | undefined)
 
 export default function SummonRemarksMain(){  
     const { showLoading, hideLoading } = useLoading();
+    const location = useLocation();
     
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedFilter, setSelectedFilter] = useState("All");
     const [pageSize, setPageSize] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    
+    const handlePageChange = (page: number) => {
+        setSearchParams({ page: String(page) });
+    };
 
     const filterOptions = [
         { id: "All", name: "All" },
@@ -100,10 +108,20 @@ export default function SummonRemarksMain(){
         }
     }, [isLoading, showLoading, hideLoading]);
 
+    // Set initial loading state
+    useEffect(() => {
+        if (summonCaseData.results !== undefined) {
+            setIsInitialLoading(false);
+        }
+    }, [summonCaseData]);
+
     // Reset to first page when filters change
     useEffect(() => {
-        setCurrentPage(1);
-    }, [debouncedSearchQuery, selectedFilter, pageSize]);
+        if (debouncedSearchQuery === "" && searchQuery !== "") return;
+        if (selectedFilter !== "All") {
+            handlePageChange(1);
+        }
+    }, [debouncedSearchQuery, selectedFilter]);
 
     const hasResidentComplainant = (item: SummonCaseList) => {
         if (!item.complainant_rp_ids) return false;
@@ -222,7 +240,11 @@ export default function SummonRemarksMain(){
                                     : [item.accused_addresses || "N/A"],
                                 complainant_rp_ids: item.complainant_rp_ids,
                                 sc_code: item.sc_code,
-                                sc_mediation_status: item.sc_mediation_status
+                                sc_mediation_status: item.sc_mediation_status,
+                                // Preserve current page state for back navigation
+                                fromPage: currentPage,
+                                fromPath: location.pathname,
+                                fromSearchParams: Object.fromEntries(searchParams.entries())
                             }}
                         >
                             <Button className="flex items-center gap-2 text-primary bg-transparent shadow-none hover:bg-transparent group">
@@ -237,6 +259,16 @@ export default function SummonRemarksMain(){
             }
         }
     ];
+
+    // Show only initial loading spinner, not during searches
+    if (isInitialLoading && !searchQuery) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Spinner size="md" />
+                <span className="ml-2 text-gray-600">Loading summon remarks...</span>
+            </div>
+        );
+    }
 
     return(
         <div className="w-full h-full flex flex-col">
@@ -272,6 +304,11 @@ export default function SummonRemarksMain(){
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
+                                {isLoading && searchQuery && (
+                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                        <Spinner size="sm" />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Status Filter */}
@@ -282,7 +319,10 @@ export default function SummonRemarksMain(){
                                     options={filterOptions}
                                     value={selectedFilter}
                                     label=""
-                                    onChange={(value) => setSelectedFilter(value)}
+                                    onChange={(value) => {
+                                        handlePageChange(1);
+                                        setSelectedFilter(value);
+                                    }}
                                 />
                             </div>
                         </div>
@@ -294,7 +334,7 @@ export default function SummonRemarksMain(){
                                 value={pageSize.toString()} 
                                 onValueChange={(value) => {
                                     setPageSize(Number.parseInt(value))
-                                    setCurrentPage(1)
+                                    handlePageChange(1)
                                 }}
                             >
                                 <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
@@ -317,12 +357,13 @@ export default function SummonRemarksMain(){
                 <div className="p-6 pt-0">
                     {isLoading ? (
                         // Loading state - shows spinner but keeps header and filters visible
+                        // This is the key fix - always show loading spinner when isLoading is true
                         <div className="flex items-center justify-center py-12">
                             <Spinner size="md" />
                             <span className="ml-2 text-gray-600">Loading cases...</span>
                         </div>
                     ) : totalItems === 0 ? (
-                        // Empty state
+                        // Empty state - only show when NOT loading
                         <div className="text-center py-12">
                             <p className="text-gray-500">
                                 {searchQuery || selectedFilter !== "All" 
@@ -332,7 +373,7 @@ export default function SummonRemarksMain(){
                             </p>
                         </div>
                     ) : (
-                        // Data state
+                        // Data state - only show when data is loaded and has items
                         <>
                             <div className="space-y-3">
                                 <DataTable columns={columns} data={summonCases}/>
@@ -348,7 +389,7 @@ export default function SummonRemarksMain(){
                                     <PaginationLayout 
                                         currentPage={currentPage} 
                                         totalPages={totalPages} 
-                                        onPageChange={setCurrentPage} 
+                                        onPageChange={handlePageChange} 
                                     />
                                 )}
                             </div>

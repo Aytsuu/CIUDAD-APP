@@ -11,7 +11,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./sidebar";
-import { capitalize } from "@/helpers/capitalize";
 
 // Updated types to be more flexible
 interface BaseMenuItem {
@@ -45,7 +44,7 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
   // Auto-set active item based on current path
   useEffect(() => {
     if (item.url && item.url.split("/").pop() === currentPath) {
-      setActiveItem(capitalize(item.title) as string);
+      setActiveItem(item.title);
     }
   }, [currentPath, item.url, item.title, setActiveItem]);
 
@@ -262,7 +261,6 @@ export function AppSidebar() {
               { title: "Ordinance", url: "/ord-page" },
               { title: "Resolution", url: "/res-page" },
               { title: "Minutes of Meeting", url: "/mom-page" },
-              { title: "Document Template", url: "/templates-main" },
             ],
           },
         ]

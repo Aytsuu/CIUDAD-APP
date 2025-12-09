@@ -273,7 +273,7 @@ export default function HouseholdFormLayout({ tab_params }: { tab_params?: Recor
                 </Button>
 
                 <Button onClick={handleContinue} type="button"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 w-32"
+                  className="flex-1"
                 >
                   Next <MoveRight/>
                 </Button>

@@ -204,11 +204,11 @@ export default function LandingLayout() {
               ))}
               {user?.staff?.staff_id ? (
                 <Link to={"/dashboard"}>
-                  <Button>Dashboard</Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700">Dashboard</Button>
                 </Link>
               ) : (
                 <DialogLayout
-                  trigger={<Button>Sign in</Button>}
+                  trigger={<Button className="bg-blue-600 hover:bg-blue-700">Sign in</Button>}
                   className="p-0 m-0 border-0 bg-transparent shadow-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-0 focus:shadow-none max-w-none w-auto h-auto"
                   mainContent={<SignIn />}
                 />

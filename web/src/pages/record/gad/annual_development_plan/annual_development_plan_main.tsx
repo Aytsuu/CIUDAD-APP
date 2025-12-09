@@ -69,7 +69,7 @@ function AnnualDevelopmentPlan(){
                     Plan, monitor, and achieve your annual development goals with structured strategies and progress tracking.
                 </p>
             </div>
-            <hr className="border-gray mb-5 sm:mb-4" />   
+            <hr className="border-gray mb-5 sm:mb-4" />
 
             {/* Tab Navigation */}
             <div className="flex border-b border-gray-200 mb-4">
