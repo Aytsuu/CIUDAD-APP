@@ -6,7 +6,7 @@ export const getOPTMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<OPTMonthsResponse> => {
+): Promise<OPTMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== 'all') params.append('year', year);
@@ -33,7 +33,7 @@ export const getMonthlyOPTRecords = async (
   sitio?: string,
   nutritional_status?: string,
   age_range?: string
-): Promise<OPTMonthlyDetailResponse> => {
+): Promise<OPTMonthlyDetailResponse| undefined > => {
   try {
     const response = await api2.get<OPTMonthlyDetailResponse>(`/reports/opt-tracking/reports/${month}/`, {
       params: {

@@ -24,7 +24,7 @@ export interface SchedulerGetData {
 }
 
 
-export const getService = async (): Promise<Service[]> => {
+export const getService = async (): Promise<Service[] | undefined> => {
   try {
     const res = await api2.get("servicescheduler/services/");
     return res.data as Service[];
@@ -35,7 +35,7 @@ export const getService = async (): Promise<Service[]> => {
   }
 }
 
-export const getDays = async (): Promise<Day[]> => {
+export const getDays = async (): Promise<Day[] | undefined> => {
   try {
     const res = await api2.get("servicescheduler/days/");
     return res.data as Day[];
@@ -46,7 +46,7 @@ export const getDays = async (): Promise<Day[]> => {
   }
 }
 
-export const getScheduler = async (): Promise<SchedulerGetData[]> => {
+export const getScheduler = async (): Promise<SchedulerGetData[] | undefined> => {
   try {
     const res = await api2.get("servicescheduler/service-scheduler/");
     

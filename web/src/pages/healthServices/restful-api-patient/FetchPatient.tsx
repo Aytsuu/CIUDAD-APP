@@ -14,7 +14,7 @@ interface PatientInfo {
   vaccination_count: number;
 }
 
-export const fetchPatientInfo = async (patId: string): Promise<PatientInfo> => {
+export const fetchPatientInfo = async (patId: string): Promise<PatientInfo | any> => {
   try {
     const response = await api2.get(`/patient-info/${patId}/`);
     return response.data;

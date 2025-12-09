@@ -10,7 +10,7 @@ export const getChildHealthSupplementsReport = async (
   page?: number,
   pageSize?: number,
   exportAll?: boolean
-): Promise<ChildHealthSupplementsResponse> => {
+): Promise<ChildHealthSupplementsResponse | undefined> => {
   try {
     const response = await api2.get<ChildHealthSupplementsResponse>(
       `reports/supplements/report/`,

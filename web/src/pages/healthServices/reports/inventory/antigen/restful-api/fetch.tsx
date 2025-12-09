@@ -6,7 +6,7 @@ export const getVaccineMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<VaccineMonthsResponse> => {
+): Promise<VaccineMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== 'all') params.append('year', year);
@@ -29,7 +29,7 @@ export const getMonthlyVaccineRecords = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<VaccineMonthlyDetailResponse> => {
+): Promise<VaccineMonthlyDetailResponse | undefined> => {
   try {
     const response = await api2.get<VaccineMonthlyDetailResponse>(`/inventory/vaccine/records/${month}/`, {
       params: {

@@ -6,7 +6,7 @@ export const getDewormingYears = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<DewormingYearsResponse> => {
+): Promise<DewormingYearsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (searchQuery) params.append('search', searchQuery);
@@ -29,7 +29,7 @@ export const getDewormingRecords = async (
   pageSize: number,
   round?: string,
   searchQuery?: string
-): Promise<DewormingDetailResponse> => {
+): Promise<DewormingDetailResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     params.append('page', page.toString());

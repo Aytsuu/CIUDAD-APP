@@ -33,7 +33,7 @@ export interface VaccinationStatisticsResponse {
   "13_23_months": VaccineStatistic[];
 }
 
-export const getVaccinationStatistics = async (month: string): Promise<VaccinationStatisticsResponse> => {
+export const getVaccinationStatistics = async (month: string): Promise<any> => {
   try {
     const response = await api2.get<VaccinationStatisticsResponse>(`/reports/fhischildhealth-page4/monthly/${month}/`);
     return response.data;
@@ -66,7 +66,7 @@ export interface NutritionStatisticsResponse {
   nutritional_status_assessment: NutritionalStatusAssessment[];
 }
 
-export const getNutritionStatistics = async (month: string): Promise<NutritionStatisticsResponse> => {
+export const getNutritionStatistics = async (month: string): Promise<any> => {
   try {
     const response = await api2.get<NutritionStatisticsResponse>(`/reports/fhischildhealth-page5/monthly/${month}/`);
     return response.data;
@@ -115,7 +115,7 @@ export interface DewormingStatisticsResponse {
   rounds?: DewormingRound[];
 }
 
-export const getDewormingStatistics = async (month: string): Promise<DewormingStatisticsResponse> => {
+export const getDewormingStatistics = async (month: string): Promise<any> => {
   try {
     const response = await api2.get<DewormingStatisticsResponse>(`/reports/deworming-statistics/monthly/${month}/`);
     return response.data;

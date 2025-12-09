@@ -7,7 +7,7 @@ export const getMedicineMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<MedicineMonthsResponse> => {
+): Promise<MedicineMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== 'all') params.append('year', year);
@@ -30,7 +30,7 @@ export const getMonthlyMedicineRecords = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<MedicineMonthlyDetailResponse> => {
+): Promise<MedicineMonthlyDetailResponse| undefined > => {
   try {
     const response = await api2.get<MedicineMonthlyDetailResponse>(`/reports/medicine/records/${month}/`, {
       params: {
