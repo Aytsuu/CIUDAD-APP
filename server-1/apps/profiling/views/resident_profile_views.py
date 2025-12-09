@@ -200,6 +200,10 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
             # if is_search_only:
             #     return queryset
         
+        # Fetch only what's being searched
+        if is_search_only and not search:
+            return None
+        
         # For staff assignment, the list should not contain staff members
         if is_staff:
             from apps.administration.models import Staff
@@ -209,10 +213,6 @@ class ResidentProfileListWithOptions(generics.ListAPIView):
                 res for res in queryset 
                 if not staffs.filter(staff_id=res.rp_id)
             ]
-        
-        # Fetch only what's being searched
-        if is_search_only and not search:
-            return None
 
         # When adding new member to a family, the list shoud not contain members of the family
         if excluded_fam_id:
