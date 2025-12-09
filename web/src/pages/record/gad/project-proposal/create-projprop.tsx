@@ -115,7 +115,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
       ? `${user?.personal?.per_fname} ${user?.personal?.per_lname}`.trim()
       : user?.phone || "";
     const userPosition = userStaff?.pos || "Staff";
-    const treasurer = staffList.find((s) => s.position === "Treasurer");
+    const treasurer = staffList.find((s) => s.position === "TREASURER");
     const treasurerName = treasurer?.full_name || "";
 
     if (!isStaffLoading && staffList.length > 0) {
@@ -163,7 +163,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
                 },
                 {
                   name: treasurerName,
-                  position: "Treasurer",
+                  position: "TREASURER",
                   type: "approved",
                 },
               ],
@@ -177,7 +177,7 @@ export const ProjectProposalForm: React.FC<ProjectProposalFormProps> = ({
           ...form.getValues(),
           signatories: [
             { name: userFullName, position: userPosition, type: "prepared" },
-            { name: treasurerName, position: "Treasurer", type: "approved" },
+            { name: treasurerName, position: "TREASURER", type: "approved" },
           ],
         });
       }

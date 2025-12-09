@@ -142,7 +142,19 @@ export default function Dashboard() {
               <div className="mb-4">
                 <Label className="text-white text-xl font-medium">Upcoming Events</Label>
               </div>
-              {instance.find(item => item.upcomingEvents)?.upcomingEvents}
+              <div className="space-y-4">
+                {instance
+                .filter(item => item.upcomingEvents && validateFeature(item.dashboard))
+                .map((item, index) => (
+                  <React.Fragment key={`events-${item.dashboard}-${index}`}>
+                    {item.upcomingEvents}
+                  </React.Fragment>
+                ))}
+              
+              {instance.filter(item => item.upcomingEvents && validateFeature(item.dashboard)).length === 0 && (
+                <p className="text-white/60 text-sm">No upcoming events scheduled</p>
+              )}
+              </div>
             </div>
             {cardsWithAccess.length > 0 && (
               <div className="bg-white rounded-lg border p-6 shadow-sm w-full">

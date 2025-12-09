@@ -41,19 +41,19 @@ class AnnouncementListView(generics.ListAPIView):
             print("Retrieving data created by you...")
             queryset = Announcement.objects.filter(staff=Staff.objects.filter(staff_id=staff).first())
         
-        if filter:
+        if filter != "":
             if filter == 'event':
                 queryset = queryset.filter(ann_type__icontains='event')
             elif filter == 'general':
                 queryset = queryset.filter(~Q(ann_type__icontains='event'))
 
-        if recipient:
+        if recipient != "":
             if recipient == 'staff':
                 queryset = queryset.filter(announcement_recipients__ar_category__iexact='staff').distinct()
             elif recipient == 'resident':
                 queryset = queryset.filter(Q(announcement_recipients__ar_category__iexact='resident') | Q(ann_type__iexact='public'))
             elif recipient == 'public':
-                queryset = queryset.filter(Q(ann_type__iexact='public'))
+                queryset = queryset.filter(Q(announcement_recipients__ar_category__iexact='public'))
 
         if search:
             print("Handling search...")
@@ -61,7 +61,7 @@ class AnnouncementListView(generics.ListAPIView):
                 Q(ann_title__icontains=search)
             )
 
-        if sort:
+        if sort != "":
             print("Handling sort...")
             if sort == "newest":
                 queryset = queryset.order_by('-ann_created_at') 
