@@ -19,5 +19,8 @@ export const usePatientByResidentId = (rp_id:any) => {
         return getPatientByResidentId(rp_id);
       },
       enabled: !!rp_id,
+      staleTime: 5000,
+      refetchInterval: 5000, 
+      refetchIntervalInBackground: true,
     });
   };

@@ -323,9 +323,16 @@ export function InventoryAlertsSidebar() {
   const hasAlerts = totalCounts.out_of_stock > 0 || totalCounts.low_stock > 0 || totalCounts.near_expiry > 0;
 
   return (
-    <Card className="rounded-lg ">
-      <h1 className="px-4 py-4 font-bold text-xl  text-primary border-b">Inventory Alert</h1>
-
+    <Card className="rounded-t mt-4 ">
+          <div className="px-6 py-4 border-b border-gray-100 rounded-t-xl bg-primary">
+                          <div className="flex items-center  justify-between">
+                            <div>
+      <h1 className="text-lg font-bold text-white  ">Inventory Alerts</h1>
+                              {/* <h3 className="text-lg font-bold text-white">{component.title}</h3> */}
+                              <p className="text-xs text-white mt-1">Latest inventory alerts</p>
+                            </div>
+                          </div>
+                        </div>
       <CardHeader className="pb-3 space-y-2">
         <div className="flex flex-wrap gap-2">
           {totalCounts.out_of_stock > 0 && (

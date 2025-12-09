@@ -66,7 +66,9 @@ export const useAnimalBitePatientSummary = (params?: {
   return useQuery({
     queryKey: ["animalbite-patient-summary", params],
     queryFn: () => getAnimalBitePatientSummary(params),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 };
 // Hook for individual patient's bite history
@@ -75,7 +77,9 @@ export const useAnimalBitePatientHistory = (patId: string) => {
     queryKey: ["animalbite-patient-history", patId],
     queryFn: () => getPatientRecordsByPatId(patId),
     enabled: !!patId,
-    staleTime: 1000 * 60 * 1,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -83,7 +87,9 @@ export const useAnimalbiteDetails = () => {
   return useQuery({
     queryKey: ["animalbite-details"],
     queryFn: getAnimalbiteDetails,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -91,7 +97,9 @@ export const useAnimalbiteReferrals = () => {
   return useQuery({
     queryKey: ["animalbite-referrals"],
     queryFn: getAnimalbiteReferrals,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -104,7 +112,9 @@ export const useUniqueAnimalbitePatients = (params?: {
   return useQuery({
     queryKey: ["unique-animalbite-patients", params],
     queryFn: () => getUniqueAnimalbitePatients(params),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -113,7 +123,9 @@ export const usePatientRecordsByPatId = (patId: string) => {
     queryKey: ["animalbitePatientHistory", patId],
     queryFn: () => getPatientRecordsByPatId(patId),
     enabled: !!patId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -122,7 +134,9 @@ export const usePatientRecordsByReferralId = (referralId: string) => {
     queryKey: ["patientRecordsByReferralId", referralId],
     queryFn: () => getPatientRecordsByReferralId(referralId),
     enabled: !!referralId,
-    staleTime: 1000 * 60 * 30,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -131,9 +145,9 @@ export const useRefreshAllData = () => {
   const { toast } = useToastContext();
   return useMutation({
     mutationFn: async () => {
-      const patientSummary = await getUniqueAnimalbitePatients({ 
-        page: 1, 
-        limit: 20 
+      const patientSummary = await getUniqueAnimalbitePatients({
+        page: 1,
+        limit: 20
       })
       const patientData = await getAnimalBitePatientDetails()
       const referralData = await getAnimalbiteReferrals()

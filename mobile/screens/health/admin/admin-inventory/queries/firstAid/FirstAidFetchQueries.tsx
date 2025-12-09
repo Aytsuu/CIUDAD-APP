@@ -5,6 +5,6 @@ export const useFirstAid = () => {
       queryKey: ["firstAid"],
       queryFn: getFirstAid,
       refetchOnMount: true,
-      staleTime: 0,
+      staleTime: 5000,
     });
   };

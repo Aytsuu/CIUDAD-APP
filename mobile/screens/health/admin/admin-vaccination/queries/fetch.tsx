@@ -192,7 +192,7 @@ export const usePatientVaccinationDetails = (patientId: string) => {
     queryKey: ["patientVaccinationDetails", patientId],
     queryFn: () => getVaccinationRecordById(patientId),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
     enabled: !!patientId,
     retry: 3
   });
@@ -205,8 +205,10 @@ export const useVaccinationRecords = (params?: { page?: number; page_size?: numb
   return useQuery({
     queryKey: ["VaccinationRecords", params],
     queryFn: () => getVaccinationRecords(params),
-    staleTime: 1000 * 60 * 5,
-    retry: 3
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
+   
   });
 };
 
@@ -216,9 +218,9 @@ export const useUnvaccinatedResidents = () => {
   return useQuery({
     queryKey: ["unvaccinatedResidents"],
     queryFn: getUnvaccinatedResidents,
-    refetchOnMount: true,
-    staleTime: 1 * 60 * 1000,
-    retry: 3
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 };
 
@@ -325,8 +327,9 @@ export const useUnvaccinatedVaccinesSummary = (params: any = {}) => {
   return useQuery({
     queryKey: ["unvaccinated-vaccines-summary", params],
     queryFn: () => getUnvaccinatedVaccinesSummary(params),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 };
 
@@ -334,8 +337,8 @@ export const useUnvaccinatedResidentsDetails = (vacId: number, params: any = {})
   return useQuery({
     queryKey: ["unvaccinated-residents", vacId, params],
     queryFn: () => getUnvaccinatedResidentsDetailsForVaccine(vacId, params),
-    enabled: !!vacId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 };

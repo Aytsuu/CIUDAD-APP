@@ -48,7 +48,7 @@ export default function IndivFirstAidRecords() {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0
+    staleTime: 5000
   });
 
   // Handle different API response formats

@@ -15,7 +15,7 @@ export const useMedicineTransactions = (
     queryKey: ["medicinetransactions", page, pageSize, search],
     queryFn: () => getMedicineTransactions(page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 };
 
@@ -29,7 +29,7 @@ export const useCommodityTransactions = (
     queryKey: ["commoditytransactions", page, pageSize, search],
     queryFn: () => getCommodityTransactions(page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 };
 
@@ -43,7 +43,7 @@ export const useFirstAidTransactions = (
     queryKey: ["firstaidtransactions", page, pageSize, search],
     queryFn: () => getFirstAidTransactions(page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 };
 
@@ -59,6 +59,6 @@ export const useAntigenTransactions = (
     queryKey: ["antigentransactions", page, pageSize, search],
     queryFn: () => getAntigenTransactions(page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 };

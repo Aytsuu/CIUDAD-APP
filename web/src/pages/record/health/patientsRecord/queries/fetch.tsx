@@ -165,7 +165,7 @@ export const usePatientHistory = (patientId: string) => {
 	return useQuery({
 		queryKey: ['patientHistory', patientId],
 		queryFn: () => getPatientHistory(patientId),
-		staleTime: 0, // always considered stale so refetch is instant when requested
+		staleTime: 5000, // always considered stale so refetch is instant when requested
 		refetchOnMount: 'always',
 		refetchOnWindowFocus: false,
 		retry: 2,

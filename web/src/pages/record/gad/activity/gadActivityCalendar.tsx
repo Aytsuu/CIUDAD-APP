@@ -306,7 +306,7 @@ export const useGADCalendarSource = (enabled: boolean = true) => {
     queryKey: ["annualDevPlans", "all"],
     queryFn: async () => getAnnualDevPlans(undefined, 1, 10000, true), // Fetch all plans including archived
     enabled: enabled,
-    staleTime: 0, // Always refetch to get latest data
+    staleTime: 5000, // Always refetch to get latest data
   });
   
   const { data: projectProposals = [] } = useGetProjectProposals(1, 1000, undefined, false, undefined, { enabled });
@@ -367,7 +367,7 @@ export const useGADCalendarSource = (enabled: boolean = true) => {
       queryKey: ["annualDevPlans", year],
       queryFn: async () => getAnnualDevPlansByYear(year, undefined, undefined, undefined, true), // Include archived plans
       enabled: enabled && Boolean(year),
-      staleTime: 0, // Always refetch to get latest data
+      staleTime: 5000, // Always refetch to get latest data
     })),
   });
   
@@ -435,7 +435,7 @@ function GADActivityPage() {
   const { data: allAnnualDevPlansData } = useQuery({
     queryKey: ["annualDevPlans", "all"],
     queryFn: async () => getAnnualDevPlans(undefined, 1, 10000, true), // Fetch all plans including archived
-    staleTime: 0, // Always refetch to get latest data
+    staleTime: 5000, // Always refetch to get latest data
   });
   
   // Fetch project proposals and resolutions to filter annual dev plans
@@ -490,7 +490,7 @@ function GADActivityPage() {
       queryKey: ["annualDevPlans", year],
       queryFn: async () => getAnnualDevPlansByYear(year, undefined, undefined, undefined, true), // Include archived plans
       enabled: Boolean(year),
-      staleTime: 0, // Always refetch to get latest data
+      staleTime: 5000, // Always refetch to get latest data
     })),
   });
   

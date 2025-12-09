@@ -6,7 +6,9 @@ export const useImzSupTable = (page:number , pageSize: number , search?: string)
       queryKey: ["ImzSupplies", page, pageSize, search],
       queryFn: () => getImzSupTables(page, pageSize, search),
       refetchOnMount: true,
-      staleTime: 0,
+       staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
     });
   };
 
@@ -15,6 +17,8 @@ export const useImzSupList = () => {
     queryKey: ["ImzSuppliesList"],
     queryFn: getImzSuplist,
     refetchOnMount: true,
-    staleTime: 0,
+ staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
   });
 }

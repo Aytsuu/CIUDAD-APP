@@ -202,7 +202,7 @@ export default function Dashboard() {
             <div className="bg-white rounded-lg border overflow-hidden shadow-sm flex-1 flex flex-col min-h-0">
               {/* Chart Tabs - Fixed at top */}
               {chartsWithAccess.length > 1 && (
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex-shrink-0">
+                <div className="px-6 py-4 mt-3 border-b border-gray-100 flex-shrink-0">
                   <div className="flex gap-6 overflow-x-auto">
                     {chartsWithAccess.map((chartItem: any, index: number) => (
                       <button
@@ -234,20 +234,20 @@ export default function Dashboard() {
 
         {/* Right Column - Sidebar with Internal Scroll */}
         {sidebarsWithAccess.length > 0 && (
-          <div className="flex flex-col overflow-y-auto flex-shrink-0 pr-1">
+          <div className="flex flex-col overflow-y-auto  flex-shrink-0 pr-1">
             {sidebarsWithAccess.map((item: any, index: number) =>
               item.sidebar.map((component: any, sidebarIndex: number) => (
                 <React.Fragment key={`${item.dashboard}-sidebar-${index}-${sidebarIndex}`}>
                   {/* Conditionally render specific sidebar items */}
                   {component.title === "Pending Appointments" || component.title == "Pending Medicine Requests" || component.title === "To-Pickup Medicine Requests" ? (
                     <ProtectedComponent exclude={["DOCTOR"]}>
-                      <div className="bg-white rounded-lg border overflow-hidden shadow-sm flex-shrink-0">
+                      <div className="bg-white rounded-lg border mt-4 overflow-hidden shadow-sm flex-shrink-0">
                         {/* Sidebar Header */}
-                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <div className="px-6 py-4 border-b border-gray-100 bg-primary">
                           <div className="flex items-center justify-between">
                             <div>
-                              <h3 className="text-lg font-bold text-gray-900">{component.title}</h3>
-                              <p className="text-xs text-gray-600 mt-1">Latest updates and activity</p>
+                              <h3 className="text-lg font-bold text-white">{component.title}</h3>
+                              <p className="text-xs text-white mt-1">Latest updates and activity</p>
                             </div>
                           </div>
                         </div>

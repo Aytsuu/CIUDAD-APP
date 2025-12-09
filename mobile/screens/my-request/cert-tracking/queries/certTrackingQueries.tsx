@@ -24,7 +24,7 @@ export const useCertTracking = (residentId: string) => {
             } as { personal: any[]; business: any[]; serviceCharge: any[] };
         },
         enabled: !!residentId,
-        staleTime: 0,
+        staleTime: 5000,
         refetchOnMount: 'always',
         refetchOnWindowFocus: 'always',
         refetchOnReconnect: 'always'

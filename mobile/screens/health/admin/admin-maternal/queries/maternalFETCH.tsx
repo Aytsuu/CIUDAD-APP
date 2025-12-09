@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { api2 } from "@/api/api";
-import { getMaternalCount,
+import {
+	getMaternalCount,
 	getPatientPostpartumCompleteRecord,
 	getPrenatalRecordComplete
- } from "../restful-api/maternalGET";
+} from "../restful-api/maternalGET";
 
 
 // for getMaternalRecords
@@ -29,8 +30,8 @@ export const useMaternalRecords = (page: number, pageSize: number, searchcQuery:
 			}
 		},
 		staleTime: 5000,
-		retry: 1,
 		refetchInterval: 5000,
+		refetchIntervalInBackground: true
 	});
 }
 
@@ -39,8 +40,9 @@ export const useMaternalCount = () => {
 	return useQuery({
 		queryKey: ["activePregnanciesCount"],
 		queryFn: getMaternalCount,
-		staleTime: 60 * 1, 
-		retry: 2,
+		staleTime: 5000,
+		refetchInterval: 5000,
+		refetchIntervalInBackground: true
 	})
 }
 
@@ -63,9 +65,9 @@ export const usePregnancyDetails = (patientId: string, page: number, pageSize: n
 			}
 		},
 		enabled: !!patientId,
-		staleTime: 30 * 1,
-		refetchInterval: 2000,
-		retry: 2,
+		staleTime: 5000,
+		refetchInterval: 5000,
+		refetchIntervalInBackground: true,
 	})
 }
 
@@ -75,8 +77,9 @@ export const usePrenatalRecordComplete = (patientId: string) => {
 		queryKey: ["prenatalRecordComplete", patientId],
 		queryFn: () => getPrenatalRecordComplete(patientId),
 		enabled: !!patientId,
-		staleTime: 30 * 1,
-		retry: 2
+		staleTime: 5000,
+		refetchInterval: 5000,
+		refetchIntervalInBackground: true
 	})
 }
 
@@ -86,9 +89,9 @@ export const usePatientPostpartumCompleteRecord = (pprId: string) => {
 		queryKey: ['postpartumRecordComplete', pprId],
 		queryFn: () => getPatientPostpartumCompleteRecord(pprId),
 		enabled: !!pprId && pprId !== "undefined" && pprId !== "null",
-		staleTime: 30 * 1,
-		retry: 2,
-		refetchInterval: 2000,
+		staleTime: 5000,
+		refetchInterval: 5000,
+		refetchIntervalInBackground: true
 	})
 }
 

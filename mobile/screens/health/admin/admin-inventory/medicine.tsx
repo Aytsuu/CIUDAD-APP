@@ -37,7 +37,10 @@ export default function InventoryScreen() {
   } = useQuery({
     queryKey: ['inventory', selectedCategory, page, debouncedSearch, selectedStockFilter],
     queryFn: () => fetchInventoryData(selectedCategory, page, itemsPerPage, debouncedSearch, selectedStockFilter),
-    placeholderData: (previousData) => previousData, // Keeps list visible while loading next page
+    placeholderData: (previousData) => previousData, 
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 
   // Extract data from backend response

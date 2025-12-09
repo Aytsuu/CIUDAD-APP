@@ -7,7 +7,7 @@ export const useAgeGroups = () => {
     queryKey: ["ageGroups"],
     queryFn: getAgegroup,
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 };
 

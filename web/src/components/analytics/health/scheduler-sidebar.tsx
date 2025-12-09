@@ -146,10 +146,19 @@ export function SchedulerSidebar() {
   }
 
   return (
-    <Card className="rounded-md shadow-none">
-            <h1 className="px-4 py-4 font-bold text-xl  text-primary  border-b">Weekly Schedule</h1>
+    <Card className="rounded-md shadow-none bg-primary">
+      <div className="px-6 py-4 border-b border-gray-100 rounded-t-xl bg-primary">
+                          <div className="flex items-center  justify-between">
+                            <div>
+      <h1 className="text-lg font-bold text-white  ">Weekly Schedule</h1>
+                              {/* <h3 className="text-lg font-bold text-white">{component.title}</h3> */}
+                              <p className="text-xs text-white mt-1">Latest services and activities</p>
+                            </div>
+                          </div>
+                        </div>
 
-      <CardContent className="pt-4 overflow-y-auto max-h-[600px]">
+      {/* <p className="text-xs text-white mt-1">Latest updates and activity</p> */}
+      <CardContent className="pt-4 overflow-y-auto bg-white max-h-[600px]">
         {isLoading ? (
           <div className="flex items-center justify-center h-[300px]">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -9,6 +9,6 @@ export function useFirstAidCount(patientId: string) {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }

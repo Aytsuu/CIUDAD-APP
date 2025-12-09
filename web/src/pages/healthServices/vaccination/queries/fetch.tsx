@@ -176,7 +176,7 @@ export const usePatientVaccinationDetails = (patientId: string) => {
     queryKey: ["patientVaccinationDetails", patientId],
     queryFn: () => getVaccinationRecordById(patientId),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
     enabled: !!patientId,
     retry: 3
   });

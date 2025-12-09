@@ -44,7 +44,9 @@ export const useIndividualMedicineRecords = (
     queryFn: () => getIndividualMedicineRecords(pat_id, page, pageSize, search),
     enabled: !!pat_id && pat_id.trim() !== "",
     refetchOnMount: false, // Changed to false to prevent double calls
-    staleTime: 5* 60 * 1000, // 2 minutes
+    staleTime: 5000,
+		refetchInterval: 5000, 
+		refetchIntervalInBackground: true,
     retry: 1, // Only retry once
     retryDelay: 2000,
   });

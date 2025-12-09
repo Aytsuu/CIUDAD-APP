@@ -14,7 +14,7 @@ export const useOrdinances = (
     return useQuery<{ results: OrdinanceData[]; count: number; total_pages: number }>({
         queryKey: ["ordinancesData", page, pageSize, searchQuery, categoryFilter, yearFilter, isArchive], 
         queryFn: () => getOrdinances(page, pageSize, searchQuery, categoryFilter, yearFilter, isArchive),
-        staleTime: 0, // Always refetch when query key changes
+        staleTime: 5000, // Always refetch when query key changes
         refetchOnMount: true,
         refetchOnWindowFocus: false,
     });

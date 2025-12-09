@@ -264,7 +264,7 @@ const MedicineRequestTracker: React.FC = () => {
       status: getStatusForTab(activeTab),
     }),
     enabled: !!user?.rp && isAuthenticated,
-    staleTime: 0, // always considered stale
+    staleTime: 5000, // always considered stale
     refetchInterval: 3000, // every 3 seconds (adjust as needed)
     refetchIntervalInBackground: true, // keeps polling even if tab is inactive
   });

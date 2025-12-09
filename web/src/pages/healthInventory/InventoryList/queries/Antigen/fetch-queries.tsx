@@ -6,7 +6,7 @@ export const useImzSupTable = (page: number, pageSize: number, search?: string) 
     queryKey: ["ImzSupplies", page, pageSize, search],
     queryFn: () => getImzSupTables(page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0
+    staleTime: 5000
   });
 };
 
@@ -15,7 +15,7 @@ export const useImzSupList = () => {
     queryKey: ["ImzSuppliesList"],
     queryFn: getImzSuplist,
     refetchOnMount: true,
-    staleTime: 0
+    staleTime: 5000
   });
 };
 
@@ -24,6 +24,6 @@ export const useAntigen = (page: number, pageSize: number, search?: string) => {
     queryKey: ["VaccineListCombine", page, pageSize, search],
     queryFn: () => getVaccineListCombine(page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0
+    staleTime: 5000
   });
 };

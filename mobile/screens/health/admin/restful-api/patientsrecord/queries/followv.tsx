@@ -11,7 +11,7 @@ export function useCompletedFollowUpVisits(patientId: string) {
     },
     enabled: !!patientId,
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }
 
@@ -24,7 +24,7 @@ export function usePendingFollowUpVisits(patientId: string) {
     },
     enabled: !!patientId,
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }
 

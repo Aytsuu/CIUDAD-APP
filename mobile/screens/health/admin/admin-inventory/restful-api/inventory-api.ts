@@ -42,6 +42,7 @@ export const fetchInventoryData = async (
         filter: filter, // Backend expects: 'all', 'low_stock', 'out_of_stock', 'expired', 'near_expiry'
       },
     });
+    
     return response.data;
   } catch (error) {
     return handleApiError(error, category);

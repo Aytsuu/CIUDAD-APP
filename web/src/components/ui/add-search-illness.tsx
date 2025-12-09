@@ -68,7 +68,7 @@ export const IllnessComponent = ({
     queryKey: ['illnesses'],
     queryFn: fetchIllnesses,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes
+    refetchInterval: 5000 * 60 * 10, // Refetch every 10 minutes
   });
 
   // Mutation for adding new illness - SIMPLIFIED like PhysicalExam component

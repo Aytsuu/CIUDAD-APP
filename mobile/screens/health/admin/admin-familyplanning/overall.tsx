@@ -114,6 +114,9 @@ export default function OverallFpRecordsScreen() {
       search: debouncedSearchQuery || undefined,
       patient_type: activeTab !== "all" ? activeTab : undefined,
     }),
+     staleTime: 5000,
+    refetchInterval: 5000, 
+    refetchIntervalInBackground: true, 
   });
 
   const {

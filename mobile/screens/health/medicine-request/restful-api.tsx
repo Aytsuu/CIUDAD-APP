@@ -21,7 +21,9 @@ export const usePendingMedicineRequests = (
     queryKey: ["pendingMedicineRequests", page, pageSize, search],
     queryFn: () => getPendingMedicineRequests(page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
+		refetchInterval: 5000, 
+		refetchIntervalInBackground: true,
   });
 };
 

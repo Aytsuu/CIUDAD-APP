@@ -9,7 +9,7 @@ export function useMedConCount(patientId: string) {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }
 
@@ -44,7 +44,7 @@ export function useAnimalbitesCount(patientId: string) {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }
 
@@ -56,6 +56,6 @@ export function useChildHealthRecordCount(patientId: string) {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }

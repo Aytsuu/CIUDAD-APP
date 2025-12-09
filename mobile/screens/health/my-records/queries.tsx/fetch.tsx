@@ -5,7 +5,9 @@ export const useGetChildren = (patientId: string) => {
 	return useQuery({
 		queryKey: ['getchildren', patientId],
 		queryFn: () => getChildren(patientId),
-		staleTime: 300000, // 5 minutes
+		staleTime: 5000,
+		refetchInterval: 5000, 
+		refetchIntervalInBackground: true,
 		enabled: !!patientId,
 	})
 }

@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { View, Text } from "react-native";
 import { Clock, Sun, Moon } from "lucide-react-native";
 import type { DailySchedule } from "./schedule-types";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface ScheduleCardProps {
   day: Date;
@@ -41,10 +42,7 @@ export default function ScheduleCard({ day, dailySchedule, services }: ScheduleC
       {/* Card Content */}
       <View className="px-4 py-6"> {/* Increased vertical padding for content */}
         {!hasAnyServices ? (
-          <View className="items-center py-8"> {/* Increased py-6 to py-8 for empty state */}
-            <Clock className="h-6 w-6 mb-3 text-gray-400" /> {/* Increased mb-2 to mb-3 */}
-            <Text className="text-sm text-gray-500">No services scheduled for this day</Text>
-          </View>
+          <LoadingState/>
         ) : (
           <View className="space-y-6"> {/* Increased space-y-4 to space-y-6 for AM/PM separation */}
             {/* AM Services */}
