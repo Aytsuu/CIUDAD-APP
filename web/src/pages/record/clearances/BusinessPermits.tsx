@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {Search, ArrowUpDown, CheckCircle, Eye } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -13,7 +13,6 @@ import TooltipLayout from "@/components/ui/tooltip/tooltip-layout";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import TemplateMainPage from "../council/templates/template-main";
 import { getBusinessPermit, type BusinessPermit } from "@/pages/record/clearances/queries/busFetchQueries";
-import { markBusinessPermitAsIssued, type MarkBusinessPermitVariables } from "@/pages/record/clearances/queries/busUpdateQueries";
 import { getAllPurposes, type Purpose } from "@/pages/record/clearances/queries/issuedFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { formatDate } from "@/helpers/dateHelper";
@@ -21,15 +20,26 @@ import { showSuccessToast, showErrorToast } from "@/components/ui/toast";
 import { useGetStaffList } from "@/pages/record/clearances/queries/certFetchQueries";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
+import { api } from '@/api/api';
+import { useAuth } from "@/context/AuthContext";
+
+type PurposeObject = {
+  pr_purpose?: string;
+  purpose?: string;
+  [key: string]: any; // Allow other properties
+};
 
 type ExtendedBusinessPermit = BusinessPermit & {
   signatory?: string;
+  purpose?: string | PurposeObject;
 };
 
 function BusinessDocumentPage() {
   const [selectedStaffId, setSelectedStaffId] = useState("");
   const queryClient = useQueryClient();
   const { showLoading, hideLoading } = useLoading();
+  const { user } = useAuth();
+  const staffId = (user?.staff?.staff_id as string | undefined) || undefined;
   const [currentPage, setCurrentPage] = useState(1);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingPermit, setViewingPermit] = useState<BusinessPermit | null>(null);
@@ -64,6 +74,13 @@ function BusinessDocumentPage() {
       }));
   }, [allPurposes]);
 
+  // Helper function to safely get purpose string
+  const getPurposeString = (purpose: string | PurposeObject | undefined): string => {
+    if (!purpose) return '';
+    if (typeof purpose === 'string') return purpose;
+    return purpose.pr_purpose || purpose.purpose || '';
+  };
+
   // Show only paid permits and apply filters
   const paidPermits = useMemo(() => {
     let filtered = (businessPermits || [])
@@ -73,18 +90,21 @@ function BusinessDocumentPage() {
     // Apply search filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter((p) => 
-        p.business_name?.toLowerCase().includes(searchLower) ||
-        p.bpr_id?.toLowerCase().includes(searchLower) ||
-        (p.purpose as string)?.toLowerCase().includes(searchLower)
-      );
+      filtered = filtered.filter((p) => {
+        const purposeString = getPurposeString(p.purpose);
+        return (
+          p.business_name?.toLowerCase().includes(searchLower) ||
+          p.bpr_id?.toLowerCase().includes(searchLower) ||
+          purposeString.toLowerCase().includes(searchLower)
+        );
+      });
     }
     
     // Apply purpose filter
     if (filterPurpose !== "all") {
       filtered = filtered.filter((p) => {
-        const permitPurpose = (p.purpose as string)?.toLowerCase() || "";
-        return permitPurpose === filterPurpose.toLowerCase();
+        const purposeString = getPurposeString(p.purpose);
+        return purposeString.toLowerCase() === filterPurpose.toLowerCase();
       });
     }
     
@@ -107,27 +127,38 @@ function BusinessDocumentPage() {
     }
   }, [error]);
 
-  
-  const markAsIssuedMutation = useMutation<any, unknown, MarkBusinessPermitVariables>({
-    mutationFn: markBusinessPermitAsIssued,
-    onSuccess: (_data, variables) => {
-      showSuccessToast(`Business permit ${variables.bpr_id} marked as printed successfully!`);
-      
-      queryClient.invalidateQueries({ queryKey: ["businessPermits"] });
+  const markAsIssuedMutation = useMutation<any, unknown, { bpr_id: string; staff_id?: string }>({
+    mutationFn: async (variables) => {
+      const response = await api.post('/clerk/mark-business-permit-issued/', {
+        bpr_id: variables.bpr_id,
+        staff_id: variables.staff_id
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['businessPermits'] });
+      queryClient.invalidateQueries({ queryKey: ['issuedBusinessPermits'] });
+      showSuccessToast('Business permit marked as printed successfully');
+      setSelectedPermit(null);
+      setIsDialogOpen(false);
     },
     onError: (error: any) => {
-      showErrorToast(error.response?.data?.error || "Failed to mark business permit as printed");
+      const errorMessage = error.response?.data?.error || 'Failed to mark business permit as printed';
+      showErrorToast(errorMessage);
     },
   });
 
   const handleMarkAsPrinted = (permit: BusinessPermit) => {
-    if (!selectedStaffId) {
-      showErrorToast("Please select a signatory before printing/issuing the business permit.");
-      return;
-    }
+    // Prevent preview flicker: clear any previously selected template
+    setSelectedPermit(null);
+    setViewingPermit(null);
+    setIsDialogOpen(false);
+    setSelectedStaffId("");
+    
     markAsIssuedMutation.mutate({
       bpr_id: permit.bpr_id,
-      staff_id: selectedStaffId,
+      staff_id: staffId
     });
   };
 
@@ -143,10 +174,12 @@ function BusinessDocumentPage() {
 
     if (viewingPermit && selectedStaffId) {
       const selectedStaff = staffOptions.find(staff => staff.id === selectedStaffId);
+      const purposeString = getPurposeString(viewingPermit.purpose);
       
       // Create permit details with staff data
       const permitDetails: ExtendedBusinessPermit = {
         ...viewingPermit,
+        purpose: purposeString,
         signatory: selectedStaff?.name,
       };
       
@@ -158,7 +191,6 @@ function BusinessDocumentPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
 
   const columns: ColumnDef<BusinessPermit>[] = [
     {
@@ -193,39 +225,6 @@ function BusinessDocumentPage() {
       ),
       cell: ({ row }) => <div className="text-center capitalize">{row.getValue("business_name")}</div>,
     },
-    // {
-    //   accessorKey: "business_gross_sales",
-    //   header: "Gross Sales",
-    //   cell: ({ row }) => {
-    //     const original = row.original as any;
-    //     const agsId = original?.ags_id;
-    //     const inputtedGrossSales = original?.bus_clearance_gross_sales;
-    //     const businessGrossSales = original?.business_gross_sales;
-
-    //     let displayAmount: number | null = null;
-
-    //     // Priority 1: Show inputted gross sales (for new businesses with barangay clearance)
-    //     if (inputtedGrossSales && agsId) {
-    //       const parsed = parseFloat(inputtedGrossSales.toString());
-    //       displayAmount = isNaN(parsed) ? null : parsed;
-    //     }
-    //     // Priority 2: Show business gross sales if available (for existing businesses)
-    //     else if (businessGrossSales !== undefined && businessGrossSales !== null && businessGrossSales !== "") {
-    //       const parsed = typeof businessGrossSales === 'string' ? parseFloat(businessGrossSales) : businessGrossSales;
-    //       displayAmount = isNaN(parsed as number) ? null : (parsed as number);
-    //     }
-
-    //     if (displayAmount === null) {
-    //       return <div className="text-center text-gray-500">Not Set</div>;
-    //     }
-
-    //     return (
-    //       <div className="text-center">
-    //         ₱{displayAmount.toLocaleString()}
-    //       </div>
-    //     );
-    //   },
-    // },
     {
       accessorKey: "purpose",
       header: ({ column }: { column: Column<BusinessPermit> }) => (
@@ -238,8 +237,21 @@ function BusinessDocumentPage() {
         </div>
       ),
       cell: ({ row }) => {
-        const raw = (row.original as any)?.purpose as string | undefined;
-        const value = raw ? raw.toString() : "";
+        const purpose = row.original.purpose;
+        
+        // Handle both string and object cases for purpose
+        let purposeText = '';
+        if (purpose && typeof purpose === 'object') {
+          // If purpose is an object, try to get the purpose text from common property names
+          purposeText = (purpose as PurposeObject).pr_purpose || 
+                       (purpose as PurposeObject).purpose || 
+                       '';
+        } else if (typeof purpose === 'string') {
+          // If purpose is a string
+          purposeText = purpose;
+        }
+        
+        const value = purposeText.toString();
         const capitalizedValue = value
           ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
           : "";
@@ -303,12 +315,6 @@ function BusinessDocumentPage() {
       ),
       cell: ({ row }) => <div className="text-center">{formatDate(row.getValue("req_request_date"), "long")}</div>,
     },
-    // {
-    //   accessorKey: "req_claim_date",
-    //   header: "Date to Claim",
-    //   cell: ({ row }) => <div>{row.getValue("req_claim_date")}</div>,
-    // },
-
     {
       id: "actions",
       header: () => (
@@ -449,7 +455,7 @@ function BusinessDocumentPage() {
         <TemplateMainPage
           businessName={selectedPermit.business_name}
           address={selectedPermit.business_address}
-          purpose={selectedPermit.purpose}
+          purpose={getPurposeString(selectedPermit.purpose)}
           issuedDate={new Date().toISOString()}
           Signatory={selectedPermit.signatory || ""}
           showAddDetails={false}

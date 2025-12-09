@@ -1167,7 +1167,6 @@ function TemplateMainPage({fname, mname, lname, age, birthdate, address, partner
   // const [isDialogOpen, setIsDialogOpen] = useState(false); 
   const [previewTemplates, setPreviewTemplates] = useState<Template[]>([]);
 
-  console.log("NISUDDDDD SAA TEMPLATE MAINNNNNNNNN")
 
   // Fetch data
   const { data: templates = [], isLoading } = useGetTemplateRecord();

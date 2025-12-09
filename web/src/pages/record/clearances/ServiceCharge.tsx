@@ -63,6 +63,9 @@ function ServiceChargePage() {
 
   // Mark as Printed -> behave like Certification: mark as issued and move to Issued Certificates
   const handleMarkAsPrinted = (sc: ServiceCharge) => {
+    // Prevent preview flicker: clear any previously selected template
+    setSelectedSC(null);
+    
     markAsIssuedMutation.mutate({ sr_id: sc.sr_id, pay_id: sc.sr_id });
   };
 
