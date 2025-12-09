@@ -13,8 +13,10 @@ import { PersistGate } from "redux-persist/integration/react";
 import { IdleProvider } from "./context/IdleContext";
 import { IdleModal } from "./IdleModal";
 import { useAuth } from "./context/AuthContext";
+import { user_guide_router } from "./routers/user-guide-router";
 
 const router = createBrowserRouter([
+  ...user_guide_router,
   ...landing_router,
   ...main_router,
   { path: "*", element: <NotFound /> },
