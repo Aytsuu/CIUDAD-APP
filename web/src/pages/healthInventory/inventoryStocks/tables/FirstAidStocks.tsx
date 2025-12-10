@@ -36,30 +36,24 @@ export default function FirstAidStocks() {
     hasAvailableStock: boolean;
   } | null>(null);
 
-  // New state for WastedModal
   const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
 
   const queryClient = useQueryClient();
   const { mutate: archiveFirstAidMutation } = useArchiveFirstAidInventory();
 
-  // Updated to use pagination parameters with filter
   const { data: apiResponse, isLoading, error } = useFirstAidStocksTable(currentPage, pageSize, searchQuery, stockFilter);
 
-  // Extract data from paginated response
   const firstAidData = apiResponse?.results || [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Use backend-provided counts
   const counts = apiResponse?.filter_counts || { out_of_stock: 0, low_stock: 0, near_expiry: 0, expired: 0, total: 0 };
 
   useEffect(() => {
     setSearchParams({ page: "1" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, stockFilter]);
 
-  // ================== HANDLERS ==================
   const handlePageChange = (page: number) => {
     setSearchParams({ page: String(page) });
   };
@@ -76,18 +70,15 @@ export default function FirstAidStocks() {
     setIsArchiveConfirmationOpen(true);
   };
 
-  // New handler for opening WastedModal
   const handleOpenWastedModal = (record: any) => {
     setSelectedRecord(record);
     setIsWastedModalOpen(true);
   };
 
-  // New handler for closing WastedModal
   const handleCloseWastedModal = () => {
     setIsWastedModalOpen(false);
     setSelectedRecord(null);
   };
-  // Corrected prepareExportData function for First Aid
   const prepareExportData = () => {
     return firstAidData.map((firstAid: any) => {
       const expired = firstAid.isExpired;
@@ -97,7 +88,6 @@ export default function FirstAidStocks() {
       const unit = firstAid.finv_qty_unit;
       const pcs = firstAid.qty?.finv_pcs || 1;
 
-      // Format Total Qty based on unit type
       let totalQtyDisplay = "";
       if (unit.toLowerCase() === "boxes" && pcs > 1) {
         totalQtyDisplay = `${firstAid.qty_number} boxes (${firstAid.qty_number * pcs} pcs)`;
@@ -105,12 +95,10 @@ export default function FirstAidStocks() {
         totalQtyDisplay = `${firstAid.qty_number} ${unit}`;
       }
 
-      // Add expired indicator to Total Qty
       if (expired) {
         totalQtyDisplay += " (Expired)";
       }
 
-      // Format Available Stock based on unit type
       let availableStockDisplay = "";
       if (unit.toLowerCase() === "boxes" && pcs > 1) {
         const availablePcs = firstAid.availableStock;
@@ -122,7 +110,6 @@ export default function FirstAidStocks() {
         availableStockDisplay = `${firstAid.availableStock} ${unit}`;
       }
 
-      // Add status indicators to Available Stock
       if (expired) {
         availableStockDisplay += " (Expired)";
       } else {

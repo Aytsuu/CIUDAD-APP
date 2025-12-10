@@ -48,21 +48,17 @@ export default function MedicineStocks() {
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Use backend-provided counts
   const counts = apiResponse?.filter_counts || { out_of_stock: 0, low_stock: 0, near_expiry: 0, expired: 0, total: 0 };
 
   useEffect(() => {
     setSearchParams({ page: "1" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, stockFilter]);
 
-  // ================== HANDLERS ==================
   const handlePageChange = (page: number) => {
     setSearchParams({ page: String(page) });
   };
 
   const handleArchiveInventory = (medicine: any) => {
-    // Check if the item is expired and has available stock
     const isExpired = medicine.expiry_status === "expired";
     const hasAvailableStock = medicine.minv_qty_avail > 0;
 
@@ -71,20 +67,16 @@ export default function MedicineStocks() {
     setIsArchiveConfirmationOpen(true);
   };
 
-  // New handler for opening WastedModal
   const handleOpenWastedModal = (record: any) => {
     setSelectedRecord(record);
     setIsWastedModalOpen(true);
   };
 
-  // New handler for closing WastedModal
   const handleCloseWastedModal = () => {
     setIsWastedModalOpen(false);
     setSelectedRecord(null);
   };
 
-  // Export functionality
-  // Corrected prepareExportData function for Medicine
   const prepareExportData = () => {
     return medicineData.map((medicine: any) => {
       const expired = medicine.isExpired;
@@ -94,7 +86,6 @@ export default function MedicineStocks() {
       const unit = medicine.minv_qty_unit;
       const pcs = medicine.qty?.pcs || 1;
 
-      // Format Total Qty based on unit type
       let totalQtyDisplay = "";
       if (unit.toLowerCase() === "boxes" && pcs > 1) {
         totalQtyDisplay = `${medicine.qty_number} boxes (${medicine.qty_number * pcs} pcs)`;
@@ -102,12 +93,10 @@ export default function MedicineStocks() {
         totalQtyDisplay = `${medicine.qty_number} ${unit}`;
       }
 
-      // Add expired indicator to Total Qty
       if (expired) {
         totalQtyDisplay += " (Expired)";
       }
 
-      // Format Available Stock based on unit type
       let availableStockDisplay = "";
       if (unit.toLowerCase() === "boxes" && pcs > 1) {
         const availablePcs = medicine.availableStock;
@@ -119,7 +108,6 @@ export default function MedicineStocks() {
         availableStockDisplay = `${medicine.availableStock} ${unit}`;
       }
 
-      // Add status indicators to Available Stock
       if (expired) {
         availableStockDisplay += " (Expired)";
       } else {
@@ -127,7 +115,6 @@ export default function MedicineStocks() {
         if (isLow) availableStockDisplay += " (Low Stock)";
       }
 
-      // Determine overall status
       let status = "Normal";
       if (expired) {
         status = "Expired";
@@ -139,14 +126,12 @@ export default function MedicineStocks() {
         status = "Near Expiry";
       }
 
-      // Format Medicine Details with dosage info
       const medicineName = medicine.item?.medicineName || "Unknown Medicine";
       const dosage = medicine.item?.dosage || 0;
       const dsgUnit = medicine.item?.dsgUnit || "";
       const form = medicine.item?.form || "";
       const medicineDetails = `${medicineName}${expired ? " (Expired)" : ""} - ${dosage} ${dsgUnit}, ${form}`;
 
-      // Format Expiry Date
       let expiryDateDisplay = medicine.expiryDate ? new Date(medicine.expiryDate).toLocaleDateString() : "N/A";
       if (expired) {
         expiryDateDisplay += " (Expired)";
