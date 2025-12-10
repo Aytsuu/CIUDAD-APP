@@ -83,7 +83,7 @@ export function HealthHistoryTable({ recordsToDisplay, chhistId }: HealthHistory
   };
 
   return (
-    <div className="w-full p-4  rounded-lg shadow-md overflow-x-auto ">
+    <div className="w-full rounded-lg shadow-md overflow-x-auto ">
       {sections.map((section, sectionIndex) => (
         <div key={sectionIndex} className="mb-6">
           {/* Section Header */}

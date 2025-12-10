@@ -73,7 +73,7 @@ export default function ChildHealthHistoryDetail() {
                         <CardLayout
                           cardClassName="border rounded-lg shadow-sm"
                           content={
-                            <div className="space-y-6 p-6">
+                            <div className="space-y-6 ">
                               {/* Record Count */}
                               <div className="flex justify-center">
                                 <div className="text-sm text-gray-500 font-medium">
