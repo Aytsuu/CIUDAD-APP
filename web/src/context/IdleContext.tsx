@@ -18,7 +18,7 @@ interface IdleProviderProps {
 
 export const IdleProvider = ({
   children,
-  timeout = 10 * 60 * 1000, // time limit of inactivity
+  timeout = 60 * 60 * 1000, // time limit of inactivity
   countdownTime = 2 * 60,
   onLogout,
   isAuthenticated, 

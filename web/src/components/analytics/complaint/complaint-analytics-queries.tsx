@@ -15,10 +15,8 @@ export const useGetCardAnalytics = () => {
     queryFn: async () => {
       try {
         const response = await api.get<ComplaintCardAnalytics>("/complaint/analytics/cards/");
-        console.log("Complaint analytics response:", response.data);
         return response.data;
       } catch (error) {
-        console.error("Error fetching complaint analytics:", error);
         return {
           pending: 0,
           cancelled: 0,
@@ -44,10 +42,8 @@ export const useGetComplaintChartAnalytics = () => {
     queryFn: async () => {
       try {
         const response = await api.get<ComplaintChartData[]>("/complaint/analytics/charts/");
-        console.log("Chart analytics response:", response.data);
         return response.data;
       } catch (error) {
-        console.error("Error fetching complaint chart analytics:", error);
         return [];
       }
     },

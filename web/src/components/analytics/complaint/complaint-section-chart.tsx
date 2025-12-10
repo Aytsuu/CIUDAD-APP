@@ -86,7 +86,7 @@ export default function ComplaintSectionCharts() {
       {/* Stats Summary Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x bg-gray-50/50 border-b border-gray-100">
         {/* Total Complaints */}
-        <div className="px-6 py-4">
+        {/* <div className="px-6 py-4">
           <div className="text-xs font-medium text-gray-600 mb-1 uppercase tracking-wide">Total Complaints</div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-gray-900">
@@ -105,7 +105,7 @@ export default function ComplaintSectionCharts() {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Daily Average */}
         <div className="px-6 py-4">

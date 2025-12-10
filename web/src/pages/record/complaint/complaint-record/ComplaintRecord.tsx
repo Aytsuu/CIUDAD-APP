@@ -12,6 +12,7 @@ import ComplaintFilterBar, { FilterState } from "./ComplaintFilterBar";
 import ComplaintTable from "../ComplaintTable";
 import ComplaintPagination from "./ComplaintPagination";
 import { useBulkArchiveComplaints } from "../api-operations/queries/complaintPostQueries";
+import ComplaintCards from "./ComplaintCards";
 
 const initialFilters: FilterState = {
   types: [],
@@ -89,7 +90,8 @@ export default function ComplaintRecord() {
         </p>
       </div>
       <hr className="pb-4" />
-
+      <ComplaintCards/>
+      
       <ComplaintFilterBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}

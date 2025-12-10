@@ -117,13 +117,7 @@ export const getItemsConfig = (
 
   const { childHealth, firstAid, medicine, vaccinations, consultations, animalBites, familyPlanning, maternal, consultationsByDoctor, chilrenConsulted } = healthCards;
   // const { driverLoaders, wasteLoaders, collectionVehicles } = wasteCards;
-  const {  
-    pending: complaintPending, 
-    cancelled: complaintCancelled, 
-    accepted: complaintAccepted, 
-    rejected: complaintRejected, 
-    raised: complaintRaised 
-  } = complaintCards;
+  const { total } = complaintCards;
   const { totalPickup} = garbCards;
   const {conciliationCases } = conciliationCards;
   const { mediationcases } = mediationCards;
@@ -182,11 +176,7 @@ export const getItemsConfig = (
       {
         dashboard: "COMPLAINT",
         card: [
-          complaintPending, 
-          complaintCancelled, 
-          complaintAccepted, 
-          complaintRejected, 
-          complaintRaised
+          total
         ],
         sidebar: [
           {
