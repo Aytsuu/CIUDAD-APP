@@ -28,9 +28,7 @@ interface ComplaintColumnsOptions {
   showAllStatuses?: boolean;
 }
 
-export const complaintColumns = (
-  options: ComplaintColumnsOptions = {}
-): ColumnDef<Complaint>[] => {
+export const complaintColumns = ( options: ComplaintColumnsOptions = {}): ColumnDef<Complaint>[] => {
   const { statusFilter = null, showAllStatuses = true } = options;
 
   return [

@@ -191,7 +191,6 @@ class NotificationListView(generics.ListAPIView):
             .order_by("-notif__notif_created_at")
         )
 
-
 """ 
     Mark multiple notifications as read
 """

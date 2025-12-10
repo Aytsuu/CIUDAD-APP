@@ -115,6 +115,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'comp_allegation',
             'comp_created_at',
             'comp_rejection_reason',
+            'comp_updated_at',
             'comp_cancel_reason',
             'complainant', 
             'accused',      

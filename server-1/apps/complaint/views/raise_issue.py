@@ -66,7 +66,7 @@ class ServiceChargeRequestCreateView(APIView):
             Complaint.objects.filter(comp_id=comp_id).update(comp_status="Raised")
             
             # Get all staff with ADMIN position
-            admin_staff = Staff.objects.filter(pos__pos_title="ADMIN").select_related("rp")
+            admin_staff = Staff.objects.filter(pos__pos_title="ADMIN", staff_type="BARANGAY STAFF").select_related("rp")
             
             recipients = [staff.rp for staff in admin_staff if staff.rp]
             

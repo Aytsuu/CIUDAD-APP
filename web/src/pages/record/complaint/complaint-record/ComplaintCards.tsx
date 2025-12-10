@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { 
   CheckCircle2, 
   XCircle, 
@@ -5,19 +6,20 @@ import {
   Clock, 
   CircleAlert 
 } from "lucide-react"
+import { useGetCardAnalytics } from "@/components/analytics/complaint/complaint-analytics-queries";
+
+const CARD_SKELETON_LOADER = () => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <div key={i} className="bg-gray-100 rounded-lg p-6 h-32 animate-pulse"></div>
+    ))}
+  </div>
+);
 
 export default function ComplaintCards() {
-    // Simulating the hook with mock data
-    const data = {
-        accepted: 124,
-        pending: 45,
-        cancelled: 18,
-        raised: 203,
-        rejected: 32
-    };
-    const isLoading = false;
+    const {data, isLoading} = useGetCardAnalytics();
 
-    const cards = [
+    const cards = useMemo(() => [
         {
             title: "Accepted",
             value: data?.accepted || 0,
@@ -58,16 +60,10 @@ export default function ComplaintCards() {
             iconBg: "bg-purple-50",
             description: "Not qualified",
         },
-    ]
+    ], [data]);
 
     if (isLoading) {
-        return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
-                {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="bg-gray-100 rounded-lg p-6 h-32 animate-pulse"></div>
-                ))}
-            </div>
-        )
+        return <CARD_SKELETON_LOADER />;
     }
 
     return (

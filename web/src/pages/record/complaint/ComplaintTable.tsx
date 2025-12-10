@@ -15,7 +15,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { showErrorToast } from "@/components/ui/toast";
-import { string } from "zod";
 
 interface ComplaintTableProps {
   data: any[];

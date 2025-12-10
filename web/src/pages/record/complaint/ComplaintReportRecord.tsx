@@ -12,7 +12,6 @@ import {
   MdBlock,
   MdAssignment,
   MdHistory,
-  MdLightbulb,
 } from "react-icons/md";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
@@ -23,7 +22,6 @@ import { useUpdateComplaint } from "./api-operations/queries/complaintUpdateQuer
 import { usePostRaiseIssue } from "./api-operations/queries/complaintPostQueries";
 import { ComplaintActionModal } from "./ComplaintActionModal";
 import { toast } from "sonner";
-import { StarOff } from "lucide-react";
 
 type ActionType = "accept" | "reject" | "raise";
 
@@ -209,7 +207,7 @@ export function ComplaintViewRecord() {
     const c = complaintData;
 
     return (
-      <div className="bg-white rounded-lg p-4 mb-4">
+      <div className="bg-white rounded-lg p-4">
         <div className="flex items-center gap-4 mb-4">
           <div
             className={`${statusConfig.bgColor} p-3 rounded-lg flex-shrink-0`}
@@ -226,7 +224,7 @@ export function ComplaintViewRecord() {
 
         {/* Action Buttons */}
         {statusConfig.showActions && (
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 items-center gap-x-4 justify-center">
             {c.comp_status === "Pending" && (
               <>
                 <Button
@@ -252,7 +250,7 @@ export function ComplaintViewRecord() {
                 disabled={isProcessing}
                 className="w-full bg-blue-500 text-white hover:bg-blue-400 flex items-center justify-center gap-2 disabled:opacity-50 py-3"
               >
-                <MdTrendingUp /> Raise to Next Level
+                <MdTrendingUp /> Raise
               </Button>
             )}
           </div>
@@ -321,24 +319,6 @@ export function ComplaintViewRecord() {
         <h2 className="text-lg font-semibold text-gray-800">Actions Taken</h2>
       </div>
       <div className="space-y-3">
-        {/* Created Action */}
-        <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-          <div className="bg-blue-100 p-2 rounded-full">
-            <MdInsertDriveFile className="text-blue-500 text-sm" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-medium text-gray-800">
-              Complaint Created
-            </h3>
-            <p className="text-xs text-gray-600">
-              Complaint was filed by the complainant
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              {new Date(complaintData.comp_datetime).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-
         {/* Status Updates */}
         <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
           <div className={`${statusConfig.bgColor} p-2 rounded-full`}>
@@ -349,10 +329,14 @@ export function ComplaintViewRecord() {
               Status Updated
             </h3>
             <p className="text-xs text-gray-600">
-              Current status:{" "}
-              <span className="font-semibold">{complaintData.comp_status}</span>
+              Current status:
+              <span className="font-semibold pl-2">{complaintData.comp_status}</span>
             </p>
-            <p className="text-xs text-gray-500 mt-1">Last updated</p>
+            <p className="text-xs text-gray-500 mt-1">Last updated: <span className="font-semibold">{new Date(complaintData.comp_updated_at).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}</span></p>
           </div>
         </div>
       </div>
@@ -403,12 +387,39 @@ export function ComplaintViewRecord() {
         {/* Left Column - Main Content (70%) */}
         <div className="w-8/12 space-y-6">
           <div className="bg-white rounded-lg p-4">
-            <h3 className="text-sm font-medium text-gray-800">
-              Blotter ID: {c.comp_id}
-            </h3>
-            <h3 className="text-sm font-medium text-gray-800">
-              Date Filed: {new Date(c.comp_created_at).toLocaleString()}
-            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Blotter ID
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-gray-800 pl-3">
+                  {c.comp_id}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-4 bg-gray-400 rounded-full"></div>
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Date Filed
+                  </span>
+                </div>
+                <div className="pl-3">
+                  <p className="text-sm font-semibold text-gray-800">
+                    {new Date(c.comp_created_at).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(c.comp_created_at).toLocaleTimeString()}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Allegation Section */}
