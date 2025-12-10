@@ -554,6 +554,7 @@ import { useEffect, useState } from "react";
 import sealImage from "@/assets/images/Seal.png";
 import { veraMonoNormal } from "@/assets/fonts/VeraMono-normal";
 import { veraMonoBold } from "@/assets/fonts/VeraMono-Bold-bold";
+import { Spinner } from "@/components/ui/spinner";
 
 interface Template {
   temp_title: string;
@@ -1154,7 +1155,8 @@ function TemplatePreview({ templates, signatory, pangkatSecretary = "ANGELICA MA
           title="Document Preview"
         />
       ) : (
-        <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center justify-center h-full gap-3 text-center text-sm text-muted-foreground">
+          <Spinner size="lg" />
           <p>Generating PDF preview...</p>
         </div>
       )}

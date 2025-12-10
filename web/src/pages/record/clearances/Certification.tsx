@@ -245,6 +245,12 @@ function CertificatePage() {
   });
 
   const handleMarkAsPrinted = (certificate: Certificate) => {
+    // Prevent preview flicker: clear any previously selected template
+    setSelectedCertificate(null);
+    setViewingCertificate(null);
+    setIsDialogOpen(false);
+    setSelectedStaffId("");
+    
     // Determine if this is a non-resident certificate
     const isNonResident = isNonResidentCertificate(certificate);
     
