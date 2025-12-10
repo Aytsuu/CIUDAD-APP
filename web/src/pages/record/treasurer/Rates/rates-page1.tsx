@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button/button"
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import RatesFormPage1 from "./forms/rates-form-page1"
 import { DataTable } from "@/components/ui/table/data-table"
-import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { Pen, Trash, History, Search, ArrowUpDown, Archive } from 'lucide-react'
@@ -43,7 +42,7 @@ function RatesPage1() {
     // Fetch data for active tab
     const { 
         data: activeData = { results: [], count: 0 }, 
-        isLoading: isLoadingActive 
+        isLoading: isLoadingActive,
     } = useGetAnnualGrossSalesActive(
         currentPageActive, 
         pageSizeActive, 
@@ -53,7 +52,7 @@ function RatesPage1() {
     // Fetch data for history tab
     const { 
         data: historyData = { results: [], count: 0 }, 
-        isLoading: isLoadingHistory 
+        isLoading: isLoadingHistory,
     } = useGetAllAnnualGrossSales(
         currentPageHistory, 
         pageSizeHistory, 
@@ -64,13 +63,13 @@ function RatesPage1() {
 
     const handleDelete = (agsId: number) => deleteAnnualGrossSales({ags_id: agsId, staff_id: user?.staff?.staff_id})
 
-    const activePlans = activeData.results || []
+    const active = activeData.results || []
     const activeTotalCount = activeData.count || 0
 
-    const historyPlans = historyData.results || []
+    const history = historyData.results || []
     const historyTotalCount = historyData.count || 0
 
-    // Loading management
+    // Loading management - Optional: you can remove this if you don't want global loading
     useEffect(() => {
         if ((activeTab === "active" && isLoadingActive) || (activeTab === "all" && isLoadingHistory)) {
             showLoading()
@@ -94,8 +93,8 @@ function RatesPage1() {
     })}`
 
     const getLastMaxRange = () => {
-        if (activePlans.length === 0) return "0"
-        const sorted = [...activePlans].sort((a, b) => b.ags_maximum - a.ags_maximum)
+        if (active.length === 0) return "0"
+        const sorted = [...active].sort((a, b) => b.ags_maximum - a.ags_maximum)
         return sorted[0].ags_maximum
     }
 
@@ -104,16 +103,12 @@ function RatesPage1() {
     const sharedColumns: ColumnDef<AnnualGrossSales>[] = [
         {
             accessorKey: "rangeOfGrossSales",
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                    Range of Annual Gross Sales
-                </div>
-            ),
+            header: "Range of Annual Gross Sales",
             cell: ({ row }) => {
                 const min = row.original.ags_minimum
                 const max = row.original.ags_maximum
                 return (
-                    <div className="text-center">
+                    <div>
                         {formatNumber(min.toString())} - {formatNumber(max.toString())}
                     </div>
                 )
@@ -121,13 +116,9 @@ function RatesPage1() {
         },
         {
             accessorKey: "ags_rate",
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                    Amount
-                </div>
-            ),
+            header: "Amount",
             cell: ({ row }) => (
-                <div className="text-center">{formatNumber(row.original.ags_rate.toString())}</div>
+                <div>{formatNumber(row.original.ags_rate.toString())}</div>
             )
         }
     ]
@@ -136,15 +127,11 @@ function RatesPage1() {
         ...sharedColumns,
         {
             accessorKey: "action",
-            header: ({}) => (
-            <div className="flex w-full justify-center items-center">
-                Action
-            </div>
-        ),
+            header: "Actions",
             cell: ({ row }) => {
                 const agsId = row.original.ags_id
                 return (
-                    <div className="flex justify-center gap-2">
+                    <div className="flex gap-2">
                         <TooltipLayout
                             trigger={
                                 <div>
@@ -195,7 +182,7 @@ function RatesPage1() {
             accessorKey: "ags_date",
             header: ({ column }) => (
                 <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                    className="flex w-full gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
                     Last Updated
@@ -203,7 +190,7 @@ function RatesPage1() {
                 </div>
             ),
             cell: ({ row }) => (
-                <div className="text-center">{formatTimestamp(row.getValue("ags_date"))} </div>            
+                <div>{formatTimestamp(row.getValue("ags_date"))} </div>            
             )
         },
         {
@@ -212,7 +199,7 @@ function RatesPage1() {
             cell: ({ row }) => {
                 const archived = row.original.ags_is_archive
                 return (
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex gap-2">
                         <span className={`inline-block h-3 w-3 rounded-full ${archived ? 'bg-red-500' : 'bg-green-500'}`} />
                         <span>{archived ? 'Inactive' : 'Active'}</span>
                     </div>
@@ -221,29 +208,12 @@ function RatesPage1() {
         },
         {
             accessorKey: "staff_name",
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                    Updated by
-                </div>
-            ),
+            header: "Updated By",
             cell: ({ row }) => (
-                <div className="text-center">{row.original.staff_name}</div>
+                <div>{row.original.staff_name}</div>
             )
         }
     ]
-
-    // Loading state for initial load
-    if ((activeTab === "active" && isLoadingActive && activePlans.length === 0) || 
-        (activeTab === "all" && isLoadingHistory && historyPlans.length === 0)) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <Spinner size="md" />
-                <span className="ml-2 text-gray-600">
-                    {activeTab === "active" ? "Loading..." : "Loading history..."}
-                </span>
-            </div>
-        )
-    }
 
     return (
         <div className='bg-snow w-full h-full'>
@@ -259,10 +229,10 @@ function RatesPage1() {
                             </TabsTrigger>
                         </TabsList>
 
-                        {/* ACTIVE TAB - Keeping exact same layout as before */}
+                        {/* ACTIVE TAB */}
                         <TabsContent value="active">
                             <div className="flex flex-col gap-4">
-                                {/* Search & Size - Same layout as before */}
+                                {/* Search & Size - Always visible */}
                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                                     <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
                                         <div className="relative w-full sm:w-64">
@@ -275,10 +245,11 @@ function RatesPage1() {
                                                     setSearchQueryActive(e.target.value)
                                                     setCurrentPageActive(1)
                                                 }}
+                                                disabled={isLoadingActive}
                                             />
                                         </div>
                                         <DialogLayout
-                                            trigger={<Button>+ Add</Button>}
+                                            trigger={<Button disabled={isLoadingActive}>+ Add</Button>}
                                             title='Add New Range and Fee for Business Permit'
                                             description="Set a new annual gross sales range and its associated fee for business permits."
                                             mainContent={
@@ -294,10 +265,14 @@ function RatesPage1() {
 
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Select value={pageSizeActive.toString()} onValueChange={(value) => {
-                                            setPageSizeActive(Number.parseInt(value))
-                                            setCurrentPageActive(1)
-                                        }}>
+                                        <Select 
+                                            value={pageSizeActive.toString()} 
+                                            onValueChange={(value) => {
+                                                setPageSizeActive(Number.parseInt(value))
+                                                setCurrentPageActive(1)
+                                            }}
+                                            disabled={isLoadingActive}
+                                        >
                                             <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
                                                 <SelectValue />
                                             </SelectTrigger>
@@ -313,8 +288,13 @@ function RatesPage1() {
                                     </div>
                                 </div>
 
-                                {/* Content */}
-                                {activePlans.length === 0 ? (
+                                {/* Content with loading state */}
+                                {isLoadingActive ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <Spinner size="md" />
+                                        <span className="ml-2 text-gray-600">Loading...</span>
+                                    </div>
+                                ) : active.length === 0 ? (
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -328,7 +308,7 @@ function RatesPage1() {
                                     </div>
                                 ) : (
                                     <>
-                                        <DataTable columns={activeColumns} data={activePlans} />
+                                        <DataTable columns={activeColumns} data={active} />
 
                                         <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4">
                                             <p className="text-gray-600">
@@ -348,10 +328,10 @@ function RatesPage1() {
                             </div>
                         </TabsContent>
 
-                        {/* HISTORY TAB - Keeping exact same layout as before */}
+                        {/* HISTORY TAB */}
                         <TabsContent value="all">
                             <div className="flex flex-col gap-4">
-                                {/* Search & Size - Same layout as before */}
+                                {/* Search & Size - Always visible */}
                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                                     <div className="relative w-full sm:w-64">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -363,14 +343,19 @@ function RatesPage1() {
                                                 setSearchQueryHistory(e.target.value)
                                                 setCurrentPageHistory(1)
                                             }}
+                                            disabled={isLoadingHistory}
                                         />
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm">Show</span>
-                                        <Select value={pageSizeHistory.toString()} onValueChange={(value) => {
-                                            setPageSizeHistory(Number.parseInt(value))
-                                            setCurrentPageHistory(1)
-                                        }}>
+                                        <Select 
+                                            value={pageSizeHistory.toString()} 
+                                            onValueChange={(value) => {
+                                                setPageSizeHistory(Number.parseInt(value))
+                                                setCurrentPageHistory(1)
+                                            }}
+                                            disabled={isLoadingHistory}
+                                        >
                                             <SelectTrigger className="w-20 h-9 bg-white border-gray-200">
                                                 <SelectValue />
                                             </SelectTrigger>
@@ -386,8 +371,12 @@ function RatesPage1() {
                                     </div>
                                 </div>
 
-                                {/* Content */}
-                                {historyPlans.length === 0 ? (
+                                {isLoadingHistory ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <Spinner size="md" />
+                                        <span className="ml-2 text-gray-600">Loading...</span>
+                                    </div>
+                                ) : history.length === 0 ? (
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -401,7 +390,7 @@ function RatesPage1() {
                                     </div>
                                 ) : (
                                     <>
-                                        <HistoryTable columns={historyColumns} data={historyPlans} />
+                                        <DataTable columns={historyColumns} data={history} />
 
                                         <div className="flex flex-col sm:flex-row justify-between items-center text-sm px-1 gap-4">
                                             <p className="text-gray-600">

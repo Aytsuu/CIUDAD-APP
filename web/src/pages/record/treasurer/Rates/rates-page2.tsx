@@ -1,13 +1,10 @@
 import DialogLayout from "@/components/ui/dialog/dialog-layout"
 import { DataTable } from "@/components/ui/table/data-table"
-import { HistoryTable } from "@/components/ui/table/history-table"
 import { ColumnDef } from "@tanstack/react-table"
 import { Pen, History, Search, ArrowUpDown, Archive } from 'lucide-react';
 import TooltipLayout from "@/components/ui/tooltip/tooltip-layout"
 import { useState, useEffect } from "react"
 import {  useGetPurposeAndRatePersonalActive,  useGetPurposeAndRateAllPersonal,  type PurposeAndRate } from "./queries/RatesFetchQueries"
-// import RatesFormPage2 from "./forms/rates-form-page2";
-// import { Button } from "@/components/ui/button/button";
 import RatesEditFormPage2 from "./edit-forms/rates-edit-form-2"
 import { formatTimestamp } from "@/helpers/timestampformatter"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -22,7 +19,6 @@ function RatesPage2() {
     const { showLoading, hideLoading } = useLoading();
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
-    // const [isDialogOpen, setIsDialogOpen] = useState(false)
 
     // Search + Pagination - Active Tab
     const [searchQueryActive, setSearchQueryActive] = useState("")
@@ -41,11 +37,11 @@ function RatesPage2() {
     // Fetch data for history tab
     const {  data: historyData = { results: [], count: 0 },  isLoading: isLoadingHistory } = useGetPurposeAndRateAllPersonal( currentPageHistory,  pageSizeHistory, debouncedSearchQueryHistory)
 
-    const activePlans = activeData.results || []
+    const active = activeData.results || []
     const activeTotalCount = activeData.count || 0
     const activeTotalPages = Math.ceil(activeTotalCount / pageSizeActive)
 
-    const historyPlans = historyData.results || []
+    const history = historyData.results || []
     const historyTotalCount = historyData.count || 0
     const historyTotalPages = Math.ceil(historyTotalCount / pageSizeHistory)
 
@@ -76,36 +72,24 @@ function RatesPage2() {
     const activeColumns: ColumnDef<PurposeAndRate>[] = [
         { 
             accessorKey: 'pr_purpose', 
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                    Purpose
-                </div>
-            ),
+            header: "Purpose",
             cell: ({ row }) => (
-                <div className="text-center">{row.original.pr_purpose}</div>
+                <div>{row.original.pr_purpose}</div>
             )
         },
         {
             accessorKey: 'pr_rate', 
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                    Amount
-                </div>
-            ),
+            header: "Amount",
             cell: ({ row }) => (
-                <div className="text-center">{formatNumber(row.original.pr_rate.toString())}</div>
+                <div>{formatNumber(row.original.pr_rate.toString())}</div>
             )
         },
         {
             accessorKey: "action", 
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                    Action
-                </div>
-            ),
+            header: "Action",
             cell: ({ row }) => {
                 return (
-                    <div className="flex justify-center gap-2">
+                    <div className="flex gap-2">
                         <TooltipLayout
                             trigger={
                                 <div>
@@ -137,37 +121,25 @@ function RatesPage2() {
     const historyColumns: ColumnDef<PurposeAndRate>[] = [
         { 
             accessorKey: 'pr_purpose', 
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                   Purpose
-                </div>
-            ),
+            header: "Purpose",
             cell: ({ row }) => (
-                <div className="text-center">{row.original.pr_purpose}</div>
+                <div>{row.original.pr_purpose}</div>
             )
         },
         {
             accessorKey: 'pr_rate', 
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center text-center">
-                    Amount
-                </div>
-            ),
+            header: "Amount",
             cell: ({ row }) => (
-                <div className="text-center">{formatNumber(row.original.pr_rate.toString())}</div>
+                <div>{formatNumber(row.original.pr_rate.toString())}</div>
             )
         },
         {
             accessorKey: "pr_is_archive", 
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                    Status
-                </div>
-            ),
+            header: "Status",
             cell: ({ row }) => {
                 const isArchived = row.original.pr_is_archive
                 return (
-                    <div className="flex items-center justify-center gap-2 text-center">
+                    <div className="flex gap-2 text-center">
                         <span className={`inline-block h-3 w-3 rounded-full ${isArchived ? 'bg-red-500' : 'bg-green-500'}`} />
                         <span>{isArchived ? 'Inactive' : 'Active'}</span>
                     </div>
@@ -178,7 +150,7 @@ function RatesPage2() {
             accessorKey: "pr_date",
             header: ({ column }) => (
                 <div
-                    className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                    className="flex w-full gap-2 cursor-pointer"
                     onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                 >
                     Last Updated
@@ -186,34 +158,17 @@ function RatesPage2() {
                 </div>
             ),
             cell: ({ row }) => (
-                <div className="text-center">{formatTimestamp(row.getValue("pr_date"))} </div>            
+                <div>{formatTimestamp(row.getValue("pr_date"))} </div>            
             )
         },
         {
             accessorKey: "staff_name",
-            header: ({}) => (
-                <div className="flex w-full justify-center items-center">
-                    Updated By
-                </div>
-            ),
+            header: "Updated By",
             cell: ({ row }) => (
-                <div className="text-center">{row.original.staff_name}</div>
+                <div>{row.original.staff_name}</div>
             )
         }
     ]
-
-    // Loading state for initial load
-    if ((activeTab === "active" && isLoadingActive && activePlans.length === 0) || 
-        (activeTab === "all" && isLoadingHistory && historyPlans.length === 0)) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <Spinner size="md" />
-                <span className="ml-2 text-gray-600">
-                    {activeTab === "active" ? "Loading..." : "Loading history..."}
-                </span>
-            </div>
-        )
-    }
 
     return (
         <div className='bg-snow w-full h-full'>
@@ -270,24 +225,16 @@ function RatesPage2() {
                                             <span className="text-sm">entries</span>
                                         </div>
 
-                                        {/* Add Button */}
-                                        {/* <DialogLayout
-                                            trigger={<Button>+ Add</Button>}
-                                            title='Add New Purpose and Rate'
-                                            description="Set a new purpose and its associated rate."
-                                            mainContent={
-                                                <RatesFormPage2
-                                                    onSuccess={() => setIsDialogOpen(false)}
-                                                />
-                                            }
-                                            isOpen={isDialogOpen}
-                                            onOpenChange={setIsDialogOpen}
-                                        /> */}
                                     </div>
                                 </div>
 
                                 {/* Content */}
-                                {activePlans.length === 0 ? (
+                                {isLoadingActive ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <Spinner size="md" />
+                                        <span className="ml-2 text-gray-600">Loading...</span>
+                                    </div>
+                                ): active.length === 0 ? (
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -302,10 +249,10 @@ function RatesPage2() {
                                 ) : (
                                     <>
                                         {/* Table */}
-                                        <DataTable columns={activeColumns} data={activePlans} />
+                                        <DataTable columns={activeColumns} data={active} />
 
                                         {/* Pagination */}
-                                        {activePlans.length > 0 && (
+                                        {active.length > 0 && (
                                             <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
                                                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                                                     Showing{" "}
@@ -375,7 +322,12 @@ function RatesPage2() {
                                 </div>
 
                                 {/* Content */}
-                                {historyPlans.length === 0 ? (
+                                {isLoadingHistory ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <Spinner size="md" />
+                                        <span className="ml-2 text-gray-600">Loading...</span>
+                                    </div>
+                                ): history.length === 0 ? (
                                     <div className="text-center py-12">
                                         <Archive className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -390,10 +342,10 @@ function RatesPage2() {
                                 ) : (
                                     <>
                                         {/* Table */}
-                                        <HistoryTable columns={historyColumns} data={historyPlans} />
+                                        <DataTable columns={historyColumns} data={history} />
 
                                         {/* Pagination */}
-                                        {historyPlans.length > 0 && (
+                                        {history.length > 0 && (
                                             <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t bg-gray-50">
                                                 <p className="text-sm text-gray-600 mb-2 sm:mb-0">
                                                     Showing{" "}
