@@ -5,7 +5,8 @@ from rest_framework import serializers
 # local
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileBaseSerializer
 from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
-from apps.administration.models import Staff
+from apps.administration.models import Staff, Position
+from apps.profiling.models import ResidentProfile, Personal 
 from .models import (Accused, Complainant, Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, ComplaintRecipient)
 
 # utility
@@ -102,8 +103,8 @@ class ComplaintSerializer(serializers.ModelSerializer):
     complainant = serializers.SerializerMethodField()
     accused = serializers.SerializerMethodField()
     complaint_files = ComplaintFileSerializer(source='files', many=True, read_only=True)
-    staff = serializers.PrimaryKeyRelatedField(queryset=Staff.objects.all(),  required=False, allow_null=True)
-
+    staff = serializers.SerializerMethodField()
+    
     class Meta:
         model = Complaint
         fields = [
@@ -142,28 +143,130 @@ class ComplaintSerializer(serializers.ModelSerializer):
         return result
     
     def get_staff(self, obj):
-        if obj.staff and obj.staff.rp and obj.staff.rp.per:
-            personal = obj.staff.rp.per
+        """Get staff details with personal information"""
+        if not obj.staff:
+            return None
+        
+        try:
+            staff = obj.staff
             
-            # Construct full name in the same format as get_staff_name
-            name_parts = [personal.per_lname, personal.per_fname]
-            if personal.per_mname:
-                name_parts.append(personal.per_mname)
-            if personal.per_suffix:
-                name_parts.append(personal.per_suffix)
-            full_name = ', '.join(name_parts)
+            resident_profile = staff.rp
             
-            # Get position
-            position = obj.staff.pos.pos_title if obj.staff.pos else "Staff"
+            if not resident_profile:
+                return {
+                    'staff_id': staff.staff_id,
+                    'staff_name': "No resident profile found",
+                    'staff_position': None,
+                }
+            
+            # Get personal data from ResidentProfile's per field
+            personal = resident_profile.per
+            
+            # Staff Name
+            if personal:
+                staff_name = f"{personal.per_fname} {personal.per_lname}"
+            else:
+                staff_name = "Personal data not found"
+            
+            # Staff Position - get from staff's pos field
+            staff_position = staff.pos
             
             return {
-                'name': full_name,
-                'position': position
+                'staff_id': staff.staff_id,
+                'staff_name': staff_name or "Name not found",
+                'staff_position': staff_position.pos_title if staff_position else None,
             }
-        return {
-            'name': f"Staff #{obj.staff.staff_id if obj.staff else 'Unknown'}",
-            'position': "Staff"
-        }
+            
+        except Exception as e:
+            return {
+                'error': str(e),
+                'staff_id': obj.staff.staff_id if obj.staff else None,
+            }
+    
+class ComplaintCreateSerializer(serializers.ModelSerializer):
+    complainant = serializers.SerializerMethodField(read_only=True)
+    accused = serializers.SerializerMethodField(read_only=True)
+    complaint_files = ComplaintFileSerializer(source='files', many=True, read_only=True)
+    staff = serializers.PrimaryKeyRelatedField(
+        queryset=Staff.objects.all(), 
+        required=False, 
+        allow_null=True
+    )
+    
+    class Meta:
+        model = Complaint
+        fields = [
+            'comp_id',
+            'comp_incident_type',
+            'comp_location',
+            'comp_datetime',
+            'comp_allegation',
+            'comp_created_at',
+            'comp_rejection_reason',
+            'comp_cancel_reason',
+            'complainant', 
+            'accused',      
+            'complaint_files',
+            'comp_status',
+            'staff',
+        ]
+        read_only_fields = [
+            'comp_id', 
+            'comp_created_at', 
+            'complainant', 
+            'accused',
+            'complaint_files',
+            'comp_rejection_reason',
+            'comp_cancel_reason',
+        ]
+    
+    def get_complainant(self, obj):
+        """Get all complainants for this complaint"""
+        complainants = obj.complaintcomplainant_set.all()
+        result = []
+        for cc in complainants:
+            complainant_data = {
+                'cpnt_id': cc.cpnt.cpnt_id,
+                'cpnt_name': cc.cpnt.cpnt_name,
+                'cpnt_gender': cc.cpnt.cpnt_gender,
+                'cpnt_age': cc.cpnt.cpnt_age,
+                'cpnt_number': cc.cpnt.cpnt_number,
+                'cpnt_relation_to_respondent': cc.cpnt.cpnt_relation_to_respondent,
+                'cpnt_address': cc.cpnt.cpnt_address,
+                'rp_id': cc.cpnt.rp_id.rp_id if cc.cpnt.rp_id else None
+            }
+            result.append(complainant_data)
+        return result
+    
+    def get_accused(self, obj):
+        """Get all accused persons for this complaint"""
+        accused = obj.complaintaccused_set.all()
+        result = []
+        for ca in accused:
+            accused_data = {
+                'acsd_id': ca.acsd.acsd_id,
+                'acsd_name': ca.acsd.acsd_name,
+                'acsd_age': ca.acsd.acsd_age,
+                'acsd_gender': ca.acsd.acsd_gender,
+                'acsd_description': ca.acsd.acsd_description,
+                'acsd_address': ca.acsd.acsd_address,
+                'rp_id': ca.acsd.rp_id.rp_id if ca.acsd.rp_id else None
+            }
+            result.append(accused_data)
+        return result
+    
+    def create(self, validated_data):
+        # Get staff from validated_data
+        staff = validated_data.pop('staff', None)
+        
+        complaint = Complaint.objects.create(**validated_data)
+        
+        if staff:
+            complaint.staff = staff
+            complaint.comp_status = "Accepted"
+            complaint.save()
+        
+        return complaint
     
 class ComplaintUpdateSerializer(serializers.ModelSerializer):
     staff_id = serializers.IntegerField(required=False, allow_null=True)

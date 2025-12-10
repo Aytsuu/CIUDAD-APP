@@ -4,16 +4,14 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-
 # Local
 from apps.complaint.models import Complaint, Complainant, Accused, ComplaintComplainant, ComplaintAccused, Complaint_File
-from apps.complaint.serializers import ComplaintSerializer
+from apps.complaint.serializers import ComplaintCreateSerializer
 from apps.account.models import Account
 from apps.profiling.models import ResidentProfile, PersonalAddress, Personal
 from apps.administration.models import Staff
 from apps.notification.utils import create_notification, reminder_notification
 from ..serializers import ComplaintFileSerializer
-
 # Django
 from django.db import transaction
 from django.core.exceptions import ObjectDoesNotExist
@@ -21,10 +19,8 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.core.files.base import ContentFile
-
 # Utility
 from utils.supabase_client import upload_to_storage
-
 # Python
 import json
 import logging
@@ -37,13 +33,9 @@ logger = logging.getLogger(__name__)
 
 class ComplaintCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
-    serializer_class = ComplaintSerializer
-
+    serializer_class = ComplaintCreateSerializer 
     def post(self, request, *args, **kwargs):
         try:
-            logger.info(f"Received data keys: {request.data.keys()}")
-            logger.info(f"Request content type: {request.content_type}")
-
             # Parse complainants safely
             complainants_data = request.data.get("complainant", [])
             if isinstance(complainants_data, str):
@@ -98,16 +90,17 @@ class ComplaintCreateView(APIView):
                 "comp_location": request.data.get("comp_location"),
                 "comp_datetime": request.data.get("comp_datetime"),
                 "comp_allegation": request.data.get("comp_allegation"),
+                "comp_status": "Pending",
             }
 
             # Add staff_id if provided
-            if request.data.get("staff"):
+            staff_id = request.data.get("staff") 
+            if staff_id:
                 try:
-                    staff_instance = Staff.objects.get(staff_id=request.data["staff"])
+                    staff_instance = Staff.objects.get(staff_id=staff_id)
                     complaint_data["staff"] = staff_instance.pk
-                    complaint_data["comp_status"] = "Accepted"
                 except Staff.DoesNotExist:
-                    logger.warning(f"Staff with ID {request.data['staff']} not found")
+                    logger.warning(f"Staff with ID {staff_id} not found")
 
             # Validate required fields
             required_fields = [
@@ -124,8 +117,7 @@ class ComplaintCreateView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            # Serialize complaint
-            serializer = ComplaintSerializer(
+            serializer = ComplaintCreateSerializer( 
                 data=complaint_data, context={"request": request}
             )
 
@@ -197,36 +189,31 @@ class ComplaintCreateView(APIView):
                         transaction.savepoint_rollback(sid)
 
                 # Serialize response with related data
-                response_serializer = ComplaintSerializer(
+                response_serializer = ComplaintCreateSerializer( 
                     complaint, context={"request": request}
                 )
 
-                # Create notification
                 try:
-                    # Get all staff with ADMIN position
-                    staff = Staff.objects.filter(staff_type="BARANGAY STAFF", pos__pos_title="ADMIN").select_related("rp")
+                    staff_list = Staff.objects.filter(staff_type="BARANGAY STAFF", pos__pos_title="BPSO HEAD").select_related("rp")
                     recipients = []
                     
-                    for staff in staff:
+                    for staff in staff_list:
                         if staff.rp:
                             print(f"Staff RP ID: {staff.rp.rp_id}")
                             recipients.append(staff.rp)
-                        
-                        complaint_payload = ComplaintSerializer(complaint, context={"request": request}).data
-                        
+                    
+                    # Only create notification if recipients exist
+                    if recipients:
                         notification = create_notification(
                             title="New Complaint Filed",
-                            message=(
-                                f"A {complaint.comp_incident_type} complaint is awaiting your review. "
-                            ),
+                            message=f"A {complaint.comp_incident_type} complaint is awaiting your review.",
                             recipients=recipients,
                             notif_type="REQUEST",
                             web_route="complaint/view/",
-                            web_params={"comp_id": str(complaint.comp_id),},
+                            web_params={"comp_id": str(complaint.comp_id)},
                             mobile_route="/(my-request)/complaint-tracking/compMainView",
                             mobile_params={"comp_id": str(complaint.comp_id)},
                         )
-
                     else:
                         logger.warning("No ADMIN staff found to notify.")
 
@@ -239,22 +226,18 @@ class ComplaintCreateView(APIView):
                 )
                 
             else:
-                logger.error(f"Serializer errors: {serializer.errors}")
                 return Response(
                     {"error": "Invalid data provided", "details": serializer.errors},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
         except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {str(e)}")
             return Response(
                 {"error": "Invalid JSON data in request"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         except Exception as e:
-            logger.error(f"Unexpected error in ComplaintCreateView: {str(e)}")
-            logger.error(f"Error traceback: ", exc_info=True)  # This will log the full traceback
             return Response(
                 {"error": "An unexpected error occurred", "detail": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
