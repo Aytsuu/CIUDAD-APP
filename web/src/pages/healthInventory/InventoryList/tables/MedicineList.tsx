@@ -150,15 +150,15 @@ export default function MedicineList() {
 
   return (
     <div className="relative">
-      <div className="hidden lg:flex justify-between items-center mb-4">
-        <div className="w-full flex gap-2 mr-2">
+      <div className="gap-2 flex justify-between items-center mb-4">
+        <div className="w-full flex gap-2 ">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input placeholder="Search medicine name..." className="pl-10 bg-white w-full" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} />
           </div>
         </div>
         <Button onClick={handleAddNew}>
-          <div className="flex justify-center items-center gap-2 px-2">
+          <div className="flex justify-center w-fullitems-center gap-2 px-2">
             <Plus size={15} /> New
           </div>
         </Button>

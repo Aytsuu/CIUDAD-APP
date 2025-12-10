@@ -287,13 +287,17 @@ const prepareExportData = () => {
         </Card>
       </div>
 
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        <div className="w-full flex gap-2 mr-2">
+      <div className="relative w-full flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+        <div className="w-full flex gap-2 sm:flex-row ">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input placeholder="Search inventory..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
-          <SelectLayout
+         
+        </div>
+
+        <div className="w-full flex gap-2 sm:flex-row justify-end">
+        <SelectLayout
             placeholder="Filter by stock status"
             label=""
             className="bg-white w-48"
@@ -307,7 +311,6 @@ const prepareExportData = () => {
             value={stockFilter}
             onChange={(value) => setStockFilter(value as any)}
           />
-        </div>
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -324,6 +327,7 @@ const prepareExportData = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
         </div>
       </div>
 

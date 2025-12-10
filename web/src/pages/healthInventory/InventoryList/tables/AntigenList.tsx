@@ -36,7 +36,7 @@ export default function AntigenList() {
               className="flex items-center justify-center gap-2 py-2 data-[state=active]:text-blue-500 data-[state=active]:rounded-full transition-all"
             >
               <Package className="h-4 w-4" />
-              <span>Immunization Supplies</span>
+              <span>Supplies</span>
               <span className="ml-1 bg-primary/10 text-primary text-xs font-medium px-2 py-0.5 rounded-full">
                 {getCountDisplay(suppliesCount, count_loading)}
               </span>

@@ -32,7 +32,7 @@ export default function MedicineStocks() {
   const [isArchiveConfirmationOpen, setIsArchiveConfirmationOpen] = useState(false);
   const [medicineToArchive, setMedicineToArchive] = useState<string | null>(null);
   const [archiveContext, setArchiveContext] = useState({ isExpired: false, hasAvailableStock: false });
-  
+
   // New state for WastedModal
   const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
@@ -63,9 +63,9 @@ export default function MedicineStocks() {
 
   const handleArchiveInventory = (medicine: any) => {
     // Check if the item is expired and has available stock
-    const isExpired = medicine.expiry_status === 'expired';
+    const isExpired = medicine.expiry_status === "expired";
     const hasAvailableStock = medicine.minv_qty_avail > 0;
-    
+
     setMedicineToArchive(medicine.inv_id);
     setArchiveContext({ isExpired, hasAvailableStock });
     setIsArchiveConfirmationOpen(true);
@@ -84,95 +84,97 @@ export default function MedicineStocks() {
   };
 
   // Export functionality
- // Corrected prepareExportData function for Medicine
-const prepareExportData = () => {
-  return medicineData.map((medicine: any) => {
-    const expired = medicine.isExpired;
-    const isLow = medicine.isLowStock;
-    const isOutOfStock = medicine.isOutOfStock;
-    const isNear = medicine.isNearExpiry;
-    const unit = medicine.minv_qty_unit;
-    const pcs = medicine.qty?.pcs || 1;
+  // Corrected prepareExportData function for Medicine
+  const prepareExportData = () => {
+    return medicineData.map((medicine: any) => {
+      const expired = medicine.isExpired;
+      const isLow = medicine.isLowStock;
+      const isOutOfStock = medicine.isOutOfStock;
+      const isNear = medicine.isNearExpiry;
+      const unit = medicine.minv_qty_unit;
+      const pcs = medicine.qty?.pcs || 1;
 
-    // Format Total Qty based on unit type
-    let totalQtyDisplay = "";
-    if (unit.toLowerCase() === "boxes" && pcs > 1) {
-      totalQtyDisplay = `${medicine.qty_number} boxes (${medicine.qty_number * pcs} pcs)`;
-    } else {
-      totalQtyDisplay = `${medicine.qty_number} ${unit}`;
-    }
+      // Format Total Qty based on unit type
+      let totalQtyDisplay = "";
+      if (unit.toLowerCase() === "boxes" && pcs > 1) {
+        totalQtyDisplay = `${medicine.qty_number} boxes (${medicine.qty_number * pcs} pcs)`;
+      } else {
+        totalQtyDisplay = `${medicine.qty_number} ${unit}`;
+      }
 
-    // Add expired indicator to Total Qty
-    if (expired) {
-      totalQtyDisplay += " (Expired)";
-    }
+      // Add expired indicator to Total Qty
+      if (expired) {
+        totalQtyDisplay += " (Expired)";
+      }
 
-    // Format Available Stock based on unit type
-    let availableStockDisplay = "";
-    if (unit.toLowerCase() === "boxes" && pcs > 1) {
-      const availablePcs = medicine.availableStock;
-      const fullBoxes = Math.floor(availablePcs / pcs);
-      const remainingPcs = availablePcs % pcs;
-      const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
-      availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? 'es' : ''} (${availablePcs} total pcs)`;
-    } else {
-      availableStockDisplay = `${medicine.availableStock} ${unit}`;
-    }
+      // Format Available Stock based on unit type
+      let availableStockDisplay = "";
+      if (unit.toLowerCase() === "boxes" && pcs > 1) {
+        const availablePcs = medicine.availableStock;
+        const fullBoxes = Math.floor(availablePcs / pcs);
+        const remainingPcs = availablePcs % pcs;
+        const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
+        availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? "es" : ""} (${availablePcs} total pcs)`;
+      } else {
+        availableStockDisplay = `${medicine.availableStock} ${unit}`;
+      }
 
-    // Add status indicators to Available Stock
-    if (expired) {
-      availableStockDisplay += " (Expired)";
-    } else {
-      if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
-      if (isLow) availableStockDisplay += " (Low Stock)";
-    }
+      // Add status indicators to Available Stock
+      if (expired) {
+        availableStockDisplay += " (Expired)";
+      } else {
+        if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
+        if (isLow) availableStockDisplay += " (Low Stock)";
+      }
 
-    // Determine overall status
-    let status = "Normal";
-    if (expired) {
-      status = "Expired";
-    } else if (isOutOfStock) {
-      status = "Out of Stock";
-    } else if (isLow) {
-      status = "Low Stock";
-    } else if (isNear) {
-      status = "Near Expiry";
-    }
+      // Determine overall status
+      let status = "Normal";
+      if (expired) {
+        status = "Expired";
+      } else if (isOutOfStock) {
+        status = "Out of Stock";
+      } else if (isLow) {
+        status = "Low Stock";
+      } else if (isNear) {
+        status = "Near Expiry";
+      }
 
-    // Format Medicine Details with dosage info
-    const medicineName = medicine.item?.medicineName || "Unknown Medicine";
-    const dosage = medicine.item?.dosage || 0;
-    const dsgUnit = medicine.item?.dsgUnit || "";
-    const form = medicine.item?.form || "";
-    const medicineDetails = `${medicineName}${expired ? " (Expired)" : ""} - ${dosage} ${dsgUnit}, ${form}`;
+      // Format Medicine Details with dosage info
+      const medicineName = medicine.item?.medicineName || "Unknown Medicine";
+      const dosage = medicine.item?.dosage || 0;
+      const dsgUnit = medicine.item?.dsgUnit || "";
+      const form = medicine.item?.form || "";
+      const medicineDetails = `${medicineName}${expired ? " (Expired)" : ""} - ${dosage} ${dsgUnit}, ${form}`;
 
-    // Format Expiry Date
-    let expiryDateDisplay = medicine.expiryDate ? new Date(medicine.expiryDate).toLocaleDateString() : "N/A";
-    if (expired) {
-      expiryDateDisplay += " (Expired)";
-    } else if (isNear) {
-      expiryDateDisplay += " (Near Expiry)";
-    }
+      // Format Expiry Date
+      let expiryDateDisplay = medicine.expiryDate ? new Date(medicine.expiryDate).toLocaleDateString() : "N/A";
+      if (expired) {
+        expiryDateDisplay += " (Expired)";
+      } else if (isNear) {
+        expiryDateDisplay += " (Near Expiry)";
+      }
 
-    return {
-      "Date": medicine.created_at ? new Date(medicine.created_at).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      }) : "N/A",
-      "ID": medicine.inv_id || "N/A",
-      "Medicine Details": medicineDetails,
-      "Dosage": `${dosage} ${dsgUnit}`,
-      "Form": form,
-      "Category": medicine.category || "N/A",
-      "Total Qty": totalQtyDisplay,
-      "Available Stock": availableStockDisplay,
-      "Qty Used": medicine.administered || 0,
-      "Expiry Date": expiryDateDisplay,
-      "Status": status
-    };
-  });
-};
+      return {
+        Date: medicine.created_at
+          ? new Date(medicine.created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric"
+            })
+          : "N/A",
+        ID: medicine.inv_id || "N/A",
+        "Medicine Details": medicineDetails,
+        Dosage: `${dosage} ${dsgUnit}`,
+        Form: form,
+        Category: medicine.category || "N/A",
+        "Total Qty": totalQtyDisplay,
+        "Available Stock": availableStockDisplay,
+        "Qty Used": medicine.administered || 0,
+        "Expiry Date": expiryDateDisplay,
+        Status: status
+      };
+    });
+  };
 
   const handleExportCSV = () => {
     const dataToExport = prepareExportData();
@@ -194,8 +196,8 @@ const prepareExportData = () => {
       setIsArchiveConfirmationOpen(false);
       try {
         // Pass the expiration and stock status to the mutation
-        await archiveInventoryMutation({ 
-          inv_id: medicineToArchive, 
+        await archiveInventoryMutation({
+          inv_id: medicineToArchive,
           isExpired: archiveContext.isExpired,
           hasAvailableStock: archiveContext.hasAvailableStock
         });
@@ -255,7 +257,7 @@ const prepareExportData = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-col items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Expired</CardTitle>
             <CalendarOff className="h-4 w-4 text-gray-500" />
           </CardHeader>
@@ -265,12 +267,14 @@ const prepareExportData = () => {
         </Card>
       </div>
 
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
-        <div className="w-full flex gap-2 mr-2">
+      <div className="relative w-full flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+        <div className="w-full flex ">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input placeholder="Search medicine..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
+        </div>
+        <div className="w-full flex gap-2 sm:flex-row justify-end">
           <SelectLayout
             placeholder="Filter by stock status"
             label=""
@@ -285,10 +289,10 @@ const prepareExportData = () => {
             value={stockFilter}
             onChange={(value) => setStockFilter(value as StockFilter)}
           />
+          <Button onClick={() => navigate("/inventory-stocks/list/stocks/medicine/add")} className="hover:bg-buttonBlue/90 group">
+            <Plus size={15} /> New Medicine
+          </Button>
         </div>
-        <Button onClick={() => navigate("/inventory-stocks/list/stocks/medicine/add")} className="hover:bg-buttonBlue/90 group">
-          <Plus size={15} /> New Medicine
-        </Button>
       </div>
 
       <div className="h-full w-full rounded-md">
@@ -310,12 +314,7 @@ const prepareExportData = () => {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
-            <ExportDropdown 
-              onExportCSV={handleExportCSV} 
-              onExportExcel={handleExportExcel} 
-              onExportPDF={handleExportPDF} 
-              className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
-            />
+            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
           </div>
         </div>
 

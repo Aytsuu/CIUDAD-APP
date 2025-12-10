@@ -145,7 +145,7 @@ export default function SupplyList() {
   return (
     <div className="space-y-4">
       {/* Search and Add Button */}
-      <div className="hidden lg:flex justify-between items-center">
+      <div className="flex justify-between items-center">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />

@@ -35,7 +35,7 @@ export default function CommodityStocks() {
     isExpired: boolean;
     hasAvailableStock: boolean;
   } | null>(null);
-  
+
   // New state for WastedModal
   const [isWastedModalOpen, setIsWastedModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
@@ -47,9 +47,7 @@ export default function CommodityStocks() {
   const { data: apiResponse, isLoading, error } = useCommodityStocksTable(currentPage, pageSize, searchQuery, stockFilter);
 
   // Extract data from paginated response
-  const commodityData = Array.isArray(apiResponse?.results) 
-  ? apiResponse.results 
-  : [];
+  const commodityData = Array.isArray(apiResponse?.results) ? apiResponse.results : [];
   const totalCount = apiResponse?.count || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -92,92 +90,94 @@ export default function CommodityStocks() {
 
   // Export functionality
   // Corrected prepareExportData function for Commodity
-const prepareExportData = () => {
-  return commodityData.map((commodity: any) => {
-    const expired = commodity.isExpired;
-    const isLow = commodity.isLowStock;
-    const isOutOfStock = commodity.isOutOfStock;
-    const isNear = commodity.isNearExpiry;
-    const unit = commodity.cinv_qty_unit;
-    const pcs = commodity.qty?.cinv_pcs || 1;
+  const prepareExportData = () => {
+    return commodityData.map((commodity: any) => {
+      const expired = commodity.isExpired;
+      const isLow = commodity.isLowStock;
+      const isOutOfStock = commodity.isOutOfStock;
+      const isNear = commodity.isNearExpiry;
+      const unit = commodity.cinv_qty_unit;
+      const pcs = commodity.qty?.cinv_pcs || 1;
 
-    // Format Total Qty based on unit type
-    let totalQtyDisplay = "";
-    if (unit.toLowerCase() === "boxes" && pcs > 1) {
-      totalQtyDisplay = `${commodity.qty_number} boxes (${commodity.qty_number * pcs} pcs)`;
-    } else {
-      totalQtyDisplay = `${commodity.qty_number} ${unit}`;
-    }
+      // Format Total Qty based on unit type
+      let totalQtyDisplay = "";
+      if (unit.toLowerCase() === "boxes" && pcs > 1) {
+        totalQtyDisplay = `${commodity.qty_number} boxes (${commodity.qty_number * pcs} pcs)`;
+      } else {
+        totalQtyDisplay = `${commodity.qty_number} ${unit}`;
+      }
 
-    // Add expired indicator to Total Qty
-    if (expired) {
-      totalQtyDisplay += " (Expired)";
-    }
+      // Add expired indicator to Total Qty
+      if (expired) {
+        totalQtyDisplay += " (Expired)";
+      }
 
-    // Format Available Stock based on unit type
-    let availableStockDisplay = "";
-    if (unit.toLowerCase() === "boxes" && pcs > 1) {
-      const availablePcs = commodity.availableStock;
-      const fullBoxes = Math.floor(availablePcs / pcs);
-      const remainingPcs = availablePcs % pcs;
-      const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
-      availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? 'es' : ''} (${availablePcs} total pcs)`;
-    } else {
-      availableStockDisplay = `${commodity.availableStock} ${unit}`;
-    }
+      // Format Available Stock based on unit type
+      let availableStockDisplay = "";
+      if (unit.toLowerCase() === "boxes" && pcs > 1) {
+        const availablePcs = commodity.availableStock;
+        const fullBoxes = Math.floor(availablePcs / pcs);
+        const remainingPcs = availablePcs % pcs;
+        const totalBoxes = remainingPcs > 0 ? fullBoxes + 1 : fullBoxes;
+        availableStockDisplay = `${totalBoxes} box${totalBoxes !== 1 ? "es" : ""} (${availablePcs} total pcs)`;
+      } else {
+        availableStockDisplay = `${commodity.availableStock} ${unit}`;
+      }
 
-    // Add status indicators to Available Stock
-    if (expired) {
-      availableStockDisplay += " (Expired)";
-    } else {
-      if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
-      if (isLow) availableStockDisplay += " (Low Stock)";
-    }
+      // Add status indicators to Available Stock
+      if (expired) {
+        availableStockDisplay += " (Expired)";
+      } else {
+        if (isOutOfStock) availableStockDisplay += " (Out of Stock)";
+        if (isLow) availableStockDisplay += " (Low Stock)";
+      }
 
-    // Determine overall status
-    let status = "Normal";
-    if (expired) {
-      status = "Expired";
-    } else if (isOutOfStock) {
-      status = "Out of Stock";
-    } else if (isLow) {
-      status = "Low Stock";
-    } else if (isNear) {
-      status = "Near Expiry";
-    }
+      // Determine overall status
+      let status = "Normal";
+      if (expired) {
+        status = "Expired";
+      } else if (isOutOfStock) {
+        status = "Out of Stock";
+      } else if (isLow) {
+        status = "Low Stock";
+      } else if (isNear) {
+        status = "Near Expiry";
+      }
 
-    // Format Commodity Details with expired indicator
-    const commodityName = commodity.item?.com_name || "Unknown Commodity";
-    const commodityDetails = `${commodityName}${expired ? " (Expired)" : ""}`;
+      // Format Commodity Details with expired indicator
+      const commodityName = commodity.item?.com_name || "Unknown Commodity";
+      const commodityDetails = `${commodityName}${expired ? " (Expired)" : ""}`;
 
-    // Format Received From
-    const receivedFrom = commodity.recevFrom?.toUpperCase() || "OTHERS";
+      // Format Received From
+      const receivedFrom = commodity.recevFrom?.toUpperCase() || "OTHERS";
 
-    // Format Expiry Date
-    let expiryDateDisplay = commodity.expiryDate ? new Date(commodity.expiryDate).toLocaleDateString() : "N/A";
-    if (expired) {
-      expiryDateDisplay += " (Expired)";
-    } else if (isNear) {
-      expiryDateDisplay += " (Near Expiry)";
-    }
+      // Format Expiry Date
+      let expiryDateDisplay = commodity.expiryDate ? new Date(commodity.expiryDate).toLocaleDateString() : "N/A";
+      if (expired) {
+        expiryDateDisplay += " (Expired)";
+      } else if (isNear) {
+        expiryDateDisplay += " (Near Expiry)";
+      }
 
-    return {
-      "Date": commodity.created_at ? new Date(commodity.created_at).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      }) : "N/A",
-      "ID": commodity.inv_id || "N/A",
-      "Commodity Details": commodityDetails,
-      "Received From": receivedFrom,
-      "Total Qty": totalQtyDisplay,
-      "Available Stock": availableStockDisplay,
-      "Qty Used": commodity.administered || 0,
-      "Expiry Date": expiryDateDisplay,
-      "Status": status
-    };
-  });
-};
+      return {
+        Date: commodity.created_at
+          ? new Date(commodity.created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric"
+            })
+          : "N/A",
+        ID: commodity.inv_id || "N/A",
+        "Commodity Details": commodityDetails,
+        "Received From": receivedFrom,
+        "Total Qty": totalQtyDisplay,
+        "Available Stock": availableStockDisplay,
+        "Qty Used": commodity.administered || 0,
+        "Expiry Date": expiryDateDisplay,
+        Status: status
+      };
+    });
+  };
 
   const handleExportCSV = () => {
     const dataToExport = prepareExportData();
@@ -268,12 +268,15 @@ const prepareExportData = () => {
         </Card>
       </div>
 
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+      <div className="relative w-full flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input placeholder="Search commodity..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
+        </div>
+
+        <div className="w-full flex gap-2 sm:flex-row justify-end">
           <SelectLayout
             placeholder="Filter by stock status"
             label=""
@@ -288,10 +291,10 @@ const prepareExportData = () => {
             value={stockFilter}
             onChange={(value) => setStockFilter(value as StockFilter)}
           />
+          <Button onClick={() => navigate("/inventory-stocks/list/stocks/commodity/add")} className="hover:bg-buttonBlue/90 group">
+            <Plus size={15} /> New Commodity
+          </Button>
         </div>
-        <Button onClick={() => navigate("/inventory-stocks/list/stocks/commodity/add")} className="hover:bg-buttonBlue/90 group">
-          <Plus size={15} /> New Commodity
-        </Button>
       </div>
 
       <div className="h-full w-full rounded-md">
@@ -313,12 +316,7 @@ const prepareExportData = () => {
             <p className="text-xs sm:text-sm">Entries</p>
           </div>
           <div>
-            <ExportDropdown 
-              onExportCSV={handleExportCSV} 
-              onExportExcel={handleExportExcel} 
-              onExportPDF={handleExportPDF} 
-              className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" 
-            />
+            <ExportDropdown onExportCSV={handleExportCSV} onExportExcel={handleExportExcel} onExportPDF={handleExportPDF} className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200" />
           </div>
         </div>
 

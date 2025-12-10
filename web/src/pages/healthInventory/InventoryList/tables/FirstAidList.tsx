@@ -169,7 +169,7 @@ export default function FirstAidList() {
 
   return (
     <div className="relative">
-      <div className="hidden lg:flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />

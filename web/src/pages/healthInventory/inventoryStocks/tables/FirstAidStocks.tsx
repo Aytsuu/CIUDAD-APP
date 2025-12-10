@@ -263,12 +263,15 @@ export default function FirstAidStocks() {
         </Card>
       </div>
 
-      <div className="relative w-full hidden lg:flex justify-between items-center mb-4">
+      <div className="relative w-full flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
         <div className="w-full flex gap-2 mr-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
             <Input placeholder="Search first aid..." className="pl-10 bg-white w-full" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           </div>
+        </div>
+
+        <div className="w-full flex gap-2 sm:flex-row justify-end">
           <SelectLayout
             placeholder="Filter by stock status"
             label=""
@@ -283,10 +286,10 @@ export default function FirstAidStocks() {
             value={stockFilter}
             onChange={(value) => setStockFilter(value as StockFilter)}
           />
+          <Button onClick={() => navigate("/inventory-stocks/list/stocks/firstaid/add")} className="hover:bg-buttonBlue/90 group">
+            <Plus size={15} /> New First Aid
+          </Button>
         </div>
-        <Button onClick={() => navigate("/inventory-stocks/list/stocks/firstaid/add")} className="hover:bg-buttonBlue/90 group">
-          <Plus size={15} /> New First Aid
-        </Button>
       </div>
 
       <div className="h-full w-full rounded-md">
