@@ -2,8 +2,10 @@ import { Clock, MapPin, Calendar } from "lucide-react";
 import { useGetCouncilEvents } from "@/pages/record/council/Calendar/queries/councilEventfetchqueries";
 import { CouncilEvent } from "@/pages/record/council/Calendar/councilEventTypes";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 export const CouncilEventsDashboard = () => {
+  const navigate = useNavigate();
   const { data, isLoading } = useGetCouncilEvents(1, 100, undefined, undefined, false);
 
   // Filter events for the next 5 days (upcoming, non-archived)
@@ -39,6 +41,7 @@ export const CouncilEventsDashboard = () => {
       {upcomingEvents.slice(0, 3).map((event: CouncilEvent) => (
         <div
           key={event.ce_id}
+          onClick={() => navigate('/calendar-page')}
           className="bg-white/10 backdrop-blur-sm rounded-lg p-4 hover:bg-white/20 transition-all cursor-pointer border border-white/10"
         >
           <h3 className="text-white font-semibold text-base mb-2 line-clamp-1">
