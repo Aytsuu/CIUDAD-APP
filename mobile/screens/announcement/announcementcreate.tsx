@@ -38,7 +38,7 @@ function uniquePreserve<T>(items: T[], keyFn: (x: T) => string): T[] {
   const seen = new Set<string>();
   const out: T[] = [];
   for (const it of items) {
-    const k = keyFn(it).toLowerCase();
+    const k = keyFn(it)?.toLowerCase();
     if (!seen.has(k)) {
       seen.add(k);
       out.push(it);
@@ -85,7 +85,7 @@ export default function AnnouncementCreate() {
   const { mutateAsync: postAnnouncementRecipient } =
     usePostAnnouncementRecipient();
   const { mutateAsync: updateAnnouncement } = useUpdateAnnouncement();
-  const { data: positions = [] } = usePositions();
+  const { data: positions } = usePositions();
 
   React.useEffect(() => {
     if (recipientType !== "STAFF") {
@@ -109,10 +109,9 @@ export default function AnnouncementCreate() {
         const types = data?.recipients?.ar_types;
         const category = new Set(
           positions
-            .filter((pos: any) => types.includes(pos.pos_title) == true)
-            .map((pos: any) => pos.pos_category)
+            ?.filter((pos: any) => types.includes(pos.pos_title) == true)
+            ?.map((pos: any) => pos.pos_category)
         );
-        console.log([...category][0]);
         if ([...category].length > 0) {
           setValue(
             "pos_category",
@@ -133,10 +132,10 @@ export default function AnnouncementCreate() {
 
   const categoryOptions = React.useMemo(() => {
     const cats = positions
-      .map((p: { pos_category: any }) => p.pos_category)
-      .filter(Boolean);
+      ?.map((p: { pos_category: any }) => p.pos_category)
+      ?.filter(Boolean);
     const uniqueCats = Array.from(new Set(cats));
-    return uniqueCats.map((cat) => ({
+    return uniqueCats?.map((cat) => ({
       label: cat as string,
       value: cat as string,
     }));
@@ -353,15 +352,15 @@ export default function AnnouncementCreate() {
                     control={control}
                     name="ar_type"
                     options={positions
-                      .filter(
+                      ?.filter(
                         (pos: any) =>
                           (pos.pos_category == posCategory ||
                             posCategory == "ALL") &&
                           pos.pos_title !== "ADMIN"
                       )
-                      .map((pos: any) => ({
-                        label: pos.pos_title,
-                        value: pos.pos_title,
+                      ?.map((pos: any) => ({
+                        id: pos.pos_title,
+                        name: pos.pos_title,
                       }))}
                   />
                 )}
@@ -445,7 +444,6 @@ export default function AnnouncementCreate() {
                           checked={value}
                           onCheckedChange={(checked) => onChange(checked)}
                           className="border-gray-300 w-5 h-5"
-                          indicatorClassName="bg-primaryBlue"
                         />
                         <Text className="text-gray-700">SMS</Text>
                       </TouchableOpacity>
@@ -464,7 +462,6 @@ export default function AnnouncementCreate() {
                           checked={value}
                           onCheckedChange={(checked) => onChange(checked)}
                           className="border-gray-300 w-5 h-5"
-                          indicatorClassName="bg-primaryBlue"
                         />
                         <Text className="text-gray-700">EMAIL</Text>
                       </TouchableOpacity>
