@@ -25,7 +25,9 @@ export const useAnimalBitePatientDetails = () => {
   return useQuery({
     queryKey: ["animalbite-patients"],
     queryFn: () => getAnimalBitePatientDetails(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   })
 }
 
@@ -43,7 +45,9 @@ export const useAnimalBitePatientSummary = () => {
   return useQuery({
     queryKey: ["animalbite-patient-summary"],
     queryFn: () => getAnimalBitePatientSummary(),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+       staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 };
 
@@ -61,7 +65,9 @@ export const useAnimalbiteDetails = () => {
   return useQuery({
     queryKey: ["animalbite-details"],
     queryFn: getAnimalbiteDetails,
-    staleTime: 1000 * 60 * 5,
+       staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   })
 }
 
@@ -82,7 +88,9 @@ export const useUniqueAnimalbitePatients = (params?: {
   return useQuery({
     queryKey: ["unique-animalbite-patients", params],
     queryFn: () => getUniqueAnimalbitePatients(params),
-    staleTime: 1000 * 60 * 5,
+       staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   })
 }
 

@@ -104,6 +104,8 @@ export default function FamPlanningTable() {
       refetchOnMount: true,       // Refetches every time you visit this page
     refetchOnWindowFocus: true, // Refetches if you switch tabs and come back
     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const fpRecords = paginatedFpRecords?.results || [];
@@ -119,6 +121,8 @@ export default function FamPlanningTable() {
     queryKey: ["fpPatientCounts"],
     queryFn: getFPPatientsCounts,
     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
   });
 
   const totalPages = Math.ceil(totalRecordsCount / pageSize);
