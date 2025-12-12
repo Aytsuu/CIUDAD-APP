@@ -3,7 +3,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { Button } from "@/components/ui/button/button";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Input } from "@/components/ui/input";
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import {
   Search,
   UserRoundCog,
@@ -29,9 +29,11 @@ import { useAuth } from "@/context/AuthContext";
 import DialogLayout from "@/components/ui/dialog/dialog-layout";
 import SitioManagement from "./SitioManagement";
 import { Spinner } from "@/components/ui/spinner";
+import DropdownLayout from "@/components/ui/dropdown/dropdown-layout";
 
 export default function AdministrationRecords() {
   // ----------------- STATE INITIALIZATION --------------------
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { showLoading, hideLoading } = useLoading();
   const [searchQuery, setSearchQuery] = React.useState<string>("");
@@ -67,6 +69,20 @@ export default function AdministrationRecords() {
   // ================== HANDLERS ==================
   const handlePageChange = (page: number) => {
     setSearchParams({ page: String(page) });
+  };
+
+  const handleCreateSelect = (id: string) => {
+    const isNew = id === "new";
+    navigate(isNew ? "staff/create" : "staff/assignment", {
+      state: {
+        params: {
+          origin: "administration",
+          title: isNew ? "Staff Registration" : "Staff Assignment",
+          description:
+            "Ensure that all required fields are filled out correctly before submission.",
+        },
+      },
+    });
   };
 
   return (
@@ -116,22 +132,27 @@ export default function AdministrationRecords() {
                 </Button>
               </Link>
 
-              <Link
-                to="staff/assignment"
-                state={{
-                  params: {
-                    origin: "administration",
-                    title: "Staff Registration",
-                    description:
-                      "Ensure that all required fields are filled out correctly before submission.",
+              <DropdownLayout
+                trigger={
+                  <Button className="px-4">
+                    <Plus size={16} className="mr-1" />
+                    Add New Staff
+                  </Button>
+                }
+                options={[
+                  {
+                    id: "new",
+                    name: "Register new profile",
+                    variant: "default",
                   },
-                }}
-              >
-                <Button className="px-4">
-                  <Plus size={16} className="mr-1" />
-                  Add New Staff
-                </Button>
-              </Link>
+                  {
+                    id: "existing",
+                    name: "Assign from existing resident",
+                    variant: "default",
+                  },
+                ]}
+                onSelect={handleCreateSelect}
+              />
             </div>
           </div>
         </div>

@@ -26,11 +26,11 @@ export const buttonConfig = (
         </Button>}
         mainContent={
           <AssignPosition
-            close={() => {
-              setIsAssignmentOpen(false);
+            tab_params={{
+              close: () => setIsAssignmentOpen(false),
+              personalInfoform: form,
+              addresses
             }}
-            personalInfoform={form}
-            addresses={addresses}
           />
         }
         isOpen={isAssignmentOpen}

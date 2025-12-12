@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { accountFormSchema } from "./account-schema";
+import { positionAssignmentSchema } from "./administration-schema";
 
 
 export const demographicInfoSchema = z.object({
@@ -56,14 +57,12 @@ export const personalInfoSchema = z.object({
     .optional(),
 
   per_contact: z.string()
-    .min(1, "Contact is required")
-    .regex(
-      /^09\d{9}$/,
-      "Must be a valid mobile number (e.g., 09171234567)"
-    )
-    .refine((val) => val.length === 11, {
+    .refine((val) => val === "" || val.match(/^09\d{9}$/), 
+    "Must be a valid mobile number (e.g., 09171234567)")
+    .refine((val) => val === "" || val.length === 11, {
       message: "Must be 11 digits (e.g., 09171234567)",
-    }),
+    })
+    .optional(),
   per_disability: z.string(),
   per_is_deceased: z.string(),
 });
@@ -289,5 +288,6 @@ export const CompleteResidentProfilingSchema = z.object({
     bus_gross_sales: z.string().min(1, 'Gross Sales is required'),
     bus_location: z.string().min(1, 'Business Address is required'),
     files: z.array(z.object({})).default([])
-  })
+  }),
+  positionAssignmentSchema
 })

@@ -17,7 +17,7 @@ from apps.healthProfiling.models import  (ResidentProfile,
     Family,
     )
 from apps.healthProfiling.serializers.all_record_serializers import *
-from apps.administration.models import Staff
+from apps.administration.models import Staff, Position
 from ..models import FamilyComposition
 from datetime import datetime
 from ..utils import *
@@ -84,6 +84,7 @@ class CompleteRegistrationView(APIView):
     livingSolo = request.data.get("livingSolo", None)
     family = request.data.get("family", None)
     staff = request.data.get("staff", None)
+    position = request.data.get("position", None)
 
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
@@ -103,6 +104,9 @@ class CompleteRegistrationView(APIView):
 
         if rp:
           results["rp_id"] = rp.pk
+    
+    if position:
+       self.create_staff(rp, position, staff)
 
     if len(houses) > 0:
         hh = self.create_household(houses, rp, staff)
@@ -157,6 +161,18 @@ class CompleteRegistrationView(APIView):
     )
 
     return resident_profile
+
+  def create_staff(self, rp, position, staff):
+    pos = Position.objects.filter(pos_id=position['pos_id']).first()
+    instance = Staff.objects.create(
+      staff_id=rp.rp_id,
+      staff_type=position["staff_type"],
+      rp=rp,
+      pos=pos,
+      manager=staff
+    )
+
+    return instance
   
   def create_household(self, houses, rp, staff):
     # data = [undefined, sitio, street]

@@ -3,6 +3,7 @@ import AdministrationRecords from "@/pages/record/administration/AdministrationR
 import NewPositionForm from "@/pages/record/administration/NewPositionForm"
 import GroupPositionForm from "@/pages/record/administration/GroupPositionForm"
 import ResidentFormLayout from "@/pages/record/profiling/resident/form/ResidentFormLayout"
+import RegistrationLayout from "@/pages/record/profiling/resident/RegistrationLayout"
 
 export const administration_router = [
     {
@@ -12,6 +13,10 @@ export const administration_router = [
     {
         path: 'administration/staff/assignment',
         element: <ResidentFormLayout />,
+    },
+    {
+        path: 'administration/staff/create',
+        element: <RegistrationLayout />,
     },
     {   
         path: 'administration/role',

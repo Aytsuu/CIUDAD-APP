@@ -6,7 +6,7 @@ import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
 import React from "react";
 import { Combobox } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button/button";
-import { Plus, X } from "lucide-react";
+import { Info, Plus, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
@@ -17,7 +17,7 @@ import { FormRadioGroup } from "@/components/ui/form/form-radio-group";
 
 // ==================== TYPES ====================
 type PersonalInfoFormProps = {
-  prefix?: string
+  prefix?: string;
   formattedSitio?: any;
   formattedResidents?: any;
   addresses?: any[];
@@ -35,8 +35,8 @@ type PersonalInfoFormProps = {
   setIsAssignmentOpen?: React.Dispatch<React.SetStateAction<boolean>>;
   setFormType?: React.Dispatch<React.SetStateAction<Type>>;
   submit: () => void;
-  onComboboxChange?: () => void;  
-  setSearchQuery?: React.Dispatch<React.SetStateAction<string>>
+  onComboboxChange?: () => void;
+  setSearchQuery?: React.Dispatch<React.SetStateAction<string>>;
 };
 
 // ==================== CONSTANTS ====================
@@ -104,236 +104,385 @@ const PersonalInfoForm = ({
   setFormType,
   submit,
   onComboboxChange,
-  setSearchQuery
+  setSearchQuery,
 }: PersonalInfoFormProps) => {
   // ============= INITIALIZING STATES =============
   const { control, setValue, watch } = form;
 
   const handleSetAddress = (idx: number, field: string, value: string) => {
-    setAddresses && setAddresses(prev => 
-      prev.map((address, prevIdx) => {
-        return (prevIdx === idx ? 
-          {...address, [field]: field !== "sitio" ? value.toUpperCase() : value} 
-          : address)
-      })
-    )
-  }   
+    setAddresses &&
+      setAddresses((prev) =>
+        prev.map((address, prevIdx) => {
+          return prevIdx === idx
+            ? {
+                ...address,
+                [field]: field !== "sitio" ? value.toUpperCase() : value,
+              }
+            : address;
+        })
+      );
+  };
 
   const handleRemoveAddress = (idx: number) => {
-    setValidAddresses && setValidAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
-    setAddresses && setAddresses(prev => prev.filter((_,removeIdx) => removeIdx !== idx));
-  }
+    setValidAddresses &&
+      setValidAddresses((prev) =>
+        prev.filter((_, removeIdx) => removeIdx !== idx)
+      );
+    setAddresses &&
+      setAddresses((prev) => prev.filter((_, removeIdx) => removeIdx !== idx));
+  };
 
   // ==================== RENDER ====================
   return (
     <>
       {origin === Origin.Administration && (
-        <Combobox 
-          options={formattedResidents}
-          value={watch(`${prefix}per_id` as any) as string}
-          onChange={(value) => {
-            setValue(`${prefix}per_id` as any, value);
-            onComboboxChange && onComboboxChange();
-          }}
-          onSearchChange={(value) => setSearchQuery && setSearchQuery(value)}
-          placeholder="Select a resident"
-          emptyMessage={
-            <div className="flex gap-2 justify-center items-center">
-              <Label className="font-normal text-[13px]">No resident found.</Label>
-              <Link to="/resident/form"
-                state={{
-                  params: {
-                    origin: "create",
-                    title: "Resident Registration",
-                    description: "Provide the necessary details, and complete the registration.",
-                  },
-                }}
-              >
-                <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
-                  Register
+        <div className="flex flex-col">
+          <Combobox
+            options={formattedResidents}
+            value={watch(`${prefix}per_id` as any) as string}
+            onChange={(value) => {
+              setValue(`${prefix}per_id` as any, value);
+              onComboboxChange && onComboboxChange();
+            }}
+            onSearchChange={(value) => setSearchQuery && setSearchQuery(value)}
+            placeholder="Select a resident"
+            emptyMessage={
+              <div className="flex gap-2 justify-center items-center">
+                <Label className="font-normal text-[13px]">
+                  No resident found.
                 </Label>
-              </Link>
-            </div>
-          }
-        />
+                <Link
+                  to="/resident/form"
+                  state={{
+                    params: {
+                      origin: "create",
+                      title: "Resident Registration",
+                      description:
+                        "Provide the necessary details, and complete the registration.",
+                    },
+                  }}
+                >
+                  <Label className="font-normal text-[13px] text-teal cursor-pointer hover:underline">
+                    Register
+                  </Label>
+                </Link>
+              </div>
+            }
+          />
+
+          <div className="mt-6 mb-2 flex items-center justify-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-700 border border-blue-100">
+            <Info className="fill-blue-700 stroke-white" size={20}/>
+            <span>
+              <span className="font-semibold">Note:</span> Select a resident to auto-fill the required fields.
+            </span>
+          </div>
+        </div>
       )}
 
       {formType == Type.Editing && (
         <div className="flex items-center gap-4 my-2">
-          <Label className="text-[15px] text-gray-700">Is this person deceased?</Label>
-          <FormRadioGroup control={control} name="per_is_deceased" orientation="horizontal" readOnly={isReadOnly} options={[
-            {value: "YES", label: "YES"},
-            {value: "NO", label: "NO"}
-          ]}/>
+          <Label className="text-[15px] text-gray-700">
+            Is this person deceased?
+          </Label>
+          <FormRadioGroup
+            control={control}
+            name="per_is_deceased"
+            orientation="horizontal"
+            readOnly={isReadOnly}
+            options={[
+              { value: "YES", label: "YES" },
+              { value: "NO", label: "NO" },
+            ]}
+          />
         </div>
       )}
-      
+
       {/* Name Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormInput control={control} name={`${prefix}per_lname`} label="Last Name" placeholder="Enter Last Name" readOnly={isReadOnly} upper={true} required noSpecialChars/>
-        <FormInput control={control} name={`${prefix}per_fname`} label="First Name" placeholder="Enter First Name" readOnly={isReadOnly} upper={true} required noSpecialChars/>
-        <FormInput control={control} name={`${prefix}per_mname`} label="Middle Name" placeholder="Enter Middle Name" readOnly={isReadOnly} upper={true} noSpecialChars/>
-        <FormInput control={control} name={`${prefix}per_suffix`} label="Suffix" placeholder="Sfx." readOnly={isReadOnly} upper={true} noSpecialChars/>
+        <FormInput
+          control={control}
+          name={`${prefix}per_lname`}
+          label="Last Name"
+          placeholder="Enter Last Name"
+          readOnly={isReadOnly}
+          upper={true}
+          required
+          noSpecialChars
+        />
+        <FormInput
+          control={control}
+          name={`${prefix}per_fname`}
+          label="First Name"
+          placeholder="Enter First Name"
+          readOnly={isReadOnly}
+          upper={true}
+          required
+          noSpecialChars
+        />
+        <FormInput
+          control={control}
+          name={`${prefix}per_mname`}
+          label="Middle Name"
+          placeholder="Enter Middle Name"
+          readOnly={isReadOnly}
+          upper={true}
+          noSpecialChars
+        />
+        <FormInput
+          control={control}
+          name={`${prefix}per_suffix`}
+          label="Suffix"
+          placeholder="Sfx."
+          readOnly={isReadOnly}
+          upper={true}
+          noSpecialChars
+        />
       </div>
 
       {/* Sex, Status, DOB, Address */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormSelect control={control} name={`${prefix}per_sex`} label="Sex" options={SEX_OPTIONS} readOnly={isReadOnly} required/>
-        <FormDateTimeInput control={control} name={`${prefix}per_dob`} label="Date of Birth" type="date" readOnly={isReadOnly} max={formatDate(new Date()) as string} required/>
-        <FormSelect control={control} name={`${prefix}per_status`} label="Marital Status" options={MARITAL_STATUS_OPTIONS} readOnly={isReadOnly} required/>
-        <FormInput control={control} name={`${prefix}per_contact`} label="Contact" placeholder="Enter contact" readOnly={isReadOnly} type="number" required/>
+        <FormSelect
+          control={control}
+          name={`${prefix}per_sex`}
+          label="Sex"
+          options={SEX_OPTIONS}
+          readOnly={isReadOnly}
+          required
+        />
+        <FormDateTimeInput
+          control={control}
+          name={`${prefix}per_dob`}
+          label="Date of Birth"
+          type="date"
+          readOnly={isReadOnly}
+          max={formatDate(new Date()) as string}
+          required
+        />
+        <FormSelect
+          control={control}
+          name={`${prefix}per_status`}
+          label="Marital Status"
+          options={MARITAL_STATUS_OPTIONS}
+          readOnly={isReadOnly}
+          required
+        />
+        <FormInput
+          control={control}
+          name={`${prefix}per_contact`}
+          label="Contact"
+          placeholder="Enter contact"
+          readOnly={isReadOnly}
+          type="number"
+        />
       </div>
 
       {/* Education, Religion, Contact */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <FormSelect control={control} name={`${prefix}per_edAttainment`} label="Educational Attainment" readOnly={isReadOnly} options={EDUCATIONAL_ATTAINMENT}/>
-        <FormSelect control={control} name={`${prefix}per_religion`} label="Religion" options={RELIGION_OPTIONS} readOnly={isReadOnly} required/>
-        <FormSelect control={control} name={`${prefix}per_disability`} label="Disability (if applicable)" options={PWD_OPTIONS} readOnly={isReadOnly} />
+        <FormSelect
+          control={control}
+          name={`${prefix}per_edAttainment`}
+          label="Educational Attainment"
+          readOnly={isReadOnly}
+          options={EDUCATIONAL_ATTAINMENT}
+        />
+        <FormSelect
+          control={control}
+          name={`${prefix}per_religion`}
+          label="Religion"
+          options={RELIGION_OPTIONS}
+          readOnly={isReadOnly}
+          required
+        />
+        <FormSelect
+          control={control}
+          name={`${prefix}per_disability`}
+          label="Disability (if applicable)"
+          options={PWD_OPTIONS}
+          readOnly={isReadOnly}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {
-          addresses?.map((address, idx) => (
-            <div className="grid gap-3" key={idx}>
-              <Label className="text-black/70">
-                Address {idx + 1} 
-                {idx == 0 && <span className="ml-1 text-red-500">*</span>}
-              </Label>
-              <div className="flex items-center gap-3">
-                <div className="flex w-2/3 items-center justify-center border shadow-sm rounded-lg" >
-                  <Input
-                    placeholder="Province"
-                    value={address.add_province}
-                    onChange={(e) => handleSetAddress(idx, 'add_province', e.target.value)}
-                    className="border-none shadow-none focus-visible:ring-0"
-                    readOnly={isReadOnly}
-                  /> <p className="opacity-40">/</p>
-                  <Input
-                    placeholder="City"
-                    value={address.add_city}
-                    onChange={(e) => handleSetAddress(idx, 'add_city', e.target.value)}
-                    className="border-none shadow-none focus-visible:ring-0"
-                    readOnly={isReadOnly}
-                  /> <p className="opacity-40">/</p>
-                  <TooltipLayout
-                    trigger={
-                      <div className="w-full flex items-center"><Input
+        {addresses?.map((address, idx) => (
+          <div className="grid gap-3" key={idx}>
+            <Label className="text-black/70">
+              Address {idx + 1}
+              {idx == 0 && <span className="ml-1 text-red-500">*</span>}
+            </Label>
+            <div className="flex items-center gap-3">
+              <div className="flex w-2/3 items-center justify-center border shadow-sm rounded-lg">
+                <Input
+                  placeholder="Province"
+                  value={address.add_province}
+                  onChange={(e) =>
+                    handleSetAddress(idx, "add_province", e.target.value)
+                  }
+                  className="border-none shadow-none focus-visible:ring-0"
+                  readOnly={isReadOnly}
+                />{" "}
+                <p className="opacity-40">/</p>
+                <Input
+                  placeholder="City"
+                  value={address.add_city}
+                  onChange={(e) =>
+                    handleSetAddress(idx, "add_city", e.target.value)
+                  }
+                  className="border-none shadow-none focus-visible:ring-0"
+                  readOnly={isReadOnly}
+                />{" "}
+                <p className="opacity-40">/</p>
+                <TooltipLayout
+                  trigger={
+                    <div className="w-full flex items-center">
+                      <Input
                         placeholder="Barangay"
                         value={address.add_barangay}
                         onChange={(e) => {
-                          if(["san roque", "sanroque", "ciudad"].includes(e.target.value?.trim().toLowerCase())) {
-                            handleSetAddress(idx, 'add_barangay', "San Roque (ciudad)")
+                          if (
+                            ["san roque", "sanroque", "ciudad"].includes(
+                              e.target.value?.trim().toLowerCase()
+                            )
+                          ) {
+                            handleSetAddress(
+                              idx,
+                              "add_barangay",
+                              "San Roque (ciudad)"
+                            );
                           } else {
-                            handleSetAddress(idx, 'add_barangay', e.target.value)
+                            handleSetAddress(
+                              idx,
+                              "add_barangay",
+                              e.target.value
+                            );
                           }
                         }}
                         className="border-none shadow-none focus-visible:ring-0"
                         readOnly={isReadOnly}
-                      /> <p className="opacity-40">/</p></div>
-                    }
-                    content={<div>
+                      />{" "}
+                      <p className="opacity-40">/</p>
+                    </div>
+                  }
+                  content={
+                    <div>
                       <p className="max-w-xs">
-                        Tip: If you type <b>san roque</b>, <b>sanroque</b>, or <b>ciudad</b>, the system will automatically autocomplete it to <b>San Roque (ciudad)</b>.
+                        Tip: If you type <b>san roque</b>, <b>sanroque</b>, or{" "}
+                        <b>ciudad</b>, the system will automatically
+                        autocomplete it to <b>San Roque (ciudad)</b>.
                       </p>
-                    </div>}
-                  />
-
-                  {address.add_barangay?.trim().toLowerCase() === "san roque (ciudad)" ? ( !isReadOnly  ? 
-                    (<SelectLayout
+                    </div>
+                  }
+                />
+                {address.add_barangay?.trim().toLowerCase() ===
+                "san roque (ciudad)" ? (
+                  !isReadOnly ? (
+                    <SelectLayout
                       className="border-none w-full"
                       placeholder="Sitio"
                       options={formattedSitio}
                       value={String(address.sitio)}
-                      onChange={(value) => handleSetAddress(idx, 'sitio', value)}
-                      
-                    />) : (
-                      <Input 
-                        className="border-none shadow-none focus-visible:ring-0" 
-                        value={address.sitio} 
-                        readOnly
-                      />
-                    )) : (<Input
-                      placeholder="Sitio"
-                      value={address.add_external_sitio}
-                      onChange={(e) => handleSetAddress(idx, 'add_external_sitio', e.target.value)}
+                      onChange={(value) =>
+                        handleSetAddress(idx, "sitio", value)
+                      }
+                    />
+                  ) : (
+                    <Input
                       className="border-none shadow-none focus-visible:ring-0"
-                      readOnly={isReadOnly}
-                    />)
-                  } 
-                  
-                  <p className="opacity-40">/</p>
+                      value={address.sitio}
+                      readOnly
+                    />
+                  )
+                ) : (
                   <Input
-                    placeholder="Street"
-                    value={address.add_street}
-                    onChange={(e) => handleSetAddress(idx, 'add_street', e.target.value)}
+                    placeholder="Sitio"
+                    value={address.add_external_sitio}
+                    onChange={(e) =>
+                      handleSetAddress(
+                        idx,
+                        "add_external_sitio",
+                        e.target.value
+                      )
+                    }
                     className="border-none shadow-none focus-visible:ring-0"
                     readOnly={isReadOnly}
                   />
-                </div>
-                {idx + 1 > 1 && formType !== Type.Viewing &&
-                  <Button 
-                    type={"button"}
-                    variant={"outline"} 
-                    className="border-none shadow-none text-red-500 hover:text-red-500"
-                    onClick={() => handleRemoveAddress(idx)}
-                  >
-                    <X className="cursor-pointer  text-red-500"/>
-                    Remove
-                  </Button>
-                }
+                )}
+                <p className="opacity-40">/</p>
+                <Input
+                  placeholder="Street"
+                  value={address.add_street}
+                  onChange={(e) =>
+                    handleSetAddress(idx, "add_street", e.target.value)
+                  }
+                  className="border-none shadow-none focus-visible:ring-0"
+                  readOnly={isReadOnly}
+                />
               </div>
-              {
-                validAddresses 
-                && validAddresses.length > 0 
-                && validAddresses[idx] === false
-                && formType !== Type.Viewing && (
-                  <Label className="text-red-500 text-sm">
-                    Complete address is required
-                  </Label>
-                )
-              }
+              {idx + 1 > 1 && formType !== Type.Viewing && (
+                <Button
+                  type={"button"}
+                  variant={"outline"}
+                  className="border-none shadow-none text-red-500 hover:text-red-500"
+                  onClick={() => handleRemoveAddress(idx)}
+                >
+                  <X className="cursor-pointer  text-red-500" />
+                  Remove
+                </Button>
+              )}
             </div>
-          ))
-        }
-        {!isReadOnly &&
+            {validAddresses &&
+              validAddresses.length > 0 &&
+              validAddresses[idx] === false &&
+              formType !== Type.Viewing && (
+                <Label className="text-red-500 text-sm">
+                  Complete address is required
+                </Label>
+              )}
+          </div>
+        ))}
+        {!isReadOnly && (
           <div>
-            <Button 
-              variant={"outline"} 
+            <Button
+              variant={"outline"}
               type="button"
               className="border-none shadow-none text-black/50 hover:text-black/80"
-              onClick={() => setAddresses && setAddresses((prev) => [
-                ...prev, {
-                  add_province: '',
-                  add_city: '',
-                  add_barangay: '',
-                  sitio: '',
-                  add_external_sitio: '',
-                  add_street: ''
-                }
-              ])}
+              onClick={() =>
+                setAddresses &&
+                setAddresses((prev) => [
+                  ...prev,
+                  {
+                    add_province: "",
+                    add_city: "",
+                    add_barangay: "",
+                    sitio: "",
+                    add_external_sitio: "",
+                    add_street: "",
+                  },
+                ])
+              }
             >
-              <Plus/> Add Address
+              <Plus /> Add Address
             </Button>
           </div>
-        }
+        )}
       </div>
 
       <div className="mt-8 flex justify-end gap-3">
-        {buttonIsVisible && renderActionButton({
-          form,
-          addresses,
-          isAssignmentOpen,
-          formType,
-          origin,
-          isSubmitting,
-          isAllowSubmit,
-          setIsAssignmentOpen,
-          setFormType,
-          submit,
-        })}
+        {buttonIsVisible &&
+          renderActionButton({
+            form,
+            addresses,
+            isAssignmentOpen,
+            formType,
+            origin,
+            isSubmitting,
+            isAllowSubmit,
+            setIsAssignmentOpen,
+            setFormType,
+            submit,
+          })}
       </div>
     </>
   );
-} 
+};
 
 export default PersonalInfoForm;

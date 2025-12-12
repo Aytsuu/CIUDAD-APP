@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.db import transaction
 from apps.profiling.models import *
 from apps.profiling.serializers.resident_profile_serializers import ResidentProfileTableSerializer
-from apps.administration.models import Staff, Assignment
+from apps.administration.models import Staff, Position
 from apps.account.models import Account
 from ..models import FamilyComposition
 from datetime import datetime
@@ -36,6 +36,7 @@ class CompleteRegistrationView(APIView):
     family = data_copy.get("family", None)
     business = data_copy.get("business", None)
     staff = data_copy.get("staff", None)
+    position = data_copy.get("position", None)
 
     if staff:
       staff=Staff.objects.filter(staff_id=staff).first()
@@ -59,6 +60,9 @@ class CompleteRegistrationView(APIView):
 
         if rp:
           results["rp_id"] = rp.pk
+    
+    if position:
+       self.create_staff(rp, position, staff)
 
     if account:
         self.create_account(account, rp)
@@ -212,6 +216,18 @@ class CompleteRegistrationView(APIView):
     )
 
     return resident_profile
+
+  def create_staff(self, rp, position, staff):
+    pos = Position.objects.filter(pos_id=position['pos_id']).first()
+    instance = Staff.objects.create(
+      staff_id=rp.rp_id,
+      staff_type=position["staff_type"],
+      rp=rp,
+      pos=pos,
+      manager=staff
+    )
+
+    return instance
 
   def create_account(self, account, rp):
     instance = Account.objects.create_user(

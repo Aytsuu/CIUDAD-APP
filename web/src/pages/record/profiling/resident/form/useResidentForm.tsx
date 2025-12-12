@@ -59,6 +59,7 @@ export const useResidentForm = (defaultData?: any, origin?: any) => {
       per_mname: obj.per_mname ?? "",
       per_suffix: obj.per_suffix ?? "",
       per_edAttainment: obj.per_edAttainment ?? "",
+      per_contact: obj.per_contact ?? "",
       per_is_deceased:
         obj.per_is_deceased == "YES"
           ? "True"
