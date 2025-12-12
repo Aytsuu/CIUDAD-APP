@@ -14,12 +14,17 @@ class StaffTableView(generics.ListCreateAPIView):
   pagination_class = StandardResultsPagination
 
   def get_queryset(self):
-    queryset = Staff.objects.select_related(
+    search_query = self.request.query_params.get('search', '').strip()
+    staff_type = self.request.query_params.get('staff_type', None)
+    pos_group = self.request.query_params.get('pos_group', None)
+
+    queryset = Staff.objects.filter(staff_type__iexact=staff_type).select_related(
       'rp',
       'pos',
     ).only(
       'staff_id',
       'staff_assign_date',
+      'staff_type',
       'rp__per__per_lname',
       'rp__per__per_fname',
       'rp__per__per_mname',
@@ -27,18 +32,20 @@ class StaffTableView(generics.ListCreateAPIView):
       'pos__pos_title'
     )
 
-    search_query = self.request.query_params.get('search', '').strip()
+    if pos_group:
+      queryset = queryset.filter(pos__pos_group=pos_group)
+
     if search_query:
       queryset = queryset.filter(
-        Q(staff_assign_date__icontains=search_query) |
         Q(rp__per__per_lname__icontains=search_query) |
         Q(rp__per__per_fname__icontains=search_query) |
         Q(rp__per__per_mname__icontains=search_query) |
         Q(rp__per__per_contact__icontains=search_query) |
-        Q(pos__pos_title__icontains=search_query) 
+        Q(pos__pos_title__icontains=search_query) |
+        Q(staff_type__icontains=search_query)
       ).distinct()
 
-    return queryset
+    return queryset.order_by('-staff_assign_date')
   
   
 class StaffUpdateView(generics.UpdateAPIView):
@@ -70,7 +77,7 @@ class StaffDeleteView(generics.DestroyAPIView):
 
 
 class HealthStaffComboboxView(generics.ListAPIView):
-  serializer_class = StaffTableSerializer
+  serializer_class = HealthStaffComboboxSerializer
   pagination_class = None  # Disable pagination for combobox
 
   def get_queryset(self):

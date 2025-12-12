@@ -26,11 +26,12 @@ class StaffTableSerializer(serializers.ModelSerializer):
   fname = serializers.CharField(source='rp.per.per_fname')
   mname = serializers.CharField(source='rp.per.per_mname')
   sex = serializers.CharField(source='rp.per.per_sex')
-  dob = serializers.CharField(source='rp.per.per_dob')
+  dob = serializers.DateField(source='rp.per.per_dob')
   contact = serializers.CharField(source='rp.per.per_contact')
   position = serializers.CharField(source='pos.pos_title')
   group = serializers.CharField(source='pos.pos_group')
   fam = serializers.SerializerMethodField()
+
 
   class Meta:
     model = Staff
@@ -79,12 +80,16 @@ class StaffCreateSerializer(serializers.ModelSerializer):
 
 class HealthStaffComboboxSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source='staff_id')
+    staff_id = serializers.CharField()
     name = serializers.SerializerMethodField()
+    fname = serializers.CharField(source='rp.per.per_fname')
+    mname = serializers.CharField(source='rp.per.per_mname')
+    lname = serializers.CharField(source='rp.per.per_lname')
     position = serializers.CharField(source='pos.pos_title')
 
     class Meta:
         model = Staff
-        fields = ['id', 'name', 'position']
+        fields = ['id', 'staff_id', 'name', 'fname', 'mname', 'lname', 'position']
 
     def get_name(self, obj):
         per = obj.rp.per

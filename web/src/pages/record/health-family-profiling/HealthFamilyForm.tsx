@@ -159,7 +159,7 @@ export default function HealthFamilyForm() {
   
   // Fetch family data to get household information - only when needed
   const { data: familyData, isLoading: isLoadingFamilyData } = useFamilyData(famId || "");
-  const householdId = familyData?.hh?.hh_id;
+  const householdId = familyData?.household_no;
 
   // Optimize: Memoize formatted family members to avoid recalculation
   const formattedFamilyMembers = React.useMemo(() => {

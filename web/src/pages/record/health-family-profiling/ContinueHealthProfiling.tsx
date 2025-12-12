@@ -13,10 +13,10 @@ import { formatResidentsWithBadge } from "./family-profling/utils/formatResident
 import { DependentRecord } from "../profiling/ProfilingTypes";
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { 
-  useFamilyDataHealth, 
+  useFamilyData, 
   useFamilyMembersWithResidentDetails,
-  useResidentsListHealth
-} from "./family-profling/queries/profilingFetchQueries";
+  useResidentsList
+} from "../profiling/queries/profilingFetchQueries";
 import { useLoading } from "@/context/LoadingContext";
 import { FaHome, FaUsers, FaBriefcaseMedical, FaHouseUser, FaClipboardList } from "react-icons/fa";
 import ParentsFormLayout from "./family-profling/parents/ParentsFormLayout";
@@ -60,9 +60,9 @@ export default function ContinueHealthProfiling() {
   const queryClient = useQueryClient();
 
   // Fetch existing family data
-  const { data: familyDataHealth, isLoading: isLoadingFamilyData } = useFamilyDataHealth(famId || null);
-  const familyMembersHealth = useFamilyMembersWithResidentDetails(famId || null);
-  const { data: residentsListHealth, isLoading: isLoadingResidents } = useResidentsListHealth();
+  const { data: familyDataHealth, isLoading: isLoadingFamilyData } = useFamilyData(famId || "");
+  const familyMembersHealth = useFamilyMembersWithResidentDetails(famId || "");
+  const { data: residentsListHealth, isLoading: isLoadingResidents } = useResidentsList();
 
   // State management
   const [currentStep, setCurrentStep] = React.useState<number>(2); // Start at step 2

@@ -39,7 +39,6 @@ class StaffTableView(generics.ListCreateAPIView):
 
     if search_query:
       queryset = queryset.filter(
-        Q(staff_assign_date__icontains=search_query) |
         Q(rp__per__per_lname__icontains=search_query) |
         Q(rp__per__per_fname__icontains=search_query) |
         Q(rp__per__per_mname__icontains=search_query) |
@@ -48,7 +47,7 @@ class StaffTableView(generics.ListCreateAPIView):
         Q(staff_type__icontains=search_query)
       ).distinct()
 
-    return queryset.order_by('-staff_id')
+    return queryset.order_by('-staff_assign_date')
   
 class StaffUpdateView(generics.UpdateAPIView):
   serializer_class = StaffBaseSerializer
@@ -139,5 +138,3 @@ class StaffDataByTitleView(APIView):
     req_position = Position.objects.get(pos_title=title)
     staff = Staff.objects.filter(pos=req_position.pos_id, staff_type__iexact=type)
     return Response(StaffTableSerializer(staff, many=True).data)
-
-
