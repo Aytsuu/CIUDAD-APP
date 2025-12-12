@@ -20,35 +20,56 @@ import { Spinner } from "@/components/ui/spinner";
 
 // Create columns function that accepts the handlePaymentSuccess and handleDeclineSuccess callbacks
 const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: () => void, activeTab: "unpaid" | "paid" | "declined"): ColumnDef<ServiceCharge>[] => [
-    { accessorKey: "sr_code",
+    { 
+        accessorKey: "sr_code",
         header: ({ column }) => (
-              <div
+            <div
                 className="flex w-full justify-center items-center gap-2 cursor-pointer"
                 onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              >
+            >
                 SR No.
                 <ArrowUpDown size={14}/>
-              </div>
+            </div>
         ),
         cell: ({row}) => (
             <div className="flex justify-center items-center gap-2">
-              <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
-                {row.getValue("sr_code")}
-              </span>
+                <span className="px-4 py-1 rounded-full text-xs font-semibold bg-[#eaf4ff] text-[#2563eb] border border-[#b6d6f7]">
+                    {row.getValue("sr_code")}
+                </span>
             </div>
         )
     },
-    {accessorKey: "complainant_name", header: () => <div className="text-center">Complainant Name</div>, cell: ({ row }: { row: any }) => <div className="text-center">{row.getValue("complainant_name")}</div>},
+    {
+        accessorKey: "complainant_name",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Complainant Name
+                <ArrowUpDown size={14} />
+            </div>
+        ),
+        cell: ({ row }) => <div className="text-center">{row.getValue("complainant_name")}</div>
+    },
     {
         accessorKey: "accused_names",
-        header: () => <div className="text-center">Respondent</div>,
-        cell: ({ row }: { row: any }) => {
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Respondent
+                <ArrowUpDown size={14} />
+            </div>
+        ),
+        cell: ({ row }) => {
             const accusedNames = row.original.accused_names as string[] | null | undefined;
             if (!accusedNames || accusedNames.length === 0) {
-                return <span className="text-gray-400">N/A</span>;
+                return <div className="text-center text-gray-400">N/A</div>;
             }
             return (
-                <div className="max-w-md">
+                <div className="text-center">
                     <span className="text-sm text-gray-700">
                         {accusedNames.join(', ')}
                     </span>
@@ -56,8 +77,17 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
             );
         }
     },
-    {accessorKey: "sr_type", 
-        header: () => <div className="text-center">Type</div>,
+    {
+        accessorKey: "sr_type",
+        header: ({ column }) => (
+            <div
+                className="flex w-full justify-center items-center gap-2 cursor-pointer"
+                onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            >
+                Type
+                <ArrowUpDown size={14} />
+            </div>
+        ),
         cell: ({ row }) => {
             const value = row.getValue("sr_type") as string;
             const capitalizedValue = value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : '';
@@ -80,12 +110,14 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
             }
             
             return (
-                <span
-                    className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-                    style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-                >
-                    {capitalizedValue}
-                </span>
+                <div className="flex justify-center">
+                    <span
+                        className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+                        style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+                    >
+                        {capitalizedValue}
+                    </span>
+                </div>
             );
         }
     },
@@ -141,12 +173,14 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
             }
             
             return (
-                <span
-                    className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
-                    style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
-                >
-                    {capitalizedValue}
-                </span>
+                <div className="flex justify-center">
+                    <span
+                        className={`px-4 py-1 rounded-full text-xs font-semibold ${bg} ${text} ${border}`}
+                        style={{ display: "inline-block", minWidth: 80, textAlign: "center" }}
+                    >
+                        {capitalizedValue}
+                    </span>
+                </div>
             );
         }
     }] : []),
@@ -157,9 +191,9 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
         cell: ({ row }: { row: any }) => {
             const reason = row.original.pay_reason as string | null | undefined;
             return (
-                <div className="max-w-md">
+                <div className="text-center">
                     <span className="text-sm text-gray-700">
-                        {reason || "N/A"}
+                        {reason || "No reason provided"}
                     </span>
                 </div>
             );
@@ -171,44 +205,50 @@ const createColumns = (handlePaymentSuccess: () => void, handleDeclineSuccess: (
         header: () => <div className="text-center">Action</div>,
         cell: ({ row }: { row: any }) =>(
           <div className="flex justify-center gap-1">
-              <TooltipLayout
+              <DialogLayout
                 trigger={
-                    <DialogLayout
-                    trigger={<div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer"><ReceiptText size={16}/></div>}
-                    className="flex flex-col"
-                    title="Create Receipt"
-                    description="Enter the serial number to generate a receipt."
-                    mainContent={
-                        (() => {
-                          const sc = row.original as ServiceCharge;
-                          const receiptData = {
-                            id: String(sc.sr_id), // Always use sr_id for service charge
-                            purpose: sc.sr_type || "Service Charge",
-                            rate: (window as any).__serviceChargeRate || "0",
-                            requester: sc.complainant_name || "Unknown",
-                            pay_status: sc.payment_request?.spay_status || "Unpaid",
-                            nat_col: "Service Charge",
-                            is_resident: false,
-                            pay_id: sc.payment_request?.spay_id || (parseInt(sc.sr_id) || undefined) // Get spay_id from payment_request, fallback to sr_id if valid
-                          };
-                          return (
-                            <ReceiptForm
-                              id={receiptData.id}
-                              purpose={receiptData.purpose}
-                              rate={receiptData.rate}
-                              requester={receiptData.requester}
-                              pay_status={receiptData.pay_status}
-                              nat_col={receiptData.nat_col}
-                              is_resident={receiptData.is_resident}
-                              pay_id={receiptData.pay_id}
-                              onComplete={handlePaymentSuccess}
-                              onRequestDiscount={() => {}}
-                            />
-                          );
-                        })()
-                    } 
+                  <TooltipLayout
+                    trigger={
+                      <div className="bg-white hover:bg-[#f3f2f2] border text-black px-4 py-2 rounded cursor-pointer">
+                        <ReceiptText size={16}/>
+                      </div>
+                    }
+                    content="Create Receipt"
                   />
-              } content="Create Receipt"/>
+                }
+                className="flex flex-col"
+                title="Create Receipt"
+                description="Enter the serial number to generate a receipt."
+                mainContent={
+                    (() => {
+                      const sc = row.original as ServiceCharge;
+                      const receiptData = {
+                        id: String(sc.sr_id), // Always use sr_id for service charge
+                        purpose: sc.sr_type || "Service Charge",
+                        rate: (window as any).__serviceChargeRate || "0",
+                        requester: sc.complainant_name || "Unknown",
+                        pay_status: sc.payment_request?.spay_status || "Unpaid",
+                        nat_col: "Service Charge",
+                        is_resident: false,
+                        pay_id: sc.payment_request?.spay_id || (parseInt(sc.sr_id) || undefined) // Get spay_id from payment_request, fallback to sr_id if valid
+                      };
+                      return (
+                        <ReceiptForm
+                          id={receiptData.id}
+                          purpose={receiptData.purpose}
+                          rate={receiptData.rate}
+                          requester={receiptData.requester}
+                          pay_status={receiptData.pay_status}
+                          nat_col={receiptData.nat_col}
+                          is_resident={receiptData.is_resident}
+                          pay_id={receiptData.pay_id}
+                          onComplete={handlePaymentSuccess}
+                          onRequestDiscount={() => {}}
+                        />
+                      );
+                    })()
+                } 
+              />
               <TooltipLayout 
                 trigger={
                     <DialogLayout
@@ -416,7 +456,7 @@ function ServiceCharge(){
                         Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount} rows
                     </p>
 
-                    <div className="w-full sm:w-auto flex justify-end">
+                    <div className="w-full sm:w-auto flex justify-center">
                         <PaginationLayout
                             totalPages={totalPages}
                             currentPage={currentPage}

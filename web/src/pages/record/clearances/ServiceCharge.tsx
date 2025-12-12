@@ -130,7 +130,9 @@ function ServiceChargePage() {
       header: () => <div className="text-center">Respondent Address</div>,
       cell: ({ row }) => {
         const addrs = row.original.accused_addresses || [];
-        if (!addrs.length) return <div>—</div>;
+        if (!addrs.length || addrs.every(addr => !addr)) {
+          return <div className="text-sm text-center text-gray-400">Not available</div>;
+        }
         return <div className="text-sm text-center">{addrs.filter(Boolean).join(', ')}</div>;
       },
     },
