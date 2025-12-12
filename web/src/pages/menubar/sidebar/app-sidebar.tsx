@@ -280,20 +280,24 @@ export function AppSidebar() {
                 title: "Disbursement Voucher",
                 url: "/treasurer-disbursement",
               },
-              {
-                title: "Payment Request",
-                url: "/",
-                items: [
-                  {
-                    title: "Personal & Others",
-                    url: "/treasurer-personal-and-others",
-                  },
-                  { title: "Permit", url: "/treasurer-permit" },
-                  { title: "Service Charge", url: "/treasurer-service-charge" },
-                  { title: "Rates", url: "/treasurer-rates" },
-                ],
-              },
               { title: "Receipts", url: "/treasurer-receipts" },
+            ],
+          },
+        ]
+      : []),
+    ...(featureValidator(["finance"])
+      ? [
+          {
+            title: "Payment Request",
+            url: "/",
+            items: [
+              {
+                title: "Personal & Others",
+                url: "/treasurer-personal-and-others",
+              },
+              { title: "Permit", url: "/treasurer-permit" },
+              { title: "Service Charge", url: "/treasurer-service-charge" },
+              { title: "Rates", url: "/treasurer-rates" },
             ],
           },
         ]
