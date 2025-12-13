@@ -37,31 +37,41 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
-          # Get the branch name (e.g. feat/login)
           BRANCH_NAME=${{ github.head_ref }}
+          echo "Searching for branch: $BRANCH_NAME"
           
-          # Get the config from Supabase API
-          # This loops until the branch is ready (up to 2 mins)
-          echo "Waiting for Branch DB to be ready..."
+          DB_HOST=""
+          
+          # Wait loop
           for i in {1..20}; do
-            DB_CONFIG=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json || echo "not_ready")
+            # Fetch JSON config. 
+            # We use '|| true' to prevent crash if command fails
+            OUTPUT=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json 2>/dev/null || true)
             
-            if [[ "$DB_CONFIG" != "not_ready" ]]; then
-              # Parse the URL (Postgres Port 6543 or 5432)
-              # NOTE: Supabase branches use the same password as Prod usually, 
-              # or a specific branch password if configured.
-              HOST=$(echo $DB_CONFIG | jq -r .db_host)
-              USER=$(echo $DB_CONFIG | jq -r .db_user)
-              # Construct URL (Assuming pass is in secrets)
-              URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:6543/postgres"
-              
-              echo "url=$URL" >> $GITHUB_OUTPUT
+            # Check if we got a valid JSON with a host
+            # jq -e .db_host checks if the key exists and is not null
+            if echo "$OUTPUT" | jq -e .db_host > /dev/null; then
+              DB_HOST=$(echo $OUTPUT | jq -r .db_host)
+              DB_USER=$(echo $OUTPUT | jq -r .db_user)
+              echo "✅ Found Database: $DB_HOST"
               break
             fi
+            
+            echo "Attempt $i: Branch not ready yet... sleeping 10s"
             sleep 10
           done
+          
+          # CRITICAL: Fail if no host found
+          if [[ -z "$DB_HOST" ]]; then
+            echo "❌ Error: Could not find Supabase Branch for '$BRANCH_NAME' after 200 seconds."
+            echo "Check Supabase Dashboard > Integrations to see if branch creation was skipped."
+            exit 1
+          fi
 
-      - name: Run Migrations & Seed
+          URL="postgres://$DB_USER:${{ secrets.DB_PASSWORD }}@$DB_HOST:6543/postgres"
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Run Migrations
         env:
           DATABASE_URL: ${{ steps.db_url.outputs.url }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -75,4 +85,5 @@ jobs:
         run: |
           # Apply Schema (Django)
           python manage.py migrate
+
 
