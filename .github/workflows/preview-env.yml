@@ -59,7 +59,7 @@ jobs:
 
           # --- STEP 2: Poll for Ready State ---
           echo "Waiting for branch to be ready..."
-          MAX_ATTEMPTS=60  # 10 minutes (60 * 10s)
+          MAX_ATTEMPTS=30  # 10 minutes (60 * 10s)
           ATTEMPT=0
           
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
