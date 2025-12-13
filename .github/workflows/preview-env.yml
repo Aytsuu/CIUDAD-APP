@@ -133,6 +133,7 @@ jobs:
           DB_USER: ${{ steps.db_url.outputs.db_user }}
           DB_PORT: ${{ steps.db_url.outputs.db_port }}
           DB_NAME: ${{ steps.db_url.outputs.db_name }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
