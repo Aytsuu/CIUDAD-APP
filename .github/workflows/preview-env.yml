@@ -101,24 +101,17 @@ jobs:
             DB_USER="${BASH_REMATCH[1]}"
             DB_PASS="${BASH_REMATCH[2]}"
             DB_HOST="${BASH_REMATCH[3]}"
-            DB_PORT="${BASH_REMATCH[4]}"
             DB_NAME="${BASH_REMATCH[5]}"
             
             echo "✅ Extracted connection details:"
             echo "URL: $FULL_POOLER_URL"
             echo "Host: $DB_HOST"
             echo "User: $DB_USER"
-            echo "Port: $DB_PORT"
             echo "Database: $DB_NAME"
             
-            # Construct full DATABASE_URL with all parameters
-            DATABASE_URL="postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require"
-            
-            # Output for next steps
-            echo "database_url=$DATABASE_URL" >> $GITHUB_OUTPUT
             echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
             echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
-            echo "db_port=$DB_PORT" >> $GITHUB_OUTPUT
+            echo "db_port=5432" >> $GITHUB_OUTPUT
             echo "db_name=$DB_NAME" >> $GITHUB_OUTPUT
             echo "db_password=$DB_PASS" >> $GITHUB_OUTPUT
           else
@@ -129,7 +122,6 @@ jobs:
 
       - name: Run Migrations
         env:
-          DATABASE_URL: ${{ steps.db_url.outputs.url }}
           DB_HOST: ${{ steps.db_url.outputs.db_host }}
           DB_USER: ${{ steps.db_url.outputs.db_user }}
           DB_PORT: ${{ steps.db_url.outputs.db_port }}
