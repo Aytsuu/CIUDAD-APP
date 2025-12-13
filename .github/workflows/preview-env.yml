@@ -55,7 +55,13 @@ jobs:
               # Construct URL (Assuming pass is in secrets)
               URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:6543/postgres"
               
+              # Get branch db credentials
               echo "url=$URL" >> $GITHUB_OUTPUT
+              echo "db_host=$HOST" >> $GITHUB_OUTPUT
+              echo "db_name=postgres" >> $GITHUB_OUTPUT
+              echo "db_user=$USER" >> $GITHUB_OUTPUT
+              echo "db_port=5432" >> $GITHUB_OUTPUT
+
               break
             fi
             sleep 10
@@ -64,6 +70,10 @@ jobs:
       - name: Run Migrations
         env:
           DATABASE_URL: ${{ steps.db_url.outputs.url }}
+          DB_HOST: ${{ steps.db_url.outputs.db_host }}
+          DB_USER: ${{ steps.db_url.outputs.db_user }}
+          DB_PORT: ${{ steps.db_url.outputs.db_port }}
+          DB_NAME: ${{ steps.db_url.outputs.db_name }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -72,14 +82,8 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
           EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_NAME: ${{ secrets.DB_NAME}}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
         run: |
           # Apply Schema (Django)
-          python manage.py makemigrations
           python manage.py migrate
 
 
