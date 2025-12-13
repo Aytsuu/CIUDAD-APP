@@ -39,6 +39,7 @@ jobs:
         run: |
           # Get the branch name (e.g. feat/login)
           BRANCH_NAME=${{ github.head_ref }}
+          echo "Waiting for $BRANCH_NAME to be ready..."
           
           # Get the config from Supabase API
           # This loops until the branch is ready (up to 2 mins)
@@ -52,16 +53,15 @@ jobs:
               # or a specific branch password if configured.
               HOST=$(echo $DB_CONFIG | jq -r .db_host)
               USER=$(echo $DB_CONFIG | jq -r .db_user)
-              # Construct URL (Assuming pass is in secrets)
+              # Construct URL
               URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:6543/postgres"
               
               # Get branch db credentials
               echo "url=$URL" >> $GITHUB_OUTPUT
               echo "db_host=$HOST" >> $GITHUB_OUTPUT
-              echo "db_name=postgres" >> $GITHUB_OUTPUT
               echo "db_user=$USER" >> $GITHUB_OUTPUT
               echo "db_port=5432" >> $GITHUB_OUTPUT
-
+              echo "db_name=postgres" >> $GITHUB_OUTPUT
               break
             fi
             sleep 10
