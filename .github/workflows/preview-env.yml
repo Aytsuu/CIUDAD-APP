@@ -43,7 +43,6 @@ jobs:
           
           # Get the config from Supabase API
           # This loops until the branch is ready (up to 2 mins)
-          echo "Waiting for Branch DB to be ready..."
           for i in {1..20}; do
             DB_CONFIG=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json || echo "not_ready")
             
