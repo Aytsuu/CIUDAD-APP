@@ -40,58 +40,97 @@ jobs:
           BRANCH_NAME=${{ github.head_ref }}
           echo "Target Branch: $BRANCH_NAME"
 
-          # --- STEP 1: Ensure Branch Exists ---
-          # We run 'create' but allow it to fail (set +e) in case it already exists (409 Error)
+          # --- STEP 1: Create or Get Branch ---
           set +e 
-          echo "Attempting to create branch..."
-          supabase branches create "$BRANCH_NAME" --project-ref "$PROJECT_REF"
+          echo "Creating branch (or confirming it exists)..."
+          CREATE_OUTPUT=$(supabase branches create "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json 2>&1)
           CREATE_EXIT_CODE=$?
-          set -e # Turn error checking back on
+          set -e
 
           if [ $CREATE_EXIT_CODE -eq 0 ]; then
-            echo "Branch creation initiated."
+            echo "✅ Branch created successfully"
+          elif echo "$CREATE_OUTPUT" | grep -q "409"; then
+            echo "ℹ️  Branch already exists, continuing..."
           else
-            echo "Branch creation returned code $CREATE_EXIT_CODE. Assuming branch already exists and proceeding."
+            echo "❌ Unexpected error creating branch:"
+            echo "$CREATE_OUTPUT"
+            exit 1
           fi
 
-          # --- STEP 2: Wait for Provisioning (The "Null Host" Fix) ---
-          echo "Polling for DB Host..."
-          HOST=""
+          # --- STEP 2: Poll for Ready State ---
+          echo "Waiting for branch to be ready..."
+          MAX_ATTEMPTS=60  # 10 minutes (60 * 10s)
+          ATTEMPT=0
           
-          # Loop up to 30 times * 10s = 5 Minutes
-          for i in {1..30}; do
-            # Get current config
-            DB_CONFIG=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json || echo "error")
-
-            # Safely extract Host using jq
-            # We treat "null" (string) and "" (empty) as not ready
-            EXTRACTED_HOST=$(echo "$DB_CONFIG" | jq -r .db_host 2>/dev/null)
-
-            if [[ "$EXTRACTED_HOST" != "null" ]] && [[ -n "$EXTRACTED_HOST" ]]; then
-              HOST=$EXTRACTED_HOST
-              USER=$(echo "$DB_CONFIG" | jq -r .db_user)
-              
-              echo "✅ Success! Branch Ready. Host: $HOST"
-              
-              # Output variables for next steps
-              echo "db_host=$HOST" >> $GITHUB_OUTPUT
-              echo "db_user=$USER" >> $GITHUB_OUTPUT
-              echo "db_port=5432" >> $GITHUB_OUTPUT
-              echo "db_name=postgres" >> $GITHUB_OUTPUT
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            
+            # Get branch details
+            BRANCH_INFO=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json 2>/dev/null || echo '{}')
+            
+            # Check if branch is active
+            STATUS=$(echo "$BRANCH_INFO" | jq -r '.status // "unknown"')
+            DB_HOST=$(echo "$BRANCH_INFO" | jq -r '.db_host // "null"')
+            
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS - Status: $STATUS, Host: $DB_HOST"
+            
+            if [[ "$STATUS" == "ACTIVE_HEALTHY" ]] && [[ "$DB_HOST" != "null" ]] && [[ -n "$DB_HOST" ]]; then
+              echo "✅ Branch is ready!"
               break
             fi
             
-            echo "Attempt $i/30: Branch exists, but DB Host is not ready yet. Waiting..."
+            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+              echo "❌ Timeout: Branch did not become ready in 10 minutes"
+              echo "Current status: $STATUS"
+              echo "Full info: $BRANCH_INFO"
+              exit 1
+            fi
+            
             sleep 10
           done
 
-          # --- STEP 3: Final Check ---
-          if [[ -z "$HOST" ]]; then
-            echo "❌ Critical Error: Timed out waiting for DB Host."
-            echo "The branch '$BRANCH_NAME' exists but is stuck in provisioning."
-            echo "ACTION REQUIRED: Run 'supabase branches delete $BRANCH_NAME' locally to clear the stuck branch."
-            exit 1
+          # --- STEP 3: Extract Connection Details ---
+          DB_USER=$(echo "$BRANCH_INFO" | jq -r '.db_user')
+          DB_PORT=$(echo "$BRANCH_INFO" | jq -r '.db_port // "5432"')
+          DB_NAME="postgres"
+          
+          echo "Host: $DB_HOST"
+          echo "User: $DB_USER"
+          echo "Port: $DB_PORT"
+
+          # --- STEP 4: Get Database Password ---
+          # Option A: Try to get the pooler connection string (contains password)
+          echo "Attempting to retrieve connection string..."
+          
+          # The connection string might be in different fields depending on CLI version
+          POOLER_URL=$(echo "$BRANCH_INFO" | jq -r '.database_url // .pooler_url // "null"')
+          
+          if [[ "$POOLER_URL" != "null" ]] && [[ -n "$POOLER_URL" ]]; then
+            echo "✅ Using connection string from branch info"
+            echo "database_url=$POOLER_URL" >> $GITHUB_OUTPUT
+          else
+            # Option B: Reset password to get a known password
+            echo "⚠️  No connection string found, resetting database password..."
+            
+            # Generate a secure random password
+            DB_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-32)
+            
+            # Reset the password (this requires the password reset API)
+            # Note: This might not be available in all Supabase CLI versions
+            supabase branches update "$BRANCH_NAME" \
+              --project-ref "$PROJECT_REF" \
+              --reset-password
+            
+            # Construct the connection URL
+            DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require"
+            echo "database_url=$DATABASE_URL" >> $GITHUB_OUTPUT
           fi
+          
+          # Output individual components for reference
+          echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
+          echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
+          echo "db_port=$DB_PORT" >> $GITHUB_OUTPUT
+          echo "db_name=$DB_NAME" >> $GITHUB_OUTPUT
 
       - name: Run Migrations
         env:
