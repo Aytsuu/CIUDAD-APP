@@ -140,41 +140,41 @@ class Invoice(models.Model):
     inv_change=models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     inv_discount_reason=models.CharField(max_length=100, null=True, blank=True)  
 
-    # bpr_id = models.ForeignKey(
-    #     'clerk.BusinessPermitRequest', 
-    #     on_delete=models.CASCADE,
-    #     blank=True,
-    #     null=True, 
-    #     related_name='bussinesspermit_files', 
-    #     db_column='bpr_id'
-    # )
+    bpr_id = models.ForeignKey(
+        'clerk.BusinessPermitRequest', 
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True, 
+        related_name='bussinesspermit_files', 
+        db_column='bpr_id'
+    )
 
-    # nrc_id = models.ForeignKey(
-    #     'clerk.NonResidentCertificateRequest',
-    #     on_delete=models.CASCADE, 
-    #     db_column='nrc_id',
-    #     null=True,
-    #     blank=True,
-    #     related_name='treasurer_invoices' 
-    # )
+    nrc_id = models.ForeignKey(
+        'clerk.NonResidentCertificateRequest',
+        on_delete=models.CASCADE, 
+        db_column='nrc_id',
+        null=True,
+        blank=True,
+        related_name='treasurer_invoices' 
+    )
 
-    # cr_id = models.ForeignKey(
-    #     'clerk.ClerkCertificate',
-    #     on_delete=models.CASCADE, 
-    #     db_column='cr_id',
-    #     null=True,
-    #     blank=True,
-    #     related_name='treasurer_invoices' 
-    # )
+    cr_id = models.ForeignKey(
+        'clerk.ClerkCertificate',
+        on_delete=models.CASCADE, 
+        db_column='cr_id',
+        null=True,
+        blank=True,
+        related_name='treasurer_invoices' 
+    )
 
-    # pay_id = models.ForeignKey(
-    #     'clerk.ServiceChargePaymentRequest',
-    #     on_delete=models.CASCADE, 
-    #     db_column='pay_id',
-    #     null=True,
-    #     blank=True,
-    #     related_name='treasurer_spay_invoices' 
-    # )    
+    pay_id = models.ForeignKey(
+        'clerk.ServiceChargePaymentRequest',
+        on_delete=models.CASCADE, 
+        db_column='pay_id',
+        null=True,
+        blank=True,
+        related_name='treasurer_spay_invoices' 
+    )    
 
     class Meta:
         db_table = 'invoice'
