@@ -47,13 +47,12 @@ jobs:
             DB_CONFIG=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json || echo "not_ready")
             
             if [[ "$DB_CONFIG" != "not_ready" ]]; then
-              # Parse the URL (Postgres Port 6543 or 5432)
-              # NOTE: Supabase branches use the same password as Prod usually, 
-              # or a specific branch password if configured.
+
               HOST=$(echo $DB_CONFIG | jq -r .db_host)
               USER=$(echo $DB_CONFIG | jq -r .db_user)
+
               # Construct URL
-              URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:6543/postgres"
+              URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:5432/postgres"
               
               # Get branch db credentials
               echo "url=$URL" >> $GITHUB_OUTPUT
@@ -61,6 +60,7 @@ jobs:
               echo "db_user=$USER" >> $GITHUB_OUTPUT
               echo "db_port=5432" >> $GITHUB_OUTPUT
               echo "db_name=postgres" >> $GITHUB_OUTPUT
+              
               break
             fi
             sleep 10
