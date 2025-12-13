@@ -1,6 +1,7 @@
 name: Setup Supabase Preview
 on:
   pull_request:
+    branches: [master]
     types: [opened, synchronize, reopened]
     # Only run if backend code or seeds change
     paths:
