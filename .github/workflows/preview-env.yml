@@ -9,20 +9,23 @@ on:
     #   - 'supabase/**'
 
 jobs:
-  setup-db:
+  server1-dev-db:
     runs-on: ubuntu-latest
+    defaults: 
+      run:
+        working-directory: ./server-1
     steps:
       - uses: actions/checkout@v3
 
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.13'
           cache: 'pip'
 
       - name: Install Dependencies
         run: |
-          pip install -r server/requirements.txt
+          pip install -r requirements.txt
           # We need the supabase CLI to get the DB URL
           brew install supabase/tap/supabase
 
