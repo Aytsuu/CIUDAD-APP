@@ -105,6 +105,7 @@ jobs:
             DB_NAME="${BASH_REMATCH[5]}"
             
             echo "✅ Extracted connection details:"
+            echo "URL: $FULL_POOLER_URL"
             echo "Host: $DB_HOST"
             echo "User: $DB_USER"
             echo "Port: $DB_PORT"
