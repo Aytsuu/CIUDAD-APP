@@ -16,13 +16,14 @@ class ClerkConfig(AppConfig):
         import apps.clerk.signals
         import sys
         from apps.clerk.signals import initialize_quarterly_hearing_reminders
-        initialize_quarterly_hearing_reminders()
 
         if 'manage.py' in sys.argv[0]:
             if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
                 return
-        
+
         # Start scheduler only when Django is fully loaded
+        initialize_quarterly_hearing_reminders()
+        
         if settings.SCHEDULER_AUTOSTART:
             # Prevent duplicate schedulers in autoreload
             if os.environ.get('RUN_MAIN') == 'true' or 'runserver' in sys.argv:
