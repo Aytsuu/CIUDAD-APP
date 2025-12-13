@@ -37,34 +37,51 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
-          # Get the branch name (e.g. feat/login)
           BRANCH_NAME=${{ github.head_ref }}
           echo "Waiting for $BRANCH_NAME to be ready..."
           
-          # Get the config from Supabase API
-          # This loops until the branch is ready (up to 2 mins)
+          # Initialize HOST to empty
+          HOST=""
+          
           for i in {1..20}; do
             DB_CONFIG=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json || echo "not_ready")
             
+            # 1. Check if the command succeeded
             if [[ "$DB_CONFIG" != "not_ready" ]]; then
-
-              HOST=$(echo $DB_CONFIG | jq -r .db_host)
-              USER=$(echo $DB_CONFIG | jq -r .db_user)
-
-              # Construct URL
-              URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:5432/postgres"
               
-              # Get branch db credentials
-              echo "url=$URL" >> $GITHUB_OUTPUT
-              echo "db_host=$HOST" >> $GITHUB_OUTPUT
-              echo "db_user=$USER" >> $GITHUB_OUTPUT
-              echo "db_port=5432" >> $GITHUB_OUTPUT
-              echo "db_name=postgres" >> $GITHUB_OUTPUT
+              # 2. Extract the host
+              EXTRACTED_HOST=$(echo $DB_CONFIG | jq -r .db_host)
               
-              break
+              # 3. CRITICAL FIX: Check if host is "null" (string) or empty
+              if [[ "$EXTRACTED_HOST" != "null" ]] && [[ -n "$EXTRACTED_HOST" ]]; then
+                 HOST=$EXTRACTED_HOST
+                 USER=$(echo $DB_CONFIG | jq -r .db_user)
+                 
+                 # Construct URL using Port 5432 (Direct connection for migrations)
+                 URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:5432/postgres"
+                 
+                 echo "Branch ready! Host: $HOST"
+                 
+                 # Output variables
+                 echo "url=$URL" >> $GITHUB_OUTPUT
+                 echo "db_host=$HOST" >> $GITHUB_OUTPUT
+                 echo "db_user=$USER" >> $GITHUB_OUTPUT
+                 echo "db_port=5432" >> $GITHUB_OUTPUT
+                 echo "db_name=postgres" >> $GITHUB_OUTPUT
+                 
+                 break # Fixed typo (was breakz)
+              else
+                 echo "Branch config exists, but db_host is currently null. Retrying..."
+              fi
             fi
             sleep 10
           done
+
+          # 4. Fail if we never got a host
+          if [[ -z "$HOST" ]]; then
+            echo "Error: Timed out waiting for DB Host to be provisioned."
+            exit 1
+          fi
 
       - name: Run Migrations
         env:
