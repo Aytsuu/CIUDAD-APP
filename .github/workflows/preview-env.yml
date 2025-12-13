@@ -38,50 +38,34 @@ jobs:
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
           BRANCH_NAME=${{ github.head_ref }}
-          echo "Waiting for $BRANCH_NAME to be ready..."
-          
-          # Initialize HOST to empty
-          HOST=""
-          
-          for i in {1..20}; do
-            DB_CONFIG=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json || echo "not_ready")
-            
-            # Check if the command succeeded
-            if [[ "$DB_CONFIG" != "not_ready" ]]; then
-              
-              # Extract the host
-              EXTRACTED_HOST=$(echo $DB_CONFIG | jq -r .db_host)
-              
-              # CRITICAL FIX: Check if host is "null" (string) or empty
-              if [[ "$EXTRACTED_HOST" != "null" ]] && [[ -n "$EXTRACTED_HOST" ]]; then
-                 HOST=$EXTRACTED_HOST
-                 USER=$(echo $DB_CONFIG | jq -r .db_user)
-                 
-                 # Construct URL using Port 5432 (Direct connection for migrations)
-                 URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:5432/postgres"
-                 
-                 echo "Branch ready! Host: $HOST"
-                 
-                 # Output variables
-                 echo "url=$URL" >> $GITHUB_OUTPUT
-                 echo "db_host=$HOST" >> $GITHUB_OUTPUT
-                 echo "db_user=$USER" >> $GITHUB_OUTPUT
-                 echo "db_port=5432" >> $GITHUB_OUTPUT
-                 echo "db_name=postgres" >> $GITHUB_OUTPUT
-                 
-                 break # Fixed typo (was breakz)
-              else
-                 echo "Branch config exists, but db_host is currently null. Retrying..."
-              fi
-            fi
-            sleep 10
-          done
+          echo "Setting up branch: $BRANCH_NAME"
 
-          # 4. Fail if we never got a host
-          if [[ -z "$HOST" ]]; then
-            echo "Error: Timed out waiting for DB Host to be provisioned."
+          # 'create' is idempotent: it makes the branch if missing, 
+          # or returns the config if it exists. 
+          # It waits automatically for the DB to be ready.
+          DB_CONFIG=$(supabase branches create "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json)
+
+          # Parse the output
+          HOST=$(echo $DB_CONFIG | jq -r .db_host)
+          USER=$(echo $DB_CONFIG | jq -r .db_user)
+
+          # Verify we actually got a host
+          if [[ "$HOST" == "null" ]] || [[ -z "$HOST" ]]; then
+            echo "Error: Branch created but Host is null. Raw config: $DB_CONFIG"
             exit 1
           fi
+
+          echo "Branch ready. Host: $HOST"
+
+          # Construct URL (Port 5432)
+          URL="postgres://$USER:${{ secrets.DB_PASSWORD }}@$HOST:5432/postgres"
+
+          # Output
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "db_host=$HOST" >> $GITHUB_OUTPUT
+          echo "db_user=$USER" >> $GITHUB_OUTPUT
+          echo "db_port=5432" >> $GITHUB_OUTPUT
+          echo "db_name=postgres" >> $GITHUB_OUTPUT
 
       - name: Run Migrations
         env:
