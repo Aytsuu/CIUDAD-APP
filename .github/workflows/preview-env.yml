@@ -46,13 +46,13 @@ jobs:
           for i in {1..20}; do
             DB_CONFIG=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json || echo "not_ready")
             
-            # 1. Check if the command succeeded
+            # Check if the command succeeded
             if [[ "$DB_CONFIG" != "not_ready" ]]; then
               
-              # 2. Extract the host
+              # Extract the host
               EXTRACTED_HOST=$(echo $DB_CONFIG | jq -r .db_host)
               
-              # 3. CRITICAL FIX: Check if host is "null" (string) or empty
+              # CRITICAL FIX: Check if host is "null" (string) or empty
               if [[ "$EXTRACTED_HOST" != "null" ]] && [[ -n "$EXTRACTED_HOST" ]]; then
                  HOST=$EXTRACTED_HOST
                  USER=$(echo $DB_CONFIG | jq -r .db_user)
