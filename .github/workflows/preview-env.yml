@@ -139,6 +139,14 @@ jobs:
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         run: |
           # Apply Schema (Django)
-          python manage.py migrate
+          # Run migration in order
+          python manage.py migrate administration
+          python manage.py migrate profiling
+          python manage.py migrate account
+          python manage.py migrate treasurer
+          python manage.py migrate council
+          python manage.py migrate clerk
 
+          # Migrate the rest
+          python manage.py migrate
 
