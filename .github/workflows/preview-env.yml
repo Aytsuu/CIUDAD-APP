@@ -79,6 +79,7 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
         run: |
           # Apply Schema (Django)
+          python manage.py makemigrations
           python manage.py migrate
 
 
