@@ -20,7 +20,7 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-          
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
@@ -30,8 +30,6 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
-          # We need the supabase CLI to get the DB URL
-          brew install supabase/tap/supabase
 
       - name: Get Branch DB URL
         id: db_url
