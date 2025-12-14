@@ -114,7 +114,7 @@
     "pos_title": "ADMIN",
     "pos_max": 2,
     "pos_group": null,
-    "pos_category": null,
+    "pos_category": "BOTH",
     "pos_is_predefined": true,
     "staff": null
   }
