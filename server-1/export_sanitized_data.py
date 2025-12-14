@@ -10,6 +10,7 @@ import shutil
 import logging
 from datetime import datetime
 from faker import Faker
+from django.core.serializers.json import DjangoJSONEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -27,106 +28,120 @@ fake = Faker()
 EXPORT_CONFIG = {
     # Format: 'app.Model': {config}
     'account.Account': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {
             'email': lambda: fake.email(),
             'phone': lambda: fake.numerify('09#########'),
         }
     },
     'administration.Staff': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'administration.Assignment': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'administration.Feature': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'administration.Position': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'profiling.Voter': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'profiling.ResidentProfile': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'profiling.Personal': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'profiling.PersonalAddress': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'profiling.Address': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'profiling.Sitio': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'profiling.BusinessRespondent': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
     'profiling.Business': {
-        'limit': 30,
+        'limit': None,
         'sanitize': {}
     },
 }
 
-def sanitize_data(model_name, data):
-    """Sanitize sensitive data"""
-    config = EXPORT_CONFIG.get(model_name, {})
-    sanitize_rules = config.get('sanitize', {})
-    
-    for obj in data:
-        for field_name, sanitizer in sanitize_rules.items():
-            if hasattr(obj, field_name):
-                setattr(obj, field_name, sanitizer())
-    
-    return data
-
 def export_model(model_name):
-    """Export a single model with sanitization"""
+    """
+    Fast export using .values() (Low Memory)
+    No complex cascading logic.
+    """
+
     try:
         app_label, model_class = model_name.split('.')
         Model = apps.get_model(app_label, model_class)
-    except (ValueError, LookupError):
+    except LookupError:
         logger.error(f"⚠️  Could not find model: {model_name}")
         return None
-    
+
+
+    queryset = Model.objects.all().order_by('pk')
     config = EXPORT_CONFIG.get(model_name, {})
+
     limit = config.get('limit')
-    
-    # Query data
-    queryset = Model.objects.all()
     if limit:
         queryset = queryset[:limit]
+
+    # Streams raw dictionaries instead of creating heavy Django Objects
+    data_iterator = queryset.values().iterator(chunk_size=2000)
+
+    formatted_data = []
+    sanitize_rules = config.get('sanitize', {})
     
-    data = list(queryset)
-    count = len(data)
-    
+    count = 0 
+
+    for row in data_iterator:
+        count += 1
+        
+        # Get Primary Key (Handle 'id' vs custom PK names)
+        pk_name = Model._meta.pk.name
+        pk = row.get(pk_name)
+        
+        # Remove PK from fields (it goes in the 'pk' key, not 'fields')
+        if pk_name in row:
+            del row[pk_name]
+
+        # Sanitize (Direct Dictionary Modification)
+        for field, sanitizer in sanitize_rules.items():
+            if field in row:
+                row[field] = sanitizer()
+
+        # Reconstruct Django Fixture Format manually
+        fixture_item = {
+            "model": model_name,
+            "pk": pk,
+            "fields": row
+        }
+        formatted_data.append(fixture_item)
+
     if count == 0:
-        logger.info(f"ℹ️  {model_name}: No data to export")
         return None
     
-    # Sanitize
-    data = sanitize_data(model_name, data)
-    
-    # Serialize to JSON
-    json_data = serializers.serialize('json', data, indent=2)
-    
-    logger.info(f"✅ {model_name}: Exported {count} records")
-    return json_data
+    logger.info(f'{model_name} retrieved: {queryset.count()}')
+    return json.dumps(formatted_data, cls=DjangoJSONEncoder, indent=2)
 
 def main():
     """Exporting Sanitized Data from Production"""
