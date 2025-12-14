@@ -79,6 +79,7 @@ def load_seed_data():
         'administration_feature.json',
         'administration_position.json',
         'administration_staff.json',
+        'profiling_voter.json'
         'profiling_sitio.json'
         'profiling_address.json',
         'profiling_personaladdress.json',

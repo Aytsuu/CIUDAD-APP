@@ -49,6 +49,10 @@ EXPORT_CONFIG = {
         'limit': None,
         'sanitize': {}
     },
+    'profiling.Voter': {
+        'limit': None,
+        'sanitize': {}
+    },
     'profiling.ResidentProfile': {
         'limit': None,
         'sanitize': {}
