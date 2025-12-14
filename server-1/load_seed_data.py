@@ -76,18 +76,18 @@ def load_seed_data():
     
     # Load files in dependency order
     load_order = [
-        'profiling_residentprofile.json',
-        'account_account.json',
-        'administration_staff.json',
         'administration_feature.json',
-        'administration_assignment.json',
         'administration_position.json',
-        'profiling_personal.json',
-        'profiling_personaladdress.json',
-        'profiling_address.json',
-        'profiling_business.json',
-        'profiling_businessrespondent.json',
+        'administration_staff.json',
         'profiling_sitio.json'
+        'profiling_address.json',
+        'profiling_personaladdress.json',
+        'profiling_personal.json',
+        'profiling_residentprofile.json',
+        'profiling_businessrespondent.json',
+        'account_account.json',
+        'administration_assignment.json',
+        'profiling_business.json',
     ]
     
     total_loaded = 0
