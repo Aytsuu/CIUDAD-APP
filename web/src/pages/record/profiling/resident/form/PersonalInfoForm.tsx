@@ -133,7 +133,7 @@ const PersonalInfoForm = ({
           value={watch(`${prefix}per_id` as any) as string}
           onChange={(value) => {
             setValue(`${prefix}per_id` as any, value);
-            onComboboxChange && onComboboxChange();
+            onComboboxChange && onComboboxChange(); 
           }}
           onSearchChange={(value) => setSearchQuery && setSearchQuery(value)}
           placeholder="Select a resident"
