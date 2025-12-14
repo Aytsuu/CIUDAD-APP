@@ -36,7 +36,7 @@ class Assignment(AbstractModels):
 
 class Staff(AbstractModels):
     staff_id = models.CharField(primary_key=True,max_length=50)
-  <staff_assign_date = models.DateTimeField(auto_now=True)
+    staff_assign_date = models.DateTimeField(auto_now=True)
     staff_type = models.CharField(max_length=20, default="BARANGAY STAFF")
     rp = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, related_name="staff_assignments")
     pos = models.ForeignKey(Position, on_delete=models.CASCADE, related_name='staffs')
