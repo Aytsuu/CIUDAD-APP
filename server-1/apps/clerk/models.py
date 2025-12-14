@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import datetime, date
 from django.core.exceptions import ObjectDoesNotExist
+from apps.profiling.models import Business
 
 
 def default_due_date():
@@ -74,22 +75,6 @@ class IssuedCertificate(models.Model):
         managed = False
 
 # Business Models
-class Business(models.Model):
-    bus_id = models.CharField(primary_key=True, max_length=50)
-    bus_name = models.CharField(max_length=255)
-    bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
-    bus_location = models.CharField(max_length=255)
-    bus_status = models.CharField(max_length=50)
-    bus_date_of_registration = models.DateField()
-    bus_date_verified = models.DateField()
-    staff_id = models.CharField(max_length=50, null=True)
-    rp_id = models.CharField(max_length=50, null=True)
-    br_id = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'business'
-        managed = False
-
 class BusinessPermitRequest(models.Model):
     bpr_id = models.CharField(primary_key=True)
     req_request_date = models.DateField()
@@ -98,7 +83,7 @@ class BusinessPermitRequest(models.Model):
     req_payment_status = models.CharField(max_length=100, default='Unpaid')
     req_amount = models.DecimalField(max_digits=10, decimal_places=2)
     ags_id = models.ForeignKey('treasurer.annual_gross_sales', on_delete=models.CASCADE, db_column='ags_id', related_name='business_permits', null=True)
-    bus_id = models.ForeignKey('profiling.Business', on_delete=models.CASCADE, db_column='bus_id', related_name='permit_requests', null=True, blank=True)
+    bus_id = models.ForeignKey(Business, on_delete=models.CASCADE, db_column='bus_id', related_name='permit_requests', null=True, blank=True)
     pr_id = models.ForeignKey('treasurer.Purpose_And_Rates', on_delete=models.CASCADE, db_column='pr_id', related_name='business_permits', null=True)
     staff_id = models.ForeignKey('administration.Staff', on_delete=models.CASCADE, db_column='staff_id', related_name='staff_business_permits', null=True)
     rp_id = models.ForeignKey('profiling.ResidentProfile', on_delete=models.CASCADE, db_column='rp_id', null=True)
