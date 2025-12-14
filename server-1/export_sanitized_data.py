@@ -37,10 +37,10 @@ EXPORT_CONFIG = {
         'limit': None,
         'sanitize': {}
     },
-    'administration.Assignment': {
-        'limit': None,
-        'sanitize': {}
-    },
+    # 'administration.Assignment': {
+    #     'limit': None,
+    #     'sanitize': {}
+    # },
     'administration.Feature': {
         'limit': None,
         'sanitize': {}

@@ -61,7 +61,7 @@ def load_json_fixture(filepath):
 
 def load_seed_data():
     """Load all seed data files"""
-    
+
     # Check if already seeded
     if check_if_seeded():
         logger.info("ℹ️  Database already seeded (skipping)")
@@ -79,7 +79,7 @@ def load_seed_data():
         'account_account.json',
         'administration_staff.json',
         'administration_feature.json',
-        'administration_assignment.json',
+        # 'administration_assignment.json',
         'administration_position.json',
         'profiling_residentprofile.json',
         'profiling_personal.json',
