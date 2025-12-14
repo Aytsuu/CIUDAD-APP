@@ -147,14 +147,14 @@ def main():
             filename = model_name.replace('.', '_').lower() + '.json'
             filepath = os.path.join(output_dir, filename)
             
-            with open(filepath, 'w') as f:
+            with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(json_data)
             
             all_data[model_name] = json_data
     
     # Create combined file
     combined_file = os.path.join(output_dir, 'all_data.json')
-    with open(combined_file, 'w') as f:
+    with open(combined_file, 'w', encoding='utf-8') as f:
         json.dump(all_data, f, indent=2)
     
     logger.info(f"✅ Data exported to {output_dir}/")
