@@ -7,6 +7,7 @@ python export_sanitized_data.py
 import os
 import json
 import sys
+import shutil
 from datetime import datetime
 from faker import Faker
 
@@ -31,6 +32,18 @@ EXPORT_CONFIG = {
         }
     },
     'administration.Staff': {
+        'limit': None,
+        'sanitize': {}
+    },
+    'administration.Assignment': {
+        'limit': None,
+        'sanitize': {}
+    },
+    'administration.Feature': {
+        'limit': None,
+        'sanitize': {}
+    },
+    'administration.Position': {
         'limit': None,
         'sanitize': {}
     },
@@ -116,7 +129,11 @@ def main():
     print()
     
     output_dir = 'seed_data'
-    os.makedirs(output_dir, exist_ok=True)
+    
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+
+    os.makedirs(output_dir)
     
     all_data = {}
     
