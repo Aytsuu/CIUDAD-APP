@@ -48,12 +48,27 @@ def load_json_fixture(filepath):
     
     try:
         objects = serializers.deserialize('json', data)
+
         count = 0
+        batch = []
+        Model = None
+        BATCH_SIZE = 5000
         
         for obj in objects:
-            obj.save()
+            object_instance = obj.object
+            if Model is None:
+                Model = type(object_instance)
+            
+            batch.append(object_instance)
             count += 1
+
+            if len(batch) >= BATCH_SIZE:
+                Model.objects.bulk_create(batch)
+                batch = []
         
+        if len(batch) > 0 and Model:
+            Model.objects.bulk_create(batch)
+
         return count
     except Exception as e:
         logger.error(f"❌ Error loading {filepath.name}: {e}")

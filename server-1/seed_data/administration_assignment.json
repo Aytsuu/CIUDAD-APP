@@ -1,272 +1,272 @@
 [
-{
-  "model": "administration.assignment",
-  "pk": 1,
-  "fields": {
-    "feat": 13,
-    "pos": 6,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
+  {
+    "model": "administration.Assignment",
+    "pk": 1,
+    "fields": {
+      "feat_id": 13,
+      "pos_id": 6,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 2,
+    "fields": {
+      "feat_id": 14,
+      "pos_id": 6,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 3,
+    "fields": {
+      "feat_id": 15,
+      "pos_id": 6,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 4,
+    "fields": {
+      "feat_id": 16,
+      "pos_id": 6,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 5,
+    "fields": {
+      "feat_id": 17,
+      "pos_id": 6,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 6,
+    "fields": {
+      "feat_id": 18,
+      "pos_id": 6,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 7,
+    "fields": {
+      "feat_id": 19,
+      "pos_id": 6,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 8,
+    "fields": {
+      "feat_id": 20,
+      "pos_id": 6,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 9,
+    "fields": {
+      "feat_id": 13,
+      "pos_id": 7,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 10,
+    "fields": {
+      "feat_id": 14,
+      "pos_id": 7,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 11,
+    "fields": {
+      "feat_id": 17,
+      "pos_id": 7,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 12,
+    "fields": {
+      "feat_id": 20,
+      "pos_id": 7,
+      "assi_date": "2025-11-25",
+      "staff_id": "00002250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 17,
+    "fields": {
+      "feat_id": 2,
+      "pos_id": 9,
+      "assi_date": "2025-12-05",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 18,
+    "fields": {
+      "feat_id": 1,
+      "pos_id": 10,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 19,
+    "fields": {
+      "feat_id": 5,
+      "pos_id": 12,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 20,
+    "fields": {
+      "feat_id": 7,
+      "pos_id": 11,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 21,
+    "fields": {
+      "feat_id": 9,
+      "pos_id": 12,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 22,
+    "fields": {
+      "feat_id": 11,
+      "pos_id": 11,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 23,
+    "fields": {
+      "feat_id": 8,
+      "pos_id": 10,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 24,
+    "fields": {
+      "feat_id": 4,
+      "pos_id": 13,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 25,
+    "fields": {
+      "feat_id": 10,
+      "pos_id": 14,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 26,
+    "fields": {
+      "feat_id": 12,
+      "pos_id": 15,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 27,
+    "fields": {
+      "feat_id": 6,
+      "pos_id": 16,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 28,
+    "fields": {
+      "feat_id": 11,
+      "pos_id": 10,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 29,
+    "fields": {
+      "feat_id": 1,
+      "pos_id": 11,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 30,
+    "fields": {
+      "feat_id": 3,
+      "pos_id": 17,
+      "assi_date": "2025-12-07",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "administration.Assignment",
+    "pk": 31,
+    "fields": {
+      "feat_id": 3,
+      "pos_id": 18,
+      "assi_date": "2025-12-09",
+      "staff_id": "00001250924"
+    }
   }
-},
-{
-  "model": "administration.assignment",
-  "pk": 2,
-  "fields": {
-    "feat": 14,
-    "pos": 6,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 3,
-  "fields": {
-    "feat": 15,
-    "pos": 6,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 4,
-  "fields": {
-    "feat": 16,
-    "pos": 6,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 5,
-  "fields": {
-    "feat": 17,
-    "pos": 6,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 6,
-  "fields": {
-    "feat": 18,
-    "pos": 6,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 7,
-  "fields": {
-    "feat": 19,
-    "pos": 6,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 8,
-  "fields": {
-    "feat": 20,
-    "pos": 6,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 9,
-  "fields": {
-    "feat": 13,
-    "pos": 7,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 10,
-  "fields": {
-    "feat": 14,
-    "pos": 7,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 11,
-  "fields": {
-    "feat": 17,
-    "pos": 7,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 12,
-  "fields": {
-    "feat": 20,
-    "pos": 7,
-    "assi_date": "2025-11-25",
-    "staff": "00002250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 17,
-  "fields": {
-    "feat": 2,
-    "pos": 9,
-    "assi_date": "2025-12-05",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 18,
-  "fields": {
-    "feat": 1,
-    "pos": 10,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 19,
-  "fields": {
-    "feat": 5,
-    "pos": 12,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 20,
-  "fields": {
-    "feat": 7,
-    "pos": 11,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 21,
-  "fields": {
-    "feat": 9,
-    "pos": 12,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 22,
-  "fields": {
-    "feat": 11,
-    "pos": 11,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 23,
-  "fields": {
-    "feat": 8,
-    "pos": 10,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 24,
-  "fields": {
-    "feat": 4,
-    "pos": 13,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 25,
-  "fields": {
-    "feat": 10,
-    "pos": 14,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 26,
-  "fields": {
-    "feat": 12,
-    "pos": 15,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 27,
-  "fields": {
-    "feat": 6,
-    "pos": 16,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 28,
-  "fields": {
-    "feat": 11,
-    "pos": 10,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 29,
-  "fields": {
-    "feat": 1,
-    "pos": 11,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 30,
-  "fields": {
-    "feat": 3,
-    "pos": 17,
-    "assi_date": "2025-12-07",
-    "staff": "00001250924"
-  }
-},
-{
-  "model": "administration.assignment",
-  "pk": 31,
-  "fields": {
-    "feat": 3,
-    "pos": 18,
-    "assi_date": "2025-12-09",
-    "staff": "00001250924"
-  }
-}
 ]
