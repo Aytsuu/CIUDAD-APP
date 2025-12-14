@@ -82,6 +82,9 @@ def load_seed_data():
     load_order = [
         'account_account.json',
         'administration_staff.json',
+        'administration_feature.json',
+        'administration_assignment.json',
+        'administration_position.json',
         'profiling_residentprofile.json',
         'profiling_personal.json',
         'profiling_personaladdress.json',
