@@ -27,7 +27,7 @@ fake = Faker()
 EXPORT_CONFIG = {
     # Format: 'app.Model': {config}
     'account.Account': {
-        'limit': 20,  # Only export 50 users
+        'limit': None,
         'sanitize': {
             'email': lambda: fake.email(),
             'phone': lambda: fake.numerify('09#########'),
