@@ -27,7 +27,7 @@ EXPORT_CONFIG = {
         'limit': 20,  # Only export 50 users
         'sanitize': {
             'email': lambda: fake.email(),
-            'phone': lambda: fake.phone_number(),
+            'phone': lambda: fake.numerify('09#########'),
         }
     },
     'administration.Staff': {
