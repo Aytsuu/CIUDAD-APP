@@ -133,7 +133,7 @@ def main():
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
 
-    os.makedirs(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     
     all_data = {}
     
