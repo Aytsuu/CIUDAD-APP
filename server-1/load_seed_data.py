@@ -67,7 +67,7 @@ def load_seed_data():
         logger.info("ℹ️  Database already seeded (skipping)")
         return
     
-    seed_dir = Path(__file__).parent / 'seed_data'
+    seed_dir = 'seed_data'
     
     if not seed_dir.exists():
         logger.error(f"⚠️  Seed data directory not found: {seed_dir}")
@@ -102,7 +102,7 @@ def load_seed_data():
                 count = load_json_fixture(filepath)
                 total_loaded += count
             else:
-                logger.error(f"   ⚠️  Not found: {filename}")
+                logger.error(f"⚠️  Not found: {filename}")
         
         # Load any remaining files not in load_order
         for filepath in seed_dir.glob('*.json'):
