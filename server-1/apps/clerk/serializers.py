@@ -26,18 +26,6 @@ class InvoiceSerializer(serializers.ModelSerializer):
             'inv_nat_of_collection'
         ]
 
-# Business Serializers
-class BusinessSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Business
-        fields = [
-            'bus_id',
-            'bus_name',
-            'bus_gross_sales',
-            'staff_id',
-            'add_id',
-        ]
-
 # Address Serializers
 # class AddressDetailsSerializer(serializers.ModelSerializer):
 #     formatted_address = serializers.SerializerMethodField()
