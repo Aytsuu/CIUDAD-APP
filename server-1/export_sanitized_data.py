@@ -27,58 +27,58 @@ fake = Faker()
 EXPORT_CONFIG = {
     # Format: 'app.Model': {config}
     'account.Account': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {
             'email': lambda: fake.email(),
             'phone': lambda: fake.numerify('09#########'),
         }
     },
     'administration.Staff': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'administration.Assignment': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'administration.Feature': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'administration.Position': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'profiling.Voter': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'profiling.ResidentProfile': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'profiling.Personal': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'profiling.PersonalAddress': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'profiling.Address': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'profiling.Sitio': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'profiling.BusinessRespondent': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
     'profiling.Business': {
-        'limit': None,
+        'limit': 30,
         'sanitize': {}
     },
 }
