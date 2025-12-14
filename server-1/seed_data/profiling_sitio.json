@@ -1,0 +1,16 @@
+[
+{
+  "model": "profiling.sitio",
+  "pk": 3,
+  "fields": {
+    "sitio_name": "CUENCO"
+  }
+},
+{
+  "model": "profiling.sitio",
+  "pk": 2,
+  "fields": {
+    "sitio_name": "PALMA"
+  }
+}
+]

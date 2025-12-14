@@ -3,10 +3,6 @@ on:
   pull_request:
     branches: [master]
     types: [opened, synchronize, reopened]
-    # Only run if backend code or seeds change
-    # paths:
-    #   - 'server/**'
-    #   - 'supabase/**'
 
 jobs:
   server1-dev-db:
@@ -40,7 +36,7 @@ jobs:
           BRANCH_NAME=${{ github.head_ref }}
           echo "Target Branch: $BRANCH_NAME"
 
-          # --- STEP 1: Create or Get Branch ---
+          # --- Create or Get Branch ---
           set +e 
           echo "Creating branch (or confirming it exists)..."
           CREATE_OUTPUT=$(supabase branches create "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json 2>&1)
@@ -57,7 +53,7 @@ jobs:
             exit 1
           fi
 
-          # --- STEP 2: Poll for Ready State ---
+          # --- Poll for Ready State ---
           echo "Waiting for branch to be ready..."
           MAX_ATTEMPTS=30  # 10 minutes (60 * 10s)
           ATTEMPT=0
@@ -71,10 +67,6 @@ jobs:
             # Check if we have connection URLs (indicates branch is ready)
             POSTGRES_URL=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL // "null"')
             POSTGRES_URL_NON_POOLING=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL_NON_POOLING // "null"')
-            
-            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS"
-            echo "Pooler URL present: $([ "$POSTGRES_URL" != "null" ] && echo "Yes" || echo "No")"
-            echo "Direct URL present: $([ "$POSTGRES_URL_NON_POOLING" != "null" ] && echo "Yes" || echo "No")"
             
             # Branch is ready when we have connection URLs
             if [[ "$POSTGRES_URL" != "null" ]] && [[ -n "$POSTGRES_URL" ]] && [[ "$POSTGRES_URL" != "***"* ]]; then
@@ -91,7 +83,7 @@ jobs:
             sleep 10
           done
 
-          # --- STEP 3: Extract Connection Details ---
+          # --- Extract Connection Details ---
           # Use the pooler URL (better for CI/CD)
           FULL_POOLER_URL=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL')
           
@@ -103,13 +95,6 @@ jobs:
             DB_HOST="${BASH_REMATCH[3]}"
             DB_PORT="${BASH_REMATCH[4]}"
             DB_NAME="${BASH_REMATCH[5]}"
-            
-            echo "✅ Extracted connection details:"
-            echo "URL: $FULL_POOLER_URL"
-            echo "Host: $DB_HOST"
-            echo "User: $DB_USER"
-            echo "Pass: $DB_PASS"
-            echo "Database: $DB_NAME"
 
             echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
             echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
@@ -140,4 +125,10 @@ jobs:
         run: |
           # Apply Schema (Django)
           python manage.py migrate
+
+          if [ -f "load_seed_data.py" ]; then
+            python load_seed_data.py
+          else
+            echo "Seed script not found. Skipping..."
+          fi
 
