@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='staff',
             name='rp',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='staff_assignments', to='profiling.residentprofile'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='staff_assignments', db_constraint=False, deferrable=models.Deferrable.DEFERRED, to='profiling.residentprofile'),
             preserve_default=False,
         ),
     ]
