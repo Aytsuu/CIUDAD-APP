@@ -3,7 +3,7 @@
   "model": "profiling.voter",
   "pk": 1,
   "fields": {
-    "voter_name": "BRITANIA, JOVELYN CABAÑERO",
+    "voter_name": "BRITANIA, JOVELYN CABAÃ‘ERO",
     "voter_address": "ARELLANO BOULEVARD",
     "voter_category": null,
     "voter_precinct": "0927A"
@@ -113,7 +113,7 @@
   "model": "profiling.voter",
   "pk": 12,
   "fields": {
-    "voter_name": "CASTAÑEDA, LORENCIA SUMALPONG",
+    "voter_name": "CASTAÃ‘EDA, LORENCIA SUMALPONG",
     "voter_address": "126 LOGARTA",
     "voter_category": "C",
     "voter_precinct": "0927A"
@@ -153,7 +153,7 @@
   "model": "profiling.voter",
   "pk": 16,
   "fields": {
-    "voter_name": "CEREÑO, JUSTIN LABASTIDA",
+    "voter_name": "CEREÃ‘O, JUSTIN LABASTIDA",
     "voter_address": "ARELLANO BLVD. NAZARENE",
     "voter_category": "*",
     "voter_precinct": "0927A"
@@ -883,7 +883,7 @@
   "model": "profiling.voter",
   "pk": 89,
   "fields": {
-    "voter_name": "NUÑEZ, JULIUS CABANILLA",
+    "voter_name": "NUÃ‘EZ, JULIUS CABANILLA",
     "voter_address": "ARELLANO BOULEVARD CEBU CITY",
     "voter_category": "*",
     "voter_precinct": "0927A"
@@ -1043,7 +1043,7 @@
   "model": "profiling.voter",
   "pk": 105,
   "fields": {
-    "voter_name": "PARREÑO, JONATHAN ESPINO",
+    "voter_name": "PARREÃ‘O, JONATHAN ESPINO",
     "voter_address": "QUEZON BLVD",
     "voter_category": null,
     "voter_precinct": "0927A"
@@ -1383,7 +1383,7 @@
   "model": "profiling.voter",
   "pk": 139,
   "fields": {
-    "voter_name": "TOÑACAO, CARMENCITA SAAVEDRA",
+    "voter_name": "TOÃ‘ACAO, CARMENCITA SAAVEDRA",
     "voter_address": "103-A, LOGARTA ST.",
     "voter_category": "C",
     "voter_precinct": "0927A"
@@ -1613,7 +1613,7 @@
   "model": "profiling.voter",
   "pk": 162,
   "fields": {
-    "voter_name": "AÑOS, JOHN VINCENT GUBEL",
+    "voter_name": "AÃ‘OS, JOHN VINCENT GUBEL",
     "voter_address": "ARELLANO ST.",
     "voter_category": "*",
     "voter_precinct": "0927B"
@@ -1623,7 +1623,7 @@
   "model": "profiling.voter",
   "pk": 163,
   "fields": {
-    "voter_name": "APA-AP, WELLA ROSE TRECIÑO",
+    "voter_name": "APA-AP, WELLA ROSE TRECIÃ‘O",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0927B"
@@ -1793,7 +1793,7 @@
   "model": "profiling.voter",
   "pk": 180,
   "fields": {
-    "voter_name": "BERDIN, MARITESS CAÑETE",
+    "voter_name": "BERDIN, MARITESS CAÃ‘ETE",
     "voter_address": "7 MAGALLANES ST.",
     "voter_category": null,
     "voter_precinct": "0927B"
@@ -1813,7 +1813,7 @@
   "model": "profiling.voter",
   "pk": 182,
   "fields": {
-    "voter_name": "BIÑAN, RODSON GONZALES",
+    "voter_name": "BIÃ‘AN, RODSON GONZALES",
     "voter_address": "ARELLANO ST",
     "voter_category": null,
     "voter_precinct": "0927B"
@@ -1963,7 +1963,7 @@
   "model": "profiling.voter",
   "pk": 197,
   "fields": {
-    "voter_name": "CAÑETE, GODFREY _",
+    "voter_name": "CAÃ‘ETE, GODFREY _",
     "voter_address": "450 QUEZON BLVD.",
     "voter_category": "*",
     "voter_precinct": "0927B"
@@ -2073,7 +2073,7 @@
   "model": "profiling.voter",
   "pk": 208,
   "fields": {
-    "voter_name": "CONDIÑO, CHERRYL VILLACARLOS",
+    "voter_name": "CONDIÃ‘O, CHERRYL VILLACARLOS",
     "voter_address": "V-GULLAS EXT.",
     "voter_category": null,
     "voter_precinct": "0927B"
@@ -2433,7 +2433,7 @@
   "model": "profiling.voter",
   "pk": 244,
   "fields": {
-    "voter_name": "MALOLOY-ON, MELQUIADES CONDIÑO",
+    "voter_name": "MALOLOY-ON, MELQUIADES CONDIÃ‘O",
     "voter_address": "R. PALMA ST.",
     "voter_category": "C",
     "voter_precinct": "0927B"
@@ -2483,7 +2483,7 @@
   "model": "profiling.voter",
   "pk": 249,
   "fields": {
-    "voter_name": "MOMONGAN, MANUEL MASKARIÑO",
+    "voter_name": "MOMONGAN, MANUEL MASKARIÃ‘O",
     "voter_address": "DOLE, REGIONAL OFFICE NO. 7 LEGASPI EXT.",
     "voter_category": "C",
     "voter_precinct": "0927B"
@@ -2503,7 +2503,7 @@
   "model": "profiling.voter",
   "pk": 251,
   "fields": {
-    "voter_name": "NUÑEZ, CARMINA PAGOBO",
+    "voter_name": "NUÃ‘EZ, CARMINA PAGOBO",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0927B"
@@ -2643,7 +2643,7 @@
   "model": "profiling.voter",
   "pk": 265,
   "fields": {
-    "voter_name": "PERALES, ROSALITA AÑORA",
+    "voter_name": "PERALES, ROSALITA AÃ‘ORA",
     "voter_address": "LAPU-LAPU ST.",
     "voter_category": "*",
     "voter_precinct": "0927B"
@@ -2913,7 +2913,7 @@
   "model": "profiling.voter",
   "pk": 292,
   "fields": {
-    "voter_name": "SOREÑO, THERESE _",
+    "voter_name": "SOREÃ‘O, THERESE _",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0927B"
@@ -3023,7 +3023,7 @@
   "model": "profiling.voter",
   "pk": 303,
   "fields": {
-    "voter_name": "TAN, ZENAIDA LAÑAS",
+    "voter_name": "TAN, ZENAIDA LAÃ‘AS",
     "voter_address": "299 MAGALLANES ST.",
     "voter_category": null,
     "voter_precinct": "0927B"
@@ -3033,7 +3033,7 @@
   "model": "profiling.voter",
   "pk": 304,
   "fields": {
-    "voter_name": "TAÑO, MARIA NOVAL",
+    "voter_name": "TAÃ‘O, MARIA NOVAL",
     "voter_address": "LAPU-LAPU ST.",
     "voter_category": "C",
     "voter_precinct": "0927B"
@@ -3403,7 +3403,7 @@
   "model": "profiling.voter",
   "pk": 341,
   "fields": {
-    "voter_name": "BAHAY, JOHNNY ANIÑON",
+    "voter_name": "BAHAY, JOHNNY ANIÃ‘ON",
     "voter_address": "ARELLANO ST.",
     "voter_category": null,
     "voter_precinct": "0928A"
@@ -3743,7 +3743,7 @@
   "model": "profiling.voter",
   "pk": 375,
   "fields": {
-    "voter_name": "CABAÑERO, GLENDA CONCON",
+    "voter_name": "CABAÃ‘ERO, GLENDA CONCON",
     "voter_address": "ARELLANO BLVD. SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0928A"
@@ -3753,7 +3753,7 @@
   "model": "profiling.voter",
   "pk": 376,
   "fields": {
-    "voter_name": "CABAÑERO, GLORIA CONCON",
+    "voter_name": "CABAÃ‘ERO, GLORIA CONCON",
     "voter_address": "ARELLANO BVLD,",
     "voter_category": null,
     "voter_precinct": "0928A"
@@ -3813,7 +3813,7 @@
   "model": "profiling.voter",
   "pk": 382,
   "fields": {
-    "voter_name": "CANALES, JERAMIE VILLASEÑOR",
+    "voter_name": "CANALES, JERAMIE VILLASEÃ‘OR",
     "voter_address": "BACK CHAPEL ARELLANO",
     "voter_category": null,
     "voter_precinct": "0928A"
@@ -3853,7 +3853,7 @@
   "model": "profiling.voter",
   "pk": 386,
   "fields": {
-    "voter_name": "CAÑETE, CECILIA SATO",
+    "voter_name": "CAÃ‘ETE, CECILIA SATO",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0928A"
@@ -3903,7 +3903,7 @@
   "model": "profiling.voter",
   "pk": 391,
   "fields": {
-    "voter_name": "CONDIÑO, DARROLD JESS ANOR",
+    "voter_name": "CONDIÃ‘O, DARROLD JESS ANOR",
     "voter_address": "V. GULLAS EXT.",
     "voter_category": null,
     "voter_precinct": "0928A"
@@ -3973,7 +3973,7 @@
   "model": "profiling.voter",
   "pk": 398,
   "fields": {
-    "voter_name": "DELA PEÑA, RHEGENE REGIDOR",
+    "voter_name": "DELA PEÃ‘A, RHEGENE REGIDOR",
     "voter_address": "ARELLANO BOULEVARD",
     "voter_category": "*",
     "voter_precinct": "0928A"
@@ -4333,7 +4333,7 @@
   "model": "profiling.voter",
   "pk": 434,
   "fields": {
-    "voter_name": "MENDOZA, WARREN KEITH CAÑETE",
+    "voter_name": "MENDOZA, WARREN KEITH CAÃ‘ETE",
     "voter_address": "PIER I PORT AREA",
     "voter_category": null,
     "voter_precinct": "0928A"
@@ -4453,7 +4453,7 @@
   "model": "profiling.voter",
   "pk": 446,
   "fields": {
-    "voter_name": "OBEÑITA, JOHN PAUL ZANORIA",
+    "voter_name": "OBEÃ‘ITA, JOHN PAUL ZANORIA",
     "voter_address": "124F LOGARTA ST",
     "voter_category": "*",
     "voter_precinct": "0928A"
@@ -4553,7 +4553,7 @@
   "model": "profiling.voter",
   "pk": 456,
   "fields": {
-    "voter_name": "PATIÑO, VAN STEWART _",
+    "voter_name": "PATIÃ‘O, VAN STEWART _",
     "voter_address": "LOGARTA 124 ST.",
     "voter_category": "*",
     "voter_precinct": "0928A"
@@ -4713,7 +4713,7 @@
   "model": "profiling.voter",
   "pk": 472,
   "fields": {
-    "voter_name": "SANCHEZ, NIÑO JANOBAS",
+    "voter_name": "SANCHEZ, NIÃ‘O JANOBAS",
     "voter_address": "LEGASPI EXT.",
     "voter_category": "*",
     "voter_precinct": "0928A"
@@ -4813,7 +4813,7 @@
   "model": "profiling.voter",
   "pk": 482,
   "fields": {
-    "voter_name": "TALITA, JOECEL NUÑEZ",
+    "voter_name": "TALITA, JOECEL NUÃ‘EZ",
     "voter_address": "31-C MABINI ST.",
     "voter_category": null,
     "voter_precinct": "0928A"
@@ -4973,7 +4973,7 @@
   "model": "profiling.voter",
   "pk": 498,
   "fields": {
-    "voter_name": "ALBINO, JUAN LAÑOJAN",
+    "voter_name": "ALBINO, JUAN LAÃ‘OJAN",
     "voter_address": "NO. 5 MAGALLANES STREET",
     "voter_category": "C",
     "voter_precinct": "0928B"
@@ -5133,7 +5133,7 @@
   "model": "profiling.voter",
   "pk": 514,
   "fields": {
-    "voter_name": "BAÑEZ, JHESAL MANGUBAT",
+    "voter_name": "BAÃ‘EZ, JHESAL MANGUBAT",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0928B"
@@ -5163,7 +5163,7 @@
   "model": "profiling.voter",
   "pk": 517,
   "fields": {
-    "voter_name": "BAYA, VINCE MOÑASQUE",
+    "voter_name": "BAYA, VINCE MOÃ‘ASQUE",
     "voter_address": "100-A LOGARTA STREET CEBU CITY",
     "voter_category": "*",
     "voter_precinct": "0928B"
@@ -5173,7 +5173,7 @@
   "model": "profiling.voter",
   "pk": 518,
   "fields": {
-    "voter_name": "BAYLON, AUDIE CONDIÑO",
+    "voter_name": "BAYLON, AUDIE CONDIÃ‘O",
     "voter_address": "R. PALMA ST",
     "voter_category": null,
     "voter_precinct": "0928B"
@@ -5183,7 +5183,7 @@
   "model": "profiling.voter",
   "pk": 519,
   "fields": {
-    "voter_name": "BENABAYE, CHESTER LUCAÑAS",
+    "voter_name": "BENABAYE, CHESTER LUCAÃ‘AS",
     "voter_address": "386 LAPU LAPU ST",
     "voter_category": null,
     "voter_precinct": "0928B"
@@ -5283,7 +5283,7 @@
   "model": "profiling.voter",
   "pk": 529,
   "fields": {
-    "voter_name": "BROÑOLA, LARRY MONTICALVO",
+    "voter_name": "BROÃ‘OLA, LARRY MONTICALVO",
     "voter_address": "LEGASPI EXTENSION CEBU CITY",
     "voter_category": null,
     "voter_precinct": "0928B"
@@ -5433,7 +5433,7 @@
   "model": "profiling.voter",
   "pk": 544,
   "fields": {
-    "voter_name": "CERILLES, GLENN AÑASCO",
+    "voter_name": "CERILLES, GLENN AÃ‘ASCO",
     "voter_address": "106-LAPU LAPU STREET",
     "voter_category": "*",
     "voter_precinct": "0928B"
@@ -5463,7 +5463,7 @@
   "model": "profiling.voter",
   "pk": 547,
   "fields": {
-    "voter_name": "CONCEPCION, NIÑA JEAN DERECHO",
+    "voter_name": "CONCEPCION, NIÃ‘A JEAN DERECHO",
     "voter_address": "28 ZULUETA  ST.,",
     "voter_category": "*",
     "voter_precinct": "0928B"
@@ -5623,7 +5623,7 @@
   "model": "profiling.voter",
   "pk": 563,
   "fields": {
-    "voter_name": "EGONIA, WILFREDO EÑEREZ",
+    "voter_name": "EGONIA, WILFREDO EÃ‘EREZ",
     "voter_address": "386 LAPU-LAPU ST.",
     "voter_category": null,
     "voter_precinct": "0928B"
@@ -5793,7 +5793,7 @@
   "model": "profiling.voter",
   "pk": 580,
   "fields": {
-    "voter_name": "JUANILLO, NIÑA ARABIS",
+    "voter_name": "JUANILLO, NIÃ‘A ARABIS",
     "voter_address": "163 ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0928B"
@@ -6123,7 +6123,7 @@
   "model": "profiling.voter",
   "pk": 613,
   "fields": {
-    "voter_name": "NUÑEZ, ROGER SOTERO",
+    "voter_name": "NUÃ‘EZ, ROGER SOTERO",
     "voter_address": "ARELLANO BLVD.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0928B"
@@ -6173,7 +6173,7 @@
   "model": "profiling.voter",
   "pk": 618,
   "fields": {
-    "voter_name": "PACAÑA, ROSENDA CANGHAGAS",
+    "voter_name": "PACAÃ‘A, ROSENDA CANGHAGAS",
     "voter_address": "LOGARATA ST.",
     "voter_category": null,
     "voter_precinct": "0928B"
@@ -6273,7 +6273,7 @@
   "model": "profiling.voter",
   "pk": 628,
   "fields": {
-    "voter_name": "PEREÑA, EDSEL IVAN LINTAG",
+    "voter_name": "PEREÃ‘A, EDSEL IVAN LINTAG",
     "voter_address": "LAPU-LAPU ST.",
     "voter_category": "*",
     "voter_precinct": "0928B"
@@ -6693,7 +6693,7 @@
   "model": "profiling.voter",
   "pk": 670,
   "fields": {
-    "voter_name": "ALIÑABON, CHERRY MAE MAKIBULAN",
+    "voter_name": "ALIÃ‘ABON, CHERRY MAE MAKIBULAN",
     "voter_address": "124-S LOGARTA ST.",
     "voter_category": "*",
     "voter_precinct": "0929A"
@@ -7023,7 +7023,7 @@
   "model": "profiling.voter",
   "pk": 703,
   "fields": {
-    "voter_name": "CAPITO, GINA SUÑIGA",
+    "voter_name": "CAPITO, GINA SUÃ‘IGA",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "C",
     "voter_precinct": "0929A"
@@ -7723,7 +7723,7 @@
   "model": "profiling.voter",
   "pk": 773,
   "fields": {
-    "voter_name": "NUÑEZ, LEONESITA PAGOBO",
+    "voter_name": "NUÃ‘EZ, LEONESITA PAGOBO",
     "voter_address": "5-B,ARELLANO BLVD.",
     "voter_category": "C",
     "voter_precinct": "0929A"
@@ -7803,7 +7803,7 @@
   "model": "profiling.voter",
   "pk": 781,
   "fields": {
-    "voter_name": "PACAÑA, JEFFERSON _",
+    "voter_name": "PACAÃ‘A, JEFFERSON _",
     "voter_address": "BLOCK 9 LOGARTA STREET",
     "voter_category": "*",
     "voter_precinct": "0929A"
@@ -8313,7 +8313,7 @@
   "model": "profiling.voter",
   "pk": 832,
   "fields": {
-    "voter_name": "TORTOR, MARIAH NIÑA EVANGELISTA",
+    "voter_name": "TORTOR, MARIAH NIÃ‘A EVANGELISTA",
     "voter_address": "R. PALMA",
     "voter_category": "*",
     "voter_precinct": "0929A"
@@ -8513,7 +8513,7 @@
   "model": "profiling.voter",
   "pk": 852,
   "fields": {
-    "voter_name": "AÑOS, JOSEPH CUBIL",
+    "voter_name": "AÃ‘OS, JOSEPH CUBIL",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0929B"
@@ -9153,7 +9153,7 @@
   "model": "profiling.voter",
   "pk": 916,
   "fields": {
-    "voter_name": "GARIN, NATASHA NIÑA _",
+    "voter_name": "GARIN, NATASHA NIÃ‘A _",
     "voter_address": "124-C LOGARTA ST.",
     "voter_category": "*",
     "voter_precinct": "0929B"
@@ -9753,7 +9753,7 @@
   "model": "profiling.voter",
   "pk": 976,
   "fields": {
-    "voter_name": "RODRIGUEZ, ARNOLD CONDIÑO",
+    "voter_name": "RODRIGUEZ, ARNOLD CONDIÃ‘O",
     "voter_address": "ARELLANO BLVD. CEBU CITY",
     "voter_category": "C",
     "voter_precinct": "0929B"
@@ -10043,7 +10043,7 @@
   "model": "profiling.voter",
   "pk": 1005,
   "fields": {
-    "voter_name": "ALIÑGASA, JOSE HERMENEGILDO LAÑAS",
+    "voter_name": "ALIÃ‘GASA, JOSE HERMENEGILDO LAÃ‘AS",
     "voter_address": "RABAYA APT.",
     "voter_category": "C",
     "voter_precinct": "0930A"
@@ -10213,7 +10213,7 @@
   "model": "profiling.voter",
   "pk": 1022,
   "fields": {
-    "voter_name": "BRITAÑA, EMELITA BELMONTE",
+    "voter_name": "BRITAÃ‘A, EMELITA BELMONTE",
     "voter_address": "ARELLANO BLVD",
     "voter_category": null,
     "voter_precinct": "0930A"
@@ -10223,7 +10223,7 @@
   "model": "profiling.voter",
   "pk": 1023,
   "fields": {
-    "voter_name": "BRITAÑA, ESPERANZA BELMONTE",
+    "voter_name": "BRITAÃ‘A, ESPERANZA BELMONTE",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": "C",
     "voter_precinct": "0930A"
@@ -10263,7 +10263,7 @@
   "model": "profiling.voter",
   "pk": 1027,
   "fields": {
-    "voter_name": "CAÑADA, MICHAEL AMACA",
+    "voter_name": "CAÃ‘ADA, MICHAEL AMACA",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0930A"
@@ -10283,7 +10283,7 @@
   "model": "profiling.voter",
   "pk": 1029,
   "fields": {
-    "voter_name": "CAÑETE, JUNIOR VILLANUEVA",
+    "voter_name": "CAÃ‘ETE, JUNIOR VILLANUEVA",
     "voter_address": "450 CORNER QUEZON AND ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0930A"
@@ -10383,7 +10383,7 @@
   "model": "profiling.voter",
   "pk": 1039,
   "fields": {
-    "voter_name": "DELA PEÑA, ANECITO GELACIO",
+    "voter_name": "DELA PEÃ‘A, ANECITO GELACIO",
     "voter_address": "93-SAN ROQUE LAPU-LAPU STREET",
     "voter_category": null,
     "voter_precinct": "0930A"
@@ -10723,7 +10723,7 @@
   "model": "profiling.voter",
   "pk": 1073,
   "fields": {
-    "voter_name": "JACALAN, DANTE ANIÑON",
+    "voter_name": "JACALAN, DANTE ANIÃ‘ON",
     "voter_address": "F. LOPEZ CMPD. MORGA ST.",
     "voter_category": null,
     "voter_precinct": "0930A"
@@ -11013,7 +11013,7 @@
   "model": "profiling.voter",
   "pk": 1102,
   "fields": {
-    "voter_name": "MARAÑAN, MICHAEL BELARMINO",
+    "voter_name": "MARAÃ‘AN, MICHAEL BELARMINO",
     "voter_address": "ARELLANO BLVD. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0930A"
@@ -11023,7 +11023,7 @@
   "model": "profiling.voter",
   "pk": 1103,
   "fields": {
-    "voter_name": "MARAÑAN, MYRNA SAMAR",
+    "voter_name": "MARAÃ‘AN, MYRNA SAMAR",
     "voter_address": "BACK CHAPEL ARELLANO",
     "voter_category": null,
     "voter_precinct": "0930A"
@@ -11173,7 +11173,7 @@
   "model": "profiling.voter",
   "pk": 1118,
   "fields": {
-    "voter_name": "OPIT, GLADYS MINDAÑA",
+    "voter_name": "OPIT, GLADYS MINDAÃ‘A",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0930A"
@@ -11653,7 +11653,7 @@
   "model": "profiling.voter",
   "pk": 1166,
   "fields": {
-    "voter_name": "VILLARTA, GERALDINE NUÑEZ",
+    "voter_name": "VILLARTA, GERALDINE NUÃ‘EZ",
     "voter_address": "51-LAPU LAPU STREET",
     "voter_category": null,
     "voter_precinct": "0930A"
@@ -11793,7 +11793,7 @@
   "model": "profiling.voter",
   "pk": 1180,
   "fields": {
-    "voter_name": "AÑOS, JULIUS FERNANDEZ",
+    "voter_name": "AÃ‘OS, JULIUS FERNANDEZ",
     "voter_address": "ARELLANO BLVD",
     "voter_category": null,
     "voter_precinct": "0930B"
@@ -11943,7 +11943,7 @@
   "model": "profiling.voter",
   "pk": 1194,
   "fields": {
-    "voter_name": "BATERZA, ANZELO NIÑO DAYDORA",
+    "voter_name": "BATERZA, ANZELO NIÃ‘O DAYDORA",
     "voter_address": "I00 A LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0930B"
@@ -11953,7 +11953,7 @@
   "model": "profiling.voter",
   "pk": 1195,
   "fields": {
-    "voter_name": "BATERZAL, BLESSED MARIELVIÑA DAYDORA",
+    "voter_name": "BATERZAL, BLESSED MARIELVIÃ‘A DAYDORA",
     "voter_address": "100A LOGARTA ST.",
     "voter_category": "*",
     "voter_precinct": "0930B"
@@ -12053,7 +12053,7 @@
   "model": "profiling.voter",
   "pk": 1205,
   "fields": {
-    "voter_name": "CAÑETE, NICHOLAS _",
+    "voter_name": "CAÃ‘ETE, NICHOLAS _",
     "voter_address": "DUMON COMPOUND ARELLANO",
     "voter_category": "*",
     "voter_precinct": "0930B"
@@ -12243,7 +12243,7 @@
   "model": "profiling.voter",
   "pk": 1224,
   "fields": {
-    "voter_name": "DUEÑAS, MARIA FAITH CABATUAN",
+    "voter_name": "DUEÃ‘AS, MARIA FAITH CABATUAN",
     "voter_address": "LOGARTA ST.",
     "voter_category": "*",
     "voter_precinct": "0930B"
@@ -12263,7 +12263,7 @@
   "model": "profiling.voter",
   "pk": 1226,
   "fields": {
-    "voter_name": "ENCARNACION, TESSIE SOREÑO",
+    "voter_name": "ENCARNACION, TESSIE SOREÃ‘O",
     "voter_address": "SITIO FIRE VICTIM",
     "voter_category": null,
     "voter_precinct": "0930B"
@@ -12583,7 +12583,7 @@
   "model": "profiling.voter",
   "pk": 1258,
   "fields": {
-    "voter_name": "MAÑEGO, PABLITO LACSENA",
+    "voter_name": "MAÃ‘EGO, PABLITO LACSENA",
     "voter_address": "ARELLANO ST.",
     "voter_category": null,
     "voter_precinct": "0930B"
@@ -12663,7 +12663,7 @@
   "model": "profiling.voter",
   "pk": 1266,
   "fields": {
-    "voter_name": "MISA, LOU NIÑO NAVASA",
+    "voter_name": "MISA, LOU NIÃ‘O NAVASA",
     "voter_address": "114 ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0930B"
@@ -12703,7 +12703,7 @@
   "model": "profiling.voter",
   "pk": 1270,
   "fields": {
-    "voter_name": "NUÑEZ, JENELYN PAGUBO",
+    "voter_name": "NUÃ‘EZ, JENELYN PAGUBO",
     "voter_address": "ARRELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0930B"
@@ -13153,7 +13153,7 @@
   "model": "profiling.voter",
   "pk": 1315,
   "fields": {
-    "voter_name": "TOLOMIA, LIBRADO DE PLEÑOS II",
+    "voter_name": "TOLOMIA, LIBRADO DE PLEÃ‘OS II",
     "voter_address": "125-B LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0930B"
@@ -13183,7 +13183,7 @@
   "model": "profiling.voter",
   "pk": 1318,
   "fields": {
-    "voter_name": "TORRES, ROMEO MARIÑAS SR.",
+    "voter_name": "TORRES, ROMEO MARIÃ‘AS SR.",
     "voter_address": "BINAKAYAN ST. CORNER COLON",
     "voter_category": "C",
     "voter_precinct": "0930B"
@@ -13474,7 +13474,7 @@
   "pk": 1347,
   "fields": {
     "voter_name": "BENDULO, NARCISO PEQUE JR.",
-    "voter_address": "WDC BLDG. #4 GROUND FLOOR, OSMEÑA BLVD.",
+    "voter_address": "WDC BLDG. #4 GROUND FLOOR, OSMEÃ‘A BLVD.",
     "voter_category": "C",
     "voter_precinct": "0931A"
   }
@@ -13563,7 +13563,7 @@
   "model": "profiling.voter",
   "pk": 1356,
   "fields": {
-    "voter_name": "CABIAO, EDNA CAÑETE",
+    "voter_name": "CABIAO, EDNA CAÃ‘ETE",
     "voter_address": "7,MAGALLANES",
     "voter_category": "C",
     "voter_precinct": "0931A"
@@ -13643,7 +13643,7 @@
   "model": "profiling.voter",
   "pk": 1364,
   "fields": {
-    "voter_name": "CAÑAMO, DANNESSA AGUILAR",
+    "voter_name": "CAÃ‘AMO, DANNESSA AGUILAR",
     "voter_address": "7 MAGALLANES ST. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0931A"
@@ -13653,7 +13653,7 @@
   "model": "profiling.voter",
   "pk": 1365,
   "fields": {
-    "voter_name": "CAÑAMO, DANNY CABILI",
+    "voter_name": "CAÃ‘AMO, DANNY CABILI",
     "voter_address": "7 MGALLANES ST.",
     "voter_category": "C",
     "voter_precinct": "0931A"
@@ -13663,7 +13663,7 @@
   "model": "profiling.voter",
   "pk": 1366,
   "fields": {
-    "voter_name": "CAÑAMO, IMELDA AGUILAR",
+    "voter_name": "CAÃ‘AMO, IMELDA AGUILAR",
     "voter_address": "7 MGALLANES ST.",
     "voter_category": "C",
     "voter_precinct": "0931A"
@@ -13673,7 +13673,7 @@
   "model": "profiling.voter",
   "pk": 1367,
   "fields": {
-    "voter_name": "CAÑETE, EDMARIE GRACE VILLANUEVA",
+    "voter_name": "CAÃ‘ETE, EDMARIE GRACE VILLANUEVA",
     "voter_address": "DUMON CMPD ARELLANO BLVD",
     "voter_category": null,
     "voter_precinct": "0931A"
@@ -13683,7 +13683,7 @@
   "model": "profiling.voter",
   "pk": 1368,
   "fields": {
-    "voter_name": "CARDAÑO, LEOMAR PADILLO",
+    "voter_name": "CARDAÃ‘O, LEOMAR PADILLO",
     "voter_address": "SITIO PANTING LOGARTA",
     "voter_category": "*",
     "voter_precinct": "0931A"
@@ -13813,7 +13813,7 @@
   "model": "profiling.voter",
   "pk": 1381,
   "fields": {
-    "voter_name": "ESPARAS, RHEA BRENDA MOREÑO",
+    "voter_name": "ESPARAS, RHEA BRENDA MOREÃ‘O",
     "voter_address": "LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0931A"
@@ -13913,7 +13913,7 @@
   "model": "profiling.voter",
   "pk": 1391,
   "fields": {
-    "voter_name": "GACAYAN, RHEYJEL JAÑO",
+    "voter_name": "GACAYAN, RHEYJEL JAÃ‘O",
     "voter_address": "29 LAPU-LAPU ST. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0931A"
@@ -14304,7 +14304,7 @@
   "pk": 1430,
   "fields": {
     "voter_name": "NACAGUE, DAISY LUMASAG",
-    "voter_address": "20 OSMEÑA BLVD.",
+    "voter_address": "20 OSMEÃ‘A BLVD.",
     "voter_category": "C",
     "voter_precinct": "0931A"
   }
@@ -14314,7 +14314,7 @@
   "pk": 1431,
   "fields": {
     "voter_name": "NACAGUE, JASON CHUA",
-    "voter_address": "20,OSMEÑA BLVD.",
+    "voter_address": "20,OSMEÃ‘A BLVD.",
     "voter_category": "C",
     "voter_precinct": "0931A"
   }
@@ -14324,7 +14324,7 @@
   "pk": 1432,
   "fields": {
     "voter_name": "NACAGUE, JESSIE CHUA",
-    "voter_address": "20 OSMEÑA BLVD.  SAN ROQUE",
+    "voter_address": "20 OSMEÃ‘A BLVD.  SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0931A"
   }
@@ -14483,7 +14483,7 @@
   "model": "profiling.voter",
   "pk": 1448,
   "fields": {
-    "voter_name": "PELICANO, ERUDITO SEREÑO JR.",
+    "voter_name": "PELICANO, ERUDITO SEREÃ‘O JR.",
     "voter_address": "SITIO PANTING LOGARTA",
     "voter_category": null,
     "voter_precinct": "0931A"
@@ -14543,7 +14543,7 @@
   "model": "profiling.voter",
   "pk": 1454,
   "fields": {
-    "voter_name": "QUEZON, SHEENY JANICE CAMPAÑA",
+    "voter_name": "QUEZON, SHEENY JANICE CAMPAÃ‘A",
     "voter_address": "78 LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0931A"
@@ -14874,7 +14874,7 @@
   "pk": 1487,
   "fields": {
     "voter_name": "WONG, EVELYN DYSAM",
-    "voter_address": "LAPULAPU ST. COR OSMEÑA BLVD.  SAN ROQUE",
+    "voter_address": "LAPULAPU ST. COR OSMEÃ‘A BLVD.  SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0931A"
   }
@@ -14884,7 +14884,7 @@
   "pk": 1488,
   "fields": {
     "voter_name": "WONG, JOHANNE DYSAM",
-    "voter_address": "LAPULAPU ST. COR OSMEÑA BLVD. SAN ROQUE",
+    "voter_address": "LAPULAPU ST. COR OSMEÃ‘A BLVD. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0931A"
   }
@@ -14993,7 +14993,7 @@
   "model": "profiling.voter",
   "pk": 1499,
   "fields": {
-    "voter_name": "AÑOS, JESSA CUBIL",
+    "voter_name": "AÃ‘OS, JESSA CUBIL",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0931B"
@@ -15243,7 +15243,7 @@
   "model": "profiling.voter",
   "pk": 1524,
   "fields": {
-    "voter_name": "CERILLES, GLENDA MAE AÑASCO",
+    "voter_name": "CERILLES, GLENDA MAE AÃ‘ASCO",
     "voter_address": "106 LAPU-LAPU ST",
     "voter_category": "*",
     "voter_precinct": "0931B"
@@ -15273,7 +15273,7 @@
   "model": "profiling.voter",
   "pk": 1527,
   "fields": {
-    "voter_name": "CUARTERO, IVORY MONIÑO",
+    "voter_name": "CUARTERO, IVORY MONIÃ‘O",
     "voter_address": "120-B LOGARTA",
     "voter_category": "*",
     "voter_precinct": "0931B"
@@ -15793,7 +15793,7 @@
   "model": "profiling.voter",
   "pk": 1579,
   "fields": {
-    "voter_name": "MACASERO, WENDYL CEQIÑA",
+    "voter_name": "MACASERO, WENDYL CEQIÃ‘A",
     "voter_address": "R. PALMA STREET",
     "voter_category": null,
     "voter_precinct": "0931B"
@@ -16053,7 +16053,7 @@
   "model": "profiling.voter",
   "pk": 1605,
   "fields": {
-    "voter_name": "PERALES, ROSALINA AÑORA",
+    "voter_name": "PERALES, ROSALINA AÃ‘ORA",
     "voter_address": "LAPU-LAPU ST.",
     "voter_category": null,
     "voter_precinct": "0931B"
@@ -16193,7 +16193,7 @@
   "model": "profiling.voter",
   "pk": 1619,
   "fields": {
-    "voter_name": "SAMONTAÑEZ, CIELO BORNEA",
+    "voter_name": "SAMONTAÃ‘EZ, CIELO BORNEA",
     "voter_address": "106 LAPU LAPU ST.",
     "voter_category": null,
     "voter_precinct": "0931B"
@@ -16233,7 +16233,7 @@
   "model": "profiling.voter",
   "pk": 1623,
   "fields": {
-    "voter_name": "SEVILLA, MARIA NIÑA MERCOLITA",
+    "voter_name": "SEVILLA, MARIA NIÃ‘A MERCOLITA",
     "voter_address": "LOGARTA NEAR CTU CAMPUS",
     "voter_category": "*",
     "voter_precinct": "0931B"
@@ -16283,7 +16283,7 @@
   "model": "profiling.voter",
   "pk": 1628,
   "fields": {
-    "voter_name": "SOREÑO, CATHERINE MANOLONG",
+    "voter_name": "SOREÃ‘O, CATHERINE MANOLONG",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0931B"
@@ -16423,7 +16423,7 @@
   "model": "profiling.voter",
   "pk": 1642,
   "fields": {
-    "voter_name": "YBAÑEZ, IVY MAY _",
+    "voter_name": "YBAÃ‘EZ, IVY MAY _",
     "voter_address": "LEGAZPI EXT",
     "voter_category": "*",
     "voter_precinct": "0931B"
@@ -16433,7 +16433,7 @@
   "model": "profiling.voter",
   "pk": 1643,
   "fields": {
-    "voter_name": "YBAÑEZ, MERIAM ALLARSE",
+    "voter_name": "YBAÃ‘EZ, MERIAM ALLARSE",
     "voter_address": "LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0931B"
@@ -16723,7 +16723,7 @@
   "model": "profiling.voter",
   "pk": 1672,
   "fields": {
-    "voter_name": "BAYA, VINISSA MOÑASQUE",
+    "voter_name": "BAYA, VINISSA MOÃ‘ASQUE",
     "voter_address": "100-A LOGARTA STREET",
     "voter_category": "*",
     "voter_precinct": "0932A"
@@ -16973,7 +16973,7 @@
   "model": "profiling.voter",
   "pk": 1697,
   "fields": {
-    "voter_name": "CAÑETE, DANTE CABRERA",
+    "voter_name": "CAÃ‘ETE, DANTE CABRERA",
     "voter_address": "03 R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0932A"
@@ -17023,7 +17023,7 @@
   "model": "profiling.voter",
   "pk": 1702,
   "fields": {
-    "voter_name": "CEREÑO, CHRISTIAN JAY ESTAÑO",
+    "voter_name": "CEREÃ‘O, CHRISTIAN JAY ESTAÃ‘O",
     "voter_address": "MSP ARELLANBO BLVD CEBU CITY",
     "voter_category": "*",
     "voter_precinct": "0932A"
@@ -17033,7 +17033,7 @@
   "model": "profiling.voter",
   "pk": 1703,
   "fields": {
-    "voter_name": "CERILLES, PATRICIA MITCHELLE AÑASCO",
+    "voter_name": "CERILLES, PATRICIA MITCHELLE AÃ‘ASCO",
     "voter_address": "106 LAPU LAPU ST",
     "voter_category": "*",
     "voter_precinct": "0932A"
@@ -17093,7 +17093,7 @@
   "model": "profiling.voter",
   "pk": 1709,
   "fields": {
-    "voter_name": "DARUCA, CHRISTIAN EÑEREZ",
+    "voter_name": "DARUCA, CHRISTIAN EÃ‘EREZ",
     "voter_address": "94 P. BURGOS ST  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0932A"
@@ -17143,7 +17143,7 @@
   "model": "profiling.voter",
   "pk": 1714,
   "fields": {
-    "voter_name": "DUEÑAS, GINALYN PISCOS",
+    "voter_name": "DUEÃ‘AS, GINALYN PISCOS",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0932A"
@@ -17613,7 +17613,7 @@
   "model": "profiling.voter",
   "pk": 1761,
   "fields": {
-    "voter_name": "MONEÑO, PERLA ROSELLO",
+    "voter_name": "MONEÃ‘O, PERLA ROSELLO",
     "voter_address": "62-A,JEREZA ST.",
     "voter_category": "C",
     "voter_precinct": "0932A"
@@ -17623,7 +17623,7 @@
   "model": "profiling.voter",
   "pk": 1762,
   "fields": {
-    "voter_name": "MONIÑO, MELCHORA VILLEGAS",
+    "voter_name": "MONIÃ‘O, MELCHORA VILLEGAS",
     "voter_address": "62-A,TEREZA ST.",
     "voter_category": null,
     "voter_precinct": "0932A"
@@ -17633,7 +17633,7 @@
   "model": "profiling.voter",
   "pk": 1763,
   "fields": {
-    "voter_name": "MONIÑO, ROSLEN ROSELLO",
+    "voter_name": "MONIÃ‘O, ROSLEN ROSELLO",
     "voter_address": "34 LOGARTA CORNER JEREZA ST.,",
     "voter_category": null,
     "voter_precinct": "0932A"
@@ -17763,7 +17763,7 @@
   "model": "profiling.voter",
   "pk": 1776,
   "fields": {
-    "voter_name": "PADACA, MANUEL CAÑEDO",
+    "voter_name": "PADACA, MANUEL CAÃ‘EDO",
     "voter_address": "26-LOGARTA",
     "voter_category": "*",
     "voter_precinct": "0932A"
@@ -17863,7 +17863,7 @@
   "model": "profiling.voter",
   "pk": 1786,
   "fields": {
-    "voter_name": "PENPEÑA, MELVIN POL",
+    "voter_name": "PENPEÃ‘A, MELVIN POL",
     "voter_address": "LAPULAPU STREET",
     "voter_category": "*",
     "voter_precinct": "0932A"
@@ -18013,7 +18013,7 @@
   "model": "profiling.voter",
   "pk": 1801,
   "fields": {
-    "voter_name": "SESBREÑO, LARRY PIELAGO",
+    "voter_name": "SESBREÃ‘O, LARRY PIELAGO",
     "voter_address": "340 P. BURGOS ST.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0932A"
@@ -18153,7 +18153,7 @@
   "model": "profiling.voter",
   "pk": 1816,
   "fields": {
-    "voter_name": "VILLAMORA, ROTCHAN CAÑADA",
+    "voter_name": "VILLAMORA, ROTCHAN CAÃ‘ADA",
     "voter_address": "LOGARTA ST",
     "voter_category": null,
     "voter_precinct": "0932A"
@@ -18313,7 +18313,7 @@
   "model": "profiling.voter",
   "pk": 1832,
   "fields": {
-    "voter_name": "CAÑEZO, JENNIFER PEPITO",
+    "voter_name": "CAÃ‘EZO, JENNIFER PEPITO",
     "voter_address": "PIER 2 ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0932B"
@@ -18623,7 +18623,7 @@
   "model": "profiling.voter",
   "pk": 1863,
   "fields": {
-    "voter_name": "LAÑA, ANA SHIELA TAMPOS",
+    "voter_name": "LAÃ‘A, ANA SHIELA TAMPOS",
     "voter_address": "SITIO LUMBOY",
     "voter_category": null,
     "voter_precinct": "0932B"
@@ -18843,7 +18843,7 @@
   "model": "profiling.voter",
   "pk": 1885,
   "fields": {
-    "voter_name": "PALACIO, ROÑEL AGOPITAC",
+    "voter_name": "PALACIO, ROÃ‘EL AGOPITAC",
     "voter_address": "114-ELOGARTA ST.",
     "voter_category": "*",
     "voter_precinct": "0932B"
@@ -18893,7 +18893,7 @@
   "model": "profiling.voter",
   "pk": 1890,
   "fields": {
-    "voter_name": "RAMAS, JANINE KAREN ESCAÑO",
+    "voter_name": "RAMAS, JANINE KAREN ESCAÃ‘O",
     "voter_address": "79 LOGARTA ST CC",
     "voter_category": "*",
     "voter_precinct": "0932B"
@@ -19003,7 +19003,7 @@
   "model": "profiling.voter",
   "pk": 1901,
   "fields": {
-    "voter_name": "TOLOMIA, PAUL PLEÑOS",
+    "voter_name": "TOLOMIA, PAUL PLEÃ‘OS",
     "voter_address": "125B LOGARTA STREET",
     "voter_category": null,
     "voter_precinct": "0932B"
@@ -19083,7 +19083,7 @@
   "model": "profiling.voter",
   "pk": 1909,
   "fields": {
-    "voter_name": "ALFORQUE, ANNECY PATIÑO",
+    "voter_name": "ALFORQUE, ANNECY PATIÃ‘O",
     "voter_address": "COR. LOGARTA & JEREZA STS.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -19093,7 +19093,7 @@
   "model": "profiling.voter",
   "pk": 1910,
   "fields": {
-    "voter_name": "ALFORQUE, ARIANNE DELIGHT PATIÑO",
+    "voter_name": "ALFORQUE, ARIANNE DELIGHT PATIÃ‘O",
     "voter_address": "CORNER LOGARTA & JEREZA ST.",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -19103,7 +19103,7 @@
   "model": "profiling.voter",
   "pk": 1911,
   "fields": {
-    "voter_name": "ALFORQUE, ARMAND PATIÑO",
+    "voter_name": "ALFORQUE, ARMAND PATIÃ‘O",
     "voter_address": "COR. LOGARTA & JEREZA STS.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -19123,7 +19123,7 @@
   "model": "profiling.voter",
   "pk": 1913,
   "fields": {
-    "voter_name": "ALFORQUE, DELIGHT PATIÑO",
+    "voter_name": "ALFORQUE, DELIGHT PATIÃ‘O",
     "voter_address": "COR LOGARTA & JEREZA STS.",
     "voter_category": "C",
     "voter_precinct": "0933A"
@@ -19243,7 +19243,7 @@
   "model": "profiling.voter",
   "pk": 1925,
   "fields": {
-    "voter_name": "BARACAO, JANICE PATIÑO",
+    "voter_name": "BARACAO, JANICE PATIÃ‘O",
     "voter_address": "LAPU-LAPU ST.",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -19373,7 +19373,7 @@
   "model": "profiling.voter",
   "pk": 1938,
   "fields": {
-    "voter_name": "CABAHUG, ALVIN CONDEÑO",
+    "voter_name": "CABAHUG, ALVIN CONDEÃ‘O",
     "voter_address": "V. GULLAS EXT. COR ARELLANO BLVD",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -19493,7 +19493,7 @@
   "model": "profiling.voter",
   "pk": 1950,
   "fields": {
-    "voter_name": "CERILLES, PABLITA AÑASCO",
+    "voter_name": "CERILLES, PABLITA AÃ‘ASCO",
     "voter_address": "106 LAPULAPU ST. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -19953,7 +19953,7 @@
   "model": "profiling.voter",
   "pk": 1996,
   "fields": {
-    "voter_name": "LAÑAS, ADAH C.",
+    "voter_name": "LAÃ‘AS, ADAH C.",
     "voter_address": "106 LAPU-LAPU ST.",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -19963,7 +19963,7 @@
   "model": "profiling.voter",
   "pk": 1997,
   "fields": {
-    "voter_name": "LAÑOJAN, ROCHELLE RAMAS",
+    "voter_name": "LAÃ‘OJAN, ROCHELLE RAMAS",
     "voter_address": "79 LOGARTA STREET",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -19973,7 +19973,7 @@
   "model": "profiling.voter",
   "pk": 1998,
   "fields": {
-    "voter_name": "LAÑOJAN, ZUL RAMAS",
+    "voter_name": "LAÃ‘OJAN, ZUL RAMAS",
     "voter_address": "79,LOGARTA ST.",
     "voter_category": "C",
     "voter_precinct": "0933A"
@@ -20033,7 +20033,7 @@
   "model": "profiling.voter",
   "pk": 2004,
   "fields": {
-    "voter_name": "MADRID, BERNARDO YBAÑEZ",
+    "voter_name": "MADRID, BERNARDO YBAÃ‘EZ",
     "voter_address": "106 LAPU-LAPU ST.  SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0933A"
@@ -20053,7 +20053,7 @@
   "model": "profiling.voter",
   "pk": 2006,
   "fields": {
-    "voter_name": "MANCO, ALICIA CAÑETE",
+    "voter_name": "MANCO, ALICIA CAÃ‘ETE",
     "voter_address": "12,PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -20173,7 +20173,7 @@
   "model": "profiling.voter",
   "pk": 2018,
   "fields": {
-    "voter_name": "MENDOZA, RONALD BAÑGI",
+    "voter_name": "MENDOZA, RONALD BAÃ‘GI",
     "voter_address": "87 LOGARTA ST.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -20203,7 +20203,7 @@
   "model": "profiling.voter",
   "pk": 2021,
   "fields": {
-    "voter_name": "NUÑEZ, GLENNIE CASTRO",
+    "voter_name": "NUÃ‘EZ, GLENNIE CASTRO",
     "voter_address": "18 P BURGOS STREET",
     "voter_category": "*",
     "voter_precinct": "0933A"
@@ -20353,7 +20353,7 @@
   "model": "profiling.voter",
   "pk": 2036,
   "fields": {
-    "voter_name": "PATIÑO, EDITHA TAN",
+    "voter_name": "PATIÃ‘O, EDITHA TAN",
     "voter_address": "LAPU-LAPU ST.",
     "voter_category": "C",
     "voter_precinct": "0933A"
@@ -20363,7 +20363,7 @@
   "model": "profiling.voter",
   "pk": 2037,
   "fields": {
-    "voter_name": "PATIÑO, ERNIE JAMES TAN",
+    "voter_name": "PATIÃ‘O, ERNIE JAMES TAN",
     "voter_address": "LAPU-LAPU ST. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -20463,7 +20463,7 @@
   "model": "profiling.voter",
   "pk": 2047,
   "fields": {
-    "voter_name": "RIOS, ROLANDO CAÑETE",
+    "voter_name": "RIOS, ROLANDO CAÃ‘ETE",
     "voter_address": "123B LOGARTA ST.",
     "voter_category": "C",
     "voter_precinct": "0933A"
@@ -20643,7 +20643,7 @@
   "model": "profiling.voter",
   "pk": 2065,
   "fields": {
-    "voter_name": "SUSAO, MERVIN CADELIÑA",
+    "voter_name": "SUSAO, MERVIN CADELIÃ‘A",
     "voter_address": "WELLMADE COMPANY,LAPU LAPU ST.",
     "voter_category": null,
     "voter_precinct": "0933A"
@@ -20773,7 +20773,7 @@
   "model": "profiling.voter",
   "pk": 2078,
   "fields": {
-    "voter_name": "ABARRI, JHUFEL SOROÑO",
+    "voter_name": "ABARRI, JHUFEL SOROÃ‘O",
     "voter_address": "R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0934A"
@@ -21683,7 +21683,7 @@
   "model": "profiling.voter",
   "pk": 2169,
   "fields": {
-    "voter_name": "HO, EULOGIO VIÑAN",
+    "voter_name": "HO, EULOGIO VIÃ‘AN",
     "voter_address": "124-F,LOGARTA ST.",
     "voter_category": "C",
     "voter_precinct": "0934A"
@@ -21753,7 +21753,7 @@
   "model": "profiling.voter",
   "pk": 2176,
   "fields": {
-    "voter_name": "MARCIAL, CARLITO CABAÑERO II",
+    "voter_name": "MARCIAL, CARLITO CABAÃ‘ERO II",
     "voter_address": "13-I A MABINI ST",
     "voter_category": null,
     "voter_precinct": "0934A"
@@ -21933,7 +21933,7 @@
   "model": "profiling.voter",
   "pk": 2194,
   "fields": {
-    "voter_name": "OBEÑITA, ADELWESA ZANORIA",
+    "voter_name": "OBEÃ‘ITA, ADELWESA ZANORIA",
     "voter_address": "124-F,LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0934A"
@@ -21943,7 +21943,7 @@
   "model": "profiling.voter",
   "pk": 2195,
   "fields": {
-    "voter_name": "OBEÑITA, JESSIE NEBRIJA",
+    "voter_name": "OBEÃ‘ITA, JESSIE NEBRIJA",
     "voter_address": "121-E,LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0934A"
@@ -21953,7 +21953,7 @@
   "model": "profiling.voter",
   "pk": 2196,
   "fields": {
-    "voter_name": "OBEÑITA, JUDY NEBRIJA",
+    "voter_name": "OBEÃ‘ITA, JUDY NEBRIJA",
     "voter_address": "124 LOGARTA ST. SAN ROQUE",
     "voter_category": "B",
     "voter_precinct": "0934A"
@@ -21963,7 +21963,7 @@
   "model": "profiling.voter",
   "pk": 2197,
   "fields": {
-    "voter_name": "OBEÑITA, MARIA RUBY NEBRIJA",
+    "voter_name": "OBEÃ‘ITA, MARIA RUBY NEBRIJA",
     "voter_address": "124-F,LOGARTA ST.",
     "voter_category": "C",
     "voter_precinct": "0934A"
@@ -21973,7 +21973,7 @@
   "model": "profiling.voter",
   "pk": 2198,
   "fields": {
-    "voter_name": "OBEÑITA, RAMIR NEBRIJA",
+    "voter_name": "OBEÃ‘ITA, RAMIR NEBRIJA",
     "voter_address": "124-F,LOGARTA",
     "voter_category": null,
     "voter_precinct": "0934A"
@@ -21983,7 +21983,7 @@
   "model": "profiling.voter",
   "pk": 2199,
   "fields": {
-    "voter_name": "OBEÑITA, RAMONITO NEBRIJA",
+    "voter_name": "OBEÃ‘ITA, RAMONITO NEBRIJA",
     "voter_address": "124-F,LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0934A"
@@ -22053,7 +22053,7 @@
   "model": "profiling.voter",
   "pk": 2206,
   "fields": {
-    "voter_name": "PEÑA, FELIX GOC-ONG",
+    "voter_name": "PEÃ‘A, FELIX GOC-ONG",
     "voter_address": "124-F LOGARTA ST.  SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0934A"
@@ -22063,7 +22063,7 @@
   "model": "profiling.voter",
   "pk": 2207,
   "fields": {
-    "voter_name": "PEÑA, MARJON DALUMPINES",
+    "voter_name": "PEÃ‘A, MARJON DALUMPINES",
     "voter_address": "124-F LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0934A"
@@ -22383,7 +22383,7 @@
   "model": "profiling.voter",
   "pk": 2239,
   "fields": {
-    "voter_name": "TORRALBA, NIÑO JOSE QUEZON",
+    "voter_name": "TORRALBA, NIÃ‘O JOSE QUEZON",
     "voter_address": "29-G MANALILI STREET",
     "voter_category": "*",
     "voter_precinct": "0934A"
@@ -22493,7 +22493,7 @@
   "model": "profiling.voter",
   "pk": 2250,
   "fields": {
-    "voter_name": "YBÑEZ, NICODEMOS CABALLERO",
+    "voter_name": "YBÃ‘EZ, NICODEMOS CABALLERO",
     "voter_address": "R PALMA ST",
     "voter_category": null,
     "voter_precinct": "0934A"
@@ -22673,7 +22673,7 @@
   "model": "profiling.voter",
   "pk": 2268,
   "fields": {
-    "voter_name": "BALEÑA, VINCENT DAEL",
+    "voter_name": "BALEÃ‘A, VINCENT DAEL",
     "voter_address": "DUMON COMPOUND ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0935A"
@@ -22763,7 +22763,7 @@
   "model": "profiling.voter",
   "pk": 2277,
   "fields": {
-    "voter_name": "BRITAÑA, JOHN REX CONCON",
+    "voter_name": "BRITAÃ‘A, JOHN REX CONCON",
     "voter_address": "ARELLANO ST",
     "voter_category": "*",
     "voter_precinct": "0935A"
@@ -22853,7 +22853,7 @@
   "model": "profiling.voter",
   "pk": 2286,
   "fields": {
-    "voter_name": "CABAÑERO, DESSIRE CONCON",
+    "voter_name": "CABAÃ‘ERO, DESSIRE CONCON",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0935A"
@@ -23073,7 +23073,7 @@
   "model": "profiling.voter",
   "pk": 2308,
   "fields": {
-    "voter_name": "DE GUIÑON, ALMA OLAGUIR",
+    "voter_name": "DE GUIÃ‘ON, ALMA OLAGUIR",
     "voter_address": "21-A MABINI COLON ST.",
     "voter_category": null,
     "voter_precinct": "0935A"
@@ -23103,7 +23103,7 @@
   "model": "profiling.voter",
   "pk": 2311,
   "fields": {
-    "voter_name": "DEGUIÑON, EVANGELINE OLAGUIR",
+    "voter_name": "DEGUIÃ‘ON, EVANGELINE OLAGUIR",
     "voter_address": "MABINI COLON ST.",
     "voter_category": "C",
     "voter_precinct": "0935A"
@@ -23113,7 +23113,7 @@
   "model": "profiling.voter",
   "pk": 2312,
   "fields": {
-    "voter_name": "DEGUIÑON, PRIMITIVO BOYLES",
+    "voter_name": "DEGUIÃ‘ON, PRIMITIVO BOYLES",
     "voter_address": "21-A, MABINI COLON ST.",
     "voter_category": "C",
     "voter_precinct": "0935A"
@@ -23123,7 +23123,7 @@
   "model": "profiling.voter",
   "pk": 2313,
   "fields": {
-    "voter_name": "DELA CRUZ, FERDINAND DAÑO",
+    "voter_name": "DELA CRUZ, FERDINAND DAÃ‘O",
     "voter_address": "LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0935A"
@@ -23253,7 +23253,7 @@
   "model": "profiling.voter",
   "pk": 2326,
   "fields": {
-    "voter_name": "GAÑA, TIRSO VIRTUDAZO",
+    "voter_name": "GAÃ‘A, TIRSO VIRTUDAZO",
     "voter_address": "21-A,MABINI ST.",
     "voter_category": null,
     "voter_precinct": "0935A"
@@ -23293,7 +23293,7 @@
   "model": "profiling.voter",
   "pk": 2330,
   "fields": {
-    "voter_name": "GERONIMO, LORDIVINA LASPIÑAS",
+    "voter_name": "GERONIMO, LORDIVINA LASPIÃ‘AS",
     "voter_address": "3032 LAPULAPU STREET",
     "voter_category": null,
     "voter_precinct": "0935A"
@@ -23313,7 +23313,7 @@
   "model": "profiling.voter",
   "pk": 2332,
   "fields": {
-    "voter_name": "GOMEZ, MARK ANTHONY LECEÑA",
+    "voter_name": "GOMEZ, MARK ANTHONY LECEÃ‘A",
     "voter_address": "21-A MABINI ST  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0935A"
@@ -23323,7 +23323,7 @@
   "model": "profiling.voter",
   "pk": 2333,
   "fields": {
-    "voter_name": "GOMEZ, SHIELA LACEÑA",
+    "voter_name": "GOMEZ, SHIELA LACEÃ‘A",
     "voter_address": "21-A,MABINI ST.",
     "voter_category": null,
     "voter_precinct": "0935A"
@@ -23384,7 +23384,7 @@
   "pk": 2339,
   "fields": {
     "voter_name": "JAMILO, ANACITA SALA",
-    "voter_address": "2-F CEBUKANGHA  BLDG.OSMEÑA BLVD.LAPU- LAPU ST.",
+    "voter_address": "2-F CEBUKANGHA  BLDG.OSMEÃ‘A BLVD.LAPU- LAPU ST.",
     "voter_category": null,
     "voter_precinct": "0935A"
   }
@@ -23644,7 +23644,7 @@
   "pk": 2365,
   "fields": {
     "voter_name": "NACAGUE, KRISTI ANNE _",
-    "voter_address": "20 OSMEÑA BLVD",
+    "voter_address": "20 OSMEÃ‘A BLVD",
     "voter_category": null,
     "voter_precinct": "0935A"
   }
@@ -23693,7 +23693,7 @@
   "model": "profiling.voter",
   "pk": 2370,
   "fields": {
-    "voter_name": "OBEÑITA, JACOB NEBRIJA",
+    "voter_name": "OBEÃ‘ITA, JACOB NEBRIJA",
     "voter_address": "124-F,LOGARTA ST.",
     "voter_category": "C",
     "voter_precinct": "0935A"
@@ -24114,7 +24114,7 @@
   "pk": 2412,
   "fields": {
     "voter_name": "TAPIA, MEGUMI POTATO",
-    "voter_address": "RM 104 WDC BLDG. OSMEÑA BLVD.",
+    "voter_address": "RM 104 WDC BLDG. OSMEÃ‘A BLVD.",
     "voter_category": null,
     "voter_precinct": "0935A"
   }
@@ -24253,7 +24253,7 @@
   "model": "profiling.voter",
   "pk": 2426,
   "fields": {
-    "voter_name": "ABENOJA, NIÑO ANGELO NEBRIJA",
+    "voter_name": "ABENOJA, NIÃ‘O ANGELO NEBRIJA",
     "voter_address": "MC. ARTHUR BOULEVARD",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -24273,7 +24273,7 @@
   "model": "profiling.voter",
   "pk": 2428,
   "fields": {
-    "voter_name": "ALBAÑO, ROSE DUMULONG",
+    "voter_name": "ALBAÃ‘O, ROSE DUMULONG",
     "voter_address": "7 V. GULLAS ST.,",
     "voter_category": "C",
     "voter_precinct": "0936A"
@@ -24553,7 +24553,7 @@
   "model": "profiling.voter",
   "pk": 2456,
   "fields": {
-    "voter_name": "CAÑETE, MYRNA FELICANO",
+    "voter_name": "CAÃ‘ETE, MYRNA FELICANO",
     "voter_address": "A-1,LAPULAPU ST.",
     "voter_category": "C",
     "voter_precinct": "0936A"
@@ -24573,7 +24573,7 @@
   "model": "profiling.voter",
   "pk": 2458,
   "fields": {
-    "voter_name": "CASTAÑEDA, JOSEPH ANN BASCO",
+    "voter_name": "CASTAÃ‘EDA, JOSEPH ANN BASCO",
     "voter_address": "12-A ZULUETA",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -24613,7 +24613,7 @@
   "model": "profiling.voter",
   "pk": 2462,
   "fields": {
-    "voter_name": "CONDIÑO, ARIEL -",
+    "voter_name": "CONDIÃ‘O, ARIEL -",
     "voter_address": "ARELLANO BLVD EXT V GULLAS",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -24643,7 +24643,7 @@
   "model": "profiling.voter",
   "pk": 2465,
   "fields": {
-    "voter_name": "DAÑO, AGNES TANEO",
+    "voter_name": "DAÃ‘O, AGNES TANEO",
     "voter_address": "97 LAPU-LAPU",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -24653,7 +24653,7 @@
   "model": "profiling.voter",
   "pk": 2466,
   "fields": {
-    "voter_name": "DELA PEÑA, JEAN NERMAL",
+    "voter_name": "DELA PEÃ‘A, JEAN NERMAL",
     "voter_address": "73-A LAPU-LAPU ST. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -24773,7 +24773,7 @@
   "model": "profiling.voter",
   "pk": 2478,
   "fields": {
-    "voter_name": "GO, ARTLIE NIÑO CABAHUG",
+    "voter_name": "GO, ARTLIE NIÃ‘O CABAHUG",
     "voter_address": "29V GULLAS ST",
     "voter_category": "*",
     "voter_precinct": "0936A"
@@ -24833,7 +24833,7 @@
   "model": "profiling.voter",
   "pk": 2484,
   "fields": {
-    "voter_name": "HERMENEGILDO, CRESLINO MARAÑON",
+    "voter_name": "HERMENEGILDO, CRESLINO MARAÃ‘ON",
     "voter_address": "119 LOGARTA ST.  SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0936A"
@@ -25303,7 +25303,7 @@
   "model": "profiling.voter",
   "pk": 2531,
   "fields": {
-    "voter_name": "OPSIMA, ATHENA NIÑA ROJO",
+    "voter_name": "OPSIMA, ATHENA NIÃ‘A ROJO",
     "voter_address": "26-2 ZULUETA ST",
     "voter_category": "*",
     "voter_precinct": "0936A"
@@ -25333,7 +25333,7 @@
   "model": "profiling.voter",
   "pk": 2534,
   "fields": {
-    "voter_name": "PALANCA, DENNIS LUCEÑARA",
+    "voter_name": "PALANCA, DENNIS LUCEÃ‘ARA",
     "voter_address": "130 LOGARTA",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -25353,7 +25353,7 @@
   "model": "profiling.voter",
   "pk": 2536,
   "fields": {
-    "voter_name": "PATIÑO, ANTHONY VILLEGAS",
+    "voter_name": "PATIÃ‘O, ANTHONY VILLEGAS",
     "voter_address": "125 A LOGARTA ST.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -25363,7 +25363,7 @@
   "model": "profiling.voter",
   "pk": 2537,
   "fields": {
-    "voter_name": "PATIÑO, ROSEMARIE VILLEGAS",
+    "voter_name": "PATIÃ‘O, ROSEMARIE VILLEGAS",
     "voter_address": "125-A,LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -25383,7 +25383,7 @@
   "model": "profiling.voter",
   "pk": 2539,
   "fields": {
-    "voter_name": "PEREÑA, IMELDA LINTAG",
+    "voter_name": "PEREÃ‘A, IMELDA LINTAG",
     "voter_address": "401,LAPULAPU ST.",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -25433,7 +25433,7 @@
   "model": "profiling.voter",
   "pk": 2544,
   "fields": {
-    "voter_name": "QUIÑAL, KENNY CABAHUG",
+    "voter_name": "QUIÃ‘AL, KENNY CABAHUG",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0936A"
@@ -25883,7 +25883,7 @@
   "model": "profiling.voter",
   "pk": 2589,
   "fields": {
-    "voter_name": "YBAÑEZ, ADONIS MANUBAG",
+    "voter_name": "YBAÃ‘EZ, ADONIS MANUBAG",
     "voter_address": "393 LAPU LAPU",
     "voter_category": null,
     "voter_precinct": "0936A"
@@ -26093,7 +26093,7 @@
   "model": "profiling.voter",
   "pk": 2610,
   "fields": {
-    "voter_name": "BAYA, NIDA MOÑASQUE",
+    "voter_name": "BAYA, NIDA MOÃ‘ASQUE",
     "voter_address": "MAC ARTHUR BLVD.",
     "voter_category": null,
     "voter_precinct": "0937A"
@@ -26373,7 +26373,7 @@
   "model": "profiling.voter",
   "pk": 2638,
   "fields": {
-    "voter_name": "CONDIÑO, DONALD COLADO",
+    "voter_name": "CONDIÃ‘O, DONALD COLADO",
     "voter_address": "V GULLAS EXT ARRELANO BLVD",
     "voter_category": "C",
     "voter_precinct": "0937A"
@@ -26383,7 +26383,7 @@
   "model": "profiling.voter",
   "pk": 2639,
   "fields": {
-    "voter_name": "CONDIÑO, DONNA GRACE ANOR",
+    "voter_name": "CONDIÃ‘O, DONNA GRACE ANOR",
     "voter_address": "MC ARTHUR BLVD",
     "voter_category": null,
     "voter_precinct": "0937A"
@@ -26393,7 +26393,7 @@
   "model": "profiling.voter",
   "pk": 2640,
   "fields": {
-    "voter_name": "CONDIÑO, GRACE ANOR",
+    "voter_name": "CONDIÃ‘O, GRACE ANOR",
     "voter_address": "MC ARTHUR BLVD.",
     "voter_category": null,
     "voter_precinct": "0937A"
@@ -26453,7 +26453,7 @@
   "model": "profiling.voter",
   "pk": 2646,
   "fields": {
-    "voter_name": "DAYAGRO, NIÑA FATIMA TABULOC",
+    "voter_name": "DAYAGRO, NIÃ‘A FATIMA TABULOC",
     "voter_address": "V.GULLAS EXT.",
     "voter_category": "*",
     "voter_precinct": "0937A"
@@ -26773,7 +26773,7 @@
   "model": "profiling.voter",
   "pk": 2678,
   "fields": {
-    "voter_name": "MALABAY, SANLEE CASTAÑARES",
+    "voter_name": "MALABAY, SANLEE CASTAÃ‘ARES",
     "voter_address": "R. PALMA ST",
     "voter_category": null,
     "voter_precinct": "0937A"
@@ -27203,7 +27203,7 @@
   "model": "profiling.voter",
   "pk": 2721,
   "fields": {
-    "voter_name": "SOSMEÑA, JOCELYN GAYO",
+    "voter_name": "SOSMEÃ‘A, JOCELYN GAYO",
     "voter_address": "37,R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0937A"
@@ -27453,7 +27453,7 @@
   "model": "profiling.voter",
   "pk": 2746,
   "fields": {
-    "voter_name": "VILLAMERA, MAXIMINO LAPEÑA",
+    "voter_name": "VILLAMERA, MAXIMINO LAPEÃ‘A",
     "voter_address": "R. PALMA ST",
     "voter_category": null,
     "voter_precinct": "0937A"
@@ -27533,7 +27533,7 @@
   "model": "profiling.voter",
   "pk": 2754,
   "fields": {
-    "voter_name": "YBAÑEZ, RICARDO QUIJANO",
+    "voter_name": "YBAÃ‘EZ, RICARDO QUIJANO",
     "voter_address": "CSCST  MAIN CAMPUS",
     "voter_category": "C",
     "voter_precinct": "0937A"
@@ -27543,7 +27543,7 @@
   "model": "profiling.voter",
   "pk": 2755,
   "fields": {
-    "voter_name": "YBAÑEZ, ROGELIA ELAS",
+    "voter_name": "YBAÃ‘EZ, ROGELIA ELAS",
     "voter_address": "CSCST MAIN CAMPUS",
     "voter_category": "C",
     "voter_precinct": "0937A"
@@ -27783,7 +27783,7 @@
   "model": "profiling.voter",
   "pk": 2779,
   "fields": {
-    "voter_name": "BAYA, NERISSA MOÑASQUE",
+    "voter_name": "BAYA, NERISSA MOÃ‘ASQUE",
     "voter_address": "100-A LOGARTA STREET",
     "voter_category": null,
     "voter_precinct": "0938A"
@@ -27923,7 +27923,7 @@
   "model": "profiling.voter",
   "pk": 2793,
   "fields": {
-    "voter_name": "CABAÑERO, JANISSA CONCON",
+    "voter_name": "CABAÃ‘ERO, JANISSA CONCON",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0938A"
@@ -28723,7 +28723,7 @@
   "model": "profiling.voter",
   "pk": 2873,
   "fields": {
-    "voter_name": "MAÑEJA, CELERINA PITOGO",
+    "voter_name": "MAÃ‘EJA, CELERINA PITOGO",
     "voter_address": "PALMA ST.",
     "voter_category": "C",
     "voter_precinct": "0938A"
@@ -28733,7 +28733,7 @@
   "model": "profiling.voter",
   "pk": 2874,
   "fields": {
-    "voter_name": "MARAÑAN, KYLE NIÑA SAMAR",
+    "voter_name": "MARAÃ‘AN, KYLE NIÃ‘A SAMAR",
     "voter_address": "32-A ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0938A"
@@ -29393,7 +29393,7 @@
   "model": "profiling.voter",
   "pk": 2940,
   "fields": {
-    "voter_name": "VARRON, ROSA GUEÑARES",
+    "voter_name": "VARRON, ROSA GUEÃ‘ARES",
     "voter_address": "R PALMA ST",
     "voter_category": "C",
     "voter_precinct": "0938A"
@@ -29553,7 +29553,7 @@
   "model": "profiling.voter",
   "pk": 2956,
   "fields": {
-    "voter_name": "ALBUERA, RENATO SERAÑO",
+    "voter_name": "ALBUERA, RENATO SERAÃ‘O",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -29833,7 +29833,7 @@
   "model": "profiling.voter",
   "pk": 2984,
   "fields": {
-    "voter_name": "BARIC, ESCOLASTICA BALDICAÑAS",
+    "voter_name": "BARIC, ESCOLASTICA BALDICAÃ‘AS",
     "voter_address": "9 R. PALMA ST.",
     "voter_category": "C",
     "voter_precinct": "0939A"
@@ -29873,7 +29873,7 @@
   "model": "profiling.voter",
   "pk": 2988,
   "fields": {
-    "voter_name": "BAYLON, FLORA CONDIÑO",
+    "voter_name": "BAYLON, FLORA CONDIÃ‘O",
     "voter_address": "R PALMA ST",
     "voter_category": "C",
     "voter_precinct": "0939A"
@@ -29983,7 +29983,7 @@
   "model": "profiling.voter",
   "pk": 2999,
   "fields": {
-    "voter_name": "CAÑETE, NORALYNE MENDOZA",
+    "voter_name": "CAÃ‘ETE, NORALYNE MENDOZA",
     "voter_address": "R PALMA ST",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -30033,7 +30033,7 @@
   "model": "profiling.voter",
   "pk": 3004,
   "fields": {
-    "voter_name": "DAVIS, JONATHAN NUÑEZ",
+    "voter_name": "DAVIS, JONATHAN NUÃ‘EZ",
     "voter_address": "119-F LOGARTA ST.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -30053,7 +30053,7 @@
   "model": "profiling.voter",
   "pk": 3006,
   "fields": {
-    "voter_name": "DE LA PEÑA, EMMANUEL DELA CRUZ",
+    "voter_name": "DE LA PEÃ‘A, EMMANUEL DELA CRUZ",
     "voter_address": "PALMA ST. COR.ARELLANO BLVD. SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0939A"
@@ -30073,7 +30073,7 @@
   "model": "profiling.voter",
   "pk": 3008,
   "fields": {
-    "voter_name": "DELA PEÑA, SANTOS MICHAEL DRIBBLE CALINAWAGAN",
+    "voter_name": "DELA PEÃ‘A, SANTOS MICHAEL DRIBBLE CALINAWAGAN",
     "voter_address": "PALMA ST. COR.ARELLANO BLVD. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -30373,7 +30373,7 @@
   "model": "profiling.voter",
   "pk": 3038,
   "fields": {
-    "voter_name": "GARCES, LEOVIGILDO BALDECAÑAS JR.",
+    "voter_name": "GARCES, LEOVIGILDO BALDECAÃ‘AS JR.",
     "voter_address": "9, PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -30383,7 +30383,7 @@
   "model": "profiling.voter",
   "pk": 3039,
   "fields": {
-    "voter_name": "GARCES, NESTOR BALDICAÑAS",
+    "voter_name": "GARCES, NESTOR BALDICAÃ‘AS",
     "voter_address": "09,R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -30663,7 +30663,7 @@
   "model": "profiling.voter",
   "pk": 3067,
   "fields": {
-    "voter_name": "LUAREZ, EDMUND MARAGAÑAS",
+    "voter_name": "LUAREZ, EDMUND MARAGAÃ‘AS",
     "voter_address": "MJ CUENCO R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -30833,7 +30833,7 @@
   "model": "profiling.voter",
   "pk": 3084,
   "fields": {
-    "voter_name": "MOHAMAD, JESSICA BALIÑA",
+    "voter_name": "MOHAMAD, JESSICA BALIÃ‘A",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0939A"
@@ -30843,7 +30843,7 @@
   "model": "profiling.voter",
   "pk": 3085,
   "fields": {
-    "voter_name": "MOJANA, LORNA BRUÑOLA",
+    "voter_name": "MOJANA, LORNA BRUÃ‘OLA",
     "voter_address": "PALMA",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -30963,7 +30963,7 @@
   "model": "profiling.voter",
   "pk": 3097,
   "fields": {
-    "voter_name": "PANSIT, LEAH NUÑEZ",
+    "voter_name": "PANSIT, LEAH NUÃ‘EZ",
     "voter_address": "R. PALMA",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -31003,7 +31003,7 @@
   "model": "profiling.voter",
   "pk": 3101,
   "fields": {
-    "voter_name": "PIÑEZ, JOVIE VILLAMOR",
+    "voter_name": "PIÃ‘EZ, JOVIE VILLAMOR",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0939A"
@@ -31223,7 +31223,7 @@
   "model": "profiling.voter",
   "pk": 3123,
   "fields": {
-    "voter_name": "SAMONTAÑEZ, GAUDENCIO JUMIO",
+    "voter_name": "SAMONTAÃ‘EZ, GAUDENCIO JUMIO",
     "voter_address": "PIER 2",
     "voter_category": "C",
     "voter_precinct": "0939A"
@@ -31363,7 +31363,7 @@
   "model": "profiling.voter",
   "pk": 3137,
   "fields": {
-    "voter_name": "TABAO, TERESITA CAÑETE",
+    "voter_name": "TABAO, TERESITA CAÃ‘ETE",
     "voter_address": "R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0939A"
@@ -31433,7 +31433,7 @@
   "model": "profiling.voter",
   "pk": 3144,
   "fields": {
-    "voter_name": "VILLAMORA, DAVID MARC CAÑADA",
+    "voter_name": "VILLAMORA, DAVID MARC CAÃ‘ADA",
     "voter_address": "124 FST. LOGARTA",
     "voter_category": "*",
     "voter_precinct": "0939A"
@@ -31943,7 +31943,7 @@
   "model": "profiling.voter",
   "pk": 3195,
   "fields": {
-    "voter_name": "CUARTERO, HORIZON MONIÑO",
+    "voter_name": "CUARTERO, HORIZON MONIÃ‘O",
     "voter_address": "120-B LOGARTA ST.",
     "voter_category": "*",
     "voter_precinct": "0940A"
@@ -32203,7 +32203,7 @@
   "model": "profiling.voter",
   "pk": 3221,
   "fields": {
-    "voter_name": "GAPAY, JIRO NIÑO GONZALES",
+    "voter_name": "GAPAY, JIRO NIÃ‘O GONZALES",
     "voter_address": "BLOCK8 LOT8 SITIO PANTING",
     "voter_category": "*",
     "voter_precinct": "0940A"
@@ -32623,7 +32623,7 @@
   "model": "profiling.voter",
   "pk": 3263,
   "fields": {
-    "voter_name": "NUÑEZ, REDGIL PAGOBO",
+    "voter_name": "NUÃ‘EZ, REDGIL PAGOBO",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0940A"
@@ -32804,7 +32804,7 @@
   "pk": 3281,
   "fields": {
     "voter_name": "RAGO, BIENVENIDO OCABA",
-    "voter_address": "182 COR V. GULLAS EXT. & S. OSMEÑA",
+    "voter_address": "182 COR V. GULLAS EXT. & S. OSMEÃ‘A",
     "voter_category": null,
     "voter_precinct": "0940A"
   }
@@ -33213,8 +33213,8 @@
   "model": "profiling.voter",
   "pk": 3322,
   "fields": {
-    "voter_name": "ZUÑIGA, ANABEL RUEDAS",
-    "voter_address": "S. OSMEÑA ST. SAN ROQUE",
+    "voter_name": "ZUÃ‘IGA, ANABEL RUEDAS",
+    "voter_address": "S. OSMEÃ‘A ST. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0940A"
   }
@@ -33223,8 +33223,8 @@
   "model": "profiling.voter",
   "pk": 3323,
   "fields": {
-    "voter_name": "ZUÑIGA, EDGARDO CATAG CATAG",
-    "voter_address": "S. OSMEÑA ST. SAN ROQUE",
+    "voter_name": "ZUÃ‘IGA, EDGARDO CATAG CATAG",
+    "voter_address": "S. OSMEÃ‘A ST. SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0940A"
   }
@@ -33824,7 +33824,7 @@
   "pk": 3383,
   "fields": {
     "voter_name": "FELICANO, JOEMAR _",
-    "voter_address": "OSMEÑA BLVD. MICHELEN BLDG.",
+    "voter_address": "OSMEÃ‘A BLVD. MICHELEN BLDG.",
     "voter_category": "*",
     "voter_precinct": "0941A"
   }
@@ -34293,7 +34293,7 @@
   "model": "profiling.voter",
   "pk": 3430,
   "fields": {
-    "voter_name": "MJARCIAL, PETER FLORENCE CABAÑERO",
+    "voter_name": "MJARCIAL, PETER FLORENCE CABAÃ‘ERO",
     "voter_address": "131A MABINI ST",
     "voter_category": null,
     "voter_precinct": "0941A"
@@ -34553,7 +34553,7 @@
   "model": "profiling.voter",
   "pk": 3456,
   "fields": {
-    "voter_name": "RODIS, RAMON IÑAKI DEL ROSARIO",
+    "voter_name": "RODIS, RAMON IÃ‘AKI DEL ROSARIO",
     "voter_address": "21 V. GULLAS ST.",
     "voter_category": null,
     "voter_precinct": "0941A"
@@ -34573,7 +34573,7 @@
   "model": "profiling.voter",
   "pk": 3458,
   "fields": {
-    "voter_name": "ROMERO, REAMARIA CASTAÑEDA",
+    "voter_name": "ROMERO, REAMARIA CASTAÃ‘EDA",
     "voter_address": "196 MJ CUENCO AVE",
     "voter_category": "C",
     "voter_precinct": "0941A"
@@ -34693,7 +34693,7 @@
   "model": "profiling.voter",
   "pk": 3470,
   "fields": {
-    "voter_name": "SOLARIO, ARRA NIÑA DEVERO",
+    "voter_name": "SOLARIO, ARRA NIÃ‘A DEVERO",
     "voter_address": "34 ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0941A"
@@ -34953,7 +34953,7 @@
   "model": "profiling.voter",
   "pk": 3496,
   "fields": {
-    "voter_name": "ABARRI, ROSALINA SOROÑO",
+    "voter_name": "ABARRI, ROSALINA SOROÃ‘O",
     "voter_address": "0264 PROPER",
     "voter_category": "C",
     "voter_precinct": "0942A"
@@ -35333,7 +35333,7 @@
   "model": "profiling.voter",
   "pk": 3534,
   "fields": {
-    "voter_name": "CERILLES, ANGELICA AÑASCO",
+    "voter_name": "CERILLES, ANGELICA AÃ‘ASCO",
     "voter_address": "106 LAPULAPU STREET",
     "voter_category": "*",
     "voter_precinct": "0942A"
@@ -35343,7 +35343,7 @@
   "model": "profiling.voter",
   "pk": 3535,
   "fields": {
-    "voter_name": "CHUA, ROBINSON MARIÑAS",
+    "voter_name": "CHUA, ROBINSON MARIÃ‘AS",
     "voter_address": "26 LOGARTA ST.  SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0942A"
@@ -35513,7 +35513,7 @@
   "model": "profiling.voter",
   "pk": 3552,
   "fields": {
-    "voter_name": "DEGUIÑON, STEVE OLAGUIR",
+    "voter_name": "DEGUIÃ‘ON, STEVE OLAGUIR",
     "voter_address": "21-A MABINI ST.",
     "voter_category": null,
     "voter_precinct": "0942A"
@@ -35673,7 +35673,7 @@
   "model": "profiling.voter",
   "pk": 3568,
   "fields": {
-    "voter_name": "EÑIGO, JEAN CLAIRE CUEVA",
+    "voter_name": "EÃ‘IGO, JEAN CLAIRE CUEVA",
     "voter_address": "ARELLANO BLVD. ST.",
     "voter_category": "*",
     "voter_precinct": "0942A"
@@ -35883,7 +35883,7 @@
   "model": "profiling.voter",
   "pk": 3589,
   "fields": {
-    "voter_name": "LAÑA, SANDARA MAE PEREZ",
+    "voter_name": "LAÃ‘A, SANDARA MAE PEREZ",
     "voter_address": "V GULLAS EXTENSION",
     "voter_category": "*",
     "voter_precinct": "0942A"
@@ -36003,7 +36003,7 @@
   "model": "profiling.voter",
   "pk": 3601,
   "fields": {
-    "voter_name": "MAÑACAP, KAE AMOR ARRIBE",
+    "voter_name": "MAÃ‘ACAP, KAE AMOR ARRIBE",
     "voter_address": "PALMA STREET",
     "voter_category": null,
     "voter_precinct": "0942A"
@@ -36033,7 +36033,7 @@
   "model": "profiling.voter",
   "pk": 3604,
   "fields": {
-    "voter_name": "MANGUBAT, MARIO ESPAÑOLA JR.",
+    "voter_name": "MANGUBAT, MARIO ESPAÃ‘OLA JR.",
     "voter_address": "31C MABINI ST",
     "voter_category": null,
     "voter_precinct": "0942A"
@@ -36143,7 +36143,7 @@
   "model": "profiling.voter",
   "pk": 3615,
   "fields": {
-    "voter_name": "MOREÑO, JOHNSON DE-AGUAS",
+    "voter_name": "MOREÃ‘O, JOHNSON DE-AGUAS",
     "voter_address": "ARELLANO BLVD.,",
     "voter_category": null,
     "voter_precinct": "0942A"
@@ -36233,7 +36233,7 @@
   "model": "profiling.voter",
   "pk": 3624,
   "fields": {
-    "voter_name": "PANSIT, MARIA LIZA NUÑEZ",
+    "voter_name": "PANSIT, MARIA LIZA NUÃ‘EZ",
     "voter_address": "R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0942A"
@@ -36453,7 +36453,7 @@
   "model": "profiling.voter",
   "pk": 3646,
   "fields": {
-    "voter_name": "ROMERO, RAYN JEZREEL CASTAÑEDA",
+    "voter_name": "ROMERO, RAYN JEZREEL CASTAÃ‘EDA",
     "voter_address": "799 D JAKOSALEM STREET",
     "voter_category": "*",
     "voter_precinct": "0942A"
@@ -36753,7 +36753,7 @@
   "model": "profiling.voter",
   "pk": 3676,
   "fields": {
-    "voter_name": "TAN, BEVERLY ANN LAÑAS",
+    "voter_name": "TAN, BEVERLY ANN LAÃ‘AS",
     "voter_address": "F. LOPEZ COMPOUND",
     "voter_category": "*",
     "voter_precinct": "0942A"
@@ -37353,7 +37353,7 @@
   "model": "profiling.voter",
   "pk": 3736,
   "fields": {
-    "voter_name": "CASTAÑO, AILEEN SABANAL",
+    "voter_name": "CASTAÃ‘O, AILEEN SABANAL",
     "voter_address": "NEAR OR BESIDE BRGY SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -37433,7 +37433,7 @@
   "model": "profiling.voter",
   "pk": 3744,
   "fields": {
-    "voter_name": "CUARTERO, AARON MONIÑO",
+    "voter_name": "CUARTERO, AARON MONIÃ‘O",
     "voter_address": "120-B LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -37483,7 +37483,7 @@
   "model": "profiling.voter",
   "pk": 3749,
   "fields": {
-    "voter_name": "DEGUIÑON, VINCENT OLAGUIR",
+    "voter_name": "DEGUIÃ‘ON, VINCENT OLAGUIR",
     "voter_address": "21-A MABINI ST.",
     "voter_category": "*",
     "voter_precinct": "0943A"
@@ -37723,7 +37723,7 @@
   "model": "profiling.voter",
   "pk": 3773,
   "fields": {
-    "voter_name": "GASTADOR, GERRY CONDIÑO",
+    "voter_name": "GASTADOR, GERRY CONDIÃ‘O",
     "voter_address": "BACK CHAPEL OF SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0943A"
@@ -37793,7 +37793,7 @@
   "model": "profiling.voter",
   "pk": 3780,
   "fields": {
-    "voter_name": "HERMENEGILDO, ERA GEMMA MARAÑON",
+    "voter_name": "HERMENEGILDO, ERA GEMMA MARAÃ‘ON",
     "voter_address": "119 LOGARTA ST.  SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0943A"
@@ -38143,7 +38143,7 @@
   "model": "profiling.voter",
   "pk": 3815,
   "fields": {
-    "voter_name": "MAHINAY, NIÑA LYN TATOY",
+    "voter_name": "MAHINAY, NIÃ‘A LYN TATOY",
     "voter_address": "95 STREET LOGARTA",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -38253,7 +38253,7 @@
   "model": "profiling.voter",
   "pk": 3826,
   "fields": {
-    "voter_name": "MIÑOZA, SAVIER ENJAMBRE",
+    "voter_name": "MIÃ‘OZA, SAVIER ENJAMBRE",
     "voter_address": "130A LOGARTA ST",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -38313,7 +38313,7 @@
   "model": "profiling.voter",
   "pk": 3832,
   "fields": {
-    "voter_name": "MONTEMOR, GERALDINE QUIÑO",
+    "voter_name": "MONTEMOR, GERALDINE QUIÃ‘O",
     "voter_address": "ARELLANO BLVD",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -38323,7 +38323,7 @@
   "model": "profiling.voter",
   "pk": 3833,
   "fields": {
-    "voter_name": "MONTEMOR, JASON QUIÑO",
+    "voter_name": "MONTEMOR, JASON QUIÃ‘O",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0943A"
@@ -38333,7 +38333,7 @@
   "model": "profiling.voter",
   "pk": 3834,
   "fields": {
-    "voter_name": "MONTEMOR, JEFFERSON QUIÑO",
+    "voter_name": "MONTEMOR, JEFFERSON QUIÃ‘O",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0943A"
@@ -38363,7 +38363,7 @@
   "model": "profiling.voter",
   "pk": 3837,
   "fields": {
-    "voter_name": "NUÑEZ, MONALUNA PAGOBO",
+    "voter_name": "NUÃ‘EZ, MONALUNA PAGOBO",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -38394,7 +38394,7 @@
   "pk": 3840,
   "fields": {
     "voter_name": "OBUNGEN, DAVIE ABARRI",
-    "voter_address": "R.PALMA COR. S.OSMEÑA ST.",
+    "voter_address": "R.PALMA COR. S.OSMEÃ‘A ST.",
     "voter_category": "*",
     "voter_precinct": "0943A"
   }
@@ -38423,7 +38423,7 @@
   "model": "profiling.voter",
   "pk": 3843,
   "fields": {
-    "voter_name": "OPIT, BENJAMIN MIÑOZA",
+    "voter_name": "OPIT, BENJAMIN MIÃ‘OZA",
     "voter_address": "ARELLANO STREET",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -38513,7 +38513,7 @@
   "model": "profiling.voter",
   "pk": 3852,
   "fields": {
-    "voter_name": "PASCUAL, JENIÑO GARCIA",
+    "voter_name": "PASCUAL, JENIÃ‘O GARCIA",
     "voter_address": "51- LAPU LAPU STREET",
     "voter_category": "*",
     "voter_precinct": "0943A"
@@ -38563,7 +38563,7 @@
   "model": "profiling.voter",
   "pk": 3857,
   "fields": {
-    "voter_name": "QUIÑO, JOHN -",
+    "voter_name": "QUIÃ‘O, JOHN -",
     "voter_address": "ARELLANO BLVD. ST.",
     "voter_category": "*",
     "voter_precinct": "0943A"
@@ -38573,7 +38573,7 @@
   "model": "profiling.voter",
   "pk": 3858,
   "fields": {
-    "voter_name": "QUIÑO, KENT ALBARACIN",
+    "voter_name": "QUIÃ‘O, KENT ALBARACIN",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "*",
     "voter_precinct": "0943A"
@@ -38673,7 +38673,7 @@
   "model": "profiling.voter",
   "pk": 3868,
   "fields": {
-    "voter_name": "ROCHE, AIME ALEMAÑA",
+    "voter_name": "ROCHE, AIME ALEMAÃ‘A",
     "voter_address": "R.PALMA ST CORNER ARELLANO BLVD",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -38713,7 +38713,7 @@
   "model": "profiling.voter",
   "pk": 3872,
   "fields": {
-    "voter_name": "ROSACEÑA, JULIE HIRRIETTE GOOPIO",
+    "voter_name": "ROSACEÃ‘A, JULIE HIRRIETTE GOOPIO",
     "voter_address": "18-A JEREZA LOGARTA",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -38773,7 +38773,7 @@
   "model": "profiling.voter",
   "pk": 3878,
   "fields": {
-    "voter_name": "SARIO, RAMIL NUÑEZ",
+    "voter_name": "SARIO, RAMIL NUÃ‘EZ",
     "voter_address": "LAPU LAPU STREET",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -38843,7 +38843,7 @@
   "model": "profiling.voter",
   "pk": 3885,
   "fields": {
-    "voter_name": "TAN, SUZZANE LAÑAS",
+    "voter_name": "TAN, SUZZANE LAÃ‘AS",
     "voter_address": "F. LOPEZ CPD. MC BRIONES EXT",
     "voter_category": "*",
     "voter_precinct": "0943A"
@@ -38903,7 +38903,7 @@
   "model": "profiling.voter",
   "pk": 3891,
   "fields": {
-    "voter_name": "URBANO, ABNER MONTAÑEZ",
+    "voter_name": "URBANO, ABNER MONTAÃ‘EZ",
     "voter_address": "94 P BURGOS ST.",
     "voter_category": null,
     "voter_precinct": "0943A"
@@ -39003,7 +39003,7 @@
   "model": "profiling.voter",
   "pk": 3901,
   "fields": {
-    "voter_name": "ANDAYA, NIÑO JOHN DEMATA",
+    "voter_name": "ANDAYA, NIÃ‘O JOHN DEMATA",
     "voter_address": "32 A ST ARELLANO BLVD.",
     "voter_category": "*",
     "voter_precinct": "0944A"
@@ -39073,7 +39073,7 @@
   "model": "profiling.voter",
   "pk": 3908,
   "fields": {
-    "voter_name": "BAÑEZ, JEREME MANGUBAT",
+    "voter_name": "BAÃ‘EZ, JEREME MANGUBAT",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -39103,7 +39103,7 @@
   "model": "profiling.voter",
   "pk": 3911,
   "fields": {
-    "voter_name": "BAYLON, RHANEVETH CONDIÑO",
+    "voter_name": "BAYLON, RHANEVETH CONDIÃ‘O",
     "voter_address": "R. PALMA ST",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -39203,7 +39203,7 @@
   "model": "profiling.voter",
   "pk": 3921,
   "fields": {
-    "voter_name": "CEREÑO, AGUSTIN GARCIA",
+    "voter_name": "CEREÃ‘O, AGUSTIN GARCIA",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -40093,7 +40093,7 @@
   "model": "profiling.voter",
   "pk": 4010,
   "fields": {
-    "voter_name": "NABASCA, MELCHORA CAÑAS",
+    "voter_name": "NABASCA, MELCHORA CAÃ‘AS",
     "voter_address": "LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -40163,7 +40163,7 @@
   "model": "profiling.voter",
   "pk": 4017,
   "fields": {
-    "voter_name": "OBEÑITA, GENGRACE ZANORIA",
+    "voter_name": "OBEÃ‘ITA, GENGRACE ZANORIA",
     "voter_address": "124-F LOGARTA ST",
     "voter_category": "*",
     "voter_precinct": "0944A"
@@ -40173,7 +40173,7 @@
   "model": "profiling.voter",
   "pk": 4018,
   "fields": {
-    "voter_name": "OBEÑITA, MARIAM GRAZELLE ZANORIA",
+    "voter_name": "OBEÃ‘ITA, MARIAM GRAZELLE ZANORIA",
     "voter_address": "124-F LOGARTA STREET",
     "voter_category": "*",
     "voter_precinct": "0944A"
@@ -40353,7 +40353,7 @@
   "model": "profiling.voter",
   "pk": 4036,
   "fields": {
-    "voter_name": "PATIÑO, ERNESTO BISNAR",
+    "voter_name": "PATIÃ‘O, ERNESTO BISNAR",
     "voter_address": "COR. A JEREZA & LAPULAPU STS.",
     "voter_category": "C",
     "voter_precinct": "0944A"
@@ -40603,7 +40603,7 @@
   "model": "profiling.voter",
   "pk": 4061,
   "fields": {
-    "voter_name": "REDOÑA, CHRISTOPHER GENSES",
+    "voter_name": "REDOÃ‘A, CHRISTOPHER GENSES",
     "voter_address": "MC ARTHUR BLVD.",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -40613,7 +40613,7 @@
   "model": "profiling.voter",
   "pk": 4062,
   "fields": {
-    "voter_name": "REDOÑA, MERIAM CARZA",
+    "voter_name": "REDOÃ‘A, MERIAM CARZA",
     "voter_address": "MAC ARTHUR BLVD.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -40763,7 +40763,7 @@
   "model": "profiling.voter",
   "pk": 4077,
   "fields": {
-    "voter_name": "SUÑIGA, RICARDO CATAG",
+    "voter_name": "SUÃ‘IGA, RICARDO CATAG",
     "voter_address": "ARELLANO BLVD",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -40833,7 +40833,7 @@
   "model": "profiling.voter",
   "pk": 4084,
   "fields": {
-    "voter_name": "UNABIA, JEOBERT CAÑETE",
+    "voter_name": "UNABIA, JEOBERT CAÃ‘ETE",
     "voter_address": "86-A MABINI",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -40843,7 +40843,7 @@
   "model": "profiling.voter",
   "pk": 4085,
   "fields": {
-    "voter_name": "URGEL, PAULITO JR COÑEJOS",
+    "voter_name": "URGEL, PAULITO JR COÃ‘EJOS",
     "voter_address": "ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -40873,7 +40873,7 @@
   "model": "profiling.voter",
   "pk": 4088,
   "fields": {
-    "voter_name": "YBAÑEZ, CHANEL MENDOZA",
+    "voter_name": "YBAÃ‘EZ, CHANEL MENDOZA",
     "voter_address": "101 LOGARTA ST.,",
     "voter_category": null,
     "voter_precinct": "0944A"
@@ -41073,7 +41073,7 @@
   "model": "profiling.voter",
   "pk": 4108,
   "fields": {
-    "voter_name": "BAÑEZ, JOSEFA MANGUBAT",
+    "voter_name": "BAÃ‘EZ, JOSEFA MANGUBAT",
     "voter_address": "ARELLANO BLVD",
     "voter_category": "C",
     "voter_precinct": "0945A"
@@ -41113,7 +41113,7 @@
   "model": "profiling.voter",
   "pk": 4112,
   "fields": {
-    "voter_name": "BAYA, VINCENT MOÑASQUE",
+    "voter_name": "BAYA, VINCENT MOÃ‘ASQUE",
     "voter_address": "100 LOGARTA ST.",
     "voter_category": "*",
     "voter_precinct": "0945A"
@@ -41293,7 +41293,7 @@
   "model": "profiling.voter",
   "pk": 4130,
   "fields": {
-    "voter_name": "DEGUIÑON, EDILBERTO BOYLES",
+    "voter_name": "DEGUIÃ‘ON, EDILBERTO BOYLES",
     "voter_address": "MABINI COR COLON ST.",
     "voter_category": "C",
     "voter_precinct": "0945A"
@@ -41613,7 +41613,7 @@
   "model": "profiling.voter",
   "pk": 4162,
   "fields": {
-    "voter_name": "MARIPOSQUE, JOJIT MOREÑO",
+    "voter_name": "MARIPOSQUE, JOJIT MOREÃ‘O",
     "voter_address": "MADRIGAL COMPOUND, ARELLANO BLVD.",
     "voter_category": null,
     "voter_precinct": "0945A"
@@ -41783,7 +41783,7 @@
   "model": "profiling.voter",
   "pk": 4179,
   "fields": {
-    "voter_name": "PEÑA, MARIS DALUMPINES",
+    "voter_name": "PEÃ‘A, MARIS DALUMPINES",
     "voter_address": "SITIO PANTING",
     "voter_category": null,
     "voter_precinct": "0945A"
@@ -41893,7 +41893,7 @@
   "model": "profiling.voter",
   "pk": 4190,
   "fields": {
-    "voter_name": "RIÑA, HERBEUS FIL ANOBLING",
+    "voter_name": "RIÃ‘A, HERBEUS FIL ANOBLING",
     "voter_address": "103 LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0945A"
@@ -41903,7 +41903,7 @@
   "model": "profiling.voter",
   "pk": 4191,
   "fields": {
-    "voter_name": "RIÑA, JEHROS ANOBLING",
+    "voter_name": "RIÃ‘A, JEHROS ANOBLING",
     "voter_address": "LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0945A"
@@ -41963,7 +41963,7 @@
   "model": "profiling.voter",
   "pk": 4197,
   "fields": {
-    "voter_name": "ROSEL, NICODEMUS LA PEÑA",
+    "voter_name": "ROSEL, NICODEMUS LA PEÃ‘A",
     "voter_address": "MAC ARTHUR BLVD.  SAN ROQUE",
     "voter_category": "C",
     "voter_precinct": "0945A"
@@ -42393,7 +42393,7 @@
   "model": "profiling.voter",
   "pk": 4240,
   "fields": {
-    "voter_name": "TOMABIAO, NIÑO JESS DACALOS",
+    "voter_name": "TOMABIAO, NIÃ‘O JESS DACALOS",
     "voter_address": "CORNER MJ.CUENCO R PALMA ST",
     "voter_category": null,
     "voter_precinct": "0945A"
@@ -42403,7 +42403,7 @@
   "model": "profiling.voter",
   "pk": 4241,
   "fields": {
-    "voter_name": "TOÑACAO, LESLIE SAAVEDRA",
+    "voter_name": "TOÃ‘ACAO, LESLIE SAAVEDRA",
     "voter_address": "103-A LOGARTA ST.  SAN ROQUE",
     "voter_category": null,
     "voter_precinct": "0945A"
@@ -42813,7 +42813,7 @@
   "model": "profiling.voter",
   "pk": 4282,
   "fields": {
-    "voter_name": "AUMAN, NIÑO BRYAN CHUANGCO",
+    "voter_name": "AUMAN, NIÃ‘O BRYAN CHUANGCO",
     "voter_address": "V GULLAS EXT.",
     "voter_category": null,
     "voter_precinct": "0946A"
@@ -43323,7 +43323,7 @@
   "model": "profiling.voter",
   "pk": 4333,
   "fields": {
-    "voter_name": "ESPAÑOLA, VILMA PESCADERO",
+    "voter_name": "ESPAÃ‘OLA, VILMA PESCADERO",
     "voter_address": "130-C LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0946A"
@@ -43383,7 +43383,7 @@
   "model": "profiling.voter",
   "pk": 4339,
   "fields": {
-    "voter_name": "GACAYAN, JAYROSE JAÑO",
+    "voter_name": "GACAYAN, JAYROSE JAÃ‘O",
     "voter_address": "29 LAPU-LAPU ST.",
     "voter_category": null,
     "voter_precinct": "0946A"
@@ -43903,7 +43903,7 @@
   "model": "profiling.voter",
   "pk": 4391,
   "fields": {
-    "voter_name": "ORLANES, SHAMEL CAÑETE",
+    "voter_name": "ORLANES, SHAMEL CAÃ‘ETE",
     "voter_address": "QUEZON BLVD.",
     "voter_category": "*",
     "voter_precinct": "0946A"
@@ -43953,7 +43953,7 @@
   "model": "profiling.voter",
   "pk": 4396,
   "fields": {
-    "voter_name": "PALAY, DONN SAMUEL CONDIÑO",
+    "voter_name": "PALAY, DONN SAMUEL CONDIÃ‘O",
     "voter_address": "V. GULLAS EXT",
     "voter_category": "*",
     "voter_precinct": "0946A"
@@ -43993,7 +43993,7 @@
   "model": "profiling.voter",
   "pk": 4400,
   "fields": {
-    "voter_name": "PARREÑO, LORENA PUNDADOR",
+    "voter_name": "PARREÃ‘O, LORENA PUNDADOR",
     "voter_address": "101 LOGARTA ST.",
     "voter_category": null,
     "voter_precinct": "0946A"
@@ -44033,7 +44033,7 @@
   "model": "profiling.voter",
   "pk": 4404,
   "fields": {
-    "voter_name": "PITOGO, JOSE CONDIÑO JR.",
+    "voter_name": "PITOGO, JOSE CONDIÃ‘O JR.",
     "voter_address": "52 R PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0946A"
@@ -44083,7 +44083,7 @@
   "model": "profiling.voter",
   "pk": 4409,
   "fields": {
-    "voter_name": "REBUCAS, MAE BARJET MEGRIÑO",
+    "voter_name": "REBUCAS, MAE BARJET MEGRIÃ‘O",
     "voter_address": "587-D POTAT BAGUMBAYAN ST.",
     "voter_category": null,
     "voter_precinct": "0946A"
@@ -44163,7 +44163,7 @@
   "model": "profiling.voter",
   "pk": 4417,
   "fields": {
-    "voter_name": "SALINAS, RICHEL CEQUIÑA",
+    "voter_name": "SALINAS, RICHEL CEQUIÃ‘A",
     "voter_address": "55 R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0946A"
@@ -44173,7 +44173,7 @@
   "model": "profiling.voter",
   "pk": 4418,
   "fields": {
-    "voter_name": "SALINAS, RIRE AURORA CEQUIÑA",
+    "voter_name": "SALINAS, RIRE AURORA CEQUIÃ‘A",
     "voter_address": "R. PALMA ST.",
     "voter_category": null,
     "voter_precinct": "0946A"
