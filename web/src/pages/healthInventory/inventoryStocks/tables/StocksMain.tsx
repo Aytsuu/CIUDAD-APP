@@ -46,11 +46,22 @@ export default function MainInventoryStocks() {
 
   const [selectedView, setSelectedView] = useState<TabType>(getCurrentTabFromPath);
 
-  // Update URL when tab changes
+  // Update URL when tab changes, preserving the tab-specific page parameter
   useEffect(() => {
     const currentTab = TabConfig.find(tab => tab.id === selectedView);
     if (currentTab) {
-      navigate(currentTab.path, { replace: true });
+      const searchParamsObj = new URLSearchParams(location.search);
+      // Remove the old page parameter and let each tab manage its own
+      searchParamsObj.delete("page");
+      
+      // Get the saved page for this tab from sessionStorage
+      const savedPage = sessionStorage.getItem(`page_${selectedView}_stocks`);
+      if (savedPage && savedPage !== "1") {
+        searchParamsObj.set("page", savedPage);
+      }
+      
+      const queryString = searchParamsObj.toString();
+      navigate(`${currentTab.path}${queryString ? `?${queryString}` : ""}`, { replace: false });
     }
     localStorage.setItem("mainInventoryStocksView", selectedView);
   }, [selectedView, navigate]);

@@ -1,23 +1,30 @@
 "use client"
-import { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
+import { useSearchParams } from "react-router-dom"
 import { DataTable } from "@/components/ui/table/data-table"
 import { Input } from "@/components/ui/input"
 import { Search, Loader2 } from "lucide-react"
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { MedTransactioncolumns } from "./columns/MedicineColumsn"
 import { useMedicineTransactions } from "../queries/fetch"
+import { useDebounce } from "@/hooks/use-debounce"
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
 
 export default function MedicineTransactionTable() {
-  const [searchQuery, setSearchQuery] = useState("")
+  // ------------- STATE INITIALIZATION ----------------
+  const [searchInput, setSearchInput] = useState("")
   const [pageSize, setPageSize] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
+  
+  const [searchParams, setSearchParams] = useSearchParams()
+  const debouncedSearchQuery = useDebounce(searchInput, 300)
+  const debouncedPageSize = useDebounce(pageSize, 100)
+  const currentPage = parseInt(searchParams.get("page") || "1", 10)
 
   const { data: apiResponse, isLoading, error } = useMedicineTransactions(
-    currentPage, 
-    pageSize, 
-    searchQuery, 
+    currentPage,
+    debouncedPageSize,
+    debouncedSearchQuery.trim() ? debouncedSearchQuery.trim() : undefined
   )
 
   // Extract data from API response
@@ -27,22 +34,42 @@ export default function MedicineTransactionTable() {
 
   const columns = MedTransactioncolumns()
 
-  // Handle page change
+  // ------------- SIDE EFFECTS ----------------
+  const isInitialMount = useRef(true)
+
+  // Save page state to sessionStorage for this tab
+  useEffect(() => {
+    sessionStorage.setItem("page_medicine_transactions", String(currentPage))
+  }, [currentPage])
+
+  // Reset to page 1 when search changes (but not on initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+    if (debouncedSearchQuery === "") return
+    handlePageChange(1)
+  }, [debouncedSearchQuery])
+
+  // ------------- HANDLERS ----------------
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+    setSearchParams({ page: String(page) })
   }
 
-  // Handle search
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    handlePageChange(1)
+  }
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    setCurrentPage(1)
+    setSearchInput(e.target.value)
   }
 
-  // Handle page size change
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = +e.target.value;
-      setPageSize(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
-    setCurrentPage(1)
+  const handlePageSizeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = +e.target.value
+    const newPageSize = value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1
+    handlePageSizeChange(newPageSize)
   }
 
     // Prepare export data for medicine transactions (EXACT table columns)
@@ -103,7 +130,7 @@ export default function MedicineTransactionTable() {
             <Input
               placeholder="Search medicine transactions..."
               className="pl-10 bg-white w-full"
-              value={searchQuery}
+              value={searchInput}
               onChange={handleSearchChange}
             />
           </div>
@@ -118,9 +145,9 @@ export default function MedicineTransactionTable() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={handlePageSizeChange}
+              onChange={handlePageSizeInputChange}
               min="1"
-                max="50"
+              max="50"
             />
             <p className="text-xs sm:text-sm">Entries</p>
           </div>

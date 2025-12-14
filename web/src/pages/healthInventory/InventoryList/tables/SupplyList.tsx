@@ -36,6 +36,11 @@ export default function SupplyList() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  // Save page state to sessionStorage for this sub-tab
+  useEffect(() => {
+    sessionStorage.setItem("page_supply", String(currentPage));
+  }, [currentPage]);
+
   // Supply query with pagination and search
   const { data: suppliesData, isLoading: isLoadingSupplies } = useImzSupTable(currentPage, pageSize, searchQuery.trim() ? searchQuery.trim() : undefined);
 

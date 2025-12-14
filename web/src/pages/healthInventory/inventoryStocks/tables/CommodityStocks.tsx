@@ -1,6 +1,6 @@
 // CommodityStocks.tsx
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
@@ -50,9 +50,21 @@ export default function CommodityStocks() {
 
   const counts = apiResponse?.filter_counts || { out_of_stock: 0, low_stock: 0, near_expiry: 0, expired: 0, total: 0 };
 
+  const isInitialMount = useRef(true);
+
+  // Save page state to sessionStorage for this tab
   useEffect(() => {
+    sessionStorage.setItem("page_commodity_stocks", String(currentPage));
+  }, [currentPage]);
+
+  // Reset page to 1 on search/filter change (skip on initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     setSearchParams({ page: "1" });
-  }, [searchQuery, stockFilter]);
+  }, [searchQuery, stockFilter, setSearchParams]);
 
   const handlePageChange = (page: number) => {
     setSearchParams({ page: String(page) });

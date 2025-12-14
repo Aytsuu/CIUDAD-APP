@@ -1,5 +1,6 @@
 "use client"
-import { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
+import { useSearchParams } from "react-router-dom"
 import { DataTable } from "@/components/ui/table/data-table"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
@@ -8,17 +9,23 @@ import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices
 import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { getArchiveFirstAidStocks } from "./columns/FirstAidCol"
 import { useArchivedFirstAidStocks } from "../queries/fetch"
+import { useDebounce } from "@/hooks/use-debounce"
 import TableLoading from "@/components/ui/table-loading"
 
 export default function FirstAidArchiveTable() {
-  const [searchQuery, setSearchQuery] = useState("")
+  // ------------- STATE INITIALIZATION ----------------
+  const [searchInput, setSearchInput] = useState("")
   const [pageSize, setPageSize] = useState(10)
-  const [currentPage, setCurrentPage] = useState(1)
+  
+  const [searchParams, setSearchParams] = useSearchParams()
+  const debouncedSearchQuery = useDebounce(searchInput, 300)
+  const debouncedPageSize = useDebounce(pageSize, 100)
+  const currentPage = parseInt(searchParams.get("page") || "1", 10)
 
   const { data: apiResponse, isLoading, error } = useArchivedFirstAidStocks(
-    currentPage, 
-    pageSize, 
-    searchQuery, 
+    currentPage,
+    debouncedPageSize,
+    debouncedSearchQuery.trim() ? debouncedSearchQuery.trim() : undefined
   )
 
   // Extract data from API response
@@ -28,22 +35,42 @@ export default function FirstAidArchiveTable() {
 
   const columns = getArchiveFirstAidStocks()
 
-  // Handle page change
+  // ------------- SIDE EFFECTS ----------------
+  const isInitialMount = useRef(true)
+
+  // Save page state to sessionStorage for this tab
+  useEffect(() => {
+    sessionStorage.setItem("page_firstaid_archive", String(currentPage))
+  }, [currentPage])
+
+  // Reset to page 1 when search changes (but not on initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
+    }
+    if (debouncedSearchQuery === "") return
+    handlePageChange(1)
+  }, [debouncedSearchQuery])
+
+  // ------------- HANDLERS ----------------
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+    setSearchParams({ page: String(page) })
   }
 
-  // Handle search with debounce (optional)
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    handlePageChange(1)
+  }
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    setCurrentPage(1) // Reset to first page when searching
+    setSearchInput(e.target.value)
   }
 
-  // Handle page size change
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePageSizeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = +e.target.value
-    setPageSize(value >= 1 ? value : 1)
-    setCurrentPage(1) // Reset to first page when page size changes
+    const newPageSize = value >= 1 ? value : 1
+    handlePageSizeChange(newPageSize)
   }
 
   // Prepare export data
@@ -97,7 +124,7 @@ export default function FirstAidArchiveTable() {
             <Input
               placeholder="Search first aid archive..."
               className="pl-10 bg-white w-full"
-              value={searchQuery}
+              value={searchInput}
               onChange={handleSearchChange}
             />
           </div>
@@ -112,7 +139,7 @@ export default function FirstAidArchiveTable() {
               type="number"
               className="w-14 h-6"
               value={pageSize}
-              onChange={handlePageSizeChange}
+              onChange={handlePageSizeInputChange}
               min="1"
             />
             <p className="text-xs sm:text-sm">Entries</p>

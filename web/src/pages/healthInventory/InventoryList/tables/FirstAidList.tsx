@@ -1,8 +1,10 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { Search, Plus } from "lucide-react";
+import { useSearchParams } from "react-router";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select";
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { ConfirmationDialog } from "@/components/ui/confirmationLayout/confirmModal";
 import { useFirstAid } from "../queries/firstAid/fetch-queries";
@@ -11,27 +13,23 @@ import { FirstAidColumns, FirstAidRecords } from "./columns/FirstAidCol";
 import { FirstAidModal } from "../Modal/FirstAidModal";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 import { ExportDropdown } from "@/pages/healthServices/reports/export/export-dropdown";
+import { useDebounce } from "@/hooks/use-debounce";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function FirstAidList() {
+  // ------------- STATE INITIALIZATION ----------------
   const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [faToDelete, setFaToDelete] = useState<string | null>(null);
   const [showFirstAidModal, setShowFirstAidModal] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [selectedFirstAid, setSelectedFirstAid] = useState<FirstAidRecords | null>(null);
 
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchQuery(searchInput);
-      setCurrentPage(1);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchInput]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const debouncedSearchQuery = useDebounce(searchInput, 300);
+  const debouncedPageSize = useDebounce(pageSize, 100);
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
   const columns = FirstAidColumns({
     onEdit: (firstAid: FirstAidRecords) => {
@@ -45,18 +43,34 @@ export default function FirstAidList() {
     }
   });
 
-  const { data: firstAidData, isLoading: isLoadingFirstAid, error } = useFirstAid(currentPage, pageSize, searchQuery.trim() ? searchQuery.trim() : undefined);
-
-  // Debug: Log API response
-  useEffect(() => {
-    
-  }, [firstAidData, error]);
+  const { data: firstAidData, isLoading: isLoadingFirstAid } = useFirstAid(
+    currentPage,
+    debouncedPageSize,
+    debouncedSearchQuery.trim() ? debouncedSearchQuery.trim() : undefined
+  );
 
   const deleteFirstAidMutation = useDeleteFirstAid();
 
-  const formatFirstAidData = useCallback((): FirstAidRecords[] => {
-    
+  // ------------- SIDE EFFECTS ----------------
+  // Track if this is the initial mount
+  const isInitialMount = React.useRef(true);
 
+  // Save page state to sessionStorage for this tab
+  React.useEffect(() => {
+    sessionStorage.setItem("page_firstaid", String(currentPage));
+  }, [currentPage]);
+
+  // Reset to page 1 when search changes (but not on initial mount)
+  React.useEffect(() => {
+    if(isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if(debouncedSearchQuery === "") return;
+    handlePageChange(1);
+  }, [debouncedSearchQuery]);
+
+  const formatFirstAidData = useCallback((): FirstAidRecords[] => {
     // Handle different response formats
     let firstAidResults = [];
 
@@ -160,93 +174,105 @@ export default function FirstAidList() {
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize);
-    setCurrentPage(1);
+    handlePageChange(1);
   };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setSearchParams({ page: String(page) });
   };
 
   return (
-    <div className="relative">
-      <div className="flex justify-between items-center mb-4">
-        <div className="w-full flex gap-2 mr-2">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-black" size={17} />
-            <Input 
-              placeholder="Search first aid name..." 
-              className="pl-10 bg-white w-full" 
-              value={searchInput} 
-              onChange={(e) => setSearchInput(e.target.value)} 
+    <div className="space-y-6">
+      {/* Search and Controls */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex-1 w-full sm:max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search first aid name..."
+              className="pl-10 bg-gray-50 border-gray-200 focus:bg-white transition-colors w-full"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
         </div>
-        <Button onClick={handleAddNew}>
-          <div className="flex justify-center items-center gap-2 px-2">
-            <Plus size={15} /> New
-          </div>
-        </Button>
+
+        <div className="flex gap-2 w-full sm:w-auto">
+          <ExportDropdown
+            onExportCSV={handleExportCSV}
+            onExportExcel={handleExportExcel}
+            onExportPDF={handleExportPDF}
+            className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200"
+          />
+          <Button onClick={handleAddNew} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            New First Aid
+          </Button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-md">
-        <div className="flex justify-between p-3">
-          <div className="flex items-center gap-2">
-            <p className="text-xs sm:text-sm">Show</p>
-            <Input
-              type="number"
-              className="w-14 h-6"
-              value={pageSize}
-              onChange={(e) => {
-                const value = +e.target.value;
-                handlePageSizeChange(value >= 1 && value <= 50 ? value : value > 50 ? 50 : 1);
-              }}
-              min="1"
-              max="50"
-            />
-            <p className="text-xs sm:text-sm">Entries</p>
+      {/* Table Container */}
+      <div className="border rounded-lg bg-white overflow-hidden">
+        {/* Table Controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 border-b">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Show</span>
+            <Select value={pageSize.toString()} onValueChange={(value) => handlePageSizeChange(Number.parseInt(value))}>
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+            <span>entries</span>
           </div>
-
-          <div >
-          <ExportDropdown 
-            onExportCSV={handleExportCSV} 
-            onExportExcel={handleExportExcel} 
-            onExportPDF={handleExportPDF} 
-            className="border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-200 " 
-          />
-          </div>
-         
         </div>
 
-        <div className="bg-white w-full overflow-x-auto">
-          {isLoadingFirstAid ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading first aid items...</span>
-            </div>
-          ) : error ? (
-            <div className="w-full h-[100px] flex text-red-500 items-center justify-center">
-              <span className="ml-2">Error loading first aid items</span>
-            </div>
-          ) : displayData.length === 0 ? (
-            <div className="w-full h-[100px] flex text-gray-500 items-center justify-center">
-              <span className="ml-2">No first aid items found</span>
-            </div>
-          ) : (
-            <DataTable columns={columns} data={displayData} />
-          )}
-        </div>
+        {/* Loading State */}
+        {isLoadingFirstAid && (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+            <span className="ml-2 text-gray-600">Loading first aid items...</span>
+          </div>
+        )}
 
-        {displayData.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center p-3 gap-3">
-            <p className="text-xs sm:text-sm text-darkGray">
-              Showing {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, paginationInfo.totalCount)} of {paginationInfo.totalCount} rows
+        {/* Empty State */}
+        {!isLoadingFirstAid && displayData.length === 0 && (
+          <div className="text-center py-12 px-4">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchInput ? "No first aid items found" : "No first aid items yet"}
+            </h3>
+            <p className="text-gray-500 mb-4">
+              {searchInput ? `No first aid items match "${searchInput}". Try adjusting your search.` : "Get started by adding a new first aid item."}
             </p>
+            {!searchInput && (
+              <Button onClick={handleAddNew}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Item
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Data Table */}
+        {!isLoadingFirstAid && displayData.length > 0 && <DataTable columns={columns} data={displayData} />}
+
+        {/* Pagination */}
+        {!isLoadingFirstAid && displayData.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center p-4 border-t rounded-b-lg bg-gray-50">
+            <p className="text-sm text-gray-600 mb-2 sm:mb-0">
+              Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> -{" "}
+              <span className="font-medium">{Math.min(currentPage * pageSize, paginationInfo.totalCount)}</span> of{" "}
+              <span className="font-medium">{paginationInfo.totalCount}</span> items
+            </p>
+
             {paginationInfo.totalPages > 1 && (
-              <PaginationLayout 
-                currentPage={currentPage} 
-                totalPages={paginationInfo.totalPages} 
-                onPageChange={handlePageChange} 
-              />
+              <PaginationLayout currentPage={currentPage} totalPages={paginationInfo.totalPages} onPageChange={handlePageChange} />
             )}
           </div>
         )}

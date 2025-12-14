@@ -51,6 +51,11 @@ export default function CombinedStockTable() {
   // Use backend-provided counts
   const counts = apiResponse?.filter_counts || { out_of_stock: 0, low_stock: 0, near_expiry: 0, expired: 0, total: 0 };
 
+  // Save page state to sessionStorage for this tab
+  useEffect(() => {
+    sessionStorage.setItem("page_antigen_stocks", String(currentPage));
+  }, [currentPage]);
+
   useEffect(() => {
     setSearchParams({ page: "1" });
     // eslint-disable-next-line react-hooks/exhaustive-deps

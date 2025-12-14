@@ -1,6 +1,6 @@
 // MedicineStocks.tsx - Updated version with export functionality
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
@@ -49,6 +49,22 @@ export default function MedicineStocks() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const counts = apiResponse?.filter_counts || { out_of_stock: 0, low_stock: 0, near_expiry: 0, expired: 0, total: 0 };
+
+  const isInitialMount = useRef(true);
+
+  // Save page state to sessionStorage for this tab
+  useEffect(() => {
+    sessionStorage.setItem("page_medicine_stocks", String(currentPage));
+  }, [currentPage]);
+
+  // Reset page to 1 on search/filter change (skip on initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    setSearchParams({ page: "1" });
+  }, [searchQuery, stockFilter, setSearchParams]);
 
   useEffect(() => {
     setSearchParams({ page: "1" });

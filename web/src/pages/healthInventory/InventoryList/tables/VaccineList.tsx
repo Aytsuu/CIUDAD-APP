@@ -37,6 +37,11 @@ export default function VaccineList() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  // Save page state to sessionStorage for this sub-tab
+  useEffect(() => {
+    sessionStorage.setItem("page_vaccine", String(currentPage));
+  }, [currentPage]);
+
   // Vaccine query with pagination and search
   const { data: vaccineData, isLoading: isLoadingVaccines } = useAntigen(currentPage, pageSize, searchQuery.trim() ? searchQuery.trim() : undefined);
 

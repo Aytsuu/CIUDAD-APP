@@ -26,11 +26,22 @@ export default function ArchiveMainInventoryStocks() {
 
   const [selectedView, setSelectedView] = useState<ArchiveInventoryView>(getCurrentTabFromPath);
 
-  // Update URL when tab changes
+  // Update URL when tab changes, preserving the tab-specific page parameter
   useEffect(() => {
     const currentTab = ArchiveTabConfig.find(tab => tab.id === selectedView);
     if (currentTab) {
-      navigate(currentTab.path, { replace: true });
+      const searchParams = new URLSearchParams(location.search);
+      // Remove the old page parameter and let each tab manage its own
+      searchParams.delete("page");
+      
+      // Get the saved page for this tab from sessionStorage
+      const savedPage = sessionStorage.getItem(`page_${selectedView}_archive`);
+      if (savedPage && savedPage !== "1") {
+        searchParams.set("page", savedPage);
+      }
+      
+      const queryString = searchParams.toString();
+      navigate(`${currentTab.path}${queryString ? `?${queryString}` : ""}`, { replace: false });
     }
     localStorage.setItem("archiveInventoryView", selectedView);
   }, [selectedView, navigate]);
