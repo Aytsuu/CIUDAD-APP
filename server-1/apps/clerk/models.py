@@ -69,7 +69,6 @@ class IssuedCertificate(models.Model):
 
     class Meta:
         db_table = 'issued_certificate'
-        managed = False
 
 class BusinessPermitRequest(models.Model):
     bpr_id = models.CharField(primary_key=True)
@@ -91,7 +90,6 @@ class BusinessPermitRequest(models.Model):
 
     class Meta:
         db_table = 'business_permit_request'
-        managed = False
 
 class BusinessPermitFile(models.Model):
     bpf_id = models.BigAutoField(primary_key=True)
