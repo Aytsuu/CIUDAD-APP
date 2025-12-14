@@ -14,11 +14,7 @@ import Announcements from "@/pages/landing/Announcements";
 import MobileApp from "@/pages/landing/MobileApp";
 import React from "react";
 import { Footer } from "@/pages/landing/Footer";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useLandingDetails } from "@/pages/landing/queries/landingFetchQueries";
 import { useUpdateLandingPage } from "@/pages/landing/queries/landingUpdateQueries";
 import { SheetLayout } from "@/components/ui/sheet/sheet-layout";
@@ -48,7 +44,7 @@ export default function LandingLayout() {
     { path: homeRef, title: "Home" },
     { path: aboutRef, title: "Our Barangay" },
     { path: announcementRef, title: "Announcement" },
-    { path: barangayConnectRef, title: "BarangayConnect"},
+    { path: barangayConnectRef, title: "BarangayConnect" },
     { path: mobileAppRef, title: "Mobile App" },
   ];
 
@@ -97,9 +93,7 @@ export default function LandingLayout() {
 
   const handleDownloadApp = async () => {
     try {
-      const { data } = supabase.storage
-        .from("APK")
-        .getPublicUrl("app-release.apk");
+      const { data } = supabase.storage.from("APK").getPublicUrl("app-release.apk");
 
       const link = document.createElement("a");
       link.href = data.publicUrl;
@@ -144,18 +138,13 @@ export default function LandingLayout() {
           <div className="flex items-center gap-2 sm:gap-3 md:gap-5 text-white/80 text-xs sm:text-sm overflow-hidden">
             <div className="flex items-center gap-1 whitespace-nowrap border-r border-white/30 pr-2 sm:pr-3 md:pr-4">
               <BadgeCheck size={14} className="fill-green-600 flex-shrink-0" />
-              <span className="truncate">
-                Official Website
-              </span>
+              <span className="truncate">Official Website</span>
             </div>
             <div className="flex gap-2 sm:gap-3 flex-shrink-0">
               <FaFacebook
                 className="hover:text-white cursor-pointer"
                 onClick={() => {
-                  window.open(
-                    "https://www.facebook.com/brgysanroqueciudad",
-                    "_black"
-                  );
+                  window.open("https://www.facebook.com/brgysanroqueciudad", "_black");
                 }}
               />
               <Popover>
@@ -168,11 +157,7 @@ export default function LandingLayout() {
               </Popover>
             </div>
           </div>
-          <img
-            src={CebuCitySeal}
-            alt="Cebu city official seal"
-            className="w-[30px] h-[30px]"
-          />
+          <img src={CebuCitySeal} alt="Cebu city official seal" className="w-[30px] h-[30px]" />
         </header>
 
         {/* Main Header */}
@@ -180,15 +165,9 @@ export default function LandingLayout() {
           <div className="flex justify-between items-center">
             <div className="w-full md:w-1/2 lg:w-1/3 h-full flex items-center slope-right p-3 bg-[#1273B8]">
               <div className="w-full flex justify-center items-center gap-3">
-                <img
-                  src={SanRoqueLogo}
-                  alt="San Roque Logo"
-                  className="w-[30px] h-[30px] sm:w-[50px] sm:h-[50px]"
-                />
+                <img src={SanRoqueLogo} alt="San Roque Logo" className="w-[30px] h-[30px] sm:w-[50px] sm:h-[50px]" />
                 <div className="grid text-white">
-                  <Label className="text-xs sm:text-[15px]">
-                    BARANGAY SAN ROQUE (CIUDAD)
-                  </Label>
+                  <Label className="text-xs sm:text-[15px]">BARANGAY SAN ROQUE (CIUDAD)</Label>
                   <Label className="text-xs font-normal sm:text-[15px]">Cebu City</Label>
                 </div>
               </div>
@@ -197,9 +176,7 @@ export default function LandingLayout() {
             <nav className="w-full items-center hidden lg:flex lg:justify-center gap-5">
               {NavItemList.map(({ path, title }) => (
                 <div key={title} onClick={() => scrollTo(path)}>
-                  <Label className="p-[10px] rounded-lg hover:bg-lightBlue cursor-pointer">
-                    {title}
-                  </Label>
+                  <Label className="p-[10px] rounded-lg hover:bg-lightBlue cursor-pointer">{title}</Label>
                 </div>
               ))}
               {user?.staff?.staff_id ? (
@@ -223,22 +200,27 @@ export default function LandingLayout() {
               content={
                 <div className="w-full h-full flex flex-col justify-between">
                   <div className="flex flex-col gap-5">
-                    <Label className="text-sm text-gray-600 font-normal">
-                      Menu
-                    </Label>
+                    <Label className="text-sm text-gray-600 font-normal">Menu</Label>
                     <nav className="w-full flex flex-col gap-8">
                       {NavItemList.map(({ path, title }) => (
                         <div key={title} onClick={() => scrollTo(path)}>
-                          <Label className="rounded-lg cursor-pointer">
-                            {title}
-                          </Label>
+                          <Label className="rounded-lg cursor-pointer">{title}</Label>
                         </div>
                       ))}
                     </nav>
                   </div>
-                  <Button className="h-[45px]" onClick={handleDownloadApp}>
-                    <Download /> Download App
-                  </Button>
+
+                  <div className="w-full flex flex-col justify-center items-center gap-4">
+                    <DialogLayout
+                      trigger={<Button className="bg-blue-600 hover:bg-blue-700 w-full">Sign in</Button>}
+                      className="p-0 m-0 border-0 bg-transparent shadow-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-0 focus:shadow-none max-w-none w-auto h-auto"
+                      mainContent={<SignIn />}
+                    />
+
+                    <Button className="h-[45px] w-full" onClick={handleDownloadApp}>
+                      <Download /> Download App
+                    </Button>
+                  </div>
                 </div>
               }
             />
@@ -247,97 +229,65 @@ export default function LandingLayout() {
       </div>
 
       {/* Floating Edit Button */}
-      {user?.staff?.pos?.toLowerCase() == "admin" &&
-        user?.staff?.staff_type?.toLowerCase() == "barangay staff" && (
-          <SheetLayout
-            contentClassname="sm:max-w-[600px]"
-            onOpenChange={() => {
-              form.reset();
-              setHideEditButton((prev) => !prev);
-            }}
-            trigger={
-              !hideEditButton && (
-                <button className="fixed bottom-8 right-8 z-[10] w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group">
-                  <SquarePen className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                </button>
-              )
-            }
-            content={
-              <div className="p-4 h-screen">
-                <header className="flex justify-between items-center mb-4">
-                  <div>
-                    <Label className="text-xl text-darkBlue1">
-                      Edit Landing Page
-                    </Label>
-                    <p className="text-[15px] text-gray-600">
-                      Configure your landing page content here.
-                    </p>
-                  </div>
-                  {(form.formState.isDirty ||
-                    carousel.length !== landingData?.files.length) && (
-                    <Button
-                      className="mt-6 rounded-full"
-                      type="button"
-                      onClick={update}
-                    >
-                      <Check />
-                      Save
-                    </Button>
-                  )}
-                </header>
-                <Separator className="mb-4" />
-                <div className="overflow-y-auto h-[85%] pr-4 pl-1">
-                  <Form {...form}>
-                    <form>
-                      <LandingEditForm
-                        form={form}
-                        carousel={carousel}
-                        setCarousel={setCarousel}
-                      />
-                    </form>
-                  </Form>
+      {user?.staff?.pos?.toLowerCase() == "admin" && user?.staff?.staff_type?.toLowerCase() == "barangay staff" && (
+        <SheetLayout
+          contentClassname="sm:max-w-[600px]"
+          onOpenChange={() => {
+            form.reset();
+            setHideEditButton((prev) => !prev);
+          }}
+          trigger={
+            !hideEditButton && (
+              <button className="fixed bottom-8 right-8 z-[10] w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group">
+                <SquarePen className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+            )
+          }
+          content={
+            <div className="p-4 h-screen">
+              <header className="flex justify-between items-center mb-4">
+                <div>
+                  <Label className="text-xl text-darkBlue1">Edit Landing Page</Label>
+                  <p className="text-[15px] text-gray-600">Configure your landing page content here.</p>
                 </div>
+                {(form.formState.isDirty || carousel.length !== landingData?.files.length) && (
+                  <Button className="mt-6 rounded-full" type="button" onClick={update}>
+                    <Check />
+                    Save
+                  </Button>
+                )}
+              </header>
+              <Separator className="mb-4" />
+              <div className="overflow-y-auto h-[85%] pr-4 pl-1">
+                <Form {...form}>
+                  <form>
+                    <LandingEditForm form={form} carousel={carousel} setCarousel={setCarousel} />
+                  </form>
+                </Form>
               </div>
-            }
-          />
-        )}
+            </div>
+          }
+        />
+      )}
 
       {/* Scrollable Page Content - Added pt-[120px] to account for fixed headers */}
       <main className="w-full bg-white overflow-hidden">
-        <section
-          ref={homeRef}
-        >
+        <section ref={homeRef}>
           <Home carousel={carousel} />
         </section>
-        <section 
-          ref={aboutRef}
-          className="pt-16"
-        >
+        <section ref={aboutRef} className="pt-16">
           <About data={landingData} />
         </section>
-        <section 
-          ref={announcementRef}
-          className="pt-16"
-        >
+        <section ref={announcementRef} className="pt-16">
           <Announcements />
         </section>
-        <section
-          ref={barangayConnectRef}
-          className="pt-16"
-        >
-          <Featured/>
+        <section ref={barangayConnectRef} className="pt-16">
+          <Featured />
         </section>
         <section ref={mobileAppRef}>
           <MobileApp />
         </section>
-        <Footer
-          data={landingData}
-          homeRef={homeRef}
-          aboutRef={aboutRef}
-          mobileAppRef={mobileAppRef}
-          announcementRef={announcementRef}
-          scrollTo={scrollTo}
-        />
+        <Footer data={landingData} homeRef={homeRef} aboutRef={aboutRef} mobileAppRef={mobileAppRef} announcementRef={announcementRef} scrollTo={scrollTo} />
       </main>
     </div>
   );

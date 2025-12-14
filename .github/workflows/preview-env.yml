@@ -1,0 +1,134 @@
+name: Setup Supabase Preview
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  server1-dev-db:
+    runs-on: ubuntu-latest
+    defaults: 
+      run:
+        working-directory: ./server-1
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Get Branch DB URL
+        id: db_url
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          BRANCH_NAME=${{ github.head_ref }}
+          echo "Target Branch: $BRANCH_NAME"
+
+          # --- Create or Get Branch ---
+          set +e 
+          echo "Creating branch (or confirming it exists)..."
+          CREATE_OUTPUT=$(supabase branches create "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json 2>&1)
+          CREATE_EXIT_CODE=$?
+          set -e
+
+          if [ $CREATE_EXIT_CODE -eq 0 ]; then
+            echo "✅ Branch created successfully"
+          elif echo "$CREATE_OUTPUT" | grep -q "409"; then
+            echo "ℹ️  Branch already exists, continuing..."
+          else
+            echo "❌ Unexpected error creating branch:"
+            echo "$CREATE_OUTPUT"
+            exit 1
+          fi
+
+          # --- Poll for Ready State ---
+          echo "Waiting for branch to be ready..."
+          MAX_ATTEMPTS=30  # 10 minutes (60 * 10s)
+          ATTEMPT=0
+          
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            
+            # Get branch details
+            BRANCH_INFO=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json 2>/dev/null || echo '{}')
+            
+            # Check if we have connection URLs (indicates branch is ready)
+            POSTGRES_URL=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL // "null"')
+            POSTGRES_URL_NON_POOLING=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL_NON_POOLING // "null"')
+            
+            # Branch is ready when we have connection URLs
+            if [[ "$POSTGRES_URL" != "null" ]] && [[ -n "$POSTGRES_URL" ]] && [[ "$POSTGRES_URL" != "***"* ]]; then
+              echo "✅ Branch is ready!"
+              break
+            fi
+            
+            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+              echo "❌ Timeout: Branch did not become ready in 5 minutes"
+              echo "Full info: $BRANCH_INFO"
+              exit 1
+            fi
+            
+            sleep 10
+          done
+
+          # --- Extract Connection Details ---
+          # Use the pooler URL (better for CI/CD)
+          FULL_POOLER_URL=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL')
+          
+          # Extract components from the connection URL
+          # Format: postgresql://user:pass@host:port/dbname
+          if [[ "$FULL_POOLER_URL" =~ postgresql://([^:]+):([^@]+)@([^:]+):([^/]+)/([^?]+) ]]; then
+            DB_USER="${BASH_REMATCH[1]}"
+            DB_PASS="${BASH_REMATCH[2]}"
+            DB_HOST="${BASH_REMATCH[3]}"
+            DB_PORT="${BASH_REMATCH[4]}"
+            DB_NAME="${BASH_REMATCH[5]}"
+
+            echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
+            echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
+            echo "db_port=$DB_PORT" >> $GITHUB_OUTPUT
+            echo "db_name=$DB_NAME" >> $GITHUB_OUTPUT
+            echo "db_password=$DB_PASS" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Failed to parse connection URL"
+            echo "URL format: $FULL_POOLER_URL"
+            exit 1
+          fi
+
+      - name: Run Migrations
+        env:
+          DB_HOST: ${{ steps.db_url.outputs.db_host }}
+          DB_USER: ${{ steps.db_url.outputs.db_user }}
+          DB_PORT: ${{ steps.db_url.outputs.db_port }}
+          DB_NAME: ${{ steps.db_url.outputs.db_name }}
+          DB_PASSWORD: ${{ steps.db_url.outputs.db_password }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+        run: |
+          # Apply Schema (Django)
+          python manage.py migrate
+
+          if [ -f "load_seed_data.py" ]; then
+            python load_seed_data.py
+          else
+            echo "Seed script not found. Skipping..."
+          fi
+

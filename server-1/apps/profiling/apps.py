@@ -13,6 +13,14 @@ class ProfilingConfig(AppConfig):
     def ready(self):
         # Start scheduler only when Django is fully loaded
         import apps.profiling.signals
+        import sys
+
+        # Check if we're running a management command that shouldn't trigger scheduler
+        if 'manage.py' in sys.argv[0]:
+            # Get the management command being run
+            if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
+                return
+            
         if settings.SCHEDULER_AUTOSTART: 
             self.start_scheduler()
             self.start_tesseract()
