@@ -1,0 +1,542 @@
+[
+{
+  "model": "profiling.personal",
+  "pk": 30,
+  "fields": {
+    "per_lname": "BULAY",
+    "per_fname": "CLYNT",
+    "per_mname": null,
+    "per_suffix": null,
+    "per_dob": "2003-04-02",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09123645312",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 50,
+  "fields": {
+    "per_lname": "QUINIO",
+    "per_fname": "STAVE",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2003-02-27",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09789456123",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 12,
+  "fields": {
+    "per_lname": "VIRTUCIO",
+    "per_fname": "SEF",
+    "per_mname": "ABE",
+    "per_suffix": null,
+    "per_dob": "2003-11-04",
+    "per_sex": "FEMALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09350318269",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 52,
+  "fields": {
+    "per_lname": "PADILLA",
+    "per_fname": "IAN",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2003-11-14",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09169008742",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 11,
+  "fields": {
+    "per_lname": "ENTERA",
+    "per_fname": "ZION",
+    "per_mname": "ZAFRA",
+    "per_suffix": "",
+    "per_dob": "2024-09-21",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09012345673",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 13,
+  "fields": {
+    "per_lname": "CABALLES",
+    "per_fname": "KATRINA",
+    "per_mname": null,
+    "per_suffix": null,
+    "per_dob": "2002-04-01",
+    "per_sex": "FEMALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09167674863",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 6,
+  "fields": {
+    "per_lname": "WARAIN",
+    "per_fname": "SEM",
+    "per_mname": "SUN",
+    "per_suffix": null,
+    "per_dob": "2002-02-05",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09123456678",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 7,
+  "fields": {
+    "per_lname": "GARCIA",
+    "per_fname": "JARLENE",
+    "per_mname": null,
+    "per_suffix": null,
+    "per_dob": "2023-02-03",
+    "per_sex": "FEMALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": null,
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09012345679",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 8,
+  "fields": {
+    "per_lname": "ENTERA",
+    "per_fname": "WELZON",
+    "per_mname": null,
+    "per_suffix": null,
+    "per_dob": "2001-01-02",
+    "per_sex": "MALE",
+    "per_status": "MARRIED",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09190318261",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 9,
+  "fields": {
+    "per_lname": "MIGALLOS",
+    "per_fname": "SCOTTY",
+    "per_mname": null,
+    "per_suffix": null,
+    "per_dob": "2020-02-08",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": null,
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09771234663",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 14,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "PAOLO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2004-09-01",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09262395355",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 15,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "PAOLO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2004-09-01",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 16,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "NOTO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2021-09-30",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 17,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "PAOLO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2004-09-01",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 18,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "MOTO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2021-09-17",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 19,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "PAOLO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2004-09-01",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 53,
+  "fields": {
+    "per_lname": "EFHAN",
+    "per_fname": "MARC",
+    "per_mname": "OUANO",
+    "per_suffix": "",
+    "per_dob": "2003-12-06",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09056273385",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 20,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "MOTO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2021-09-17",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 21,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "PAOLO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2004-09-01",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 22,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "MOTO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2021-09-17",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 23,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "PAOLO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2004-09-01",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 24,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "MOTO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2021-09-17",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 25,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "PAOLO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2004-09-01",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 26,
+  "fields": {
+    "per_lname": "ARANETA",
+    "per_fname": "MOTO",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2021-09-17",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09264080945",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 55,
+  "fields": {
+    "per_lname": "BAGIUO",
+    "per_fname": "JOB",
+    "per_mname": "ENICO",
+    "per_suffix": "",
+    "per_dob": "2007-10-16",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "BORN AGAIN",
+    "per_contact": "09231554897",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 4,
+  "fields": {
+    "per_lname": "GRAVA",
+    "per_fname": "KURT KEN",
+    "per_mname": null,
+    "per_suffix": null,
+    "per_dob": "1945-11-13",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09393645186",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 27,
+  "fields": {
+    "per_lname": "BARULO",
+    "per_fname": "TRISHA",
+    "per_mname": null,
+    "per_suffix": null,
+    "per_dob": "2003-02-03",
+    "per_sex": "FEMALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09169008743",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 57,
+  "fields": {
+    "per_lname": "YBANEZ",
+    "per_fname": "JOHN RIC",
+    "per_mname": "",
+    "per_suffix": "",
+    "per_dob": "2005-10-05",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09174903887",
+    "per_disability": "",
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 28,
+  "fields": {
+    "per_lname": "NOGALO",
+    "per_fname": "NATALIE",
+    "per_mname": null,
+    "per_suffix": null,
+    "per_dob": "2003-02-03",
+    "per_sex": "FEMALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "COLLEGE LEVEL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09169008742",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+},
+{
+  "model": "profiling.personal",
+  "pk": 59,
+  "fields": {
+    "per_lname": "SALES",
+    "per_fname": "MARKCEL",
+    "per_mname": "SALA",
+    "per_suffix": null,
+    "per_dob": "1987-04-13",
+    "per_sex": "MALE",
+    "per_status": "SINGLE",
+    "per_edAttainment": "HIGH SCHOOL",
+    "per_religion": "ROMAN CATHOLIC",
+    "per_contact": "09188556214",
+    "per_disability": null,
+    "per_is_deceased": false
+  }
+}
+]

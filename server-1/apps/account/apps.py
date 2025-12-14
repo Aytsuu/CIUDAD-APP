@@ -11,6 +11,12 @@ class AccountConfig(AppConfig):
     name = 'apps.account'
 
     def ready(self):
+        import sys
+
+        if 'manage.py' in sys.argv[0]:
+            if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
+                return
+
         if settings.SCHEDULER_AUTOSTART: 
             self.start_scheduler()
 

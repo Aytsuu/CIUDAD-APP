@@ -1,0 +1,302 @@
+[
+{
+  "model": "profiling.voter",
+  "pk": 1,
+  "fields": {
+    "voter_name": "BRITANIA, JOVELYN CABAÑERO",
+    "voter_address": "ARELLANO BOULEVARD",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 2,
+  "fields": {
+    "voter_name": "BUANGHUG, TERESITA ROSALES",
+    "voter_address": "ARELLANO",
+    "voter_category": "C",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 3,
+  "fields": {
+    "voter_name": "BUAYA, HANZEL ROSE APELENIA",
+    "voter_address": "114 J LOGARTA STREET",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 4,
+  "fields": {
+    "voter_name": "BUAYA, MENANDRO GOCOTANO",
+    "voter_address": "114-J LOGARTA ST SITIO PANTING",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 5,
+  "fields": {
+    "voter_name": "BUAYA, NIKKA APELINIA",
+    "voter_address": "114-J LOGARTA STREET",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 6,
+  "fields": {
+    "voter_name": "BUENAFLOR, CHRISTIAN ABELLA",
+    "voter_address": "ARELLANO BLVD.  SAN ROQUE",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 7,
+  "fields": {
+    "voter_name": "BUENAFLOR, MAUREEN TURA",
+    "voter_address": "ARELLANO BLVD. SAN ROQUE",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 8,
+  "fields": {
+    "voter_name": "CABILAN, EVANGELINE LAUREANO",
+    "voter_address": "ARELLANO BLVD. SAN ROQUE",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 9,
+  "fields": {
+    "voter_name": "CADIVIDA, ARTEMIO SAGANG",
+    "voter_address": "F LOPEZ COMPD QUEZON BLVD",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 10,
+  "fields": {
+    "voter_name": "CASINILLO, FE SALES",
+    "voter_address": "ARELLANO BLVD. SAN ROQUE",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 11,
+  "fields": {
+    "voter_name": "CASINILLO, ROMULO TAMPUS",
+    "voter_address": "ARELLANO ST.",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 12,
+  "fields": {
+    "voter_name": "CASTAÑEDA, LORENCIA SUMALPONG",
+    "voter_address": "126 LOGARTA",
+    "voter_category": "C",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 13,
+  "fields": {
+    "voter_name": "CATADA, COLLEEN BUAYA",
+    "voter_address": "74 B. LOGARTA STREET",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 14,
+  "fields": {
+    "voter_name": "CATAGCATAG, CELSO COLLAMAR",
+    "voter_address": "ARELLANO BLVD.",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 15,
+  "fields": {
+    "voter_name": "CATAGCATAG, EMMA COLLAMAR",
+    "voter_address": "ARELLANO BLVD.",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 16,
+  "fields": {
+    "voter_name": "CEREÑO, JUSTIN LABASTIDA",
+    "voter_address": "ARELLANO BLVD. NAZARENE",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 17,
+  "fields": {
+    "voter_name": "CERO, JASCHA DANGATE",
+    "voter_address": "124 E LOGARTA STREET",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 18,
+  "fields": {
+    "voter_name": "CHARCOS, RAMIL BANDIVAS",
+    "voter_address": "ARELLANO BLVD. (BACK OF BARANGAY HALL)",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 19,
+  "fields": {
+    "voter_name": "CINCO, ENGRACIA URGEL",
+    "voter_address": "PIER 2 SAN ROQUE STREET",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 20,
+  "fields": {
+    "voter_name": "CORTEZ, ROMMEL POSTRERO",
+    "voter_address": "ARELLANO BLVD. SAN ROQUE",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 21,
+  "fields": {
+    "voter_name": "DABALOS, JINKY CORTEZ",
+    "voter_address": "ARELLANO BLVD.",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 22,
+  "fields": {
+    "voter_name": "DAITOL, JASMINE AMILOSEN",
+    "voter_address": "ARELLANO BLVD",
+    "voter_category": "BC",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 23,
+  "fields": {
+    "voter_name": "DECHIMO, JOHN PAUL GALARCE",
+    "voter_address": "LOGARTA",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 24,
+  "fields": {
+    "voter_name": "DEL MAR, SOFIA QUEEN STA. MARIA",
+    "voter_address": "74-B LOGARTA ST",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 25,
+  "fields": {
+    "voter_name": "DELOS REYES, ARMANDO HOGALBOT",
+    "voter_address": "ARELLANO BLVD",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 26,
+  "fields": {
+    "voter_name": "DERDER, VIRGEL GOMIA",
+    "voter_address": "ARELLANO BLVD. SAN ROQUE",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 27,
+  "fields": {
+    "voter_name": "DESAMPARADO, ARTURO GERBABUENA JR.",
+    "voter_address": "#23 BURGOS ST.",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 28,
+  "fields": {
+    "voter_name": "DIAZ, JOHANNAH MABUNAY",
+    "voter_address": "R.PALMA",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 29,
+  "fields": {
+    "voter_name": "DIAZ, JOSANDRO _",
+    "voter_address": "R.PALMA STREET",
+    "voter_category": "*",
+    "voter_precinct": "0927A"
+  }
+},
+{
+  "model": "profiling.voter",
+  "pk": 30,
+  "fields": {
+    "voter_name": "DIOLA, KIRK CHAN",
+    "voter_address": "12 R.PALMA ST.",
+    "voter_category": null,
+    "voter_precinct": "0927A"
+  }
+}
+]

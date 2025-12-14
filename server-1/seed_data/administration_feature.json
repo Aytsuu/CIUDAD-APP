@@ -1,0 +1,162 @@
+[
+{
+  "model": "administration.feature",
+  "pk": 1,
+  "fields": {
+    "feat_name": "PROFILING",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 2,
+  "fields": {
+    "feat_name": "REPORT",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 3,
+  "fields": {
+    "feat_name": "COMPLAINT",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 4,
+  "fields": {
+    "feat_name": "GAD",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 5,
+  "fields": {
+    "feat_name": "FINANCE",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 6,
+  "fields": {
+    "feat_name": "SUMMON REMARKS",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 7,
+  "fields": {
+    "feat_name": "COUNCIL",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 8,
+  "fields": {
+    "feat_name": "CERTIFICATE & CLEARANCES",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 9,
+  "fields": {
+    "feat_name": "DONATION",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 10,
+  "fields": {
+    "feat_name": "WASTE",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 11,
+  "fields": {
+    "feat_name": "COUNCIL MEDIATION",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 12,
+  "fields": {
+    "feat_name": "CONCILIATION PROCEEDINGS",
+    "feat_category": "BARANGAY FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 13,
+  "fields": {
+    "feat_name": "PATIENT RECORDS",
+    "feat_category": "HEALTH FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 14,
+  "fields": {
+    "feat_name": "REFERRED PATIENTS",
+    "feat_category": "HEALTH FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 15,
+  "fields": {
+    "feat_name": "FORWARDED RECORDS",
+    "feat_category": "HEALTH FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 16,
+  "fields": {
+    "feat_name": "INVENTORY",
+    "feat_category": "HEALTH FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 17,
+  "fields": {
+    "feat_name": "REPORTS",
+    "feat_category": "HEALTH FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 18,
+  "fields": {
+    "feat_name": "SERVICE SCHEDULER",
+    "feat_category": "HEALTH FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 19,
+  "fields": {
+    "feat_name": "FOLLOW-UP VISITS",
+    "feat_category": "HEALTH FEATURE"
+  }
+},
+{
+  "model": "administration.feature",
+  "pk": 20,
+  "fields": {
+    "feat_name": "SERVICES ",
+    "feat_category": "HEALTH FEATURE"
+  }
+}
+]
