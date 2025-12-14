@@ -67,7 +67,7 @@ def load_seed_data():
         logger.info("ℹ️  Database already seeded (skipping)")
         return
     
-    seed_dir = 'seed_data'
+    seed_dir = Path(__file__).parent / 'seed_data'
     
     if not seed_dir.exists():
         logger.error(f"⚠️  Seed data directory not found: {seed_dir}")
@@ -79,8 +79,8 @@ def load_seed_data():
         'administration_feature.json',
         'administration_position.json',
         'administration_staff.json',
-        'profiling_voter.json'
-        'profiling_sitio.json'
+        'profiling_voter.json',
+        'profiling_sitio.json',
         'profiling_address.json',
         'profiling_personaladdress.json',
         'profiling_personal.json',
