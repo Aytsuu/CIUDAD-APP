@@ -194,7 +194,7 @@ class RequestRegistrationComposition(AbstractModels):
     rrc_fam_role = models.CharField(max_length=50)
     req = models.ForeignKey(RequestRegistration, on_delete=models.CASCADE, related_name="request_composition")
     per = models.ForeignKey(Personal, on_delete=models.CASCADE)
-    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE, null=True)
+    acc = models.ForeignKey('account.Account', on_delete=models.CASCADE, deferrable=models.Deferrable.DEFERRED, null=True)
 
     class Meta:
         db_table = 'request_registration_composition'
