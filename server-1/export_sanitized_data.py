@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Export sanitized data from production database.
 Run on production or with access to production DB:
@@ -8,8 +7,11 @@ import os
 import json
 import sys
 import shutil
+import logging
 from datetime import datetime
 from faker import Faker
+
+logger = logging.getLogger(__name__)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 import django
@@ -95,7 +97,7 @@ def export_model(model_name):
         app_label, model_class = model_name.split('.')
         Model = apps.get_model(app_label, model_class)
     except (ValueError, LookupError):
-        print(f"⚠️  Could not find model: {model_name}")
+        logger.error(f"⚠️  Could not find model: {model_name}")
         return None
     
     config = EXPORT_CONFIG.get(model_name, {})
@@ -110,7 +112,7 @@ def export_model(model_name):
     count = len(data)
     
     if count == 0:
-        print(f"ℹ️  {model_name}: No data to export")
+        logger.info(f"ℹ️  {model_name}: No data to export")
         return None
     
     # Sanitize
@@ -119,14 +121,11 @@ def export_model(model_name):
     # Serialize to JSON
     json_data = serializers.serialize('json', data, indent=2)
     
-    print(f"✅ {model_name}: Exported {count} records")
+    logger.info(f"✅ {model_name}: Exported {count} records")
     return json_data
 
 def main():
-    print("="*70)
-    print("Exporting Sanitized Data from Production")
-    print("="*70)
-    print()
+    """Exporting Sanitized Data from Production"""
     
     output_dir = 'seed_data'
     
@@ -154,22 +153,14 @@ def main():
     with open(combined_file, 'w') as f:
         json.dump(all_data, f, indent=2)
     
-    print()
-    print("="*70)
-    print(f"✅ Data exported to {output_dir}/")
-    print("="*70)
-    print()
-    print("Next steps:")
-    print("1. Review the exported files to ensure data is properly sanitized")
-    print("2. Commit to repository: git add seed_data/")
-    print("3. The data will be automatically loaded in preview branches")
+    logger.info(f"✅ Data exported to {output_dir}/")
 
 if __name__ == '__main__':
     # Check for Faker
     try:
         from faker import Faker
     except ImportError:
-        print("❌ Faker not installed. Install with: pip install faker")
+        logger.error("❌ Faker not installed. Install with: pip install faker")
         sys.exit(1)
     
     main()

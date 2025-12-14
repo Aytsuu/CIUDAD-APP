@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Load sanitized seed data into database.
 Run in preview environments after migrations.
@@ -6,7 +5,10 @@ Run in preview environments after migrations.
 import os
 import sys
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 import django
@@ -38,7 +40,7 @@ def mark_as_seeded():
 def load_json_fixture(filepath):
     """Load a JSON fixture file"""
     if not filepath.exists():
-        print(f"⚠️  File not found: {filepath}")
+        logger.error(f"⚠️  File not found: {filepath}")
         return 0
     
     with open(filepath, 'r') as f:
@@ -54,28 +56,22 @@ def load_json_fixture(filepath):
         
         return count
     except Exception as e:
-        print(f"❌ Error loading {filepath.name}: {e}")
+        logger.error(f"❌ Error loading {filepath.name}: {e}")
         return 0
 
 def load_seed_data():
     """Load all seed data files"""
-    print("="*70)
-    print("Loading Seed Data")
-    print("="*70)
-    print()
     
     # Check if already seeded
     if check_if_seeded():
-        print("ℹ️  Database already seeded (skipping)")
-        print("To re-seed, remove the marker:")
-        print("  DELETE FROM django_migrations WHERE app = '_seed_data_marker';")
+        logger.info("ℹ️  Database already seeded (skipping)")
         return
     
     seed_dir = Path(__file__).parent / 'seed_data'
     
     if not seed_dir.exists():
-        print(f"⚠️  Seed data directory not found: {seed_dir}")
-        print("Run export_sanitized_data.py first to create seed data")
+        logger.error(f"⚠️  Seed data directory not found: {seed_dir}")
+        logger.error("Run export_sanitized_data.py first to create seed data")
         return
     
     # Load files in dependency order
@@ -96,39 +92,33 @@ def load_seed_data():
     
     total_loaded = 0
     
+    # Load seed
     with transaction.atomic():
         for filename in load_order:
             filepath = seed_dir / filename
             
             if filepath.exists():
-                print(f"📦 Loading: {filename}")
                 count = load_json_fixture(filepath)
-                print(f"   ✅ Loaded {count} records")
                 total_loaded += count
             else:
-                print(f"   ⚠️  Not found: {filename}")
+                logger.error(f"   ⚠️  Not found: {filename}")
         
         # Load any remaining files not in load_order
         for filepath in seed_dir.glob('*.json'):
             if filepath.name not in load_order and filepath.name != 'all_data.json':
-                print(f"📦 Loading: {filepath.name}")
                 count = load_json_fixture(filepath)
-                print(f"   ✅ Loaded {count} records")
                 total_loaded += count
         
         # Mark as seeded
         mark_as_seeded()
-    
-    print()
-    print("="*70)
-    print(f"✅ Loaded {total_loaded} total records")
-    print("="*70)
+
+    logger.info(f"✅ Loaded {total_loaded} total records")
 
 if __name__ == '__main__':
     try:
         load_seed_data()
     except Exception as e:
-        print(f"❌ Error: {e}")
+        logger.error(f"❌ Error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
