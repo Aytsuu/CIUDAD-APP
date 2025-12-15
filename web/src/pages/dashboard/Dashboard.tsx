@@ -53,7 +53,7 @@ export default function Dashboard() {
     // const basicSections = ["ADMINISTRATION", "PROFILING", "REPORT", "CERTIFICATE & CLEARANCES", "DONATION", "WASTE", "CONCILIATION PROCEEDINGS", "COUNCIL MEDIATION", "SUMMON REMARKS"];
     // if (basicSections.includes(feature)) {
     //   return true;
-    // }
+    // } 
     
     const hasAccess =
       user?.staff?.assignments?.includes(feature) ||
