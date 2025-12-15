@@ -5,11 +5,11 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  server1-dev-db:
+  server2-dev-db:
     runs-on: ubuntu-latest
-    defaults: 
+    defaults:
       run:
-        working-directory: ./server-1
+        working-directory: ./server-2
     steps:
       - uses: actions/checkout@v3
 
@@ -31,7 +31,7 @@ jobs:
         id: db_url
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID2 }}
         run: |
           BRANCH_NAME=${{ github.head_ref }}
           echo "Target Branch: $BRANCH_NAME"
@@ -114,14 +114,12 @@ jobs:
           DB_PORT: ${{ steps.db_url.outputs.db_port }}
           DB_NAME: ${{ steps.db_url.outputs.db_name }}
           DB_PASSWORD: ${{ steps.db_url.outputs.db_password }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
-          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
-          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
-          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY2 }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET2 }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY2 }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
         run: |
           # Apply Schema (Django)
           python manage.py migrate
