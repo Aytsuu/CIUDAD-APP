@@ -10,7 +10,6 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        # ('healthProfiling', '0001_initial'),
     ]
 
     operations = [
@@ -47,7 +46,6 @@ class Migration(migrations.Migration):
                 ('staff_type', models.CharField(default='HEALTH STAFF', max_length=20)),
                 ('manager', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='subordinates', to='administration.staff')),
                 ('pos', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='staffs', to='administration.position')),
-                ('rp', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='staff_assignments', to='healthProfiling.residentprofile')),
             ],
             options={
                 'db_table': 'staff',
