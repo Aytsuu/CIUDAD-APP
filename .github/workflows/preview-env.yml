@@ -158,7 +158,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Get Branch DB URL
-        id: db_url
+        id: db_url2
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID2 }}
@@ -239,11 +239,11 @@ jobs:
 
       - name: Run Migrations
         env:
-          DB_HOST: ${{ steps.db_url.outputs.db_host }}
-          DB_USER: ${{ steps.db_url.outputs.db_user }}
-          DB_PORT: ${{ steps.db_url.outputs.db_port }}
-          DB_NAME: ${{ steps.db_url.outputs.db_name }}
-          DB_PASSWORD: ${{ steps.db_url.outputs.db_password }}
+          DB_HOST: ${{ steps.db_url2.outputs.db_host }}
+          DB_USER: ${{ steps.db_url2.outputs.db_user }}
+          DB_PORT: ${{ steps.db_url2.outputs.db_port }}
+          DB_NAME: ${{ steps.db_url2.outputs.db_name }}
+          DB_PASSWORD: ${{ steps.db_url2.outputs.db_password }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY2 }}
