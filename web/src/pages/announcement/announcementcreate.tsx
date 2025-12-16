@@ -5,6 +5,7 @@ import { Form } from "@/components/ui/form/form";
 import { FormInput } from "@/components/ui/form/form-input";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { FormDateTimeInput } from "@/components/ui/form/form-date-time-input";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
 import AnnouncementSchema from "@/form-schema/Announcement/announcementschema";
 import {
   usePostAnnouncement,
@@ -532,7 +533,7 @@ const AnnouncementCreate = () => {
                 )}
 
                 {/* Submit Button */}
-                <div className="flex justify-end pt-4 pb-8">
+                {/* <div className="flex justify-end pt-4 pb-8">
                   {!isSubmitting ? (
                     <Button type="button"
                     onClick={() => {
@@ -541,6 +542,29 @@ const AnnouncementCreate = () => {
                   >
                     <Send className="h-4 w-4 mr-2" /> {data ? "Update Announcement" : "Create Announcement"}
                   </Button>
+                  ) : (
+                    <LoadButton>
+                      {data ? "Saving..." : "Creating..."}
+                    </LoadButton>
+                  )}
+                </div> */}
+                
+                 {/* Submit Button */}
+                <div className="flex justify-end pt-4 pb-8">
+                  {!isSubmitting ? (
+                    <ConfirmationModal
+                      trigger={
+                        <Button type="button">
+                          <Send className="h-4 w-4 mr-2" /> {data ? "Update Announcement" : "Create Announcement"}
+                        </Button>
+                      }
+                      title="Confirm Announcement Submission"
+                      description="Review the announcement thoroughly before proceeding."
+                      onClick={() => {
+                      data ? update() : create()
+                    }}
+                      actionLabel="Confirm"
+                    />
                   ) : (
                     <LoadButton>
                       {data ? "Saving..." : "Creating..."}
