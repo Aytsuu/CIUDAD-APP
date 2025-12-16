@@ -31,7 +31,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'gad_development_plan',
-                'managed': False,
             },
         ),
         migrations.CreateModel(

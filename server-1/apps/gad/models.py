@@ -25,7 +25,6 @@ class DevelopmentPlan(models.Model):
 
     class Meta:
         db_table = 'gad_development_plan'
-        managed = False
 
 class GAD_Budget_Year(models.Model):
     gbudy_num = models.BigAutoField(primary_key=True)
