@@ -124,6 +124,7 @@ jobs:
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         run: |
           # Delete the history so Django runs everything again
+          echo "Cleaning migration history..."
           psql "$POSTGRES_URL" -c "DELETE FROM django_migrations;" || true
           
           # Apply Schema (Django)
@@ -257,6 +258,7 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
         run: |
           # Delete the history so Django runs everything again
+          echo "Cleaning migration history..."
           psql "$POSTGRES_URL" -c "DELETE FROM django_migrations;" || true
             
           # Apply Schema (Django)
