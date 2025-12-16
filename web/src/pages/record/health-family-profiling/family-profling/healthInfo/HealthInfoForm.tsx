@@ -28,9 +28,13 @@ export default function HealthInfoForm({
   // Watch the method field with proper type safety
   const selectedMethods = form.watch(`${prefix}.method`) as string[] || []
   
-  // Check if "No Family Planning" is selected (values are stored in lowercase by FormComboCheckbox)
+  // Check if "No Family Planning" is selected
+  // Check for both lowercase and original casing to handle different scenarios
   const noFamilyPlanningSelected = useMemo(
-    () => selectedMethods.includes("nofamplanning"),
+    () => selectedMethods.some(method => 
+      method.toLowerCase() === "nofamplanning" || 
+      method.toLowerCase() === "no family planning"
+    ),
     [selectedMethods]
   )
 
@@ -41,10 +45,11 @@ export default function HealthInfoForm({
     }
   }, [noFamilyPlanningSelected, form, prefix])
 
-  // Show family planning source field only when methods are selected AND it's not "No Family Planning"
+  // Hide family planning source field ONLY when "No Family Planning" is selected
+  // Show it in all other cases (even when nothing is selected yet)
   const showFamilyPlanningSource = useMemo(() => {
-    return selectedMethods.length > 0 && !noFamilyPlanningSelected
-  }, [selectedMethods, noFamilyPlanningSelected])
+    return !noFamilyPlanningSelected
+  }, [noFamilyPlanningSelected])
 
   // Debug logging (remove after testing)
   useEffect(() => {
