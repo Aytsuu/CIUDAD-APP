@@ -124,11 +124,7 @@ jobs:
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         run: |
           # Apply Schema (Django)
-
-          python manage.py migrate contenttypes || exit 1
-          python manage.py migrate auth || exit 1
-          python manage.py migrate account --noinput || echo "No account app or already migrated"
-          python manage.py migrate --noinput
+          python manage.py migrate
 
           if [ -f "load_seed_data.py" ]; then
             python load_seed_data.py
