@@ -24,8 +24,8 @@ export default function Featured() {
   React.useEffect(() => {
     if (!api) {
       return
-    }
-
+    } 
+ 
     setCurrent(api.selectedScrollSnap())
     api.on("select", () => {
       setCurrent(api.selectedScrollSnap())
