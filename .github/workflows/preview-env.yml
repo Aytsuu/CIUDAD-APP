@@ -99,7 +99,7 @@ jobs:
             echo "user: $DB_USER"
             echo "pass: $DB_PASS"
             echo "host: $DB_HOST"
-            echo "port: $DB_PORT"
+            echo "port: 6543"
 
             echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
             echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
@@ -231,7 +231,7 @@ jobs:
             echo "user: $DB_USER"
             echo "pass: $DB_PASS"
             echo "host: $DB_HOST"
-            echo "port: $DB_PORT"
+            echo "port: 6543"
 
             echo "db_host2=$DB_HOST" >> $GITHUB_OUTPUT
             echo "db_user2=$DB_USER" >> $GITHUB_OUTPUT
