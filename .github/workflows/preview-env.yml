@@ -212,6 +212,7 @@ jobs:
           # --- Extract Connection Details ---
           # Use the pooler URL (better for CI/CD)
           FULL_POOLER_URL=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL')
+          echo "$FULL_POOLER_URL"
           
           # Extract components from the connection URL
           # Format: postgresql://user:pass@host:port/dbname
@@ -221,7 +222,7 @@ jobs:
             DB_HOST="${BASH_REMATCH[3]}"
             DB_PORT="${BASH_REMATCH[4]}"
             DB_NAME="${BASH_REMATCH[5]}"
-            
+
             echo "user: $DB_USER"
             echo "pass: $DB_PASS"
             echo "host: $DB_HOST"
