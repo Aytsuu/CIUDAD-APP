@@ -123,10 +123,17 @@ jobs:
           EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         run: |
-          # Delete the history so Django runs everything again
-          echo "Cleaning migration history..."
-          psql "$POSTGRES_URL" -c "DELETE FROM django_migrations;" || true
+          # Install Postgres Client
+          sudo apt-get install -y postgresql-client
+
+          echo "🧹 NUCLEAR OPTION: Wiping migration history..."
           
+          # Export Password (psql reads this automatically)
+          export PGPASSWORD="$DB_PASSWORD"
+          
+          # RUN PSQL WITH EXPLICIT FLAGS (-h, -U, -d, -p)
+          psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -p "$DB_PORT" -c "DELETE FROM django_migrations;" || echo "⚠️ Warning: Could not clear migrations (maybe table doesn't exist yet)"
+
           # Apply Schema (Django)
           python manage.py migrate
 
@@ -257,10 +264,17 @@ jobs:
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY2 }}
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
         run: |
-          # Delete the history so Django runs everything again
-          echo "Cleaning migration history..."
-          psql "$POSTGRES_URL" -c "DELETE FROM django_migrations;" || true
-            
+          # Install Postgres Client
+          sudo apt-get install -y postgresql-client
+
+          echo "🧹 NUCLEAR OPTION: Wiping migration history..."
+          
+          # Export Password (psql reads this automatically)
+          export PGPASSWORD="$DB_PASSWORD"
+          
+          # RUN PSQL WITH EXPLICIT FLAGS (-h, -U, -d, -p)
+          psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -p "$DB_PORT" -c "DELETE FROM django_migrations;" || echo "⚠️ Warning: Could not clear migrations (maybe table doesn't exist yet)"
+         
           # Apply Schema (Django)
           python manage.py migrate
 
