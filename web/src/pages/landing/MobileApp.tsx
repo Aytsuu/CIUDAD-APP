@@ -22,7 +22,7 @@ export default function MobileApp() {
             application
           </p>
           <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-purple-400 mx-auto mt-8 rounded-full"></div>
-        </div>
+        </div> 
 
         {/* Main Content */}
         <div className="grid gap-12 items-center max-w-6xl mx-auto mb-16">
