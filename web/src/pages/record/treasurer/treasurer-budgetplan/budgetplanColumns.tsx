@@ -43,7 +43,7 @@ export const useBudgetPlanColumns = () => {
       cell: ({ row }) => (
         <div className="text-center">{row.getValue("plan_year")}</div>
       )
-    }, 
+    },
     {
       accessorKey: "plan_issue_date",
       header: ({}) => (
