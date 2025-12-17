@@ -20,7 +20,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { useLoading } from "@/context/LoadingContext"
 import { Spinner } from "@/components/ui/spinner"
 import { useAuth } from "@/context/AuthContext"
-
+  
 function RatesPage1() {
     const {user} = useAuth();
     const { showLoading, hideLoading } = useLoading();
