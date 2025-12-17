@@ -15,7 +15,7 @@ import PaginationLayout from "@/components/ui/pagination/pagination-layout"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select/select"
 import React from "react"
 
- 
+  
 function RatesPage5() {
     const [editingRowId, setEditingRowId] = useState<number | null>(null)
     const [activeTab, setActiveTab] = useState("active")
