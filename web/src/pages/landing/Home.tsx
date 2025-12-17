@@ -23,7 +23,7 @@ export default function Home({ carousel }: { carousel: MediaUploadType }) {
           onMouseEnter={plugin.current.stop}
           onMouseLeave={plugin.current.reset}
           className="hidden lg:block"
-        >
+        > 
           <CarouselContent>
             {carousel.map((file: any, index: number) => (
               <CarouselItem key={index} className="basis-full p-0">
