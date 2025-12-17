@@ -13,6 +13,12 @@ class AnnouncementConfig(AppConfig):
 
     def ready(self):
         # Prevent duplicate schedulers in autoreload
+        import sys
+
+        if 'manage.py' in sys.argv[0]:
+            if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
+                return
+ 
         if settings.SCHEDULER_AUTOSTART:
             self.start_scheduler()
 

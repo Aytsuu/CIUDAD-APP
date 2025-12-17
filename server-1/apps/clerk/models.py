@@ -38,7 +38,6 @@ class ClerkCertificate(models.Model):
 
     class Meta:
         db_table = 'certification_request'
-        managed = False
 
 class NonResidentCertificateRequest(models.Model):
     nrc_id = models.CharField(primary_key=True, max_length=20)  # For formatted ID like NRC001-25
@@ -60,7 +59,6 @@ class NonResidentCertificateRequest(models.Model):
 
     class Meta:
         db_table = 'nonresident_cert_req'
-        managed = False
         
 class IssuedCertificate(models.Model):
     ic_id = models.BigAutoField(primary_key=True)
@@ -71,24 +69,6 @@ class IssuedCertificate(models.Model):
 
     class Meta:
         db_table = 'issued_certificate'
-        managed = False
-
-# Business Models
-class Business(models.Model):
-    bus_id = models.CharField(primary_key=True, max_length=50)
-    bus_name = models.CharField(max_length=255)
-    bus_gross_sales = models.DecimalField(max_digits=10, decimal_places=2)
-    bus_location = models.CharField(max_length=255)
-    bus_status = models.CharField(max_length=50)
-    bus_date_of_registration = models.DateField()
-    bus_date_verified = models.DateField()
-    staff_id = models.CharField(max_length=50, null=True)
-    rp_id = models.CharField(max_length=50, null=True)
-    br_id = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'business'
-        managed = False
 
 class BusinessPermitRequest(models.Model):
     bpr_id = models.CharField(primary_key=True)
@@ -110,7 +90,6 @@ class BusinessPermitRequest(models.Model):
 
     class Meta:
         db_table = 'business_permit_request'
-        managed = False
 
 class BusinessPermitFile(models.Model):
     bpf_id = models.BigAutoField(primary_key=True)
@@ -119,7 +98,6 @@ class BusinessPermitFile(models.Model):
     bpr_id = models.ForeignKey('BusinessPermitRequest', on_delete=models.CASCADE, null=True, related_name='permit_files', db_column='bpr_id')
     class Meta:
         db_table = 'business_permit_file'
-        managed = True
 
 class IssuedBusinessPermit(models.Model):
     ibp_id = models.CharField(max_length=10, primary_key=True)
@@ -129,7 +107,6 @@ class IssuedBusinessPermit(models.Model):
 
     class Meta:
         db_table = 'issued_business_permit'
-        managed = False
 
 class ClerkBusinessPermit(models.Model):
     busi_req_no = models.CharField(max_length=10, primary_key=True)
@@ -159,7 +136,6 @@ class SummonDateAvailability(models.Model):
 
     class Meta:
         db_table = 'summon_date_availability'
-        managed = False
 
 class SummonTimeAvailability(models.Model):
     st_id = models.BigAutoField(primary_key=True)
@@ -169,7 +145,6 @@ class SummonTimeAvailability(models.Model):
 
     class Meta:
         db_table = 'summon_time_availability'
-        managed = False
 
 
 class ServiceChargePaymentRequest(models.Model):
@@ -238,7 +213,6 @@ class SummonCase(models.Model):
 
     class Meta:
         db_table = 'summon_case'
-        managed = False
 
 
 class HearingSchedule(models.Model):
