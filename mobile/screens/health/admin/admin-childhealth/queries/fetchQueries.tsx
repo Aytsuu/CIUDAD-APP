@@ -15,7 +15,9 @@ export const useChildHealthRecords = (params?: { page?: number; page_size?: numb
   return useQuery({
     queryKey: ["ChildHealthRecords", params],
     queryFn: () => getChildHealthRecords(params),
-    staleTime: 1000 * 60 * 5,
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background every 30 seconds
     retry: 3
   });
 };
@@ -25,7 +27,9 @@ export function useNutritionalSummary(id: string) {
     queryKey: ["nutritionalSummary", id],
     queryFn: () => getNutrionalSummary(id),
     enabled: !!id,
-    staleTime: 1000 * 60 * 5
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, 
   });
 }
 
@@ -34,7 +38,9 @@ export const useChildHealthHistory = (id: string | undefined) => {
     queryKey: ["childHealthHistory", id],
     queryFn: () => getChildHealthHistory(id!),
     enabled: !!id,
-    staleTime: 1000 * 60 * 5
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
   });
 };
 
@@ -43,7 +49,9 @@ export const useNutriotionalStatus = (id: string | undefined) => {
     queryKey: ["NutritionalStatus", id],
     queryFn: () => getNutritionalStatus(id!),
     enabled: !!id,
-    staleTime: 1000 * 60 * 5
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
   });
 };
 
@@ -51,7 +59,9 @@ export const useNextufcno = () => {
   return useQuery({
     queryKey: ["nextufc"],
     queryFn: getNextufc,
-    staleTime: 1000 * 60 * 5
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
   });
 };
 
@@ -60,7 +70,9 @@ export const useChildLatestVitals = (id: string | undefined) => {
     queryKey: ["latestVitals", id],
     queryFn: () => getLatestVitals(id!),
     enabled: !!id,
-    staleTime: 1000 * 60 * 5
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
   });
 };
 
@@ -69,7 +81,9 @@ export const useChildNotesFollowup = (id: string | undefined) => {
     queryKey: ["childnotesfollowup", id],
     queryFn: () => getChildnotesfollowup(id!),
     enabled: !!id,
-    staleTime: 1000 * 60 * 5
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
   });
 };
 
@@ -78,7 +92,9 @@ export const useChildData = (id: string, page?: number, pageSize?: number ) => {
 	return useQuery({
 		queryKey: ['childData', id, page, pageSize],
 		queryFn: () => getChildData(id, page, pageSize),
-		staleTime: 300000, // 5 minutes
+		 staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
 		enabled: !!id
 	})
 }

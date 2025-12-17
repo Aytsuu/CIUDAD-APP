@@ -30,8 +30,8 @@ const immunizationColumns: ColumnDef<ImmunizationTracking>[] = [
     cell: ({ row }) => {
       const doseNumber = Number(row.getValue("dose_number"));
       return (
-        <div className="text-gray-800 flex justify-center ">
-          <div className="w-20 text-sm  bg-blue-500 text-white rounded-md py-1 ">{getOrdinalSuffix(doseNumber)} Dose</div>
+        <div className="text-gray-800 flex  ">
+          <div className="w-20 text-sm text-center  bg-blue-500 text-white rounded-md py-1 ">{getOrdinalSuffix(doseNumber)} Dose</div>
         </div>
       );
     }

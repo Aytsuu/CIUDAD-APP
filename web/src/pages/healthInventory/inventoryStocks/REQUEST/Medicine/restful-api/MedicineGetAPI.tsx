@@ -7,8 +7,10 @@ export const getMedicineInventory = async () => {
     const res = await api2.get(`inventory/medicineinventorylist/`);
     return res.data;
   } catch (err: any) {
-    console.log("Error fetching medicine inventory:", err.response?.data || err.message);
-    throw err;
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error fetching medicine inventory:", err.response?.data || err.message);
+    }
+    return null;
   }
 };
 
@@ -29,11 +31,11 @@ export const getMedicineStocks = async (
         filter: filter || "all"
       }
     });
-
-    console.log("Medicine Stock API Response:", res.data);
     return res.data;
   } catch (error) {
-    console.error("Medicine Stock API Error:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Medicine Stock API Error:", error);
+    }
     return {
       results: [],
       count: 0,

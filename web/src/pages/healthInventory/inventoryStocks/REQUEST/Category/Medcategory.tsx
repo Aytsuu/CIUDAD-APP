@@ -31,10 +31,14 @@ export const useCategoriesMedicine = () => {
         cat_type: CategoryInfo.cat_type,
         cat_name: toTitleCase(CategoryInfo.cat_name.trim())
       });
-      console.log("Category added successfully:", res.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Category added successfully:", res.data);
+      }
       return res.data;
     } catch (err) {
-      console.error("Error adding category:", err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error adding category:", err);
+      }
       throw err; // Re-throw the error to handle it in the calling function
     }
   };
@@ -64,11 +68,15 @@ export const useCategoriesMedicine = () => {
           setCategories(transformedCategories);
           return transformedCategories;
         } else {
-          console.error("Unexpected data format:", data);
+          if (process.env.NODE_ENV === 'development') {
+            console.error("Unexpected data format:", data);
+          }
           throw new Error("Unexpected data format from server");
         }
       } catch (err) {
-        console.error(err);
+        if (process.env.NODE_ENV === 'development') {
+          console.error(err);
+        }
         throw new Error("Failed to fetch categories");
       }
     },
@@ -117,7 +125,9 @@ export const useCategoriesMedicine = () => {
         showSuccessToast("Category added successfully");
       }
     } catch (error) {
-      console.error("❌ Failed to add category:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("❌ Failed to add category:", error);
+      }
       showErrorToast("Failed to add category");
     } finally {
       setIsProcessing(false);
@@ -149,7 +159,9 @@ export const useCategoriesMedicine = () => {
       setNewCategoryName("");
       setOnCategoryAddedCallback(null);
     } catch (error) {
-      console.error("Error in confirmation:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error in confirmation:", error);
+      }
     }
   };
 
@@ -164,11 +176,15 @@ export const useCategoriesMedicine = () => {
 
         showSuccessToast("Category deleted successfully");
       } else {
-        console.error(response);
+        if (process.env.NODE_ENV === 'development') {
+          console.error(response);
+        }
         showErrorToast("Failed to delete category. It may be in use.");
       }
     } catch (err) {
-      console.error(err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(err);
+      }
       showErrorToast("Failed to delete category. It may be in use.");
     }
   };

@@ -15,7 +15,7 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     cell: ({ row, table }) => {
       // Reverse index: totalRows - row.index
       const totalRows = table.getRowModel().rows.length;
-      return <div className="text-center p-1 rounded-md">{totalRows - row.index}</div>;
+      return <div className=" rounded-md">{totalRows - row.index}</div>;
     },
   },
 
@@ -23,7 +23,7 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     accessorKey: "vaccine_name",
     header: "Vaccine",
     cell: ({ row }) => (
-      <div className="flex justify-center px-2">
+      <div className="flex ">
         <div className="font-medium">
           {row.original.vaccine_name}
           {/* <div className="text-xs text-gray-500">
@@ -43,9 +43,9 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     cell: ({ row }) => {
       const vital = row.original.vital_signs;
       return (
-        <div className="flex justify-center items-center gap-2 px-2 py-1 ">
+        <div className="flex gap-2  py-1 ">
           {vital?.vital_bp_systolic && vital?.vital_bp_diastolic && (
-            <div className="flex items-center">
+            <div className="flex">
               <span>
                 {vital.vital_bp_systolic}/{vital.vital_bp_diastolic} mmHg
               </span>
@@ -64,9 +64,9 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     cell: ({ row }) => {
       const vital = row.original.vital_signs;
       return (
-        <div className="flex justify-center items-center gap-2 px-2 py-1 ">
+        <div className="flex gap-2  py-1 ">
           {vital?.vital_temp && (
-            <div className="flex items-center">
+            <div className="flex">
               <span>{vital.vital_temp}°C</span>
             </div>
           )}
@@ -83,9 +83,9 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     cell: ({ row }) => {
       const vital = row.original.vital_signs;
       return (
-        <div className="flex justify-center items-center gap-2 px-2 py-1 ">
+        <div className="flex gap-2  py-1 ">
           {vital?.vital_pulse && (
-            <div className="flex items-center">
+            <div className="flex ">
               <span>{vital.vital_pulse}</span>
             </div>
           )}
@@ -102,9 +102,9 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     cell: ({ row }) => {
       const vital = row.original.vital_signs;
       return (
-        <div className="flex justify-center items-center gap-2 px-2 py-1 ">
+        <div className="flex gap-2  py-1 ">
           {vital?.vital_o2 && (
-            <div className="flex items-center">
+            <div className="flex ">
               <span>{vital.vital_o2}%</span>
             </div>
           )}
@@ -119,8 +119,8 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     cell: ({ row }) => {
       const formattedDose = getOrdinalSuffix(row.original.vachist_doseNo ? parseInt(row.original.vachist_doseNo, 10) : undefined);
       return (
-        <div className="flex justify-center">
-          <div className="bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">{formattedDose} Dose</div>
+        <div className="flex">
+          <div className="bg-blue-50 text-blue-800  py-1 rounded-full text-sm font-medium">{formattedDose} Dose</div>
         </div>
       );
     },
@@ -135,18 +135,16 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
     },
   },
 
-  {
+    {
 
     accessorKey: "status",
     header: "Status",
     cell: ({}) => (
-      <div className="w-full flex justify-center">
-        <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">Completed</span>
+      <div className="w-full flex">
+        <span className="text-xs  py-1 rounded bg-green-100 text-green-800">Completed</span>
       </div>
     ),
   },
-
-
   
   // {
   //   accessorKey: "nextDose",
@@ -189,7 +187,7 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
   //   accessorKey: "signature",
   //   header: "Signature",
   //   cell: ({ row }) => (
-  //     <div className="flex justify-center px-2 w-full">
+  //     <div className="flex justify-center  w-full">
   //       {row.original.signature && (
   //         <div className="w-[200px]">
   //           <img src={`data:image/png;base64,${row.original.signature}`} alt="Authorized Signature" className="h-10 w-auto object-contain" />
@@ -207,7 +205,7 @@ export const IndivVaccineColumns = (patientData: Patient): ColumnDef<Vaccination
       const navigate = useNavigate();
 
       return (
-        <div className="flex justify-center gap-2">
+        <div className="flex gap-2">
           {/* <Link to="/services/vaccination/records/history" state={{ params: { Vaccination: currentRecord, patientData } }}> */}
           {/* <Button variant="outline" size="sm" className="h-8 w-[50px] p-0">
               View

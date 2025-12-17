@@ -11,14 +11,14 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "child",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Child <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
         const fullName = `${row.original.lname}, ${row.original.fname} ${row.original.mname}`.trim();
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex justify-start min-w-[200px] ">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{toTitleCase(fullName)}</div>
               <div className="text-sm text-darkGray">
@@ -32,14 +32,14 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "mother",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Mother <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => {
         const fullName = `${row.original.mother_lname}, ${row.original.mother_fname} ${row.original.mother_mname}`.trim();
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex justify-start min-w-[200px] ">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{toTitleCase(fullName)}</div>
             </div>
@@ -54,7 +54,7 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
       cell: ({ row }) => {
         const fullName = `${row.original.father_lname}, ${row.original.father_fname} ${row.original.father_mname}`.trim();
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex justify-start min-w-[200px] ">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{toTitleCase(fullName)}</div>
             </div>
@@ -65,12 +65,12 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "address",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Address <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-start px-2">
+        <div className="flex justify-start ">
           <div className="w-[250px] break-words">{toTitleCase(row.original.address)}</div>
         </div>
       ),
@@ -79,8 +79,8 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
       accessorKey: "family_no",
       header: "Family No.",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.family_no || "N/A"}</div>
+        <div className="flex min-w-[100px] ">
+          <div className="w-full">{row.original.family_no || "N/A"}</div>
         </div>
       ),
     },
@@ -88,7 +88,7 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
     //   accessorKey: "delivery_type",
     //   header: "Delivery Type",
     //   cell: ({ row }) => (
-    //     <div className="flex justify-center min-w-[120px] px-2">
+    //     <div className="flex justify-center min-w-[120px] ">
     //       <div className="text-center w-full">{toTitleCase(row.original.delivery_type || "N/A")}</div>
     //     </div>
     //   )
@@ -97,8 +97,8 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
       accessorKey: "pat_type",
       header: "Patient Type",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{toTitleCase(row.original.pat_type || "N/A")}</div>
+        <div className="flex min-w-[100px] ">
+          <div className="w-full">{toTitleCase(row.original.pat_type || "N/A")}</div>
         </div>
       ),
     },
@@ -106,7 +106,7 @@ export const useChildImmunizationColumns = (): ColumnDef<any>[] => {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
+        <div className="flex gap-2">
           <ViewButton
             onClick={() => {
               // Clear localStorage before navigation

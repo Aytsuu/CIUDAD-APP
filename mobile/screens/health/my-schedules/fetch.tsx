@@ -153,7 +153,7 @@ export const useAllAppointments = (filters: AppointmentFilters, options = {}) =>
   return useQuery({
     queryKey: ['allAppointments', filters],
     queryFn: () => getAllAppointments(filters),
-    staleTime: 60 * 1000, // 1 minute
+    staleTime: 5000,
     retry: 3,
     placeholderData: keepPreviousData,
 	refetchInterval: 5000, 

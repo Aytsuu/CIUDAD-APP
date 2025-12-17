@@ -13,13 +13,15 @@ export const useGetHouseholds = () => {
     queryKey: ['healthHouseholds'],
     queryFn: async () => {
       try {
-        const res = await api2.get("health-profiling/household/list/");
+        const res = await api.get("profiling/household/list/");
         return res.data;
       } catch (err) {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -28,7 +30,7 @@ export const useHouseholdTable = (page: number, pageSize: number, searchQuery: s
     queryKey: ['householdTable', page, pageSize, searchQuery],
     queryFn: async () => {
       try {
-        const res = await api2.get("health-profiling/household/list/table/", {
+        const res = await api.get("profiling/household/list/table/", {
           params: {
             page,
             page_size: pageSize,
@@ -40,7 +42,9 @@ export const useHouseholdTable = (page: number, pageSize: number, searchQuery: s
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   })
 }
 
@@ -50,13 +54,15 @@ export const useGetHouseholdData = (householdId: string) => {
     queryKey: ['healthHouseholdData', householdId],
     queryFn: async () => {
       try {
-        const res = await api2.get(`health-profiling/household/${householdId}/data/`);
+        const res = await api.get(`profiling/household/${householdId}/data/`);
         return res.data;
       } catch (err) {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!householdId
   });
 };
@@ -67,13 +73,15 @@ export const useGetResidents = (params?: any) => {
     queryKey: ['healthResidents', params],
     queryFn: async () => {
       try {
-        const res = await api2.get("health-profiling/resident/", { params });
+        const res = await api.get("profiling/resident/", { params });
         return res.data;
       } catch (err) {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -89,7 +97,9 @@ export const useGetResidentPersonalInfo = (rpId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!rpId
   });
 
@@ -123,13 +133,15 @@ export const useGetResidentsExcludingFamily = (famId: string) => {
     queryKey: ['healthResidentsExcludingFamily', famId],
     queryFn: async () => {
       try {
-        const res = await api2.get(`health-profiling/resident/exclude/fam/${famId}/`);
+        const res = await api.get(`profiling/resident/exclude/fam/${famId}/`);
         return res.data;
       } catch (err) {
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -142,13 +154,15 @@ export const useGetFamilyMembers = (famId: string) => {
     queryFn: async () => {
       if (!famId) return [];
       try {
-        const res = await api2.get(`health-profiling/family/${famId}/members/`);
+        const res = await api.get(`profiling/family/${famId}/members/`);
         return res.data;
       } catch (err) {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 
@@ -182,13 +196,15 @@ export const useGetFamilyData = (famId: string) => {
     queryKey: ['healthFamilyData', famId],
     queryFn: async () => {
       try {
-        const res = await api2.get(`health-profiling/family/${famId}/data/`);
+        const res = await api.get(`profiling/family/${famId}/data/`);
         return res.data;
       } catch (err) {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -198,19 +214,30 @@ export const useGetFamilyList = (page?: number, pageSize?: number, searchQuery?:
     queryKey: ['healthFamilyList', page, pageSize, searchQuery],
     queryFn: async () => {
       try {
-        const res = await api2.get("health-profiling/family/list/table/", {
+        // console.log('🚀 Fetching family list with params:', { page, pageSize, searchQuery });
+        const res = await api.get("profiling/family/list/table/", {
           params: {
             page,
             page_size: pageSize,
-            search: searchQuery
+            search: searchQuery,
+            occupancy: 'all'
           }
         });
+        // console.log('✅ Family list response:', res.data);
         return res.data;
-      } catch (err) {
+      } catch (err: any) {
+        // console.log('❌ Family list error:', {
+        //   message: err.message,
+        //   response: err.response?.data,
+        //   status: err.response?.status,
+        //   url: err.config?.url
+        // });
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -226,7 +253,9 @@ export const useGetWaterSupplyOptions = () => {
         throw err;
       }
     },
-    staleTime: Infinity
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -241,7 +270,9 @@ export const useGetEnvironmentalData = (hhId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!hhId
   });
 };
@@ -258,7 +289,9 @@ export const useGetNCDByFamily = (famId: string) => {
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -275,7 +308,9 @@ export const useGetTBByFamily = (famId: string) => {
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -292,7 +327,9 @@ export const useGetSurveyByFamily = (famId: string) => {
         throw err;
       }
     },
-    staleTime: 5000,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 };
@@ -310,7 +347,9 @@ export const useGetFamilyHealthProfiling = (famId: string) => {
         throw err;
       }
     },
-    staleTime: Infinity,
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
     enabled: !!famId
   });
 
@@ -350,7 +389,9 @@ export const useGetFamilyHealthProfilingSummary = () => {
         throw err;
       }
     },
-    staleTime: 5000
+    staleTime: 0,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
   });
 };
 
@@ -498,7 +539,7 @@ export const fetchIllnesses = async () => {
     const response = await api2.get("maternal/prenatal/illnesses/");
     return response.data;
   } catch (error) {
-    console.error("Error fetching illnesses:", error);
+    // console.error("Error fetching illnesses:", error);
     throw error;
   }
 };

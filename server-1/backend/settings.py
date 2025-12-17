@@ -74,7 +74,6 @@ INSTALLED_APPS = [
     'apps.waste',
     'apps.profiling',
     'apps.account',
-    'apps.file',
     'apps.complaint',
     'apps.report',
     'apps.council',

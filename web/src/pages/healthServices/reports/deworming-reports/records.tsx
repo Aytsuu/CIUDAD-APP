@@ -66,7 +66,9 @@ export default function DewormingDetails() {
   useEffect(() => {
     if (error) {
       toast.error("Failed to fetch deworming records");
-      console.error("API Error:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("API Error:", error);
+      }
     }
   }, [error]);
 

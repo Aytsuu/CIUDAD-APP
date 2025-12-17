@@ -53,7 +53,9 @@ export function AgeGroupForm({ isOpen, onClose, mode = "add", ageGroupData }: Ag
       const existingAgeGroups = await getAgegroup();
       return existingAgeGroups.some((group: AgeGroupType & { id?: string }) => group.agegroup_name === data.agegroup_name && group.min_age === data.min_age && group.max_age === data.max_age && group.time_unit === data.time_unit);
     } catch (error) {
-      console.error("Error checking for duplicates:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error checking for duplicates:", error);
+      }
       return false;
     }
   };
@@ -80,7 +82,9 @@ export function AgeGroupForm({ isOpen, onClose, mode = "add", ageGroupData }: Ag
     } catch (error) {
       const action = isEditing ? "updating" : "adding";
       toast.error(`An error occurred while ${action} the age group. Please try again.`);
-      console.error("Submission error:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Submission error:", error);
+      }
     } finally {
       setIsLoading(false);
     }

@@ -3,13 +3,12 @@ import { DataTable } from "@/components/ui/table/data-table";
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { SelectLayout } from "@/components/ui/select/select-layout";
-import { Search, Home, UserCog, Users, FileInput, ArrowUpDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Search, Home, UserCog, Users } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom"; // Added useSearchParams
 import PaginationLayout from "@/components/ui/pagination/pagination-layout";
 import { useLoading } from "@/context/LoadingContext";
 import { ExportButton } from "@/components/ui/export";
 import { useDebounce } from "@/hooks/use-debounce";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown/dropdown-menu";
 import { MainLayoutComponent } from "@/components/ui/layout/main-layout-component";
 import { EnhancedCardLayout } from "@/components/ui/health-total-cards";
 import ReferralFormModal from "./referralform";
@@ -25,6 +24,7 @@ import { ProtectedComponent } from "@/ProtectedComponent";
 import { useSitioList } from "@/pages/record/profiling/queries/profilingFetchQueries";
 import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
 import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFiltersChipsProps ";
+import { getPatType } from "../record/health/patientsRecord/PatientsRecordMain";
 
 // TYPES
 type UniquePatientDisplay = {
@@ -56,11 +56,14 @@ const Overall: React.FC = () => {
   const { showLoading, hideLoading } = useLoading();
   const navigate = useNavigate();
 
+  // --- PAGINATION: URL PARAMS HANDLING ---
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+
   // State management
   const [patients, setPatients] = useState<UniquePatientDisplay[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [pageSize, setPageSize] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
   const [filterValue, setFilterValue] = useState("all");
   const [isReferralFormOpen, setIsReferralFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -75,9 +78,14 @@ const Overall: React.FC = () => {
   // Debounce search query
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Reset to first page when filters change
+  // Reset to first page when filters change (only if not already on page 1)
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+       // Only trigger reset if filters are actually active/changed to avoid initial mount loops
+       if (debouncedSearchQuery || filterValue !== "all" || selectedSitios.length > 0) {
+          setSearchParams({ page: "1" });
+       }
+    }
   }, [debouncedSearchQuery, filterValue, selectedSitios]);
 
   const fetchAnimalBiteRecords = async () => {
@@ -113,7 +121,7 @@ const Overall: React.FC = () => {
         setTotalCount(0);
       }
     } catch (err) {
-      console.error("Fetch error:", err);
+      // console.error("Fetch error:", err);
       setError("Failed to load animal bite records.");
       toast.error("Failed to load animal bite records.");
     } finally {
@@ -179,16 +187,29 @@ const Overall: React.FC = () => {
 
   const columns: ColumnDef<UniquePatientDisplay>[] = [
     {
+      accessorKey: "patient_id",
+      header: ({ column }) => (
+        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Patient ID 
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className="flex min-w-[120px] px-2">
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
+        </div>
+      )
+    },
+    {
       accessorKey: "patient",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient <ArrowUpDown size={15} />
+        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Patient 
         </div>
       ),
       cell: ({ row }) => {
         const p = row.original;
         return (
-          <div className="flex justify-start min-w-[200px] px-2">
+          <div className="flex justify-start min-w-[200px]">
             <div className="flex flex-col w-full">
               <div className="font-medium truncate">{`${p.lname}, ${p.fname}`.trim()}</div>
               <div className="text-sm text-darkGray">
@@ -203,12 +224,12 @@ const Overall: React.FC = () => {
       accessorKey: "patientType",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Patient Type <ArrowUpDown size={15} />
+          Type 
         </div>
       ),
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
-          <div className="text-center w-full">{row.original.patientType}</div>
+          <div className={getPatType(row.original.patientType)}>{row.original.patientType}</div>
         </div>
       )
     },
@@ -216,7 +237,7 @@ const Overall: React.FC = () => {
       accessorKey: "bitingAnimal",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Biting Animal <ArrowUpDown size={15} />
+          Biting Animal 
         </div>
       ),
       cell: ({ row }) => (
@@ -227,11 +248,15 @@ const Overall: React.FC = () => {
     },
     {
       accessorKey: "actions_taken",
-      header: "Actions Taken",
+      header: () => (
+        <div className="flex w-full justify-center items-center">
+          Actions Taken
+        </div>
+      ),
       cell: ({ row }) => {
         const actions = row.original.actions_taken;
         return (
-          <div className="flex justify-center min-w-[150px] px-2">
+          <div className="flex justify-center max-w-full px-2">
             <div className="text-center w-full">{actions && actions.length > 30 ? `${actions.substring(0, 30)}...` : actions}</div>
           </div>
         );
@@ -241,7 +266,7 @@ const Overall: React.FC = () => {
       accessorKey: "norecords",
       header: ({ column }) => (
         <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          No of Records <ArrowUpDown size={15} />
+          No of Records 
         </div>
       ),
       cell: ({ row }) => (
@@ -408,30 +433,20 @@ const Overall: React.FC = () => {
                 onChange={(e) => {
                   const value = +e.target.value;
                   setPageSize(value >= 1 ? value : 1);
-                  setCurrentPage(1);
+                  setSearchParams({ page: "1" }); // Reset to page 1 via URL
                 }}
                 min="1"
               />
               <p className="text-xs sm:text-sm">Entries</p>
             </div>
             <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" aria-label="Export data" className="flex items-center gap-2">
-                    <FileInput className="h-4 w-4" />
-                    Export
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem>
-                    <ExportButton 
-                      data={patients} 
-                      filename="animal-bite-records" 
-                      columns={exportColumns} 
-                    />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div>
+              <ExportButton 
+                data={patients} 
+                filename="animal-bite-records" 
+                columns={exportColumns} 
+              />
+            </div>
             </div>
           </div>
 
@@ -457,7 +472,7 @@ const Overall: React.FC = () => {
               <PaginationLayout 
                 currentPage={currentPage} 
                 totalPages={totalPages} 
-                onPageChange={(page) => setCurrentPage(page)} 
+                onPageChange={(page) => setSearchParams({ page: String(page) })} 
               />
             </div>
           </div>

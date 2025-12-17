@@ -9,7 +9,10 @@ export const usePatientByResidentId = (rp_id: string, options = {}) => {
     queryKey: ['patientByResident', rp_id],
     queryFn: () => getPatientByResidentId(rp_id),
     enabled: !!rp_id, 
-    ...options
+    ...options,
+    staleTime: 5000,
+		refetchInterval: 5000, 
+		refetchIntervalInBackground: true,
   });
 };
 
@@ -19,6 +22,9 @@ export const useFPRecordsByPatientId = (pat_id: string | null, options = {}) => 
     queryFn: () => getFPRecordsByPatientId(pat_id!),
     enabled: !!pat_id, 
     ...options,
+    staleTime: 5000,
+		refetchInterval: 5000, 
+		refetchIntervalInBackground: true,
   });
 };
 

@@ -13,6 +13,11 @@ export const getArchiveFirstAidStocks = (): ColumnDef<any>[] => {
         return archivedDate ? new Date(archivedDate).toLocaleDateString() : "N/A"
       }
     },
+      {
+    accessorKey: "inv_id",
+    header: "ID",
+    cell: ({ row }) => <div className="bg-primary p-1 rounded-md text-white w-fit">{row.original.inv_id || "N/A"}</div>
+  },
     {
       accessorKey: "item.fa_name",
       header: "First Aid Item Name",
@@ -52,7 +57,7 @@ export const getArchiveFirstAidStocks = (): ColumnDef<any>[] => {
     cell: ({ row }) => {
       const reason = row.original.reason;
       return (
-        <div className="text-center">
+        <div>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
             reason === "Expired" 
               ? "bg-red-100 text-red-800" 

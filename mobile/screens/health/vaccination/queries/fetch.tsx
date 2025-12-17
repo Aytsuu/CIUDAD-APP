@@ -25,10 +25,10 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
       }
 
       return response.map((record: any) => {
-        console.log(
-          "Vaccine Type Choice:",
-          record?.vaccine_stock?.vaccinelist?.vac_type_choices
-        );
+        // console.log(
+        //   "Vaccine Type Choice:",
+        //   record?.vaccine_stock?.vaccinelist?.vac_type_choices
+        // );
         
         return {
           per_dob: record.patient?.personal_info?.per_dob,
@@ -180,7 +180,7 @@ export const usePatientVaccinationDetails = (patientId: string) => {
     queryKey: ["patientVaccinationDetails", patientId],
     queryFn: () => getVaccinationRecordById(patientId),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
     enabled: !!patientId, // Only fetch if patientId exists
   });
 };

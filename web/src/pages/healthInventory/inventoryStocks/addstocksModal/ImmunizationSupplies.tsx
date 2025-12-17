@@ -55,7 +55,9 @@ export default function AddImzSupplyStock() {
         const options = await getSupplies();
         setSupplyOptions(options);
       } catch (error) {
-        console.error("Error fetching supplies:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error fetching supplies:", error);
+        }
       } finally {
         setLoading(false);
       }

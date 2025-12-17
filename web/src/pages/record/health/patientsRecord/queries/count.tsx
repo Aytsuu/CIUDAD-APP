@@ -9,7 +9,7 @@ export function useMedConCount(patientId: string) {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }
 
@@ -20,9 +20,9 @@ export function useFamplanCount(patientId: string) {
     queryKey: ["fam-count", patientId],
     queryFn: async () => {
       try {
-        console.log("Making API call to fetch FP count...");
+        // console.log("Making API call to fetch FP count...");
         const response = await api2.get(`/familyplanning/fp-methods-count/${patientId}/`);
-        console.log("API Response:", response.data);
+        // console.log("API Response:", response.data);
         return response.data;
       } catch (error) {
         console.error("Error fetching FP count:", error);
@@ -44,7 +44,7 @@ export function useAnimalbitesCount(patientId: string) {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }
 
@@ -56,6 +56,6 @@ export function useChildHealthRecordCount(patientId: string) {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 }

@@ -40,7 +40,9 @@ export default function SchedulerMain() {
             // Monday = 0, Tuesday = 1, etc.
             return addDays(monday, dayIndex);
           } else {
-            console.error("Invalid day name:", dayData.day);
+            if (process.env.NODE_ENV === 'development') {
+              console.error("Invalid day name:", dayData.day);
+            }
             return null;
           }
         })
@@ -76,19 +78,25 @@ export default function SchedulerMain() {
 
       setWeeklySchedule(schedule);
     } else {
-      console.log("No schedulers data found");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("No schedulers data found");
+      }
     }
   }, [schedulersData, servicesData, weekDays]);
 
   const handleSaveSchedule = (newSchedule: WeeklySchedule) => {
     setWeeklySchedule(newSchedule);
-    console.log("Weekly schedule saved:", newSchedule);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Weekly schedule saved:", newSchedule);
+    }
   };
 
   const handleAddService = (serviceName: string) => {
     if (!services.includes(serviceName)) {
       setServices((prev) => [...prev, serviceName]);
-      console.log("New service added:", serviceName);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("New service added:", serviceName);
+      }
     }
   };
 

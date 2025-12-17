@@ -69,8 +69,8 @@ export const PendingMedicineRequestsSidebar = () => {
     });
   };
 
-  // Display only first 5 requests
-  const displayedRequests = requests.slice(0, 5);
+  // Display only first 3 requests
+  const displayedRequests = requests.slice(0, 3);
 
   return (
     <Card className="w-full bg-white h-full flex flex-col border-none">
@@ -129,7 +129,7 @@ export const PendingMedicineRequestsSidebar = () => {
         <div className="p-4 border-t border-gray-100">
           <Link to="/services/medicine/requests/pending">
             <Button variant="link">
-              View All Requests ({totalCount > 100 ? "100+" : totalCount}){totalCount > 5 && <span className="ml-1 text-gray-400">• Showing 5 of {totalCount}</span>}
+              View All Requests ({totalCount > 100 ? "100+" : totalCount}){totalCount > 3 && <span className="ml-1 text-gray-400">• Showing 3 of {totalCount}</span>}
             </Button>
           </Link>
         </div>

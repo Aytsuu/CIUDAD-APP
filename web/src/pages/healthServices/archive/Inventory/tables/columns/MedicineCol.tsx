@@ -14,7 +14,7 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
     {
     accessorKey: "inv_id",
     header: "ID",
-    cell: ({ row }) => <div className="text-center bg-snow p-2 rounded-md text-gray-700">{row.original.inv_id || "N/A"}</div>
+    cell: ({ row }) => <div className="bg-primary p-1 rounded-md text-white w-fit">{row.original.inv_id || "N/A"}</div>
   },
     {
       accessorKey: "item",
@@ -23,10 +23,10 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
         const item = row.original.item;
         return (
           <div className="flex flex-col">
-            <div className="font-medium text-center">
+            <div className="font-medium">
               {item?.med_name || "Unknown Medicine"}
             </div>
-            <div className="text-sm text-center text-gray-600">
+            <div className="text-sm text-gray-600">
               {item?.dosage || 0} {item?.dsgUnit || ""}, {item?.form || ""}
             </div>
           </div>
@@ -43,14 +43,14 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
 
         if (unit.toLowerCase() === "boxes" && pcs > 1) {
           return (
-            <div className="text-center">
+            <div>
               {qty} boxes ({qty * pcs} pcs)
             </div>
           );
         }
 
         return (
-          <div className="text-center">
+          <div>
             {qty} {unit}
           </div>
         );
@@ -70,7 +70,7 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
           const remainingPcs = availablePcs % pcs;
       
           return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-start">
           <span>
             {remainingPcs > 0 ? fullBoxes + 1 : fullBoxes} box{fullBoxes !== 1 ? "es" : ""}
           </span>
@@ -80,7 +80,7 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
         }
       
         return (
-          <div className="text-center">
+          <div>
         {record.availableStock} {unit}
           </div>
         );
@@ -120,7 +120,7 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
     cell: ({ row }) => {
       const reason = row.original.reason;
       return (
-        <div className="text-center">
+        <div>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
             reason === "Expired" 
               ? "bg-red-100 text-red-800" 
@@ -131,6 +131,6 @@ export const getArchiveMedicineStocks = (): ColumnDef<any>[] => {
         </div>
       );
     },
-    },
+  }
   ];
 }

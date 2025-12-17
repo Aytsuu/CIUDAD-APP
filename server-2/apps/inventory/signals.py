@@ -282,7 +282,8 @@ def _notify_for_instance(instance):
                     mark_as_notified(item_id, "NEAR_EXPIRY")
                     logger.info(f"✅ Sent ONE-TIME NEAR_EXPIRY notification for {display_name}")
                     return True
-                logger.info(f"⏭️ NEAR_EXPIRY notification already sent for {display_name}")
+                else:
+                    logger.info(f"⏭️ NEAR_EXPIRY notification already sent for {display_name}")
                 return False
 
     except Exception as e:
@@ -309,19 +310,22 @@ def _notify_for_instance(instance):
         logger.info(f"⏭️ OUT_OF_STOCK notification already sent for {display_name}")
         return False
 
-    # LOW STOCK ALERT - Notify every time stock is updated when at or below 20 (or 2 for boxes)
+    # LOW STOCK ALERT - Notify only once per item until restocked
     if _is_low_stock(instance, available):
-        # Always notify on low stock, no cache check - notifies on every update
-        send_inventory_notification(
-            title=f"Low Stock Alert - {display_name}",
-            message=f"{display_name} is running low with only {available} {unit} remaining. Please restock soon.",
-            inventory_type="LOW_STOCK",
-            item_name=display_name,
-            quantity=available,
-            inventory_subtype=inventory_subtype
-        )
-        logger.info(f"✅ Sent LOW_STOCK notification for {display_name} - Current: {available} {unit}")
-        return True
+        if not has_been_notified(item_id, "LOW_STOCK"):
+            send_inventory_notification(
+                title=f"Low Stock Alert - {display_name}",
+                message=f"{display_name} is running low with only {available} {unit} remaining. Please restock soon.",
+                inventory_type="LOW_STOCK",
+                item_name=display_name,
+                quantity=available,
+                inventory_subtype=inventory_subtype
+            )
+            mark_as_notified(item_id, "LOW_STOCK")
+            logger.info(f"✅ Sent ONE-TIME LOW_STOCK notification for {display_name} - Current: {available} {unit}")
+            return True
+        logger.info(f"⏭️ LOW_STOCK notification already sent for {display_name}")
+        return False
 
     logger.info(f"⏭️ No notifications needed for {display_name} (stock: {available} {unit})")
     return False

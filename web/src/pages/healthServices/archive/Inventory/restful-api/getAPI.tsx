@@ -17,18 +17,22 @@ export const getAntigenStocks = async (
         filter: filter || undefined
       }
     });
-    
     if (res.status === 200) {
       return res.data;
     }
-    console.error(res.status);
+    if (process.env.NODE_ENV === "development") {
+      console.error(res.status);
+    }
     return {
       results: [],
       count: 0,
       next: null,
       previous: null
     };
-  } catch {
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error(error);
+    }
     return {
       results: [],
       count: 0,
@@ -55,22 +59,25 @@ export const getAntigenStocks = async (
           search: search?.trim() || undefined
         }
       });
-      
       if (res.status === 200) {
         return res.data;
       }
-      console.error(res.status);
+      if (process.env.NODE_ENV === "development") {
+        console.error(res.status);
+      }
       return {
         results: [],
         count: 0,
         next: null,
         previous: null
       };
-    } catch {
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
       return {
         results: [],
         count: 0,
-
         next: null,
         previous: null
       };
@@ -95,18 +102,22 @@ export const getAntigenStocks = async (
           search: search?.trim() || undefined
         }
       });
-      
       if (res.status === 200) {
         return res.data;
       }
-      console.error(res.status);
+      if (process.env.NODE_ENV === "development") {
+        console.error(res.status);
+      }
       return {
         results: [],
         count: 0,
         next: null,
         previous: null
       };
-    } catch {
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
       return {
         results: [],
         count: 0,
@@ -120,8 +131,11 @@ export const getFirstAidInventoryList = async () => {
   try {
     const res = await api2.get("inventory/archive/first-aid-inventory/");
     return res.data || [];
-  }catch {
-     return [];
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error(error);
+    }
+    return [];
   }
 };
 
@@ -142,18 +156,22 @@ export const getFirstAidInventoryList = async () => {
           search: search?.trim() || undefined
         }
       });
-      
       if (res.status === 200) {
         return res.data;
       }
-      console.error(res.status);
+      if (process.env.NODE_ENV === "development") {
+        console.error(res.status);
+      }
       return {
         results: [],
         count: 0,
         next: null,
         previous: null
       };
-    } catch {
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.error(error);
+      }
       return {
         results: [],
         count: 0,

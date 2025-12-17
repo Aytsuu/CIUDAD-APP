@@ -24,38 +24,41 @@ export interface SchedulerGetData {
 }
 
 
-export const getService = async (): Promise<Service[]> => {
+export const getService = async (): Promise<Service[] | undefined> => {
   try {
     const res = await api2.get("servicescheduler/services/");
     return res.data as Service[];
   } catch (error) {
-    console.error("Error fetching services:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching services:", error);
+    }
   }
 }
 
-export const getDays = async (): Promise<Day[]> => {
+export const getDays = async (): Promise<Day[] | undefined> => {
   try {
     const res = await api2.get("servicescheduler/days/");
     return res.data as Day[];
   } catch (error) {
-    console.error("Error fetching days:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching days:", error);
+    }
   }
 }
 
-export const getScheduler = async (): Promise<SchedulerGetData[]> => {
+export const getScheduler = async (): Promise<SchedulerGetData[] | undefined> => {
   try {
     const res = await api2.get("servicescheduler/service-scheduler/");
     
     return res.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error("Services fetch error: ", error.response?.data || error.message);
-    } else {
-      console.error("Unexpected Error: ", error);
+    if (process.env.NODE_ENV === 'development') {
+      if (axios.isAxiosError(error)) {
+        console.error("Services fetch error: ", error.response?.data || error.message);
+      } else {
+        console.error("Unexpected Error: ", error);
+      }
     }
-    throw error;
   }
 };
 

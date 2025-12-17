@@ -124,11 +124,11 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
       setError(null)
 
       try {
-        console.log("🔄 Starting to fetch all form data...")
+        // console.log("🔄 Starting to fetch all form data...")
 
         // Fetch patients
         const patientData = await getAllPatients()
-        console.log("📥 Fetched patients:", patientData)
+        // console.log("📥 Fetched patients:", patientData)
         if (patientData && patientData.length > 0) {
           // Use the same formatting as FpPage1.tsx
           const formattedPatients = patientData.map((patient: any) => {
@@ -161,7 +161,7 @@ export default function ReferralFormModal({ onClose, onAddPatient }: ReferralFor
           setPatientsData([])
         }
 
-        console.log("✅ All form data fetched successfully!")
+        // console.log("✅ All form data fetched successfully!")
       } catch (error) {
         console.error("❌ Error fetching form data:", error)
         setError("Failed to load form data. Please refresh and try again.")

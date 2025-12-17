@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Plus, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, ArrowUpDown, Search, Users, Home, UserCog, ArrowUp, ArrowDown, UserRoundX } from "lucide-react";
 import { Link } from "react-router";
+import { useAuth } from "@/context/AuthContext";
+import { useSearchParams } from "react-router";
+
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -75,9 +78,9 @@ interface Patients {
 export const getPatType = (type: string) => {
   switch (type.toLowerCase()) {
     case "resident":
-      return 'bg-blue-600 py-1 w-20 rounded-xl font-semibold text-white'
+      return 'bg-blue-600 py-1 w-20 rounded-xl font-semibold text-white text-center'
     case "transient":
-      return 'border border-black/40 py-1 w-20 rounded-xl font-semibold text-black'
+      return 'border border-black/40 py-1 w-20 rounded-xl font-semibold text-black text-center'
     default:
       return "bg-gray-500 text-white";
   }
@@ -88,7 +91,7 @@ export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         <div className="flex items-center gap-2">
           <span>Patient No.</span>
           <ArrowUpDown size={14} />
@@ -96,7 +99,7 @@ export const columns: ColumnDef<Report>[] = [
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex w-full justify-center">
+      <div className="flex w-full">
         <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">{row.original.id}</div>
       </div>
     )
@@ -105,16 +108,16 @@ export const columns: ColumnDef<Report>[] = [
     accessorKey: "fullName",
     size: 250,
     header: () => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
+      <div className="flex w-full items-center gap-2 cursor-pointer">
         <div className="flex items-center gap-2">
-          <span>Name</span>
+          <span>Patient Name</span>
         </div>
       </div>
     ),
     cell: ({ row }) => {
       const fullNameObj = row.getValue("fullName") as { lastName: string; firstName: string; mi: string } | undefined;
       return (
-        <div className="hidden lg:block max-w-xs truncate">
+        <div className="flex">
           {`${(fullNameObj?.lastName)}, ${(fullNameObj?.firstName)} ${fullNameObj?.mi}`}
         </div>
       )
@@ -123,13 +126,13 @@ export const columns: ColumnDef<Report>[] = [
   {
     accessorKey: "sitio",
     header: ({ column }) => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+      <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
         Sitio
         <ArrowUpDown size={14} />
       </div>
     ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate uppercase">
+      <div className="flex uppercase">
         {row.getValue("sitio")}
       </div>
     ),
@@ -137,68 +140,72 @@ export const columns: ColumnDef<Report>[] = [
   
   {
     accessorKey: "age",
-    header:"Age",
+    header: "Age",
     cell: ({ row }) => {
       const ageObj = row.getValue("age") as { ageNumber: number; ageUnit: string };
-      return <div className="hidden xl:flex justify-center">{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
+      return <div>{ageObj ? `${ageObj.ageNumber} ${ageObj.ageUnit} old` : "-"}</div>;
     }
   },
   {
     accessorKey: "type",
-    header: () => <div className="">Type</div>,
+    header: "Type",
     cell: ({ row }) => (
-      <div className="flex  items-center justify-center">
+      <div className="flex items-center">
         <div className={getPatType(row.getValue("type"))}>{row.getValue("type")}</div>
       </div>
     )
   },
   {
     accessorKey: "noOfRecords",
-    header: () => <div className="flex justify-center">No. of Records</div>,
-    cell: ({ row }) => <div className="flex justify-center"><PatientRecordCount patientId={row.getValue("id")} /></div>
+    size: 120,
+    header: "No. of Records",
+    cell: ({ row }) => <div className="flex"><PatientRecordCount patientId={row.getValue("id")} /></div>
   },
   {
     accessorKey: "status",
-    header: () => <div className="flex justify-center">Status</div>,
+    header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
       const displayStatus = status === "Transfer of Residency" ? "TOR" : status;
-      return <div className="flex justify-center">{displayStatus}</div>;
+      return <div className="flex">{displayStatus}</div>;
     }
   },
   {
     accessorKey: "dateRegistered",
     header: () => (
-      <div className="flex w-full justify-center items-center gap-2 cursor-pointer">
+      <div className="flex w-full items-center cursor-pointer">
         Date Registered
       </div>
     ),
     cell: ({ row }) => (
-      <div className="hidden lg:block max-w-xs truncate">
+      <div>
         {formatDate(row.getValue("dateRegistered"), 'short')}
       </div>
     ),
   },
   {
     accessorKey: "action",
-    header: () => <div className="flex justify-center">Action</div>,
+    header: "Action",
     cell: ({ row }) => (
-      <Link
-        to="/patientrecords/view"
-        state={
-          { patientId: row.getValue("id"), 
-            patientData: {
-              id: row.original.id,
-              sitio: row.original.sitio,
-              fullName: row.original.fullName,
-              type: row.original.type,
-              noOfRecords: row.original.noOfRecords,
-              philhealthId: row.original.philhealthId 
-            }
-          }}
-      >
-        <ViewButton onClick={() => {}} />
-      </Link>
+      <div>
+        <Link
+          to="/patientrecords/view"
+          state={
+            { patientId: row.getValue("id"), 
+              patientData: {
+                id: row.original.id,
+                sitio: row.original.sitio,
+                fullName: row.original.fullName,
+                type: row.original.type,
+                noOfRecords: row.original.noOfRecords,
+                philhealthId: row.original.philhealthId 
+              }
+            }}
+        >
+          <ViewButton onClick={() => {}} />
+        </Link>
+      </div>
+      
     ),
     enableSorting: false,
     enableHiding: false
@@ -222,22 +229,31 @@ function getBestAgeUnit(dob: string): { value: number; unit: string } {
 // main component
 export default function PatientsRecord() {
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
 
+  const searchTerm = searchParams.get("search") || "";
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const user = useAuth();
 
   // Fetch sitio data
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
   const sitios = sitioData || [];
 
+  // Keep local page state in sync with URL params
+  useEffect(() => {
+    const pageFromParams = parseInt(searchParams.get("page") || "1", 10);
+    setPage(Number.isNaN(pageFromParams) ? 1 : pageFromParams);
+  }, [searchParams]);
+
   // Reset to first page when filters change
   useEffect(() => {
-    setPage(1);
-  }, [debouncedSearchTerm, selectedFilter, selectedSitios]);
+    if (debouncedSearchTerm == "") return;
+    handlePageChange(1);
+  }, [debouncedSearchTerm, selectedFilter, selectedSitios, searchTerm, setSearchParams]);
 
   // Build the combined search query that includes selected sitios
   const combinedSearchQuery = useMemo(() => {
@@ -270,11 +286,22 @@ export default function PatientsRecord() {
   // searching and pagination handlers
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("page", String(newPage));
+      if (searchTerm) next.set("search", searchTerm); else next.delete("search");
+      return next;
+    });
   };
 
   const handleSearch = (search: string) => {
-    setSearchTerm(search);
     setPage(1);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("page", "1");
+      if (search.trim()) next.set("search", search.trim()); else next.delete("search");
+      return next;
+    });
   };
 
   const handleFilterChange = (filter: string) => {
@@ -367,8 +394,25 @@ export default function PatientsRecord() {
 
   const residents = patientCount?.resident || 0;
   const transients = patientCount?.transient || 0;
+  const tor = patientCount?.tor || 0;
   const residentPercentage = totalPatients > 0 ? Math.round((residents / totalPatients) * 100) : 0;
   const transientPercentage = totalPatients > 0 ? Math.round((transients / totalPatients) * 100) : 0;
+  const torPercentage = totalPatients > 0 ? Math.round((tor / totalPatients) * 100) : 0;
+
+  console.log("tor: ", tor);
+  console.log("torPercentage: ", torPercentage);
+
+
+  if(user.user == null){
+    return (
+      <MainLayoutComponent 
+        title="Patient Records"
+        description="Manage and view patients information"
+      >
+        <div>No user logged in</div>
+      </MainLayoutComponent>
+    )
+  }
 
   return (
     <MainLayoutComponent
@@ -377,7 +421,7 @@ export default function PatientsRecord() {
     >
       <div className="w-full">
         {/* Stats Cards with simplified design */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <CardLayout
             title="Total Patients"
             description="All registered patients"
@@ -440,6 +484,28 @@ export default function PatientsRecord() {
             headerClassName="pb-2"
             contentClassName="pt-0"
           />
+
+          <CardLayout
+            title="Transferred-out Patients"
+            description="Patients who have transferred residency"
+            content={
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold">{tor}</span>
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    {torPercentage > residentPercentage ? <ArrowUp className="h-3 w-3 mr-1 text-green-500" /> : <ArrowDown className="h-3 w-3 mr-1 text-amber-500" />}
+                    <span>{torPercentage}% of total</span>
+                  </div>
+                </div>
+                <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center">
+                  <UserRoundX className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            }
+            cardClassName="border shadow-sm rounded-lg"
+            headerClassName="pb-2"
+            contentClassName="pt-0"
+          />
         </div>
 
         {/* Filters Section */}
@@ -484,7 +550,7 @@ export default function PatientsRecord() {
             <ProtectedComponent exclude={["DOCTOR"]}>
               <div className="w-full sm:w-auto">
                 <Link to="/patientrecords/form">
-                  <Button className="w-full sm:w-auto flex items-center bg-buttonBlue py-1.5 px-4 text-white text-[14px] rounded-md gap-1 shadow-sm hover:bg-buttonBlue/90">
+                  <Button variant="default">
                     <Plus size={15} /> Create
                   </Button>
                 </Link>

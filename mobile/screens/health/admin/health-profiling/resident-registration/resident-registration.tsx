@@ -93,14 +93,19 @@ export default function ResidentRegistration() {
       });
     }
     
-    // Move to next step or completion screen
-    // stepId is the current step that was just completed, so navigate to stepId + 1
-    if (stepId < registrationSteps.length - 1) {
-      setCurrentStep(stepId + 1); // Navigate to next step
+    // Handle backward navigation (stepId < currentStep means going back)
+    if (stepId < currentStep) {
+      setCurrentStep(stepId);
     } else {
-      setCurrentStep(registrationSteps.length); // Completion screen (step 4, one beyond last form)
+      // Move to next step or completion screen
+      // stepId is the current step that was just completed, so navigate to stepId + 1
+      if (stepId < registrationSteps.length - 1) {
+        setCurrentStep(stepId + 1); // Navigate to next step
+      } else {
+        setCurrentStep(registrationSteps.length); // Completion screen (step 4, one beyond last form)
+      }
     }
-  }, []);
+  }, [currentStep]);
 
   const handleStepPress = React.useCallback((stepIndex: number) => {
     // Allow navigation to any step that has been reached before
@@ -245,9 +250,9 @@ export default function ResidentRegistration() {
       }, 1500);
 
     } catch (error: any) {
-      console.error("Registration failed:", error);
-      console.error("Error response:", error.response);
-      console.error("Error response data:", error.response?.data);
+      // console.error("Registration failed:", error);
+      // console.error("Error response:", error.response);
+      // console.error("Error response data:", error.response?.data);
       
       // Extract error message
       let errorMessage = "Failed to register. Please try again.";
@@ -318,7 +323,7 @@ export default function ResidentRegistration() {
     >
       <View className="flex-1 bg-gray-50">
         {/* MultiStep Progress Bar */}
-        {currentStep <= registrationSteps.length && (
+        {currentStep < registrationSteps.length && (
           <View className="bg-white px-5 pb-5 border-b border-gray-200">
             <MultiStepProgressBar
               steps={progressSteps}

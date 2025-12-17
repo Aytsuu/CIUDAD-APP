@@ -63,7 +63,7 @@ export const fetchVaccinesWithStockVacID = (vacId: number) => {
 
         setVaccines(transformedData);
       } catch (error) {
-        console.error("Error fetching vaccine stocks:", error);
+        {process.env.NODE_ENV === 'development' && console.error("Error fetching vaccine stocks:", error);}
         setVaccines({ default: [], formatted: [] });
       } finally {
         setIsLoading(false);
@@ -85,7 +85,7 @@ export const checkVaccineStatus = async (pat_id: string, vac_id: number) => {
     const response = await api2.get(`/vaccination/check-vaccine/${pat_id}/${vac_id}`);
     return response.data; // Return the data from the response
   } catch (error: unknown) {
-    // Handle errors (you can customize this based on your needs)
-    console.error("Error checking vaccine status:", error);
+    // DEVELOPMENT MODE ONLY
+    {process.env.NODE_ENV === 'development' && console.error("Error checking vaccine status:", error);}
   }
 };

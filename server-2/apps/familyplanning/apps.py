@@ -1,5 +1,3 @@
-# familyplanning/apps.py
-
 from django.apps import AppConfig
 from django.conf import settings
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -11,11 +9,9 @@ logger = logging.getLogger(__name__)
 
 class FamilyplanningConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    # NOTE: Ensure this name matches your app's actual path
     name = 'apps.familyplanning' 
 
     def ready(self):
-        # Only start the scheduler if SCHEDULER_AUTOSTART is True in settings
         if settings.SCHEDULER_AUTOSTART: 
             # Crucial check: only allow the scheduler to run in the main process (or the one designated as the master)
             if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
@@ -32,8 +28,8 @@ class FamilyplanningConfig(AppConfig):
             # --- Schedule the Daily Follow-up Check Job ---
             scheduler.add_job(
                 run_followup_check,
-                'cron',              # Use 'cron' for time-of-day scheduling
-                hour=2,              # Run every day at 2 AM (02:00)
+                'cron',              
+                hour=2,              
                 minute=0,
                 misfire_grace_time=3600, # Allow up to 1 hour to run if missed
                 id='family_planning_followup_check', # Unique ID

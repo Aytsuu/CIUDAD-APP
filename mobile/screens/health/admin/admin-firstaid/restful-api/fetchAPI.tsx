@@ -27,7 +27,7 @@ export const fetchFirstaidsWithStock = () => {
         
         // Skip if no stocks or empty array
         if (!stocks || !Array.isArray(stocks) || stocks.length === 0) {
-          console.log("No Firstaid stocks available.");
+          // console.log("No Firstaid stocks available.");
           setFirstaids([]);
           return;
         }

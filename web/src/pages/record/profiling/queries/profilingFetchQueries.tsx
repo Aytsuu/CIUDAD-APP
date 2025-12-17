@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import React from "react";
 import {
   getActiveBusinesses,
   getBusinessRespondent,
@@ -191,6 +192,7 @@ export const useFamilyData = (familyId: string) => {
   return useQuery({
     queryKey: ["familyData", familyId],
     queryFn: () => getFamilyData(familyId),
+    enabled: !!familyId,
     staleTime: 5000,
   });
 };
@@ -202,6 +204,68 @@ export const useFamilyMembers = (familyId: string) => {
     queryFn: () => getFamilyMembers(familyId),
     staleTime: 5000,
   });
+};
+
+export const useFamilyMembersWithResidentDetails = (familyId: string | null) => {
+  const { data: familyMembers } = useFamilyMembers(familyId || "");
+
+  return React.useMemo(() => {
+    // Return empty array if no familyId or if data is not available
+    if (!familyId || !familyMembers) {
+      return [];
+    }
+
+    // Handle paginated response structure - extract results array
+    const familyMembersArray = familyMembers?.results || familyMembers;
+
+    // Ensure familyMembersArray is an array
+    const safeFamilyMembers = Array.isArray(familyMembersArray) ? familyMembersArray : [];
+
+    if (safeFamilyMembers.length === 0) {
+      return [];
+    }
+
+    // Transform family members to match expected structure (optimized)
+    const transformedMembers = safeFamilyMembers.map((member: any) => {
+      // Parse the name field more efficiently
+      let firstName = '';
+      let lastName = '';
+      let middleName = '';
+      
+      if (member.name) {
+        const [lastNamePart, ...restParts] = member.name.split(', ');
+        lastName = lastNamePart?.trim() || '';
+        
+        if (restParts.length > 0) {
+          const nameParts = restParts.join(', ').trim().split(' ');
+          firstName = nameParts[0] || '';
+          middleName = nameParts.slice(1).join(' ') || '';
+        }
+      }
+
+      return {
+        rp_id: member.rp_id,
+        per: {
+          per_fname: firstName,
+          per_lname: lastName,
+          per_mname: middleName,
+          per_sex: member.sex,
+          per_dob: member.dob,
+          per_contact: member.contact || ''
+        },
+        // Also include flat structure for compatibility
+        firstName,
+        lastName,
+        middleName,
+        sex: member.sex,
+        dateOfBirth: member.dob,
+        contact: member.contact || '',
+        fc_role: member.fc_role
+      };
+    });
+    
+    return transformedMembers;
+  }, [familyId, familyMembers]);
 };
 
 export const useFamFilteredByHouse = (householdId: string) => {

@@ -54,6 +54,9 @@ export default function IndividualFpRecordsScreen() {
     queryKey: ["fpRecordsForPatient", patientId],
     queryFn: () => getFPRecordsForPatient(patientId), 
     enabled: !!patientId,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 
   // Pagination calculations

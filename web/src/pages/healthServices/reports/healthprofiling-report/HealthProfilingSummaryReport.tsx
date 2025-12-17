@@ -81,7 +81,9 @@ export default function HealthProfilingSummaryReport() {
 
       await html2pdf().set(opt as any).from(element).save(filename);
     } catch (e) {
-      console.error(e);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(e);
+      }
       toast.error("Failed to export PDF. Please try again.");
     } finally {
       hideLoading();

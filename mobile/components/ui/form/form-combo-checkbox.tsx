@@ -92,14 +92,14 @@ const FormComboCheckbox = ({
 
         return (
           <View className="w-full">
-            {label && <Text className="text-sm mb-2 font-medium">{label}</Text>}
+            {label && <Text className="text-sm mb-2">{label}</Text>}
             {!readOnly ? (
               <>
                 <TouchableOpacity
                   ref={triggerRef}
                   onPress={() => setIsOpen(true)}
                   className={cn(
-                    'w-full border border-gray-300 rounded-md px-3 py-2 flex-row justify-between items-center',
+                    'w-full border border-gray-300 px-3 py-2 flex-row h-[45px] rounded-xl justify-between items-center',
                     !selectedValues.length && 'text-gray-500',
                   )}
                 >

@@ -1,0 +1,512 @@
+[
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00001250924",
+    "fields": {
+      "rp_date_registered": "2025-09-24",
+      "per_id": 1,
+      "staff_id": null,
+      "voter_id": 1
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00002250924",
+    "fields": {
+      "rp_date_registered": "2025-09-24",
+      "per_id": 2,
+      "staff_id": null,
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00003250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 3,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00004250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 4,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00005250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 5,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00006250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 6,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00007250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 7,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00008250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 8,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00009250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 9,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00010250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 10,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00011250925",
+    "fields": {
+      "rp_date_registered": "2025-09-25",
+      "per_id": 11,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00012250930",
+    "fields": {
+      "rp_date_registered": "2025-09-30",
+      "per_id": 12,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00013250930",
+    "fields": {
+      "rp_date_registered": "2025-09-30",
+      "per_id": 13,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "00014251001",
+    "fields": {
+      "rp_date_registered": "2025-10-01",
+      "per_id": 27,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25100515",
+    "fields": {
+      "rp_date_registered": "2025-10-05",
+      "per_id": 29,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25100716",
+    "fields": {
+      "rp_date_registered": "2025-10-07",
+      "per_id": 30,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25100717",
+    "fields": {
+      "rp_date_registered": "2025-10-07",
+      "per_id": 31,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25100718",
+    "fields": {
+      "rp_date_registered": "2025-10-07",
+      "per_id": 32,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25100919",
+    "fields": {
+      "rp_date_registered": "2025-10-09",
+      "per_id": 33,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25100920",
+    "fields": {
+      "rp_date_registered": "2025-10-09",
+      "per_id": 34,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25101021",
+    "fields": {
+      "rp_date_registered": "2025-10-10",
+      "per_id": 35,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25101022",
+    "fields": {
+      "rp_date_registered": "2025-10-10",
+      "per_id": 36,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112423",
+    "fields": {
+      "rp_date_registered": "2025-11-24",
+      "per_id": 38,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112424",
+    "fields": {
+      "rp_date_registered": "2025-11-24",
+      "per_id": 37,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112425",
+    "fields": {
+      "rp_date_registered": "2025-11-24",
+      "per_id": 41,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112526",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 42,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112527",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 43,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112528",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 44,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112529",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 45,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112530",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 46,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112531",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 39,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112532",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 40,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112533",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 47,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112534",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 48,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112535",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 49,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112536",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 50,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25112537",
+    "fields": {
+      "rp_date_registered": "2025-11-25",
+      "per_id": 51,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25120738",
+    "fields": {
+      "rp_date_registered": "2025-12-07",
+      "per_id": 52,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25120739",
+    "fields": {
+      "rp_date_registered": "2025-12-07",
+      "per_id": 53,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25120740",
+    "fields": {
+      "rp_date_registered": "2025-12-07",
+      "per_id": 54,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25120941",
+    "fields": {
+      "rp_date_registered": "2025-12-09",
+      "per_id": 55,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25120942",
+    "fields": {
+      "rp_date_registered": "2025-12-09",
+      "per_id": 56,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25120943",
+    "fields": {
+      "rp_date_registered": "2025-12-09",
+      "per_id": 57,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25120944",
+    "fields": {
+      "rp_date_registered": "2025-12-09",
+      "per_id": 58,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25121045",
+    "fields": {
+      "rp_date_registered": "2025-12-10",
+      "per_id": 59,
+      "staff_id": "25112528",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25121146",
+    "fields": {
+      "rp_date_registered": "2025-12-11",
+      "per_id": 60,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25121147",
+    "fields": {
+      "rp_date_registered": "2025-12-11",
+      "per_id": 61,
+      "staff_id": "00002250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25121248",
+    "fields": {
+      "rp_date_registered": "2025-12-12",
+      "per_id": 62,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25121249",
+    "fields": {
+      "rp_date_registered": "2025-12-12",
+      "per_id": 66,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25121250",
+    "fields": {
+      "rp_date_registered": "2025-12-12",
+      "per_id": 67,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  },
+  {
+    "model": "profiling.ResidentProfile",
+    "pk": "25121251",
+    "fields": {
+      "rp_date_registered": "2025-12-12",
+      "per_id": 68,
+      "staff_id": "00001250924",
+      "voter_id": null
+    }
+  }
+]

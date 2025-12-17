@@ -7,7 +7,7 @@ export const useIndividualMedicineRecords = (pat_id: string, page: number, pageS
     queryKey: ["individualMedicineRecords", pat_id, page, pageSize, search],
     queryFn: () => getIndividualMedicineRecords(pat_id, page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0
+    staleTime: 5000
   });
 };
 

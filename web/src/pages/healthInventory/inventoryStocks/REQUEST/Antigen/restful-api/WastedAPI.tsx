@@ -7,7 +7,9 @@ export const handleVaccineWasteAPI = async (id: number, data: { wastedAmount: nu
     const response = await api2.post(`/inventory/waste/vaccine/${id}/`, data);
     return response.data;
   } catch (error) {
-    console.error("Error in handleVaccineWasteAPI:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error in handleVaccineWasteAPI:", error);
+    }
     throw error;
   }
 };
@@ -17,7 +19,9 @@ export const handleSupplyWasteAPI = async (id: number, data: { wastedAmount: num
     const response = await api2.post(`/inventory/waste/supply/${id}/`, data);
     return response.data;
   } catch (error) {
-    console.error("Error in handleSupplyWasteAPI:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error in handleSupplyWasteAPI:", error);
+    }
     throw error;
   }
 };
@@ -28,7 +32,9 @@ export const fetchVaccineStockById = async (id: number) => {
     const response = await api2.get(`/inventory/vaccine-stocks/${id}/`);
     return response.data;
   } catch (error) {
-    console.error("Error in fetchVaccineStockById:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error in fetchVaccineStockById:", error);
+    }
     throw error;
   }
 };
@@ -38,7 +44,9 @@ export const fetchImzSupplyStockById = async (id: number) => {
     const response = await api2.get(`/inventory/immunization-stocks/${id}/`);
     return response.data;
   } catch (error) {
-    console.error("Error in fetchImzSupplyStockById:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error in fetchImzSupplyStockById:", error);
+    }
     throw error;
   }
 };

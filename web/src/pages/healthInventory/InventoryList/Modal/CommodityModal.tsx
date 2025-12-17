@@ -108,7 +108,9 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
 
       onClose();
     } catch (error) {
-      console.error("Error during submission:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error during submission:", error);
+      }
       showErrorToast("Failed to process commodity");
     } finally {
       setIsSubmitting(false);
@@ -129,7 +131,7 @@ export function CommodityModal({ mode, initialData, onClose }: CommodityModalPro
     const isValid = await form.trigger();
     
     if (!isValid) {
-      console.log("Form has validation errors, not showing confirmation");
+      // console.log("Form has validation errors, not showing confirmation");
       return;
     }
 

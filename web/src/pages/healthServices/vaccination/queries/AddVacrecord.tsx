@@ -65,7 +65,9 @@ export const useSubmitVaccinationRecord = () => {
         vaccination_history: vaccinationHistory
       };
 
-      console.log("Submission Data:", submissionData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Submission Data:", submissionData);
+      }
       const response = await api2.post("/vaccination/submit-vaccination-records/", submissionData);
       return response.data;
     },

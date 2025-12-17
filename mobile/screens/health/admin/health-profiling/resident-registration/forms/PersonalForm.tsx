@@ -72,6 +72,31 @@ export default function PersonalForm({ form, onNext }: PersonalFormProps) {
     };
   }, []);
 
+  // Auto-capitalize text inputs to uppercase
+  React.useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name && isMounted.current) {
+        const textFields = [
+          'personalSchema.per_fname',
+          'personalSchema.per_lname',
+          'personalSchema.per_mname',
+          'personalSchema.per_suffix',
+        ];
+        
+        if (textFields.includes(name)) {
+          const currentValue = getValues(name);
+          if (typeof currentValue === 'string' && currentValue) {
+            const uppercaseValue = currentValue.toUpperCase();
+            if (uppercaseValue !== currentValue) {
+              setValue(name, uppercaseValue, { shouldValidate: false });
+            }
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, getValues, setValue]);
+
   const {
     headingSize,
     bodyTextSize,
@@ -156,8 +181,8 @@ export default function PersonalForm({ form, onNext }: PersonalFormProps) {
   };
 
   const handleBack = () => {
-    // Navigate back to previous step (Account form - step 1)
-    onNext(0, false); // Step 0 is the Account form
+    // Navigate back to previous step (Account form - step 0)
+    onNext(0, false); // Pass step 0 to navigate back to Account form
   };
 
   return (

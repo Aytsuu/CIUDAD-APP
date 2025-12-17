@@ -27,10 +27,10 @@ export interface AnimalBiteAnalytics {
 
 export const getAnimalbitePatients = async () => {
   try {
-    console.log("🔍 Fetching comprehensive animal bite patient records from /animalbites/patient-details/...")
+    // console.log("🔍 Fetching comprehensive animal bite patient records from /animalbites/patient-details/...")
     const res = await api2.get("animalbites/patient-details/")
     const allAnimalBiteRecords = res.data
-    console.log(`✅ Found ${allAnimalBiteRecords.length} comprehensive animal bite records.`)
+    // console.log(`✅ Found ${allAnimalBiteRecords.length} comprehensive animal bite records.`)
     return allAnimalBiteRecords
   } catch (error) {
     console.error("❌ Error fetching comprehensive animal bite patients:", error)
@@ -42,7 +42,7 @@ export const getAnimalbitePatients = async () => {
 export const getAllPatients = async () => {
   try {
     const res = await api2.get("patientrecords/patients/")
-    console.log("✅ Patients fetched successfully:", res.data)
+    // console.log("✅ Patients fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, "Fetch All Patients")
@@ -52,10 +52,10 @@ export const getAllPatients = async () => {
 
 export const getAnimalBitePatientDetails = async (patientId?: string) => {
   try {
-    console.log(`🔍 Fetching animal bite patient details for patientId: ${patientId || "all"}...`)
+    // console.log(`🔍 Fetching animal bite patient details for patientId: ${patientId || "all"}...`)
     const url = patientId ? `animalbites/patient-details/?patient_id=${patientId}` : "animalbites/patient-details/"
     const res = await api2.get(url)
-    console.log(`✅ Animal bite patient details fetched successfully: ${res.data.length} records`)
+    // console.log(`✅ Animal bite patient details fetched successfully: ${res.data.length} records`)
     return res.data
   } catch (error: any) {
     console.error("❌ Error fetching animal bite patient details:", error)
@@ -76,7 +76,7 @@ export const getAnimalbiteReferrals = async () => {
 export const getAnimalbiteDetails = async () => {
   try {
     const res = await api2.get("animalbites/details/")
-    console.log("✅ Animal bite details fetched successfully:", res.data)
+    // console.log("✅ Animal bite details fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, "Fetch Animal Bite Details")
@@ -86,9 +86,9 @@ export const getAnimalbiteDetails = async () => {
 
 export const getUniqueAnimalbitePatients = async (params: any = {}) => {
   try {
-    console.log("🔍 Fetching unique animal bite patients with params:", params)
+    // console.log("🔍 Fetching unique animal bite patients with params:", params)
     const res = await api2.get("animalbites/unique-patients/", { params })
-    console.log("✅ Unique animal bite patients fetched successfully:", res.data)
+    // console.log("✅ Unique animal bite patients fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, "Fetch Unique Animal Bite Patients")
@@ -98,9 +98,9 @@ export const getUniqueAnimalbitePatients = async (params: any = {}) => {
 
 export const getAnimalBiteStats = async () => {
   try {
-    console.log("🔍 Fetching animal bite stats...")
+    // console.log("🔍 Fetching animal bite stats...")
     const res = await api2.get("animalbites/stats/")
-    console.log("✅ Animal bite stats fetched successfully:", res.data)
+    // console.log("✅ Animal bite stats fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, "Fetch Animal Bite Stats")
@@ -116,11 +116,10 @@ export const getAnimalBiteStats = async () => {
 
 export const getAnimalBitePatientSummary = async () => {
   try {
-    console.log("🔍 Fetching unique animal bite patient summary from /animalbites/patient-details/...")
+    // console.log("🔍 Fetching unique animal bite patient summary from /animalbites/patient-details/...")
     const res = await api2.get("animalbites/patient-details/")
-    console.log("API Response:", res.data)
     const uniquePatients = res.data
-    console.log(`✅ Found ${uniquePatients.length} unique animal bite patients.`)
+    // console.log(`✅ Found ${uniquePatients.length} unique animal bite patients.`)
 
     const patientIds = uniquePatients.map((p: any) => p.patient_id)
     const uniqueIds = [...new Set(patientIds)]
@@ -133,7 +132,7 @@ export const getAnimalBitePatientSummary = async () => {
         }
       })
       const deduplicatedPatients = Array.from(uniquePatientsMap.values())
-      console.log(`✅ Deduplicated to ${deduplicatedPatients.length} unique patients.`)
+      // console.log(`✅ Deduplicated to ${deduplicatedPatients.length} unique patients.`)
       return deduplicatedPatients
     }
     return uniquePatients
@@ -146,21 +145,21 @@ export const getAnimalBitePatientSummary = async () => {
 
 export const getPatientById = async (patientId: string) => {
   try {
-    console.log(`🔍 Fetching patient with ID: ${patientId}...`)
+    // console.log(`🔍 Fetching patient with ID: ${patientId}...`)
     const res = await api2.get(`patientrecords/patients/${patientId}/`)
-    console.log("✅ Patient fetched successfully:", res.data)
+    // console.log("✅ Patient fetched successfully:", res.data)
     return res.data
   } catch (error) {
-    handleApiError(error, `Fetch Patient by ID: ${patientId}`)
+    // handleApiError(error, `Fetch Patient by ID: ${patientId}`)
     return null
   }
 }
 
 export const createPatient = async (patientData: any) => {
   try {
-    console.log("📝 Creating new patient:", patientData)
+    // console.log("📝 Creating new patient:", patientData)
     const res = await api2.post("patientrecords/patients/", patientData)
-    console.log("✅ Patient created successfully:", res.data)
+    // console.log("✅ Patient created successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, "Create Patient")
@@ -170,9 +169,9 @@ export const createPatient = async (patientData: any) => {
 
 export const createPatientRecord = async (recordData: any) => {
   try {
-    console.log("📝 Creating new patient record:", recordData)
+    // console.log("📝 Creating new patient record:", recordData)
     const res = await api2.post("patientrecords/patient-record/", recordData)
-    console.log("✅ Patient record created successfully:", res.data)
+    // console.log("✅ Patient record created successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, "Create Patient Record")
@@ -183,7 +182,7 @@ export const createPatientRecord = async (recordData: any) => {
 export const getPatientRecordsByPatId = async (patId: string) => {
   try {
     const res = await api2.get(`animalbites/patient-details/?patient_id=${patId}`)
-    console.log("✅ Patient records by pat_id fetched successfully:", res.data)
+    // console.log("✅ Patient records by pat_id fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, `Fetch Patient Records by Pat ID: ${patId}`)
@@ -194,7 +193,7 @@ export const getPatientRecordsByPatId = async (patId: string) => {
 export const getPatientRecordsByReferralId = async (referralId: string) => {
   try {
     const res = await api2.get(`animalbites/referral/${referralId}/`)
-    console.log("✅ Patient records by referral ID fetched successfully:", res.data)
+    // console.log("✅ Patient records by referral ID fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, `Fetch Patient Records by Referral ID: ${referralId}`)
@@ -204,14 +203,14 @@ export const getPatientRecordsByReferralId = async (referralId: string) => {
 
 export const getAnimalBiteAnalytics = async ({ months = 12, month }: { months?: number; month?: string }): Promise<AnimalBiteAnalytics> => {
   try {
-    console.log(`🔍 Fetching animal bite analytics for last ${months} months${month ? ` ending ${month}` : ''}...`)
+    // console.log(`🔍 Fetching animal bite analytics for last ${months} months${month ? ` ending ${month}` : ''}...`)
     const res = await api2.get("animalbites/analytics/", {
       params: {
         months,
         ...(month && { month }),
       },
     })
-    console.log("✅ Animal bite analytics fetched successfully:", res.data)
+    // console.log("✅ Animal bite analytics fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, "Fetch Animal Bite Analytics")
@@ -234,9 +233,9 @@ export const getAnimalBiteAnalytics = async ({ months = 12, month }: { months?: 
 
 export const getAnimalBitePatientAnalytics = async (patientId: string) => {
   try {
-    console.log(`🔍 Fetching patient analytics for ${patientId}...`)
+    // console.log(`🔍 Fetching patient analytics for ${patientId}...`)
     const res = await api2.get(`animalbites/analytics/${patientId}/`)
-    console.log("✅ Patient analytics fetched successfully:", res.data)
+    // console.log("✅ Patient analytics fetched successfully:", res.data)
     return res.data
   } catch (error) {
     handleApiError(error, "Fetch Patient Analytics")

@@ -14,7 +14,9 @@ export const useUpdateHeaderReport = () => {
       queryClient.invalidateQueries({ queryKey: ["monthlyMorbidityDetails"] });
     },
     onError: (error: any) => {
-      console.error("Error updating header report:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error updating header report:", error);
+      }
       toast.error("Failed to update header report");
     },
   });

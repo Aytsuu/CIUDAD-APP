@@ -6,7 +6,7 @@ export const getFirstAidMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<FirstAidMonthsResponse> => {
+): Promise<FirstAidMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== 'all') params.append('year', year);
@@ -17,8 +17,10 @@ export const getFirstAidMonths = async (
     const response = await api2.get<FirstAidMonthsResponse>(`/inventory/firstaid/summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching first aid months:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching first aid months:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -27,7 +29,7 @@ export const getMonthlyFirstAidRecords = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<FirstAidMonthlyDetailResponse> => {
+): Promise<FirstAidMonthlyDetailResponse | undefined> => {
   try {
     const response = await api2.get<FirstAidMonthlyDetailResponse>(`/inventory/firstaid/records/${month}/`, {
       params: {
@@ -38,7 +40,9 @@ export const getMonthlyFirstAidRecords = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly first aid records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly first aid records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

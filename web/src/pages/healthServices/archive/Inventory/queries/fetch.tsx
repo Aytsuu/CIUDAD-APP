@@ -10,7 +10,7 @@ export const useAntigenSocks = (
       queryKey: ["archiveantigeninventorylist", page, pageSize, search],
       queryFn: () => getAntigenStocks(page, pageSize, search),
       refetchOnMount: true,
-      staleTime: 0,
+      staleTime: 5000,
     });
   };
 
@@ -26,7 +26,7 @@ export const useArchivedCommodityStocks = (
       queryKey: ["archivecommodityinventorylist", page, pageSize, search],
       queryFn: () => getArchivedCommodityStocks(page, pageSize, search),
       refetchOnMount: true,
-      staleTime: 0,
+      staleTime: 5000,
     });
   };
 
@@ -40,7 +40,7 @@ export const useArchivedMedicineStocks = (
       queryKey: ["archivemedicineinventorylist", page, pageSize, search],
       queryFn: () => getArchivedMedicineStocks(page, pageSize, search),
       refetchOnMount: true,
-      staleTime: 0,
+      staleTime: 5000,
     });
   };
   
@@ -55,7 +55,7 @@ export const useArchivedFirstAidStocks = (
       queryKey: ["archivefirstaidinventorylist", page, pageSize, search],
       queryFn: () => getArchivedFirstAidStocks(page, pageSize, search),
       refetchOnMount: true,
-      staleTime: 0,
+      staleTime: 5000,
     });
   };
   

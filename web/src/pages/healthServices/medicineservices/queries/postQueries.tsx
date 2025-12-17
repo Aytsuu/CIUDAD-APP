@@ -23,7 +23,9 @@ export const useMedicineRequestMutation = () => {
       navigate(-1);
     },
     onError: (error: Error) => {
-      console.error("Submission failed:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Submission failed:", error);
+      }
       showErrorToast(error.message || "Failed to submit medicine request. Please try again.");
     }
   });

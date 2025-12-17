@@ -81,7 +81,7 @@ export default function ForwardedMaternal() {
          title="Forwarded Maternal Records" 
          description="View and manage forwarded maternal health records"
       >
-         <div>
+         <div className="bg-white">
             <div className="bg-white flex w-full p-6 gap-x-2">
                <div className="relative w-1/4">
                   <Search
@@ -102,13 +102,16 @@ export default function ForwardedMaternal() {
                   <TableLoading />
                </div>
             ) : (
-               <div className="bg-white border">
+               <div className="border">
                   <DataTable columns={columns} data={transformedData} />
                </div>
             )}
             
             
-            <div className="flex justify-end mt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full py-3 gap-3 sm:gap-0 border-t">
+               <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
+                  Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, prenatalData?.count) || 0} of {prenatalData?.count} rows
+               </p>
                <PaginationLayout 
                   currentPage={currentPage}
                   totalPages={totalPages}

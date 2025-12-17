@@ -9,7 +9,9 @@ export function useFirstAidCount(patientId: string) {
       return response.data;
     },
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 }
 
@@ -43,6 +45,8 @@ export const useFirstAidRecords = (params: {
     },
     enabled: !!params.patientId, // Only run the query if patientId exists
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 };

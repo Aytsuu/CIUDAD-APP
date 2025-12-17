@@ -10,7 +10,9 @@ export const useSubmitMedicalConsultation = () => {
   const navigate = useNavigate();
   return useMutation({
     mutationFn: async ({ data }: { data: any }) => {
-      console.log("Submitting medical consultation data:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Submitting medical consultation data:", data);
+      }
       const response = await api2.post("/medical-consultation/create-medical-consultation-record-step1/", data);
       return response.data;
     },
@@ -31,7 +33,9 @@ export const useSubmitMedicalConsultation = () => {
       navigate(-1);
     },
     onError: (error: any) => {
-      console.error(error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error(error);
+      }
       if (axios.isAxiosError(error) && error.response) {
         showErrorToast(`Error: ${error.response.data.error || "Something went wrong"}`);
       } else {

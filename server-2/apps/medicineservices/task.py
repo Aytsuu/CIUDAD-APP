@@ -118,27 +118,38 @@ def send_medicine_expired_notification(medicine_request_item):
 
 def send_daily_pending_medicine_requests_notification():
     """
-    Daily task that sends notification if there are pending medicine requests
-    Counts unique medreq_id to avoid duplicate counting of the same request
-    Only sends ONE notification per day (using cache to prevent duplicates)
+    Daily task that sends notification for NEW pending medicine requests only
+    Tracks which requests have already been notified to avoid duplicate notifications
+    Only sends notification for requests that haven't been notified before
     """
     try:
         from django.core.cache import cache
-        from .models import MedicineRequestItem
+        from django.utils import timezone
+        from .models import MedicineRequest, MedicineRequestItem
         from apps.inventory.signals import get_health_staff_recipients
         
-        # Check if notification was already sent today (prevent duplicates)
-        cache_key = "pending_medicine_notification_sent_today"
-        if cache.get(cache_key):
-            logger.info("⏭️ Pending medicine notification already sent today, skipping")
+        # Get all pending medicine requests
+        pending_requests = MedicineRequest.objects.filter(
+            items__status__iexact='pending'
+        ).distinct()
+        
+        if not pending_requests.exists():
+            logger.info("⏭️ No pending medicine requests found")
             return 0
         
-        # Count unique pending medicine requests (distinct medreq_id)
-        pending_requests_count = MedicineRequestItem.objects.filter(
-            status__iexact='pending'
-        ).values('medreq_id').distinct().count()
+        # Get cache key for tracking notified requests
+        cache_key = "notified_pending_medicine_requests"
+        notified_request_ids = cache.get(cache_key, set())
         
-        if pending_requests_count > 0:
+        # Find NEW pending requests that haven't been notified yet
+        new_pending_requests = []
+        for request in pending_requests:
+            if request.medreq_id not in notified_request_ids:
+                new_pending_requests.append(request)
+        
+        new_pending_count = len(new_pending_requests)
+        
+        if new_pending_count > 0:
             # Get health staff recipients
             recipients = get_health_staff_recipients()
             
@@ -146,13 +157,17 @@ def send_daily_pending_medicine_requests_notification():
                 notification = NotificationQueries()
                 
                 # Create notification message based on count
-                if pending_requests_count == 1:
-                    message = "There is 1 pending medicine request waiting for review."
+                if new_pending_count == 1:
+                    message = f"There is 1 new medicine request (ID: {new_pending_requests[0].medreq_id}) with pending items waiting for review and action."
                 else:
-                    message = f"There are {pending_requests_count} pending medicine requests waiting for review."
+                    request_ids = [req.medreq_id for req in new_pending_requests[:3]]  # Show first 3 IDs
+                    ids_text = ", ".join(request_ids)
+                    if new_pending_count > 3:
+                        ids_text += f" and {new_pending_count - 3} more"
+                    message = f"There are {new_pending_count} new medicine requests ({ids_text}) with pending items waiting for review and action."
                 
                 success = notification.create_notification(
-                    title="Pending Medicine Requests Alert",
+                    title="New Pending Medicine Requests Alert",
                     message=message,
                     recipients=recipients,
                     notif_type="PENDING",
@@ -163,18 +178,28 @@ def send_daily_pending_medicine_requests_notification():
                 )
                 
                 if success:
-                    # Mark notification as sent for today (86400 seconds = 24 hours)
-                    cache.set(cache_key, True, 86400)
-                    logger.info(f"✅ Daily pending medicine requests notification sent: {pending_requests_count} unique pending requests")
+                    # Add the new request IDs to the notified set
+                    for request in new_pending_requests:
+                        notified_request_ids.add(request.medreq_id)
+                    
+                    # Update cache with no expiration (persistent until status changes)
+                    cache.set(cache_key, notified_request_ids, None)
+                    
+                    logger.info(f"✅ New pending medicine requests notification sent: {new_pending_count} new requests")
                 else:
-                    logger.error("❌ Failed to send daily pending medicine requests notification")
+                    logger.error("❌ Failed to send new pending medicine requests notification")
             else:
                 logger.warning("⚠️ No health staff recipients found for pending medicine requests notification")
         else:
-            logger.info("⏭️ No pending medicine requests, skipping daily notification")
+            logger.info("⏭️ No new pending medicine requests to notify about")
+        
+        # Clean up cache: remove request IDs that are no longer pending
+        current_pending_ids = set(req.medreq_id for req in pending_requests)
+        notified_request_ids = notified_request_ids.intersection(current_pending_ids)
+        cache.set(cache_key, notified_request_ids, None)
             
-        return pending_requests_count
+        return new_pending_count
         
     except Exception as e:
-        logger.error(f"❌ Error in daily pending medicine requests notification: {e}")
+        logger.error(f"❌ Error in pending medicine requests notification: {e}")
         return 0

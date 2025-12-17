@@ -11,8 +11,10 @@ export const getMonthlyData = async (page: number, pageSize: number, year?: stri
     const response = await api2.get<any>(`/reports/fhis/monthly/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly data:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly data:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -31,13 +33,15 @@ export interface VaccinationStatisticsResponse {
   "13_23_months": VaccineStatistic[];
 }
 
-export const getVaccinationStatistics = async (month: string): Promise<VaccinationStatisticsResponse> => {
+export const getVaccinationStatistics = async (month: string): Promise<any> => {
   try {
     const response = await api2.get<VaccinationStatisticsResponse>(`/reports/fhischildhealth-page4/monthly/${month}/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching vaccination statistics:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching vaccination statistics:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -62,13 +66,15 @@ export interface NutritionStatisticsResponse {
   nutritional_status_assessment: NutritionalStatusAssessment[];
 }
 
-export const getNutritionStatistics = async (month: string): Promise<NutritionStatisticsResponse> => {
+export const getNutritionStatistics = async (month: string): Promise<any> => {
   try {
     const response = await api2.get<NutritionStatisticsResponse>(`/reports/fhischildhealth-page5/monthly/${month}/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching nutrition statistics:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching nutrition statistics:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -109,13 +115,15 @@ export interface DewormingStatisticsResponse {
   rounds?: DewormingRound[];
 }
 
-export const getDewormingStatistics = async (month: string): Promise<DewormingStatisticsResponse> => {
+export const getDewormingStatistics = async (month: string): Promise<any> => {
   try {
     const response = await api2.get<DewormingStatisticsResponse>(`/reports/deworming-statistics/monthly/${month}/`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching deworming statistics:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching deworming statistics:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -131,7 +139,9 @@ export const getMonthlyMorbidityDetails = async (month: string, page?: number, p
     const response = await api2.get<any>(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly morbidity details:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly morbidity details:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

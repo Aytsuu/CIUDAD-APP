@@ -232,7 +232,7 @@ export const getLatestCompleteFPRecordForPatient = async (patientId: string): Pr
     return response.data
   } catch (err) {
     if (axios.isAxiosError(err) && err.response?.status === 404) {
-      console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
+      // console.log(`No latest complete FP record found for patient ${patientId}. This is expected for new records.`);
       return null; // Return null if no existing record, so the form can load defaults
     }
     console.error(`❌ Error fetching latest complete FP record for patient ${patientId}:`, err)
@@ -244,7 +244,7 @@ export const getLatestCompleteFPRecordForPatient = async (patientId: string): Pr
 export const getFPCompleteRecord = async (fprecord_id: any): Promise<any> => {
   try {
     const response = await api2.get(`familyplanning/complete-fp-record/${fprecord_id}/`)
-    console.log("Error",response.data);
+    // console.log("Error",response.data);
     
     return response.data
   } catch (err) {

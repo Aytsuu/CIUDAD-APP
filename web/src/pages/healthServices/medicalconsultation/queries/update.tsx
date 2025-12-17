@@ -39,7 +39,9 @@ export const useActionAppointment = () => {
     },
 
     onError: (error: Error) => {
-      console.error("Failed to reject appointment:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to reject appointment:", error);
+      }
       showErrorToast("Failed to reject appointment");
     }
   });

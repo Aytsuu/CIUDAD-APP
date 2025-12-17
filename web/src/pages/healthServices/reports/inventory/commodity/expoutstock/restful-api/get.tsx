@@ -8,7 +8,7 @@ import { api2 } from "@/api/api";
 export const getCommodityExpiredOutOfStockSummary = async (
   page: number,
   pageSize: number,
-): Promise<CommodityExpiredOutOfStockSummaryResponse> => {
+): Promise<CommodityExpiredOutOfStockSummaryResponse| undefined> => {
   try {
     const params = new URLSearchParams();
     params.append('page', page.toString());
@@ -19,21 +19,25 @@ export const getCommodityExpiredOutOfStockSummary = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching commodity expired/out-of-stock summary:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching commodity expired/out-of-stock summary:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
 export const getMonthlyCommodityExpiredOutOfStockDetail = async (
   month: string,
-): Promise<CommodityExpiredOutOfStockDetailResponse> => {
+): Promise<CommodityExpiredOutOfStockDetailResponse | undefined> => {
   try {
     const response = await api2.get<CommodityExpiredOutOfStockDetailResponse>(
       `/inventory/commodity-expired-out-of-stock-detail/${month}/`
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly commodity expired/out-of-stock detail:", error);
-    throw error;
-  };
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly commodity expired/out-of-stock detail:", error);
+    }
+    // Do not throw in production; only log in development
+  }
 };

@@ -94,14 +94,15 @@ export default function ScheduleRecords() {
         try {
           const patientDetails = visit.patient_details;
           if (!patientDetails) {
-            console.warn("No patient details found for visit:", visit);
+            if (process.env.NODE_ENV === "development") {
+              console.warn("No patient details found for visit:", visit);
+            }
             return null;
           }
 
-        const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
-        const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patientInfo.per_dob || "")
-        const address = patientDetails.address || {}
-
+          const patientInfo = patientDetails.patient_info || patientDetails.personal_info || {}
+          const { value: ageInfo, unit: ageUnit } = getBestAgeUnit(patientInfo.per_dob || "")
+          const address = patientDetails.address || {}
 
           const formatDate = (dateStr: string) => {
             if (!dateStr) return new Date().toISOString().split("T")[0];
@@ -112,30 +113,32 @@ export default function ScheduleRecords() {
             }
           };
 
-        const record: ScheduleRecord = {
-          id: visit.followv_id || visit.id || 0,
-          patient: {
-            firstName: patientInfo.per_fname || "",
-            lastName: patientInfo.per_lname || "",
-            middleName: patientInfo.per_mname || "",
-            gender: patientInfo.per_sex || "",
-            age: ageInfo,
-            ageTime: ageUnit,
-            patientId: patientDetails.pat_id || patientInfo.pat_id || "",
-          },
-          scheduledDate: formatDate(visit.followv_date || visit.date),
-          purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
-          status: visit.followv_status || "Pending",
-          sitio: address.add_sitio || "",
-          type: patientDetails.pat_type || "",
-          patrecType: patientDetails.patrec_type || "",
-        }
+          const record: ScheduleRecord = {
+            id: visit.followv_id || visit.id || 0,
+            patient: {
+              firstName: patientInfo.per_fname || "",
+              lastName: patientInfo.per_lname || "",
+              middleName: patientInfo.per_mname || "",
+              gender: patientInfo.per_sex || "",
+              age: ageInfo,
+              ageTime: ageUnit,
+              patientId: patientDetails.pat_id || patientInfo.pat_id || "",
+            },
+            scheduledDate: formatDate(visit.followv_date || visit.date),
+            purpose: visit.followv_description || visit.description || visit.purpose || "Follow-up Visit",
+            status: visit.followv_status || "Pending",
+            sitio: address.add_sitio || "",
+            type: patientDetails.pat_type || "",
+            patrecType: patientDetails.patrec_type || "",
+          }
 
-        return record
-      } catch (error) {
-        console.error("Error transforming visit data:", error, visit)
-        return null
-      }
+          return record
+        } catch (error) {
+          if (process.env.NODE_ENV === "development") {
+            console.error("Error transforming visit data:", error, visit)
+          }
+          return null
+        }
     }).filter(Boolean) // Remove null values
   }, [paginatedData])
 
@@ -185,7 +188,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
       size: 80,
       header: "No.",
       cell: ({ row }) => (
-        <div className="flex justify-center">
+        <div>
           <div className="flex justify-center items-center gap-2 cursor-pointer bg-blue-100 text-blue-800 px-3 py-1 rounded-md w-8 text-center font-semibold">
             {row.index + 1}
           </div>
@@ -196,7 +199,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
       accessorKey: "patient",
       size: 250,
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient <ArrowUpDown size={15} />
         </div>
       ),
@@ -207,7 +210,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
         return (
           <div className="flex justify-start">
             <div className="flex flex-col w-full">
-              <div className="font-medium truncate">{fullName}</div>
+              <div className="font-medium">{fullName}</div>
               <div className="text-sm text-gray-600">
                 {patient.gender}, {patient.age} {patient.ageTime} old
               </div>
@@ -219,13 +222,13 @@ const handleTimeFrameChange = (timeFrame: string) => {
     {
       accessorKey: "scheduledDate",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Scheduled Date <ArrowUpDown size={15} />
         </div>
       ),
       cell: ({ row }) => (
-        <div className="flex justify-center">
-          <div className="text-center">
+        <div className="flex">
+          <div>
             <div className="font-medium">{row.original.scheduledDate}</div>
           </div>
         </div>
@@ -255,7 +258,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
         }
 
         return (
-          <div className="flex justify-center">
+          <div>
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[actualStatus as keyof typeof statusColors]}`}>{actualStatus}</span>
           </div>
         );
@@ -266,9 +269,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
       // size: 80,
       header: "Sitio",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[120px]">
-          <div className="text-center w-full">{row.original.sitio}</div>
-        </div>
+        <div>{row.original.sitio}</div>
       )
     },
     {
@@ -280,31 +281,7 @@ const handleTimeFrameChange = (timeFrame: string) => {
           <div className="w-full">{row.original.type}</div>
         </div>
       )
-    }, 
-    // {
-    //   accessorKey: "action",
-    //   size: 100,
-    //   header: "Action",
-    //   cell: ({ row }) => (
-    //     <div className="flex justify-center">
-    //       <TooltipProvider> 
-    //         <TooltipLayout
-    //           trigger={
-    //             <div
-    //               className="bg-white hover:bg-gray-50 text-black px-4 py- rounded cursor-pointer"
-    //               onClick={() => {
-    //                 console.log("View patient:", row.original.patient.patientId)
-    //               }}
-    //             >
-    //               <ViewButton onClick={() => {}} />
-    //             </div>
-    //           }
-    //           content="View Schedule Details"
-    //         />
-    //       </TooltipProvider>
-    //     </div>
-    //   )
-    // }
+    }
   ], [getAppointmentStatus]);
 
   const filter = [

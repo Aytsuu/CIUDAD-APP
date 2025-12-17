@@ -176,8 +176,8 @@
     accessorKey: "id",
     header: "#",
     cell: ({ row }) => (
-      <div className="flex justify-center">
-        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 text-center font-semibold">{row.original.index}</div>
+      <div className="flex">
+        <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md w-8 font-semibold">{row.original.index}</div>
       </div>
     ),
   },
@@ -185,7 +185,7 @@
       accessorKey: "medicine",
       header: "Medicine Details",
       cell: ({ row }) => (
-        <div className="text-center px-3 py-2">
+        <div className=" py-2">
           <div className="font-semibold text-gray-900">{row.original.med_details?.med_name || "Unknown"}</div>
           <div className="text-sm text-gray-600 mt-1">
             {row.original.med_details?.med_dsg} {row.original.med_details?.med_form}
@@ -197,7 +197,7 @@
       accessorKey: "quantity",
       header: "Quantity",
       cell: ({ row }) => (
-        <div className="flex justify-center min-w-[200px] px-2">
+        <div className="flex min-w-[200px]">
           <div className="flex flex-col">
             <div className="text-sm">
  {row.original.total_allocated_qty}{" "}
@@ -214,7 +214,7 @@
       cell: ({ row }) => {
         const requestedAt = new Date(row.original.fulfilled_at || Date.now());
         return (
-          <div className="min-w-[140px] px-3 py-2">
+          <div className="min-w-[140px] py-2">
             <div className="text-sm font-medium">{requestedAt.toLocaleDateString()}</div>
             <div className="text-xs text-gray-500">
               {requestedAt.toLocaleTimeString([], {
@@ -233,11 +233,11 @@
         const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
 
         return (
-          <div className="flex justify-center px-3 py-2">
-            {row.original.signature ? (
+          <div className="flex py-2">
+            {row.original.medreq_details?.signature ? (
               <>
                 <div className="h-12 w-32 border border-gray-200 rounded bg-white p-1 cursor-pointer hover:shadow-md transition-shadow group relative" onClick={() => setIsSignatureModalOpen(true)}>
-                  <img src={`data:image/png;base64,${row.original.signature}`} alt="Authorized Signature" className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
+                  <img src={`data:image/png;base64,${row.original.medreq_details?.signature}`} alt="Authorized Signature" className="h-full w-full object-contain group-hover:scale-105 transition-transform" />
                   {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100 rounded">
                     <span className="text-xs text-white bg-black bg-opacity-50 px-2 py-1 rounded">Click to enlarge</span>
@@ -257,7 +257,7 @@
     id: "reason",
       header: "Reason",
       cell: ({ row }) => (
-        <div className="min-w-[200px] max-w-[300px] px-3 py-2">
+        <div className="min-w-[200px] max-w-[300px]  py-2">
           <div className="text-sm text-gray-700 line-clamp-3">{row.original.reason || "No reason provided"}</div>
         </div>
       )
@@ -292,7 +292,7 @@
 
         return (
          
-          <div className="px-3 py-2 min-w-[150px] flex justify-center">
+          <div className=" py-2 min-w-[150px] flex">
           {files.length > 0 ? (
             <>
             <button onClick={handleOpenModal} className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded transition-colors flex items-center">

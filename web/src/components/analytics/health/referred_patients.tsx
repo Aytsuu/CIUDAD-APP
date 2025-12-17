@@ -11,7 +11,7 @@ export const ReferredPatientsSidebar = () => {
   const staffId = user?.staff?.staff_id || "";
 
   const { data: combinedData, isLoading } = useCombinedHealthRecords(
-    staffId, 
+    staffId,
     "", // No search query
     "all", // All record types
     1, // First pageF
@@ -23,11 +23,11 @@ export const ReferredPatientsSidebar = () => {
 
   const formatName = (personalInfo: any) => {
     if (!personalInfo) return "Unknown Patient";
-    
+
     const firstName = personalInfo.per_fname || "";
     const middleName = personalInfo.per_mname || "";
     const lastName = personalInfo.per_lname || "";
-    
+
     const middle = middleName && middleName.trim() ? `${middleName[0].toUpperCase()}.` : "";
     return `${firstName.trim()} ${middle} ${lastName.trim()}`.replace(/\s+/g, " ").trim();
   };
@@ -88,16 +88,24 @@ export const ReferredPatientsSidebar = () => {
       "medical-consultation": { label: "Medical", color: "text-blue-600 bg-blue-50 border-blue-500" },
       "prenatal": { label: "Prenatal", color: "text-purple-600 bg-purple-50 border-purple-500" }
     };
-    
+
     return types[recordType] || { label: recordType.replace("-", " "), color: "text-gray-600 bg-gray-50 border-gray-500" };
   };
 
-  // Display only first 5 records
-  const displayedRecords = records.slice(0, 5);
+  // Display only first 3 records
+  const displayedRecords = records.slice(0, 3);
 
   return (
-    <Card className="w-full bg-white h-full flex flex-col border-none">
-      
+    <Card className="w-full  h-full flex flex-col rounded-t-lg mt-4 border-none">
+          <div className="px-6 py-4 border-b border-gray-100 rounded-t-xl bg-primary">
+                          <div className="flex items-center  justify-between">
+                            <div>
+      <h1 className="text-lg font-bold text-white  ">Referred Patients</h1>
+                              {/* <h3 className="text-lg font-bold text-white">{component.title}</h3> */}
+                              <p className="text-xs text-white mt-1">Latest referred patients and statuses</p>
+                            </div>
+                          </div>
+                        </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
@@ -117,11 +125,11 @@ export const ReferredPatientsSidebar = () => {
             {displayedRecords.map((record: any) => {
               const { personalInfo, recordType } = getPatientDetails(record);
               const badge = getRecordTypeBadge(recordType);
-              
+
               return (
-                <Card 
-                  key={`${record.record_type}-${record.data.id || record.data.medrec_id || record.data.chrec_id}`} 
-                  className="p-4 hover:shadow-sm transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200" 
+                <Card
+                  key={`${record.record_type}-${record.data.id || record.data.medrec_id || record.data.chrec_id}`}
+                  className="p-4 hover:shadow-sm transition-shadow duration-200 cursor-pointer border border-gray-200 hover:border-blue-200"
                   onClick={() => handleClick(record)}
                 >
                   <div className="flex items-start justify-between">
@@ -134,7 +142,7 @@ export const ReferredPatientsSidebar = () => {
                           {badge.label}
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>
                           {personalInfo?.per_sex || "Unknown"}, {personalInfo?.per_dob ? calculateAge(personalInfo.per_dob) : "N/A"}
@@ -142,7 +150,7 @@ export const ReferredPatientsSidebar = () => {
                         <span className="text-blue-600 font-medium">Referred</span>
                       </div>
                     </div>
-                    
+
                     <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
                   </div>
                 </Card>
@@ -166,7 +174,7 @@ export const ReferredPatientsSidebar = () => {
           <Link to="/referred-patients/pending-assessment">
             <Button variant="link" className="w-full justify-start text-blue-600 hover:text-blue-700">
               View All Referred Patients ({totalCount > 100 ? "100+" : totalCount})
-              {totalCount > 5 && <span className="ml-1 text-gray-400">• Showing 5 of {totalCount}</span>}
+              {totalCount > 3 && <span className="ml-1 text-gray-400">• Showing 3 of {totalCount}</span>}
             </Button>
           </Link>
         </div>

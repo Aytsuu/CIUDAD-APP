@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, Search, RefreshCw } from "lucide-react";
 import WomanRoundedIcon from "@mui/icons-material/WomanRounded";
@@ -64,24 +64,34 @@ interface maternalRecords {
 
 export default function MaternalAllRecords() {
   // Sitio filter state
+  
   const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
-  const { data: sitioData, isLoading: isSitiosLoading } = useSitioList();
-  const sitios = sitioData || [];
-
   const [isRefetching, setIsRefetching] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedFilter, setSelectedFilter] = useState("all");
-
+  
+  const { data: sitioData, isLoading: isSitiosLoading } = useSitioList();
+  const sitios = sitioData || [];
+  
   const { showLoading, hideLoading } = useLoading();
+  const searchTerm = searchParams.get("search") || "";
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+
+  // Keep local page state in sync with URL params
+  useEffect(() => {
+    const pageFromParams = parseInt(searchParams.get("page") || "1", 10);
+    setPage(Number.isNaN(pageFromParams) ? 1 : pageFromParams);
+  }, [searchParams]);
 
   // Reset to first page when filters change
   useEffect(() => {
-    setPage(1);
-  }, [debouncedSearchTerm, selectedFilter, selectedSitios]);
+    if(debouncedSearchTerm == "") return;
+    handlePageChange(1);
+  }, [debouncedSearchTerm, selectedFilter, selectedSitios, searchTerm, setSearchParams]);
 
   // Build the combined search query that includes selected sitios
   const combinedSearchQuery = useMemo(() => {
@@ -115,12 +125,23 @@ export default function MaternalAllRecords() {
   
   // searching and pagination handlers
   const handlePageChange = (newPage: number) => {
-    setPage(newPage)
+    setPage(newPage);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("page", String(newPage));
+      if (searchTerm) next.set("search", searchTerm); else next.delete("search");
+      return next;
+    });
   }
 
   const handleSearch = (search: string) => {
-    setSearchTerm(search)
-    setPage(1)
+    setPage(1);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("page", "1");
+      if (search.trim()) next.set("search", search.trim()); else next.delete("search");
+      return next;
+    });
   }
 
   const handleFilterChange = (filter: string) => {
@@ -211,8 +232,8 @@ export default function MaternalAllRecords() {
       accessorKey: "pat_id",
       header: "Patient ID",
       cell: ({ row }) => (
-        <div className="flex w-full justify-center">
-          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+        <div>
+          <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md font-semibold">
             {row.original.pat_id}
           </div>
         </div>
@@ -222,7 +243,7 @@ export default function MaternalAllRecords() {
       accessorKey: "patient",
       header: ({ column }) => (
         <div
-          className="flex w-full justify-center items-center gap-2 cursor-pointer"
+          className="flex w-full items-center gap-2 cursor-pointer"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Patient <ArrowUpDown size={15} />
@@ -235,7 +256,7 @@ export default function MaternalAllRecords() {
           `${patient.per_lname}, ${patient.per_fname} ${patient.per_mname}`.trim();
 
         return (
-          <div className="flex justify-center w-full">
+          <div className="flex w-full">
             <div className="flex flex-col">
               <div className="font-medium truncate">{capitalize(fullName)}</div>
               <div className="text-sm text-darkGray">
@@ -270,8 +291,8 @@ export default function MaternalAllRecords() {
               .join(", ") || "Unknown"
           : "Unknown";
         return (
-          <div className="flex justify-center min-w-full px-">
-            <div className="w-full truncate">{capitalize(fullAddress)}</div>
+          <div className="flex justify-center">
+            <div className="">{capitalize(fullAddress)}</div>
           </div>
         );
       },
@@ -280,7 +301,7 @@ export default function MaternalAllRecords() {
     {
       accessorKey: "sitio",
       size: 80,
-      header: "Sitio",
+      header: () => <div className="flex justify-center">Sitio</div>,
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className="text-center w-full">
@@ -292,7 +313,7 @@ export default function MaternalAllRecords() {
     {
       accessorKey: "type",
       size: 80,
-      header: "Type",
+      header: () => <div className="flex justify-center">Type</div>,
       cell: ({ row }) => (
         <div className="flex justify-center min-w-[100px] px-2">
           <div className={getPatType(row.original.pat_type)}>{row.original.pat_type}</div>
@@ -301,7 +322,7 @@ export default function MaternalAllRecords() {
     },
     {
       accessorKey: "pregnancy_status",
-      header: "Current Pregnancy Status",
+      header: () => <div className="flex justify-center">Current Pregnancy Status</div>,
       cell: ({ row }) => {
         const status = row.original.additional_info?.latest_pregnancy?.pregnancy_status || "N/A";
         const normalizedStatus = status?.toLowerCase() || "";
@@ -327,7 +348,7 @@ export default function MaternalAllRecords() {
     {
       accessorKey: "action",
       size: 100,
-      header: "Action",
+      header: () => <div className="flex justify-center">Action</div>,
       cell: ({ row }) => (
         <>
           <div className="flex justify-center gap-2 ">
@@ -556,14 +577,13 @@ export default function MaternalAllRecords() {
             {/* Showing Rows Info */}
             <p className="text-xs sm:text-sm font-normal text-darkGray pl-0 sm:pl-4">
               Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, maternalRecordsData?.count) || 0} of {maternalRecordsData?.count} rows
-
             </p>
 
             {/* Pagination */}
             <div className="w-full sm:w-auto flex justify-center">
               {totalPages > 0 && (
                 <PaginationLayout
-                  currentPage={page}
+                  currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={handlePageChange}
                 />

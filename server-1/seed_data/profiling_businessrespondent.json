@@ -1,0 +1,86 @@
+[
+  {
+    "model": "profiling.BusinessRespondent",
+    "pk": "BR-250927-1",
+    "fields": {
+      "br_date_registered": "2025-09-26",
+      "br_lname": "JAW",
+      "br_fname": "GEMO",
+      "br_mname": null,
+      "br_sex": "MALE",
+      "br_dob": "2000-04-21",
+      "br_contact": "09262355926",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "profiling.BusinessRespondent",
+    "pk": "BR-250927-2",
+    "fields": {
+      "br_date_registered": "2025-09-27",
+      "br_lname": "KANG",
+      "br_fname": "KANG",
+      "br_mname": null,
+      "br_sex": "MALE",
+      "br_dob": "2001-04-19",
+      "br_contact": "09262355926",
+      "staff_id": "00001250924"
+    }
+  },
+  {
+    "model": "profiling.BusinessRespondent",
+    "pk": "BR-251126-3",
+    "fields": {
+      "br_date_registered": "2025-11-26",
+      "br_lname": "ARANETA",
+      "br_fname": "PAOLO",
+      "br_mname": "MANAGO",
+      "br_sex": "MALE",
+      "br_dob": "2004-09-01",
+      "br_contact": "09953544002",
+      "staff_id": null
+    }
+  },
+  {
+    "model": "profiling.BusinessRespondent",
+    "pk": "BR-251126-4",
+    "fields": {
+      "br_date_registered": "2025-11-26",
+      "br_lname": "ARANETA",
+      "br_fname": "PAOLO",
+      "br_mname": "MANAGO",
+      "br_sex": "MALE",
+      "br_dob": "2004-09-01",
+      "br_contact": "09953544002",
+      "staff_id": null
+    }
+  },
+  {
+    "model": "profiling.BusinessRespondent",
+    "pk": "BR-251126-5",
+    "fields": {
+      "br_date_registered": "2025-11-26",
+      "br_lname": "ARANETA",
+      "br_fname": "PAOLO",
+      "br_mname": "MANAGO",
+      "br_sex": "MALE",
+      "br_dob": "2004-09-01",
+      "br_contact": "09953544002",
+      "staff_id": null
+    }
+  },
+  {
+    "model": "profiling.BusinessRespondent",
+    "pk": "BR-251126-6",
+    "fields": {
+      "br_date_registered": "2025-11-26",
+      "br_lname": "ARANETA",
+      "br_fname": "PAOLO",
+      "br_mname": "MANAGO",
+      "br_sex": "MALE",
+      "br_dob": "2004-09-01",
+      "br_contact": "09953544002",
+      "staff_id": null
+    }
+  }
+]

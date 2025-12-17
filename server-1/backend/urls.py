@@ -35,7 +35,6 @@ urlpatterns = [
     path('profiling/', include("apps.profiling.urls")),
     path('administration/', include("apps.administration.urls")),
     path('user/', include('apps.account.urls')),
-    path('file/', include('apps.file.urls')),
     path('complaint/', include("apps.complaint.urls")),
     path('treasurer/', include('apps.treasurer.urls')),
     path('report/', include('apps.report.urls')),

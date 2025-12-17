@@ -16,6 +16,7 @@ module.exports = {
         PoppinsRegular: ["PoppinsRegular", "sans-serif"],
         PoppinsMedium: ["PoppinsMedium", "sans-serif"],
         PoppinsSemiBold: ["PoppinsSemiBold", "sans-serif"],
+        Geist: ["Geist"]
       },
       colors: {
         border: 'hsl(var(--border))',

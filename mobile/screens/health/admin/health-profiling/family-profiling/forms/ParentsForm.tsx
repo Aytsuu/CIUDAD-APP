@@ -735,21 +735,12 @@ export const ParentsStep: React.FC<ParentsStepProps> = ({ form, onNext, onBack }
                     
                     return showSource ? (
                       <View style={{ marginBottom: marginBottom }}>
-                        <Text style={{ fontSize: bodyTextSize }} className="font-medium text-gray-700 mb-2">
-                          Family Planning Source
-                        </Text>
-                        <Controller
+                        <FormSelect
                           control={form.control}
                           name="motherInfo.motherHealthInfo.source"
-                          render={({ field: { onChange, value } }) => (
-                            <CustomDropdown
-                              data={FAMILY_PLANNING_SOURCES}
-                              value={value || ''}
-                              onSelect={onChange}
-                              placeholder="Select Source"
-                              searchPlaceholder="Search..."
-                            />
-                          )}
+                          label="Family Planning Source"
+                          options={FAMILY_PLANNING_SOURCES}
+                          placeholder="Select Source"
                         />
                       </View>
                     ) : null;

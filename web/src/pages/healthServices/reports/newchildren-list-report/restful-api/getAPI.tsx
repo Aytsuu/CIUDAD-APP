@@ -11,8 +11,9 @@ export const getMonthlyChildrenCount = async (page: number, pageSize: number, se
     const response = await api2.get<any>(`reports/new-monthly-children/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly children count:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly children count:", error);
+    }
   }
 };
 
@@ -28,7 +29,8 @@ export const getMonthlyChildrenDetails = async (month: string, page: number, pag
     const response = await api2.get<any>(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly children details:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly children details:", error);
+    }
   }
 };

@@ -168,8 +168,10 @@ export const DemographicStep: React.FC<DemographicStepProps> = ({ form, onNext, 
                           Select a household
                         </Text>
                       )}
-                    </TouchableOpacity>                  {/* Household Dropdown */}
-                  {showHouseholdDropdown && (
+                    </TouchableOpacity>
+                    
+                    {/* Household Dropdown */}
+                    {showHouseholdDropdown && (
                     <View className="border border-gray-300 rounded-xl mt-2 bg-white max-h-80">
                       {/* Search Input */}
                       <View className="flex-row items-center border-b border-gray-200 px-3 py-2">

@@ -10,7 +10,7 @@ export const getCommodityMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<CommodityMonthsResponse> => {
+): Promise<CommodityMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== "all") params.append("year", year);
@@ -23,8 +23,10 @@ export const getCommodityMonths = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching commodity months:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching commodity months:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -33,7 +35,7 @@ export const getMonthlyCommodityRecords = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<CommodityMonthlyDetailResponse> => {
+): Promise<CommodityMonthlyDetailResponse | undefined> => {
   try {
     const response = await api2.get<CommodityMonthlyDetailResponse>(
       `/inventory/commodity/records/${month}/`,
@@ -47,7 +49,9 @@ export const getMonthlyCommodityRecords = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly commodity records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly commodity records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

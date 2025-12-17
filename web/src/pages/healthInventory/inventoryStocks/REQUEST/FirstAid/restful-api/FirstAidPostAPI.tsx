@@ -6,7 +6,9 @@ export const createFirstAidStock = async (data: Record<string, any>) => {
     const response = await api2.post("inventory/firstaidstock-create/", data);
     return response.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
     throw err;
   }
 };
@@ -17,7 +19,9 @@ export const addFirstAidTransaction = async ( data:Record<string,any>) => {
     const res = await api2.post("inventory/firstaidtransaction/",data);
     return res.data;
   } catch (err) {
-    console.error(err);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(err);
+    }
     throw err;
   }
 };

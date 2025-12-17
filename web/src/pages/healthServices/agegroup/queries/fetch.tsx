@@ -7,7 +7,7 @@ export const useAgeGroups = () => {
     queryKey: ["ageGroups"],
     queryFn: getAgegroup,
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
   });
 };
 
@@ -24,7 +24,12 @@ export const fetchAgeGroups = async () => {
       })),
     };
   } catch (error) {
-    console.error("Error fetching age groups:", error);
-    throw error;
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error fetching age groups:", error);
+    }
+    return {
+      default: [],
+      formatted: [],
+    };
   }
 };

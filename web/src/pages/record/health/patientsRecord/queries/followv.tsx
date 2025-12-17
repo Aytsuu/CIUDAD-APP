@@ -15,7 +15,7 @@ export function usePatientFollowUpVisits(patientId: string, status: FollowUpStat
     },
     enabled: !!patientId,
     refetchOnMount: true,
-    staleTime: 0
+    staleTime: 5000
   });
 }
 

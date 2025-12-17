@@ -129,6 +129,7 @@ export default function Page3({ onBack, onNext }: PageProps) {
                             className="w-full px-1 py-1 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                             value={formData[row.id]?.['<10'] || ''}
                             onChange={(e) => handleInputChange(row.id, '10', e.target.value)}
+                            readOnly
                           />
                         </td>
                         <td className="border border-gray-400 p-1">
@@ -137,6 +138,7 @@ export default function Page3({ onBack, onNext }: PageProps) {
                             className="w-full px-1 py-1 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                             value={formData[row.id]?.['10-14'] || ''}
                             onChange={(e) => handleInputChange(row.id, '10-14', e.target.value)}
+                            readOnly
                           />
                         </td>
                         <td className="border border-gray-400 p-1">
@@ -145,6 +147,7 @@ export default function Page3({ onBack, onNext }: PageProps) {
                             className="w-full px-1 py-1 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                             value={formData[row.id]?.['15-19'] || ''}
                             onChange={(e) => handleInputChange(row.id, '15-19', e.target.value)}
+                            readOnly
                           />
                         </td>
                         <td className="border border-gray-400 p-1">
@@ -153,6 +156,7 @@ export default function Page3({ onBack, onNext }: PageProps) {
                             className="w-full px-1 py-1 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                             value={formData[row.id]?.['20-49'] || ''}
                             onChange={(e) => handleInputChange(row.id, '20-49', e.target.value)}
+                            readOnly
                           />
                         </td>
                         <td className="border border-gray-400 p-1">
@@ -161,6 +165,7 @@ export default function Page3({ onBack, onNext }: PageProps) {
                             className="w-full px-1 py-1 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                             value={formData[row.id]?.['total'] || ''}
                             onChange={(e) => handleInputChange(row.id, 'total', e.target.value)}
+                            readOnly
                           />
                         </td>
                       </tr>

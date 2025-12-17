@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom"; // Added useSearchParams
 import { Button } from "@/components/ui/button/button";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/table/data-table";
@@ -17,6 +17,8 @@ import { ProtectedComponent } from "@/ProtectedComponent";
 import { SelectedFiltersChips } from "@/pages/healthServices/reports/selectedFiltersChipsProps ";
 import { FilterSitio } from "@/pages/healthServices/reports/filter-sitio";
 import { useSitioList } from "../../profiling/queries/profilingFetchQueries";
+import { ExportButton } from "@/components/ui/export";
+import { getPatType } from "../patientsRecord/PatientsRecordMain";
 
 interface FPRecord {
   fprecord_id: number;
@@ -36,6 +38,7 @@ interface FPRecord {
 interface ExtendedGetFPRecordsParams extends GetFPRecordsParams {
   sitio?: string;
 }
+
 const getFPRecordsList = async (params: ExtendedGetFPRecordsParams = {}): Promise<PaginatedFPRecords> => {
   try {
     const response = await api2.get("familyplanning/overall-records/", { params });
@@ -47,13 +50,17 @@ const getFPRecordsList = async (params: ExtendedGetFPRecordsParams = {}): Promis
 
 export default function FamPlanningTable() {
   const navigate = useNavigate();
+  
+  // --- PAGINATION: URL PARAMS HANDLING ---
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+
   const [pageSize, setPageSize] = React.useState<number>(10);
-  const [currentPage, setCurrentPage] = React.useState<number>(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClientType, setSelectedClientType] = useState("all");
   const [selectedPatientType, setSelectedPatientType] = useState("all"); 
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
+  const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
   
   // --- FETCH SITIO DATA ---
   const { data: sitioData, isLoading: isLoadingSitios } = useSitioList();
@@ -70,8 +77,11 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
     };
   }, [searchQuery]);
 
+  // Reset to Page 1 when filters change (only if not already on page 1)
   useEffect(() => {
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+      setSearchParams({ page: "1" });
+    }
   }, [selectedClientType, selectedPatientType, selectedSitios, debouncedSearchQuery]);
 
   // Use useQuery to fetch paginated FP records
@@ -79,9 +89,9 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
     data: paginatedFpRecords,
     isLoading,
     isError,
-    error
+    error,
   } = useQuery({
-    queryKey: ["fpRecordsList", currentPage, pageSize, debouncedSearchQuery, selectedClientType, selectedPatientType,selectedSitios],
+    queryKey: ["fpRecordsList", currentPage, pageSize, debouncedSearchQuery, selectedClientType, selectedPatientType, selectedSitios],
     queryFn: () =>
       getFPRecordsList({
         page: currentPage,
@@ -90,7 +100,10 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
         client_type: selectedClientType === "all" ? undefined : selectedClientType,
         patient_type: selectedPatientType === "all" ? undefined : selectedPatientType,
         sitio: selectedSitios.length > 0 ? selectedSitios.join(",") : undefined,
-      })
+      }),
+      refetchOnMount: true,       // Refetches every time you visit this page
+    refetchOnWindowFocus: true, // Refetches if you switch tabs and come back
+    staleTime: 5000,
   });
 
   const fpRecords = paginatedFpRecords?.results || [];
@@ -105,30 +118,31 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
   } = useQuery<FPPatientsCount, Error>({
     queryKey: ["fpPatientCounts"],
     queryFn: getFPPatientsCounts,
-    staleTime: 0,
+    staleTime: 5000,
   });
 
   const totalPages = Math.ceil(totalRecordsCount / pageSize);
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setSearchParams({ page: String(page) });
   };
 
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value) || 10;
     setPageSize(newSize);
-    setCurrentPage(1); 
+    setSearchParams({ page: "1" }); 
   };
 
   const handleClientTypeChange = (value: string) => {
     setSelectedClientType(value);
-    setCurrentPage(1);
+    // useEffect handles the page reset
   };
 
   const handlePatientTypeChange = (value: string) => {
     setSelectedPatientType(value);
-    setCurrentPage(1);
+    // useEffect handles the page reset
   };
+
   const handleSitioSelection = (sitio_name: string, checked: boolean) => {
     if (checked) {
       setSelectedSitios([...selectedSitios, sitio_name]);
@@ -158,13 +172,30 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
     { id: "transient", name: "Transient" },
   ];
 
+  // 2. DEFINE EXPORT COLUMNS
+  const exportColumns = [
+    { key: "patient_id", header: "Patient ID" },
+    { key: "patient_name", header: "Patient Name" },
+    { key: "patient_age", header: "Age" },
+    { key: "sex", header: "Sex" },
+    { key: "patient_type", header: "Patient Type" },
+    { key: "client_type", header: "Client Type" },
+    { key: "method_used", header: "Method Used" },
+    { key: "created_at", header: "Date Created" },
+  ];
 
   const columns = useMemo<ColumnDef<FPRecord>[]>(
     () => [
       {
-        accessorKey: "fprecord_id",
-        header: "Record ID",
-        cell: ({ row }) => `${row.original.fprecord_id}`
+        accessorKey: "patient_id",
+        header: "Patient ID",
+        cell: ({ row }) => (
+          <div className="flex w-full">
+            <div className="bg-lightBlue text-darkBlue1 px-3 py-1 rounded-md text-center font-semibold">
+              {row.original.patient_id}
+            </div>
+          </div>
+        )
       },
       {
         accessorKey: "patient_info",
@@ -185,37 +216,16 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
       },
       {
         accessorKey: "patient_type",
-        header: "Patient Type",
+        header: "Type",
         cell: ({ row }) => {
           const patientType = row.original.patient_type;
-          const isResident = patientType === "Resident";
           return (
-            <span
-              className={`px-2 py-1 rounded-full text-sm font-medium 
-                          ${isResident ? "bg-green-100 text-green-800" : "bg-purple-100 text-purple-800"}`}
-            >
-              {patientType || "N/A"}
-            </span>
+           <div className="flex">
+              <div className={getPatType(patientType)}>{patientType}</div>
+            </div>
           );
         }
       },
-      // {
-      //   accessorKey: "client_type",
-      //   header: "Client Type",
-      //   cell: ({ row }) => {
-      //     const clientType = row.original.client_type;
-      //     const displayName = getClientTypeDisplayName(clientType);
-      //     const isNewAcceptor = clientType === "newacceptor";
-      //     return (
-      //       <span
-      //         className={`px-2 py-1 rounded-full text-sm font-medium 
-      //                     ${isNewAcceptor ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"}`}
-      //       >
-      //         {displayName}
-      //       </span>
-      //     );
-      //   }
-      // },
       {
         accessorKey: "method_used",
         header: "Method",
@@ -235,15 +245,6 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
             day: "numeric"
           })
       },
-      // {
-      //   accessorKey: "record_count",
-      //   header: "Records",
-      //   cell: ({ row }) => (
-      //     <span className="font-semibold text-gray-700">
-      //       {row.original.record_count || 0} records
-      //     </span>
-      //   )
-      // },
       {
         id: "action",
         header: "Action",
@@ -296,7 +297,7 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
       </div>
       <hr className="border-gray mb-6 sm:mb-10" />
 
-      {/* Stats Cards for Family Planning Patients */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <CardLayout
           title="Total Patients"
@@ -453,6 +454,7 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
           </div>
       )}
      
+      {/* 3. ADDED EXPORT BUTTON TO CONTROLS */}
       <div className="w-full h-auto sm:h-16 bg-gray-50 flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-0 rounded-t-lg">
         <div className="flex gap-x-2 items-center">
           <p className="text-xs sm:text-sm">Show</p>
@@ -465,6 +467,15 @@ const [selectedSitios, setSelectedSitios] = useState<string[]>([]);
             max="100"
           />
           <p className="text-xs sm:text-sm">Entries</p>
+        </div>
+
+        {/* Export Button Placed Here */}
+        <div>
+           <ExportButton 
+             data={fpRecords} 
+             filename="family-planning-records" 
+             columns={exportColumns} 
+           />
         </div>
       </div>
 

@@ -10,7 +10,7 @@ const ArchiveTabConfig = [
   { id: "medicine" as const, icon: Pill, label: "Medicine", path: "medicine" },
   { id: "vaccine" as const, icon: Syringe, label: "Antigen", path: "antigen" },
   { id: "commodity" as const, icon: Package, label: "Commodity", path: "commodity" },
-  { id: "firstaid" as const, icon: Bandage, label: "First Aid", path: "firstaid" },
+  { id: "firstaid" as const, icon: Bandage, label: "First Aid", path: "first-aid" },
 ];
 
 export default function ArchiveMainInventoryStocks() {

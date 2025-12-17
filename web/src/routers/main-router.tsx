@@ -209,11 +209,11 @@ export const main_router: RouteObject[] = [
       // --- START OF NEWLY PROTECTED ROUTES ---
       ...vaccination.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["SERVICES"]}>{route.element}</ProtectedRoute>,
       })),
       ...childHealthServices.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["SERVICES"]}>{route.element}</ProtectedRoute>,
       })),
       ...gad_router.map((route) => ({
         ...route,
@@ -221,7 +221,7 @@ export const main_router: RouteObject[] = [
       })),
       ...bites_route.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["SERVICES"]}>{route.element}</ProtectedRoute>,
       })),
       ...announcement_route.map((route) => ({
         ...route,
@@ -229,15 +229,15 @@ export const main_router: RouteObject[] = [
       })),
       ...famplanning_route.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["SERVICES"]}>{route.element}</ProtectedRoute>,
       })),
       ...healthinventory.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["INVENTORY"]}>{route.element}</ProtectedRoute>,
       })),
       ...doctorRouting.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["REFERRED PATIENTS"]}>{route.element}</ProtectedRoute>,
       })),
       ...summon_router.map((route) => ({
         ...route,
@@ -249,23 +249,23 @@ export const main_router: RouteObject[] = [
       })),
       ...patientsRecordRouter.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["PATIENT RECORDS"]}>{route.element}</ProtectedRoute>,
       })),
       ...medicineRequest.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["SERVICES"]}>{route.element}</ProtectedRoute>,
       })),
       ...forwardedhealthrecord_router.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["FORWARDED RECORDS"]}>{route.element}</ProtectedRoute>,
       })),
       ...firstaid_router.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["SERVICES"]}>{route.element}</ProtectedRoute>,
       })),
       ...health_schedule_routes.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute >{route.element}</ProtectedRoute>,
       })),
       ...viewprofile_router.map((route) => ({
         ...route,
@@ -277,11 +277,11 @@ export const main_router: RouteObject[] = [
       })),
       ...healthreports_router.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["REPORTS"]}>{route.element}</ProtectedRoute>,
       })),
       ...medicalConsultation.map((route) => ({
         ...route,
-        element: <ProtectedRoute>{route.element}</ProtectedRoute>,
+        element: <ProtectedRoute requiredFeatures={["SERVICES"]}>{route.element}</ProtectedRoute>,
       })),
       ...bhw_daily_notes_router.map((route) => ({
         ...route,

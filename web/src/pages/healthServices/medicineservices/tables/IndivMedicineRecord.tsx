@@ -17,7 +17,6 @@ import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { exportToCSV, exportToExcel, exportToPDF2 } from "@/pages/healthServices/reports/export/export-report";
 
 export default function IndivMedicineRecords({ patientDataProps }: { patientDataProps?: any }) {
-  console.log("tesxzxt", patientDataProps);
 
   const location = useLocation();
   const patientData = location.state?.params?.patientData;

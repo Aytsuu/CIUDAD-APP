@@ -277,24 +277,9 @@ class UnvaccinatedVaccinesDetailsView(APIView):
 
     def is_conditional_vaccine(self, vaccine):
         """
-        Determine if a vaccine is conditional based on:
-        1. Vaccine name patterns (e.g., contains 'conditional', 'special', etc.)
-        2. Presence of vacrec_totaldose values in records (individual dosing)
+        Determine if a vaccine is conditional based on vac_type_choices
         """
-        # Check by name pattern
-        conditional_keywords = ['conditional', 'special', 'medical', 'high risk', 'immunocompromised', 'specific']
-        vaccine_name_lower = vaccine.vac_name.lower()
-        
-        if any(keyword in vaccine_name_lower for keyword in conditional_keywords):
-            return True
-        
-        # Check if this vaccine has individual dosing records
-        has_individual_dosing = VaccinationRecord.objects.filter(
-            vaccination_histories__vacStck_id__vac_id=vaccine.vac_id,
-            vacrec_totaldose__isnull=False
-        ).exclude(vacrec_totaldose=0).exists()
-        
-        return has_individual_dosing
+        return vaccine.vac_type_choices.lower() == 'conditional' if vaccine.vac_type_choices else False
 
     def get_total_required_doses(self, vaccine, patient_id=None):
         """
@@ -640,22 +625,9 @@ class UnvaccinatedVaccinesSummaryView(APIView):
 
     def is_conditional_vaccine(self, vaccine):
         """
-        Determine if a vaccine is conditional
+        Determine if a vaccine is conditional based on vac_type_choices
         """
-        # Check by name pattern
-        conditional_keywords = ['conditional', 'special', 'medical', 'high risk', 'immunocompromised', 'specific']
-        vaccine_name_lower = vaccine.vac_name.lower()
-        
-        if any(keyword in vaccine_name_lower for keyword in conditional_keywords):
-            return True
-        
-        # Check if this vaccine has individual dosing records
-        has_individual_dosing = VaccinationRecord.objects.filter(
-            vaccination_histories__vacStck_id__vac_id=vaccine.vac_id,
-            vacrec_totaldose__isnull=False
-        ).exclude(vacrec_totaldose=0).exists()
-        
-        return has_individual_dosing
+        return vaccine.vac_type_choices.lower() == 'conditional' if vaccine.vac_type_choices else False
 
     def get_patient_total_doses(self, patient_id, vaccine):
         """

@@ -31,7 +31,11 @@ export function exportToPDF(orientation: 'portrait' | 'landscape' = 'portrait') 
   try {
     const element = document.getElementById("printable-area");
     if (!element) {
-      throw new Error("Printable area not found");
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Printable area not found");
+      }
+      alert("Failed to generate PDF. Please try again.");
+      return;
     }
 
     // Dynamic sizing based on orientation but always long format
@@ -105,11 +109,16 @@ export function exportToPDF(orientation: 'portrait' | 'landscape' = 'portrait') 
         if (clone.parentNode) {
           document.body.removeChild(clone);
         }
-        throw error;
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error generating PDF:", error);
+        }
+        alert("Failed to generate PDF. Please try again.");
       });
     }, 300);
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error generating PDF:", error);
+    }
     alert("Failed to generate PDF. Please try again.");
   }
 }
@@ -247,7 +256,9 @@ export function exportToPDF2(data: any[], filename: string, title: string = "Vac
     pdf.save(`${filename}.pdf`);
 
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error generating PDF:", error);
+    }
     alert("Failed to generate PDF. Please try again.");
   }
 }

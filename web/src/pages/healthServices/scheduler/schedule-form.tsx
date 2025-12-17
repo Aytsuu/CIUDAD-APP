@@ -161,7 +161,9 @@ export default function ServiceScheduleForm({ initialSchedule, weekDays, service
         setIsAddingService(false);
         onAddService(newServiceName.trim());
       } catch (error) {
-        console.error("Error adding service: ", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Error adding service: ", error);
+        }
       }
     }
   };
@@ -171,7 +173,9 @@ export default function ServiceScheduleForm({ initialSchedule, weekDays, service
     try {
       const serviceObj = servicesData?.find((s) => s.service_name === service);
       if (!serviceObj) {
-        console.error("Service not found: ", service);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Service not found: ", service);
+        }
         return;
       }
 
@@ -190,9 +194,13 @@ export default function ServiceScheduleForm({ initialSchedule, weekDays, service
         return updatedSchedule;
       });
 
-      console.log(`Removed service: ${service}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Removed service: ${service}`);
+      }
     } catch (error) {
-      console.error("Error removing service:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error removing service:", error);
+      }
     }
   };
 
@@ -207,9 +215,13 @@ export default function ServiceScheduleForm({ initialSchedule, weekDays, service
     try {
       await addDayMutation.mutateAsync({ day: nextDay, day_description: `${nextDay} Schedule` });
 
-      console.log("Successfully added day: ", nextDay);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Successfully added day: ", nextDay);
+      }
     } catch (error) {
-      console.error("Error adding day: ", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error adding day: ", error);
+      }
     }
   };
 
@@ -219,7 +231,9 @@ export default function ServiceScheduleForm({ initialSchedule, weekDays, service
       const dayObj = daysData?.find((d) => d.day === day);
 
       if (!dayObj) {
-        console.error("Day not found: ", day);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Day not found: ", day);
+        }
         return;
       }
 
@@ -235,116 +249,128 @@ export default function ServiceScheduleForm({ initialSchedule, weekDays, service
         return updatedSchedule;
       });
 
-      console.log(`Removed day: ${day}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Removed day: ${day}`);
+      }
     } catch (error) {
-      console.error("Error removing day:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error removing day:", error);
+      }
     }
   };
 
   // updated handleSave to create individual scheduler entries using your API
   const handleSave = async () => {
     try {
-      console.log("Saving weekly schedule: ", currentWeeklySchedule);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Saving weekly schedule: ", currentWeeklySchedule);
+      }
 
-    // Get current scheduler entries from UI state
-    const currentEntries = [];
-    for (const dayName of days) {
-      const dailySchedule = currentWeeklySchedule[dayName] || {};
+      // Get current scheduler entries from UI state
+      const currentEntries = [];
+      for (const dayName of days) {
+        const dailySchedule = currentWeeklySchedule[dayName] || {};
 
-      for (const [serviceName, timeSlots] of Object.entries(dailySchedule)) {
-        if(timeSlots.AM) {
-          currentEntries.push({
-            service_name: serviceName,
-            day: dayName,
-            meridiem: "AM" as const,
-          })
+        for (const [serviceName, timeSlots] of Object.entries(dailySchedule)) {
+          if(timeSlots.AM) {
+            currentEntries.push({
+              service_name: serviceName,
+              day: dayName,
+              meridiem: "AM" as const,
+            })
+          }
+          if(timeSlots.PM) {
+            currentEntries.push({
+              service_name: serviceName,
+              day: dayName,
+              meridiem: "PM" as const,
+            })
+          }
         }
-        if(timeSlots.PM) {
-          currentEntries.push({
-            service_name: serviceName,
-            day: dayName,
-            meridiem: "PM" as const,
-          })
+      }
+
+      // Get existing entries from schedulerIdMap
+      const existingEntries = Object.keys(schedulerIdMap).map(key => {
+        const [day, service_name, meridiem] = key.split('-')
+        return {
+          key,
+          ss_id: schedulerIdMap[key],
+          service_name,
+          day,
+          meridiem: meridiem as "AM" | "PM"
+        }
+      })
+
+      const toCreate = []
+      const toUpdate = []
+      const toDelete = []
+
+      for (const currentEntry of currentEntries) {
+        const currentKey = `${currentEntry.day}-${currentEntry.service_name}-${currentEntry.meridiem}`
+        const existing = existingEntries.find(e => e.key === currentKey)
+        
+        if (!existing) {
+          toCreate.push(currentEntry)
         }
       }
-    }
 
-    // Get existing entries from schedulerIdMap
-    const existingEntries = Object.keys(schedulerIdMap).map(key => {
-      const [day, service_name, meridiem] = key.split('-')
-      return {
-        key,
-        ss_id: schedulerIdMap[key],
-        service_name,
-        day,
-        meridiem: meridiem as "AM" | "PM"
-      }
-    })
-
-    const toCreate = []
-    const toUpdate = []
-    const toDelete = []
-
-    for (const currentEntry of currentEntries) {
-      const currentKey = `${currentEntry.day}-${currentEntry.service_name}-${currentEntry.meridiem}`
-      const existing = existingEntries.find(e => e.key === currentKey)
-      
-      if (!existing) {
-        toCreate.push(currentEntry)
-      }
-    }
-
-    for (const existingEntry of existingEntries) {
-      const stillExists = currentEntries.some(current => 
-        current.day === existingEntry.day && 
-        current.service_name === existingEntry.service_name && 
-        current.meridiem === existingEntry.meridiem
-      )
-      
-      if (!stillExists) {
-        const sameServiceDay = currentEntries.find(current => 
+      for (const existingEntry of existingEntries) {
+        const stillExists = currentEntries.some(current => 
           current.day === existingEntry.day && 
-          current.service_name === existingEntry.service_name &&
-          current.meridiem !== existingEntry.meridiem
+          current.service_name === existingEntry.service_name && 
+          current.meridiem === existingEntry.meridiem
         )
         
-        if (sameServiceDay) {
-          toUpdate.push({
-            ss_id: existingEntry.ss_id,
-            meridiem: sameServiceDay.meridiem
-          })
-        } else {
-          toDelete.push(existingEntry.ss_id)
+        if (!stillExists) {
+          const sameServiceDay = currentEntries.find(current => 
+            current.day === existingEntry.day && 
+            current.service_name === existingEntry.service_name &&
+            current.meridiem !== existingEntry.meridiem
+          )
+          
+          if (sameServiceDay) {
+            toUpdate.push({
+              ss_id: existingEntry.ss_id,
+              meridiem: sameServiceDay.meridiem
+            })
+          } else {
+            toDelete.push(existingEntry.ss_id)
+          }
         }
       }
-    }
 
-    console.log('Operations to perform:', { toCreate, toUpdate, toDelete })
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Operations to perform:', { toCreate, toUpdate, toDelete })
+      }
 
-    const operations = []
+      const operations = []
 
-    // create new entries
-    for (const entry of toCreate) {
-      operations.push(addSchedulerMutation.mutateAsync(entry))
-    }
+      // create new entries
+      for (const entry of toCreate) {
+        operations.push(addSchedulerMutation.mutateAsync(entry))
+      }
 
-    // update existing entries
-    for (const update of toUpdate) {
-      operations.push(updateSchedulerMutation.mutateAsync(update))
-    }
+      // update existing entries
+      for (const update of toUpdate) {
+        operations.push(updateSchedulerMutation.mutateAsync(update))
+      }
 
-    // delete removed entries
-    for (const deleteId of toDelete) {
-      operations.push(deleteSchedulerMutation.mutateAsync(deleteId))
-    }
+      // delete removed entries
+      for (const deleteId of toDelete) {
+        operations.push(deleteSchedulerMutation.mutateAsync(deleteId))
+      }
 
-    // wait for all operations to complete
-    await Promise.all(operations)
+      // wait for all operations to complete
+      await Promise.all(operations)
 
-    console.log("All scheduler operations completed successfully")
-    onSave(currentWeeklySchedule)
+      if (process.env.NODE_ENV === 'development') {
+        console.log("All scheduler operations completed successfully")
+      }
+      onSave(currentWeeklySchedule)
     } catch (error){ 
-      console.error("Error saving schedule: ", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error saving schedule: ", error)
+      }
     }
   };
 

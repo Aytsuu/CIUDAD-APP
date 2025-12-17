@@ -70,9 +70,6 @@ const PrenatalBookingPage: React.FC = () => {
 
   const formattedSelectedDate = formatDate(selectedDate);
   useEffect(() => {
-  console.log('Selected date:', selectedDate);
-  console.log('Formatted date for API:', formattedSelectedDate);
-  console.log('Current Philippines time:', new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }));
 }, [selectedDate, formattedSelectedDate]);
 
   const { data: appointmentRequests = [], isLoading: isLoadingAppointments } = usePrenatalAppointmentRequestsByDate(
@@ -107,20 +104,33 @@ const PrenatalBookingPage: React.FC = () => {
   );
 
   const isDateDisabled = (date: Date): boolean => {
-    const dayName = format(date, 'EEEE');
-    const dateString = formatDate(date);
+  const dayName = format(date, 'EEEE');
+  const dateString = formatDate(date);
+  const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
 
-    if (availableDays.size > 0) {
-      return !availableDays.has(dayName);
-    } else {
-      const dayOfWeek = date.getDay();
-      return dayOfWeek !== 4;
-    }
-  };
+  // Check if it's a weekend
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    return true;
+  }
+
+  if (availableDays.size > 0) {
+    return !availableDays.has(dayName);
+  } else {
+    return dayOfWeek !== 4; // Original fallback logic
+  }
+};
 
   const onDateChange = (event: any, selected?: Date): void => {
     setShowDatePicker(false);
     if (selected) {
+      const dayOfWeek = selected.getDay();
+       if (dayOfWeek === 0 || dayOfWeek === 6) {
+      Alert.alert('Weekend Not Available', 'The clinic is closed on weekends. Please select a weekday (Monday to Friday).');
+      return;
+    }
+
+
+
       if (isDateDisabled(selected)) {
         Alert.alert('Unavailable Date', 'Prenatal appointments are only available based on the scheduler. Please check the scheduler first.');
         return; 
@@ -162,26 +172,35 @@ const PrenatalBookingPage: React.FC = () => {
   }
 
   const handleSubmit = (): void => {
-    if (hasPendingAppointment) {
-      Alert.alert(
-        'Pending Appointment', 
-        'You already have a pending prenatal appointment for this date. Please wait for approval or select a different date.'
-      );
-      return;
-    }
+  // Check if selected date is a weekend
+  const dayOfWeek = selectedDate.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    Alert.alert(
+      'Weekend Not Available',
+      'You cannot book appointments on weekends. The clinic is closed on Saturdays and Sundays. Please select a weekday.'
+    );
+    return;
+  }
 
-    if (!selectedDate) {
-      Alert.alert('Error', 'Please select date for your prenatal appointment');
-      return;
-    }
+  if (hasPendingAppointment) {
+    Alert.alert(
+      'Pending Appointment', 
+      'You already have a pending prenatal appointment for this date. Please wait for approval or select a different date.'
+    );
+    return;
+  }
 
-    if (!pat_id && rp_id) {
-      setShowRegistrationDialog(true);
-    } else {
-      proceedWithAppointment(pat_id || '');
-    }
-  };
+  if (!selectedDate) {
+    Alert.alert('Error', 'Please select date for your prenatal appointment');
+    return;
+  }
 
+  if (!pat_id && rp_id) {
+    setShowRegistrationDialog(true);
+  } else {
+    proceedWithAppointment(pat_id || '');
+  }
+};
   const handleCreatePatient = async (): Promise<void> => {
     if (!rp_id) {
       Alert.alert('Error', 'Resident ID not found');

@@ -37,7 +37,7 @@ const FPRecordCard: React.FC<{
   record: FPRecord;
   onPress: () => void;
 }> = ({ record, onPress }) => {
-  
+
   return (
     <TouchableOpacity
       className="bg-white rounded-xl border border-gray-200 mb-3 overflow-hidden shadow-sm"
@@ -76,7 +76,7 @@ const FPRecordCard: React.FC<{
     </TouchableOpacity>
   );
 };
-  
+
 export default function OverallFpRecordsScreen() {
   const [searchQuery, setSearchQuery] = useState("");  // Raw input value (updates instantly)
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");  // Debounced value for API
@@ -84,7 +84,7 @@ export default function OverallFpRecordsScreen() {
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const [page, setPage] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize] = useState(10);
+  const [pageSize] = useState(10);
 
   const queryClient = useQueryClient();
 
@@ -114,6 +114,9 @@ export default function OverallFpRecordsScreen() {
       search: debouncedSearchQuery || undefined,
       patient_type: activeTab !== "all" ? activeTab : undefined,
     }),
+     staleTime: 5000,
+    refetchInterval: 5000, 
+    refetchIntervalInBackground: true, 
   });
 
   const {
@@ -156,7 +159,7 @@ export default function OverallFpRecordsScreen() {
         params: { patientId },
       });
     } catch (error) {
-      console.log("Navigation error:", error);
+      // console.log("Navigation error:", error);
     }
   };
 
@@ -233,17 +236,17 @@ export default function OverallFpRecordsScreen() {
         <TabBar activeTab={activeTab} setActiveTab={setActiveTab} />
 
         <View className="px-4 flex-row items-center justify-between mt-4">
-                  <View className="flex-row items-center">
-                    <Text className="text-sm text-gray-600">
-                      Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
-                    </Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <Text className="text-sm font-medium text-gray-800">
-                      Page {currentPage} of {totalPages}
-                    </Text>
-                  </View>
-                </View>
+          <View className="flex-row items-center">
+            <Text className="text-sm text-gray-600">
+              Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, totalCount)} of {totalCount} records
+            </Text>
+          </View>
+          <View className="flex-row items-center">
+            <Text className="text-sm font-medium text-gray-800">
+              Page {currentPage} of {totalPages}
+            </Text>
+          </View>
+        </View>
 
         {/* Records List */}
         {fpRecords.length === 0 ? (
@@ -284,43 +287,43 @@ export default function OverallFpRecordsScreen() {
               </View>
             )}
             ListFooterComponent={() => (
-  <View className="px-4 mb-4">
- 
-    {totalPages > 1 && (
-      <Card className="bg-white border-slate-200">
-        <CardContent className="p-4">
-          <View className="flex-row items-center justify-between">
-            <Button
-              onPress={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-              variant={page === 1 ? "secondary" : "default"}
-              className={page === 1 ? "bg-slate-200" : "bg-blue-600"}
-            >
-              <Text className={page === 1 ? "text-slate-400" : "text-white"}>
-                Previous
-              </Text>
-            </Button>
+              <View className="px-4 mb-4">
 
-            <Text className="text-slate-600 font-medium">
-              Page {page} of {totalPages}
-            </Text>
+                {totalPages > 1 && (
+                  <Card className="bg-white border-slate-200">
+                    <CardContent className="p-4">
+                      <View className="flex-row items-center justify-between">
+                        <Button
+                          onPress={() => handlePageChange(page - 1)}
+                          disabled={page === 1}
+                          variant={page === 1 ? "secondary" : "default"}
+                          className={page === 1 ? "bg-slate-200" : "bg-blue-600"}
+                        >
+                          <Text className={page === 1 ? "text-slate-400" : "text-white"}>
+                            Previous
+                          </Text>
+                        </Button>
 
-            <Button
-              onPress={() => handlePageChange(page + 1)}
-              disabled={page === totalPages}
-              variant={page === totalPages ? "secondary" : "default"}
-              className={page === totalPages ? "bg-slate-200" : "bg-blue-600"}
-            >
-              <Text className={page === totalPages ? "text-slate-400" : "text-white"}>
-                Next
-              </Text>
-            </Button>
-          </View>
-        </CardContent>
-      </Card>
-    )}
-  </View>
-)}
+                        <Text className="text-slate-600 font-medium">
+                          Page {page} of {totalPages}
+                        </Text>
+
+                        <Button
+                          onPress={() => handlePageChange(page + 1)}
+                          disabled={page === totalPages}
+                          variant={page === totalPages ? "secondary" : "default"}
+                          className={page === totalPages ? "bg-slate-200" : "bg-blue-600"}
+                        >
+                          <Text className={page === totalPages ? "text-slate-400" : "text-white"}>
+                            Next
+                          </Text>
+                        </Button>
+                      </View>
+                    </CardContent>
+                  </Card>
+                )}
+              </View>
+            )}
           />
         )}
       </View>

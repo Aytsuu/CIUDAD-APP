@@ -6,7 +6,7 @@ export const getPatientByResidentId = async (rpId: string) => {
     const res = await api2.get(`patientrecords/patient/by-resident/${rpId}/`);
     return res.data;
   } catch (error) {
-    console.error("❌ Error fetching patient by resident ID:", error);
+    // console.error("❌ Error fetching patient by resident ID:", error);
     return null;
   }
 };
@@ -19,5 +19,8 @@ export const usePatientByResidentId = (rp_id:any) => {
         return getPatientByResidentId(rp_id);
       },
       enabled: !!rp_id,
+      staleTime: 5000,
+      refetchInterval: 5000, 
+      refetchIntervalInBackground: true,
     });
   };

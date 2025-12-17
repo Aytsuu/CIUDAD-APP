@@ -4,7 +4,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Calendar, Clock, AlertCircle, ChevronDown, ChevronLeft, Info } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { api2 } from '@/api/api';
-import { format, isWeekend } from 'date-fns';
+// IMPORTANT: Keep parseISO to prevent Android crashes
+import { format, isWeekend, parseISO } from 'date-fns'; 
 import PageLayout from '@/screens/_PageLayout';
 import { router } from 'expo-router';
 import { LoadingState } from '@/components/ui/loading-state';
@@ -29,40 +30,52 @@ const SetSchedule = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   
-  // CHANGED: Store an array of pending dates strings instead of a boolean
   const [pendingDates, setPendingDates] = useState<string[]>([]);
 
   const { user } = useAuth();
   const rpId = user?.rp;
 
+  // DEBUG: Check if user is loaded
+  useEffect(() => {
+    // console.log("🟢 [SetSchedule] Component Mounted. User RP ID:", rpId);
+    if (!rpId) console.warn("⚠️ [SetSchedule] Warning: No RP ID found for user.");
+  }, [rpId]);
+
   const formatDateToISO = (date: Date): string => {
     return format(date, 'yyyy-MM-dd');
   };
 
-  // NEW: Helper to check if the currently selected date is in the pending list
   const isCurrentDatePending = pendingDates.includes(formatDateToISO(selectedDate));
 
   const getCurrentSlot = (date: Date): Slot | undefined => {
     const dateStr = formatDateToISO(date);
-    return availableSlots.find((s: Slot) => s.date === dateStr);
+    const found = availableSlots.find((s: Slot) => s.date === dateStr);
+    
+    // DEBUG: Log slot lookup when date changes
+    // console.log(`🔍 [SetSchedule] Looking for slot on ${dateStr}:`, found ? "Found" : "Not Found");
+    return found;
   };
 
-  // UPDATED: Fetch list of pending dates
   const checkPendingStatus = useCallback(async () => {
     if (!rpId) return;
     try {
+      // console.log(`📡 [SetSchedule] Checking pending status for RP ID: ${rpId}...`);
       const response = await api2.get(`/medical-consultation/check-pending-status/?rp_id=${rpId}`);
+      
+      // console.log("✅ [SetSchedule] Pending status response:", response.data);
+      
       if (response.data && Array.isArray(response.data.pending_dates)) {
         setPendingDates(response.data.pending_dates);
       } else {
         setPendingDates([]);
       }
-    } catch (error) {
-      console.error('Failed to check pending status:', error);
+    } catch (error: any) {
+      console.error('❌ [SetSchedule] Failed to check pending status:', error.message);
     }
   }, [rpId]);
 
   const fetchAvailableSlots = useCallback(async (showLoader = true) => {
+    // console.log("📡 [SetSchedule] Fetching available slots...");
     if (showLoader) {
       setIsLoading(true);
     } else {
@@ -70,32 +83,58 @@ const SetSchedule = () => {
     }
 
     try {
+        // DEBUG: Log the baseURL to ensure it's not localhost
+      // console.log("🔗 [SetSchedule] API Base URL:", api2.defaults.baseURL);
+      
       const response = await api2.get('/medical-consultation/available-slots/');
-      if (!Array.isArray(response.data)) throw new Error('Invalid response');
+      
+      // console.log(`✅ [SetSchedule] Raw Slots Data (${response.data.length} items):`, JSON.stringify(response.data, null, 2));
+
+      if (!Array.isArray(response.data)) throw new Error('Invalid response format (not an array)');
 
       const slots: Slot[] = response.data;
+
+      // Filter out weekends safely
       const validSlots = slots.filter(slot => {
-        const date = new Date(slot.date);
-        return !isWeekend(date);
+        const isWknd = isWeekend(parseISO(slot.date));
+        // console.log(`Processing ${slot.date}: Weekend? ${isWknd}`);
+        return !isWknd;
       });
 
+      // console.log(`ℹ️ [SetSchedule] Valid Slots (Weekdays only): ${validSlots.length}`);
       setAvailableSlots(validSlots);
 
       // Initialize with valid data if not set
       const firstAvailableSlot = validSlots.find((slot: Slot) => {
         try {
-          return new Date(slot.date) >= new Date();
+          return parseISO(slot.date) >= new Date();
         } catch (e) { return false; }
       });
 
       if (firstAvailableSlot && !selectedDate) {
-        const initialDate = new Date(firstAvailableSlot.date);
+        // console.log("📅 [SetSchedule] Setting initial date to:", firstAvailableSlot.date);
+        const initialDate = parseISO(firstAvailableSlot.date);
         setSelectedDate(initialDate);
         setAmAvailable(firstAvailableSlot.am_available);
         setPmAvailable(firstAvailableSlot.pm_available);
       }
     } catch (error: any) {
-      if (showLoader) Alert.alert('Error', 'Failed to load slots.');
+      // EXTENSIVE ERROR LOGGING
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error("❌ [SetSchedule] Server Error Data:", error.response.data);
+        console.error("❌ [SetSchedule] Server Error Status:", error.response.status);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error("❌ [SetSchedule] Network Error (No Response):", error.request);
+        console.error("💡 [SetSchedule] Tip: Check your IP address in api.ts and ensure 'python manage.py runserver 0.0.0.0:8000' is running.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error("❌ [SetSchedule] Request Setup Error:", error.message);
+      }
+      
+      if (showLoader) Alert.alert('Error', 'Failed to load slots. Check console for details.');
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -110,6 +149,7 @@ const SetSchedule = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isLoading && !refreshing) {
+        // console.log("🔄 [SetSchedule] Auto-refreshing slots...");
         fetchAvailableSlots(false);
         checkPendingStatus();
       }
@@ -120,42 +160,51 @@ const SetSchedule = () => {
   const onDateChange = (event: any, selected?: Date) => {
     setShowDatePicker(false);
     if (selected) {
+      // console.log("📅 [SetSchedule] Date Selected:", format(selected, 'yyyy-MM-dd'));
+      
       if (isWeekend(selected)) {
-        Alert.alert('Weekend', 'No appointments on weekends.');
+        // console.log("⚠️ [SetSchedule] Weekend selected - blocking.");
+        Alert.alert('Weekend', 'No appointments on weekends. Please select a weekday.');
         return;
       }
 
-      // Allow selection even if pending, logic is handled in render
       setSelectedDate(selected); 
       
       const slot = getCurrentSlot(selected);
       if (slot) {
-        // Only clear meridiem if the availability changed significantly
+        // console.log("✅ [SetSchedule] Slot found for date. AM:", slot.am_available, "PM:", slot.pm_available);
+        
         if (!slot.am_available && selectedMeridiem === 'AM') setSelectedMeridiem('');
         if (!slot.pm_available && selectedMeridiem === 'PM') setSelectedMeridiem('');
         
         setAmAvailable(slot.am_available);
         setPmAvailable(slot.pm_available);
       } else {
+        // console.log("⚠️ [SetSchedule] No slot data found for this date.");
         setAmAvailable(false);
         setPmAvailable(false);
+        setSelectedMeridiem('');
       }
     }
   };
 
   const handleSubmit = async () => {
+    // console.log("🚀 [SetSchedule] Submit triggered");
+
     if (!rpId) {
+      // console.error("❌ [SetSchedule] Submit failed: User ID missing");
       Alert.alert('Error', 'User ID missing.');
       return;
     }
     
-    // Block submission if current date is pending
     if (isCurrentDatePending) {
+        // console.warn("⚠️ [SetSchedule] Submit blocked: Date pending");
         Alert.alert('Pending Request', 'You already have a pending appointment on this date.');
         return;
     }
 
     if (!selectedDate || !selectedMeridiem || !chiefComplaint.trim()) {
+      // console.warn("⚠️ [SetSchedule] Submit blocked: Missing fields");
       Alert.alert('Required Fields', 'Please fill all fields.');
       return;
     }
@@ -167,9 +216,13 @@ const SetSchedule = () => {
       chief_complaint: chiefComplaint.trim(),
     };
 
+    // console.log("📦 [SetSchedule] Sending Appointment Payload:", appointmentData);
+
     setIsLoading(true);
     try {
       const response = await api2.post('/medical-consultation/book-appointment/', appointmentData);
+      // console.log("✅ [SetSchedule] Booking Success:", response.data);
+
       if (response.status === 201 && response.data.success) {
        Alert.alert(
         'Success',
@@ -191,6 +244,10 @@ const SetSchedule = () => {
       );
     }
     } catch (error: any) {
+      console.error("❌ [SetSchedule] Booking Failed:", error);
+      if (error.response) {
+          console.error("❌ [SetSchedule] Error Response Data:", error.response.data);
+      }
       Alert.alert('Booking Error', error.response?.data?.error || 'Failed to book.');
     } finally {
       setIsLoading(false);
@@ -206,8 +263,10 @@ const SetSchedule = () => {
     return (
       <TouchableOpacity
         className={`flex-1 rounded-xl p-3 items-center mx-1 ${selected ? 'bg-blue-600' : 'bg-gray-100'} ${!available ? 'opacity-50' : ''}`}
-        onPress={() => available ? setSelectedMeridiem(meridiem) : null}
-        // Disable interaction if not available OR if date is pending
+        onPress={() => {
+            // console.log(`🕒 [SetSchedule] Selected ${meridiem}`);
+            if (available) setSelectedMeridiem(meridiem);
+        }}
         disabled={!available || isCurrentDatePending}
       >
         <Clock size={20} color={selected ? '#fff' : '#2563EB'} />
@@ -219,7 +278,6 @@ const SetSchedule = () => {
     );
   };
 
-  // Submit is disabled if loading, missing data, OR current date is pending
   const isSubmitDisabled = isLoading || !rpId || !selectedDate || !selectedMeridiem || !chiefComplaint.trim() || isCurrentDatePending;
 
   return (
@@ -244,7 +302,6 @@ const SetSchedule = () => {
             />
           }
         >
-            {/* Warning Banner: Only show if the SELECTED date is pending */}
             {isCurrentDatePending && (
             <View className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex-row items-center">
                 <Info size={24} color="#ea580c" />
@@ -263,7 +320,6 @@ const SetSchedule = () => {
             <>
                 <Text className='text-lg font-semibold text-gray-700 mb-3'>1. Select Date</Text>
 
-                {/* Date Picker is ALWAYS active */}
                 <View className='flex-row items-center justify-between bg-gray-100 rounded-xl p-4 mb-4'>
                     <Calendar size={20} color="#374151" />
                     <Text className='text-md font-medium text-gray-800 flex-1 ml-3'>
@@ -284,7 +340,6 @@ const SetSchedule = () => {
                     />
                 )}
 
-              {/* Only dim the inputs below if the current date is pending */}
               <View className={isCurrentDatePending ? 'opacity-50' : ''} pointerEvents={isCurrentDatePending ? 'none' : 'auto'}>
                 <Text className='text-lg font-semibold text-gray-700 mb-3'>2. Select Time Slot</Text>
                 <View className='flex-row justify-between mb-6'>
@@ -326,19 +381,17 @@ const SetSchedule = () => {
                   </View>
                   <View className='flex-row mt-2'>
                     <Text className='text-yellow-700 mr-2'>•</Text>
-                    <Text className='text-yellow-700 flex-1'>Please provide a detailed chief complaint for your appointment. We will review your reason before the consultation.</Text>
+                    <Text className='text-yellow-700 flex-1'>Please provide a detailed chief complaint for your appointment.</Text>
                   </View>
                  
                 </View>
               </View>
-
 
               <TouchableOpacity
                 className={`rounded-xl p-4 items-center mb-8 shadow-md ${isSubmitDisabled ? 'bg-gray-400' : isLoading ? 'bg-blue-400' : 'bg-blue-600'}`}
                 onPress={handleSubmit}
                 disabled={isSubmitDisabled}
               >
-                {/* Dynamic Button Text */}
                 {isCurrentDatePending ? (
                    <Text className='text-white font-bold text-lg'>Pending Request on Date</Text>
                 ) : isLoading ? (

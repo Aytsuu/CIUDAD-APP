@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useGetScheduler, useGetDays } from "@/pages/healthServices/scheduler/queries/schedulerFetchQueries";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+// import { CardHeader } from "@mui/material";
 
 const COLORS = [
   "#3b82f6", // Blue
@@ -65,7 +66,7 @@ export function SchedulerSidebar() {
 
   // Transform scheduler data to include dates
   const scheduleItems: ScheduleItem[] = [];
-  
+
   if (schedulersData.length > 0 && weekDays.length > 0) {
     weekDays.forEach((day) => {
       const dayName = format(day, "EEEE");
@@ -86,42 +87,46 @@ export function SchedulerSidebar() {
   }
 
   // Sort by date
-  const sortedSchedules = scheduleItems.sort((a, b) => 
-    a.fullDate.getTime() - b.fullDate.getTime()
-  );
+  const sortedSchedules = scheduleItems.sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime());
 
   // Group by day for display
-  const groupedByDay = sortedSchedules.reduce((acc, item) => {
-    const key = `${item.date}-${item.day}`;
-    if (!acc[key]) {
-      acc[key] = {
-        day: item.day,
-        date: item.date,
-        fullDate: item.fullDate,
-        amServices: [],
-        pmServices: []
-      };
-    }
-    // Separate AM and PM services
-    if (item.meridiem === "AM") {
-      acc[key].amServices.push({
-        name: item.service,
-        meridiem: item.meridiem
-      });
-    } else {
-      acc[key].pmServices.push({
-        name: item.service,
-        meridiem: item.meridiem
-      });
-    }
-    return acc;
-  }, {} as Record<string, { 
-    day: string; 
-    date: string; 
-    fullDate: Date; 
-    amServices: Array<{ name: string; meridiem: string }>; 
-    pmServices: Array<{ name: string; meridiem: string }> 
-  }>);
+  const groupedByDay = sortedSchedules.reduce(
+    (acc, item) => {
+      const key = `${item.date}-${item.day}`;
+      if (!acc[key]) {
+        acc[key] = {
+          day: item.day,
+          date: item.date,
+          fullDate: item.fullDate,
+          amServices: [],
+          pmServices: []
+        };
+      }
+      // Separate AM and PM services
+      if (item.meridiem === "AM") {
+        acc[key].amServices.push({
+          name: item.service,
+          meridiem: item.meridiem
+        });
+      } else {
+        acc[key].pmServices.push({
+          name: item.service,
+          meridiem: item.meridiem
+        });
+      }
+      return acc;
+    },
+    {} as Record<
+      string,
+      {
+        day: string;
+        date: string;
+        fullDate: Date;
+        amServices: Array<{ name: string; meridiem: string }>;
+        pmServices: Array<{ name: string; meridiem: string }>;
+      }
+    >
+  );
 
   const allDaySchedules = Object.values(groupedByDay);
   const itemsToShow = showAll ? allDaySchedules : allDaySchedules.slice(0, 7);
@@ -141,8 +146,19 @@ export function SchedulerSidebar() {
   }
 
   return (
-    <Card className="rounded-md shadow-none">
-      <CardContent className="pt-4 overflow-y-auto max-h-[600px]">
+    <Card className="rounded-md shadow-none bg-primary">
+      <div className="px-6 py-4 border-b border-gray-100 rounded-t-xl bg-primary">
+                          <div className="flex items-center  justify-between">
+                            <div>
+      <h1 className="text-lg font-bold text-white  ">Weekly Schedule</h1>
+                              {/* <h3 className="text-lg font-bold text-white">{component.title}</h3> */}
+                              <p className="text-xs text-white mt-1">Latest services and activities</p>
+                            </div>
+                          </div>
+                        </div>
+
+      {/* <p className="text-xs text-white mt-1">Latest updates and activity</p> */}
+      <CardContent className="pt-4 overflow-y-auto bg-white max-h-[600px]">
         {isLoading ? (
           <div className="flex items-center justify-center h-[300px]">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -153,9 +169,7 @@ export function SchedulerSidebar() {
               <Calendar className="h-6 w-6 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold mb-2">No Schedules Available</h3>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              No scheduled services found for this week.
-            </p>
+            <p className="text-sm text-muted-foreground max-w-sm">No scheduled services found for this week.</p>
           </div>
         ) : (
           <>
@@ -164,24 +178,19 @@ export function SchedulerSidebar() {
                 const isToday = format(new Date(), "yyyy-MM-dd") === daySchedule.date;
 
                 return (
+
+
                   <div key={daySchedule.date} className="space-y-2 border border-gray-300 p-2 rounded-md">
+
+
+
                     {/* Day Header */}
-                    <div className={`flex items-center gap-2 px-2 py-1.5 rounded-md ${
-                      isToday ? "bg-blue-200" : "bg-gray-50"
-                    }`}>
+                    <div className={`flex items-center gap-2 px-2 py-1.5 rounded-md ${isToday ? "bg-blue-200" : "bg-gray-50"}`}>
                       <Calendar className="h-4 w-4 text-gray-600" />
                       <div className="flex items-center gap-2 flex-1">
-                        <span className="text-sm font-semibold text-gray-700">
-                          {daySchedule.day}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {format(daySchedule.fullDate, "MMM dd, yyyy")}
-                        </span>
-                        {isToday && (
-                          <span className="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-lg">
-                            Today
-                          </span>
-                        )}
+                        <span className="text-sm font-semibold text-gray-700">{daySchedule.day}</span>
+                        <span className="text-xs text-gray-500">{format(daySchedule.fullDate, "MMM dd, yyyy")}</span>
+                        {isToday && <span className="text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-lg">Today</span>}
                       </div>
                     </div>
 
@@ -192,14 +201,12 @@ export function SchedulerSidebar() {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 px-2 pb-1">
                             <div className="h-px flex-1 bg-orange-200" />
-                            <span className="text-xs font-semibold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
-                              AM
-                            </span>
+                            <span className="text-xs font-semibold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">AM</span>
                             <div className="h-px flex-1 bg-orange-200" />
                           </div>
                           {daySchedule.amServices.map((service, serviceIndex) => {
                             const color = getServiceColor(service.name, serviceColorMap);
-                            
+
                             return (
                               <Link
                                 key={`${daySchedule.date}-${service.name}-am-${serviceIndex}`}
@@ -213,17 +220,10 @@ export function SchedulerSidebar() {
                               >
                                 <div className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-all hover:shadow-sm">
                                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <div
-                                      className="w-2 h-8 rounded-full flex-shrink-0"
-                                      style={{ backgroundColor: color }}
-                                    />
+                                    <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium text-gray-800 truncate">
-                                        {service.name}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        Scheduled service
-                                      </p>
+                                      <p className="text-sm font-medium text-gray-800 truncate">{service.name}</p>
+                                      <p className="text-xs text-muted-foreground">Scheduled service</p>
                                     </div>
                                   </div>
                                 </div>
@@ -238,14 +238,12 @@ export function SchedulerSidebar() {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 px-2 pb-1">
                             <div className="h-px flex-1 bg-indigo-200" />
-                            <span className="text-xs font-semibold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
-                              PM
-                            </span>
+                            <span className="text-xs font-semibold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">PM</span>
                             <div className="h-px flex-1 bg-indigo-200" />
                           </div>
                           {daySchedule.pmServices.map((service, serviceIndex) => {
                             const color = getServiceColor(service.name, serviceColorMap);
-                            
+
                             return (
                               <Link
                                 key={`${daySchedule.date}-${service.name}-pm-${serviceIndex}`}
@@ -259,17 +257,10 @@ export function SchedulerSidebar() {
                               >
                                 <div className="flex items-center justify-between p-3 rounded-md border hover:bg-gray-50 transition-all hover:shadow-sm">
                                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                                    <div
-                                      className="w-2 h-8 rounded-full flex-shrink-0"
-                                      style={{ backgroundColor: color }}
-                                    />
+                                    <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-medium text-gray-800 truncate">
-                                        {service.name}
-                                      </p>
-                                      <p className="text-xs text-muted-foreground">
-                                        Scheduled service
-                                      </p>
+                                      <p className="text-sm font-medium text-gray-800 truncate">{service.name}</p>
+                                      <p className="text-xs text-muted-foreground">Scheduled service</p>
                                     </div>
                                   </div>
                                 </div>
@@ -286,14 +277,9 @@ export function SchedulerSidebar() {
 
             {totalDays > 7 && (
               <div className="text-center pt-4 border-t mt-4">
-                <button
-                  onClick={() => setShowAll(!showAll)}
-                  className="text-sm text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1"
-                >
+                <button onClick={() => setShowAll(!showAll)} className="text-sm text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1">
                   {showAll ? "Show Less" : `View All ${totalDays} Days`}
-                  <ChevronDown
-                    className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`}
-                  />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showAll ? "rotate-180" : ""}`} />
                 </button>
               </div>
             )}

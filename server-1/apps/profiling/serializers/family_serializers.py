@@ -6,6 +6,7 @@ from datetime import datetime
 from ..double_queries import PostQueries
 from apps.notification.utils import create_notification
 from ..notif_recipients import general_recipients
+from ..utils import generate_fam_no
 
 class FamilyBaseSerializer(serializers.ModelSerializer):
   class Meta:
@@ -19,12 +20,13 @@ class FamilyTableSerializer(serializers.ModelSerializer):
   street = serializers.CharField(source='hh.add.add_street')
   father = serializers.SerializerMethodField()
   mother = serializers.SerializerMethodField()
+  independent = serializers.SerializerMethodField()
   guardian = serializers.SerializerMethodField()
   registered_by = serializers.SerializerMethodField()
   class Meta: 
     model = Family
     fields = ['fam_id', 'household_no', 'sitio', 'street', 'fam_building', 'fam_indigenous', 'mother', 
-              'father', 'guardian', 'fam_date_registered', 'members', 'registered_by']
+              'father', 'guardian', 'independent', 'fam_date_registered', 'members', 'registered_by']
     
   def get_members(self, obj):
     return FamilyComposition.objects.filter(fam=obj).count()
@@ -33,7 +35,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     father = FamilyComposition.objects.filter(fam=obj, fc_role='FATHER').first()
     if father: 
       info = father.rp.per
-      return f"{info.per_fname}"
+      return f"{info.per_lname}, {info.per_fname}"
     
     return ""
   
@@ -41,7 +43,7 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     mother = FamilyComposition.objects.filter(fam=obj, fc_role='MOTHER').first()
     if mother: 
       info = mother.rp.per
-      return f"{info.per_fname}"
+      return f"{info.per_lname}, {info.per_fname}"
     
     return ""
   
@@ -49,7 +51,15 @@ class FamilyTableSerializer(serializers.ModelSerializer):
     guardian = FamilyComposition.objects.filter(fam=obj, fc_role='GUARDIAN').first()
     if guardian: 
       info = guardian.rp.per
-      return f"{info.per_fname}"
+      return f"{info.per_lname}, {info.per_fname}"
+    
+    return ""
+
+  def get_independent(self, obj):
+    independent = FamilyComposition.objects.filter(fam=obj, fc_role='INDEPENDENT').first()
+    if independent: 
+      info = independent.rp.per
+      return f"{info.per_lname}, {info.per_fname}"
     
     return ""
 
@@ -75,7 +85,7 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
   @transaction.atomic
   def create(self, validated_data):
     family = Family.objects.create(
-      fam_id = self.generate_fam_no(validated_data['fam_building']),
+      fam_id = generate_fam_no(validated_data['fam_building']),
       fam_indigenous = validated_data['fam_indigenous'],
       fam_building = validated_data['fam_building'],
       fam_date_registered = timezone.now().date(),
@@ -109,21 +119,6 @@ class FamilyCreateSerializer(serializers.ModelSerializer):
     )
       
     return family
-  
-  def generate_fam_no(self, building_type):
-
-    type = {'Owner' : 'O', 'Renter' : 'R', 'Sharer' : 'S'}
-
-    next_val = Family.objects.count() + 1
-    date = datetime.now()
-    year = str(date.year - 2000)
-    month = str(date.month).zfill(2)
-    day = str(date.day).zfill(2)
-    
-    formatted = f"{next_val:04d}"
-    family_id = f"{year}{month}{day}00{formatted}-{type[building_type]}"
-    
-    return family_id
 
 class FamilyListSerializer(serializers.ModelSerializer):
   total_members = serializers.SerializerMethodField()

@@ -5,7 +5,7 @@ import { getUnvaccinatedVaccines, getUnvaccinatedVaccinesSummary, getUnvaccinate
 // import { VaccinationRecord } from "../tables/columns/types";
 import { getAgeInUnit } from "@/helpers/ageCalculator";
 import { getUnvaccinatedResidents, getVaccinationRecords, getVaccinationRecordById, getLatestVitals } from "../restful-api/get";
-import { showErrorToast } from "@/components/ui/toast";
+
 import { getVaccintStocks } from "../restful-api/get";
 import { calculateAge } from "@/helpers/ageCalculator";
 
@@ -23,7 +23,7 @@ export const useIndivPatientVaccinationRecords = (patientId?: string) => {
 
       return response
         .map((record: any) => {
-          console.log("Vaccine Type Choice:", record?.vaccine_stock?.vaccinelist?.vac_type_choices);
+          // console.log("Vaccine Type Choice:", record?.vaccine_stock?.vaccinelist?.vac_type_choices);
 
           return {
             patrec_id: record.vacrec_details?.patrec_id,
@@ -192,7 +192,7 @@ export const usePatientVaccinationDetails = (patientId: string) => {
     queryKey: ["patientVaccinationDetails", patientId],
     queryFn: () => getVaccinationRecordById(patientId),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
     enabled: !!patientId,
     retry: 3
   });
@@ -205,8 +205,10 @@ export const useVaccinationRecords = (params?: { page?: number; page_size?: numb
   return useQuery({
     queryKey: ["VaccinationRecords", params],
     queryFn: () => getVaccinationRecords(params),
-    staleTime: 1000 * 60 * 5,
-    retry: 3
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
+   
   });
 };
 
@@ -216,9 +218,9 @@ export const useUnvaccinatedResidents = () => {
   return useQuery({
     queryKey: ["unvaccinatedResidents"],
     queryFn: getUnvaccinatedResidents,
-    refetchOnMount: true,
-    staleTime: 1 * 60 * 1000,
-    retry: 3
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 };
 
@@ -259,7 +261,7 @@ export const fetchVaccinesWithStock = (dob?: string) => {
           }))
         };
       } catch (error) {
-        showErrorToast("Failed to fetch vaccine stocks");
+        // showErrorToast("Failed to fetch vaccine stocks");
         throw error;
       }
     }
@@ -304,7 +306,7 @@ export const filterVaccinesByAge = (vaccines: any[], dob: string) => {
       return patientAgeInVaccineUnits >= minAge && patientAgeInVaccineUnits <= maxAge;
     });
   } catch (error) {
-    console.error("Error filtering vaccines by age:", error);
+    // console.error("Error filtering vaccines by age:", error);
     return vaccines; // Return all vaccines if there's an error calculating age
   }
 };
@@ -325,8 +327,9 @@ export const useUnvaccinatedVaccinesSummary = (params: any = {}) => {
   return useQuery({
     queryKey: ["unvaccinated-vaccines-summary", params],
     queryFn: () => getUnvaccinatedVaccinesSummary(params),
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 };
 
@@ -334,8 +337,8 @@ export const useUnvaccinatedResidentsDetails = (vacId: number, params: any = {})
   return useQuery({
     queryKey: ["unvaccinated-residents", vacId, params],
     queryFn: () => getUnvaccinatedResidentsDetailsForVaccine(vacId, params),
-    enabled: !!vacId,
-    staleTime: 2 * 60 * 1000,
-    refetchOnWindowFocus: false
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true
   });
 };

@@ -10,7 +10,7 @@ export const getChildHealthSupplementsReport = async (
   page?: number,
   pageSize?: number,
   exportAll?: boolean
-): Promise<ChildHealthSupplementsResponse> => {
+): Promise<ChildHealthSupplementsResponse | undefined> => {
   try {
     const response = await api2.get<ChildHealthSupplementsResponse>(
       `reports/supplements/report/`,
@@ -25,8 +25,10 @@ export const getChildHealthSupplementsReport = async (
     );
     return response.data;
   } catch (error) {
-    console.error("Error fetching child health supplements report:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching child health supplements report:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 

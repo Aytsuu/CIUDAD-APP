@@ -7,7 +7,7 @@ export const useIndividualMedicineRecords = (pat_id: string, page: number, pageS
     queryKey: ["individualMedicineRecordssss", pat_id, page, pageSize, search],
     queryFn: () => getIndividualMedicineRecords(pat_id, page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0,
+    staleTime: 5000,
     retry: 1, // Reduce retries to fail faster
   });
 };
@@ -17,7 +17,9 @@ export const useMedicineRecords = (params?: { page?: number; page_size?: number;
   return useQuery({
     queryKey: ["medicineRecords", params],
     queryFn: () => getMedicineRecords(params),
-    staleTime: 1000 * 60 * 5,
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
     retry: 3
   });
 };

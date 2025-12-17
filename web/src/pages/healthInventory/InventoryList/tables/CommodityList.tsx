@@ -37,16 +37,20 @@ export default function CommodityList() {
 
   const { data: commoditiesData, isLoading: isLoadingCommodities, error } = useCommodities(currentPage, pageSize, searchQuery.trim() ? searchQuery.trim() : undefined);
 
-  // Debug: Log API response
+  // Debug: Log API response (development only)
   useEffect(() => {
-    console.log("Commodity Data Response:", commoditiesData);
-    console.log("API Error:", error);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Commodity Data Response:", commoditiesData);
+      console.log("API Error:", error);
+    }
   }, [commoditiesData, error]);
 
   const deleteMutation = useDeleteCommodity();
 
   const formatCommodityData = useCallback((): CommodityRecords[] => {
-    console.log("Formatting commodity data:", commoditiesData);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Formatting commodity data:", commoditiesData);
+    }
 
     // Handle different response formats
     let commodityResults = [];

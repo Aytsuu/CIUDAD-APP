@@ -94,7 +94,7 @@ export const getChildData = async (id: string, page?: number, pageSize?: number)
     if (res.status !== 200) {
       throw new Error("Failed to fetch child data");
     }
-    console.log(res);
+    // console.log(res);
     return res.data;
   } catch (error) {
     console.error("Error fetching child data:", error);

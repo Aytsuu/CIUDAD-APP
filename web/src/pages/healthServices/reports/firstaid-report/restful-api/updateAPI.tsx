@@ -8,10 +8,14 @@ export const update_monthly_recipient_list_report = async (monthlyrcplist_id: st
         "Content-Type": "application/json", // Changed from multipart/form-data
       },
     });
-    console.log("Update response:", response.data);
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Update response:", response.data);
+    }
     return response.data;
   } catch (error) {
-    console.error("Error updating recipient list:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error updating recipient list:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

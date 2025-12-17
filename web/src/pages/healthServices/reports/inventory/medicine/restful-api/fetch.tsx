@@ -7,7 +7,7 @@ export const getMedicineMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<MedicineMonthsResponse> => {
+): Promise<MedicineMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== 'all') params.append('year', year);
@@ -18,8 +18,10 @@ export const getMedicineMonths = async (
     const response = await api2.get<MedicineMonthsResponse>(`/reports/medicine/summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching medicine months:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching medicine months:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -28,7 +30,7 @@ export const getMonthlyMedicineRecords = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<MedicineMonthlyDetailResponse> => {
+): Promise<MedicineMonthlyDetailResponse| undefined > => {
   try {
     const response = await api2.get<MedicineMonthlyDetailResponse>(`/reports/medicine/records/${month}/`, {
       params: {
@@ -39,7 +41,9 @@ export const getMonthlyMedicineRecords = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly medicine records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly medicine records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

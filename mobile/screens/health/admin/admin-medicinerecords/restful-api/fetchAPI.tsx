@@ -51,8 +51,8 @@ import { api2 } from "@/api/api";
   //         return med.avail  > 0 && !isExpired;
   //       });
   //     },
-  //     staleTime: 0, // Disable caching for real-time updates
-  //     refetchInterval: 1000 * 5, // Refetch every 5 seconds for real-time inventory updates
+  //     staleTime: 5000, // Disable caching for real-time updates
+  //     refetchInterval: 5000 * 5, // Refetch every 5 seconds for real-time inventory updates
   //   });
   // };
 
@@ -143,7 +143,9 @@ export const fetchMedicinesWithStock = (params: MedicineSearchParams = {}) => {
         pagination: paginationInfo 
       };
     },
-    staleTime: 1000 * 30, // 30 seconds
+     staleTime: 5000,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
     enabled: params !== undefined, // Make the query optional
   });
 };

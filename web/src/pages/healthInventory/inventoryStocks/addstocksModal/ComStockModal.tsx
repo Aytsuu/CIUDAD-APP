@@ -57,7 +57,9 @@ export default function AddCommodityStock() {
   }, [comId, commodityOptions]);
 
   const onSubmit = (data: CommodityStockType) => {
-    console.log("Form submitted, opening confirmation dialog");
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Form submitted, opening confirmation dialog");
+    }
     setFormData(data);
     setIsAddConfirmationOpen(true);
   };

@@ -11,8 +11,10 @@ export const getMonthlyMorbiditySummary = async (page: number, pageSize: number,
     const response = await api2.get<any>(`reports/morbidity/monthly-summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly morbidity summary:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly morbidity summary:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -27,7 +29,9 @@ export const getMonthlyMorbidityDetails = async (month: string, page?: number, p
     const response = await api2.get<any>(url);
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly morbidity details:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly morbidity details:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

@@ -6,6 +6,8 @@ export const useAntigen = (page:number , pageSize: number , search?: string) => 
     queryKey: ["VaccineListCombine", page, pageSize, search],
     queryFn: () => getVaccineListCombine(page, pageSize, search),
     refetchOnMount: true,
-    staleTime: 0,
+     staleTime: 5000,
+    refetchInterval: 5000, // Auto-refresh every 30 seconds
+    refetchIntervalInBackground: true, // Refresh even when app is in background
   });
 };

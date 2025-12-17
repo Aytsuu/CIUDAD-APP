@@ -9,22 +9,22 @@ import { toTitleCase } from "@/helpers/ToTitleCase";
 export const refrecanmissed: ColumnDef<any>[] = [
   {
     id: "index",
-    header: () => <div className="text-center">#</div>,
+    header: () => <div>#</div>,
     size: 50,
     cell: ({ row, table }) => {
-      return <div className="text-center">{table.getRowModel().rows.indexOf(row) + 1}</div>;
+      return <div>{table.getRowModel().rows.indexOf(row) + 1}</div>;
     },
   },
   {
     accessorKey: "personal_info",
-    header: () => <div className="text-center">Patient Information</div>,
+    header: () => <div>Patient Information</div>,
     size: 220,
     cell: ({ row }) => {
       const personalInfo = row.original.personal_info;
       const fullName = `${personalInfo?.per_lname || ""}, ${personalInfo?.per_fname || ""}${personalInfo?.per_mname ? ` ${personalInfo.per_mname}` : ""}${personalInfo?.per_suffix ? ` ${personalInfo.per_suffix}` : ""}`.trim();
       return (
         <div className="px-2 py-2">
-          <div className="text-center space-y-1">
+          <div className="space-y-1">
             <div className="font-medium text-gray-900 break-words whitespace-normal" title={fullName}>
               {toTitleCase(fullName) || "Unknown Patient"}
             </div>
@@ -39,7 +39,7 @@ export const refrecanmissed: ColumnDef<any>[] = [
   },
   {
     accessorKey: "address",
-    header: () => <div className="text-center">Address</div>,
+    header: () => <div>Address</div>,
     size: 250,
     cell: ({ row }) => {
       const address = row.original.address;
@@ -51,7 +51,7 @@ export const refrecanmissed: ColumnDef<any>[] = [
         : "No address";
       return (
         <div className="px-2 py-2">
-          <div className="text-sm text-gray-700 break-words whitespace-normal text-center leading-relaxed" title={addressText}>
+          <div className="text-sm text-gray-700 break-words whitespace-normal leading-relaxed" title={addressText}>
             {addressText}
           </div>
         </div>
@@ -60,13 +60,13 @@ export const refrecanmissed: ColumnDef<any>[] = [
   },
   {
     accessorKey: "chief_complaint",
-    header: () => <div className="text-center">Chief Complaint</div>,
+    header: () => <div>Chief Complaint</div>,
     size: 200,
     cell: ({ row }) => {
       const complaint = row.original.chief_complaint || "No complaint specified";
       return (
         <div className="px-2 py-2">
-          <div className="text-sm text-gray-700 break-words whitespace-normal text-center leading-relaxed" title={complaint}>
+          <div className="text-sm text-gray-700 break-words whitespace-normal leading-relaxed" title={complaint}>
             {complaint}
           </div>
         </div>
@@ -75,11 +75,11 @@ export const refrecanmissed: ColumnDef<any>[] = [
   },
   {
     accessorKey: "scheduled_date",
-    header: () => <div className="text-center">Scheduled Date</div>,
+    header: () => <div>Scheduled Date</div>,
     size: 130,
     cell: ({ row }) => {
       return (
-        <div className="text-center py-2">
+        <div className="py-2">
           <div className="font-medium text-gray-900">{toTitleCase(formatDate(row.original.scheduled_date))}</div>
         </div>
       );
@@ -87,11 +87,11 @@ export const refrecanmissed: ColumnDef<any>[] = [
   },
   {
     accessorKey: "meridiem",
-    header: () => <div className="text-center">Time</div>,
+    header: () => <div>Time</div>,
     size: 80,
     cell: ({ row }) => {
       return (
-        <div className="flex justify-center py-2">
+        <div className="flex py-2">
           <Badge
             variant="outline"
             className={`px-3 py-1 text-xs font-medium ${
@@ -110,12 +110,12 @@ export const refrecanmissed: ColumnDef<any>[] = [
   },
   {
     accessorKey: "created_at",
-    header: () => <div className="text-center">Requested On</div>,
+    header: () => <div>Requested On</div>,
     size: 140,
     cell: ({ row }) => {
       const { date, time } = formatDateTime(row.original.created_at);
       return (
-        <div className="text-center py-2">
+        <div className="py-2">
           <div className="font-medium text-gray-900 text-sm">{toTitleCase(date)}</div>
           {time && <div className="text-xs text-gray-500 mt-1">{toTitleCase(time)}</div>}
         </div>

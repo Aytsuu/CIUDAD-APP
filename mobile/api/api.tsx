@@ -33,6 +33,7 @@ export const api = axios.create({
 //     "Accept": "application/json",
 //   },
 //   timeout: 10000,
+//   timeout: 10000,
 // });
 
 export const api2 = axios.create({
@@ -43,6 +44,8 @@ export const api2 = axios.create({
     "Accept": "application/json",
   },
 });
+
+
 
 setupApiInterceptor(api)
 

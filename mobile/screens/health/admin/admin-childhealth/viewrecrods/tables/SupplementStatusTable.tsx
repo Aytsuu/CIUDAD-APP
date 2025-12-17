@@ -53,7 +53,7 @@ export const SupplementStatusTable: React.FC<NutritionStatusTableProps> = ({
                 className={`bg-white rounded-xl shadow-sm mb-3 p-4 border border-gray-100 ${
                   isCurrentRecord ? 'border-blue-200 bg-blue-50' : ''
                 } active:opacity-80 transition-all duration-200`}
-                onPress={() => console.log('Nutrition Status:', { record })}
+                // onPress={() => console.log('Nutrition Status:', { record })}
               >
                 <View className="flex-row flex-wrap">
                   <View className="flex-1 min-w-[120px] py-1 pr-2">

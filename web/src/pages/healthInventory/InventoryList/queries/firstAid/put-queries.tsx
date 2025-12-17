@@ -12,8 +12,10 @@ export const useUpdateFirstAid = () => {
       queryClient.invalidateQueries({ queryKey: ["firstAid"] });
     },
     onError: (error: any) => {
-      console.error("Error updating first aid:", error);
-      throw error;
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error updating first aid:", error);
+      }
+      // DEVELOPMENT MODE ONLY: No throw in production
     }
   });
 };

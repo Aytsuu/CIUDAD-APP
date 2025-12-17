@@ -120,7 +120,7 @@ export const createHistoricalVitalSignsColumns = (): ColumnDef<VitalSignType>[] 
     accessorKey: "notes",
     header: "Notes",
     cell: ({ row }) => (
-      <div className="flex justify-center">
+      <div className="flex ">
         <div className="max-w-[200px] text-left">
           <p className="whitespace-pre-wrap">{row.original.notes || "No notes for this entry."}</p>
           {row.original.followUpVisit && (
@@ -187,7 +187,7 @@ export const createTodaysVitalSignsColumns = (
       if (isEditing) {
         return <FormInput control={editVitalSignFormControl} name="wt" label="" type="number" placeholder="Weight" className="w-full" />;
       }
-      return <div className="flex justify-center">{row.original.wt || "-"}</div>;
+      return <div className="flex ">{row.original.wt || "-"}</div>;
     }
   },
   {
@@ -198,7 +198,7 @@ export const createTodaysVitalSignsColumns = (
       if (isEditing) {
         return <FormInput control={editVitalSignFormControl} name="temp" label="" type="number" placeholder="Temperature" className="w-[100px]" />;
       }
-      return <div className="flex justify-center">{row.original.temp || "-"}</div>;
+      return <div className="flex ">{row.original.temp || "-"}</div>;
     }
   },
   // ADD THIS NEW COLUMN FOR REMARKS
@@ -212,7 +212,7 @@ export const createTodaysVitalSignsColumns = (
       }
       const displayRemarks = row.original.remarks || "No remarks";
       return (
-        <div className="flex justify-center">
+        <div className="flex ">
           <div className="max-w-[200px] text-left">
             <p className="whitespace-pre-wrap text-sm">{displayRemarks}</p>
           </div>
@@ -236,7 +236,7 @@ export const createTodaysVitalSignsColumns = (
       }
       const displayNotes = row.original.notes || "No notes for this entry.";
       return (
-        <div className="flex justify-center">
+        <div className="flex ">
           <div className="max-w-[200px] text-left">
             <p className="whitespace-pre-wrap">{displayNotes}</p>
             {row.original.followUpVisit && (
@@ -265,11 +265,11 @@ export const createTodaysVitalSignsColumns = (
               onClick={editVitalSignFormHandleSubmit((data) => {
                 onUpdateVitalSign(row.index, data);
               })}
-              className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700"
+              className="bg-green-600 py-1 text-xs hover:bg-green-700"
             >
               Save
             </Button>
-            <Button size="sm" variant="outline" onClick={onCancelEdit} className="px-2 py-1 text-xs">
+            <Button size="sm" variant="outline" onClick={onCancelEdit} className=" py-1 text-xs">
               Cancel
             </Button>
           </div>
@@ -296,7 +296,7 @@ export const createTodaysVitalSignsColumns = (
               is_opt: row.original.is_opt || false
             });
           }}
-          className="px-2 py-1"
+          className=" py-1"
           title="Edit vital sign"
         >
           Update
@@ -397,10 +397,10 @@ export const createHistoricalSupplementStatusColumns = (
       if (isEditingAnemia) {
         return (
           <div className="flex gap-1">
-            <Button size="sm" onClick={supplementStatusEditFormHandleSubmit((data) => onSaveAnemiaDate(row.index, data.date_completed || null))} className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700">
+            <Button size="sm" onClick={supplementStatusEditFormHandleSubmit((data) => onSaveAnemiaDate(row.index, data.date_completed || null))} className="bg-green-600  py-1 text-xs hover:bg-green-700">
               Save
             </Button>
-            <Button size="sm" variant="outline" onClick={onCancelEditAnemia} className="px-2 py-1 text-xs">
+            <Button size="sm" variant="outline" onClick={onCancelEditAnemia} className="py-1 text-xs">
               Cancel
             </Button>
           </div>
@@ -408,10 +408,10 @@ export const createHistoricalSupplementStatusColumns = (
       } else if (isEditingBirthWeight) {
         return (
           <div className="flex gap-1">
-            <Button size="sm" onClick={supplementStatusEditFormHandleSubmit((data) => onSaveBirthWeightDate(row.index, data.date_completed || null))} className="bg-green-600 px-2 py-1 text-xs hover:bg-green-700">
+            <Button size="sm" onClick={supplementStatusEditFormHandleSubmit((data) => onSaveBirthWeightDate(row.index, data.date_completed || null))} className="bg-green-600 py-1 text-xs hover:bg-green-700">
               Save
             </Button>
-            <Button size="sm" variant="outline" onClick={onCancelEditBirthWeight} className="px-2 py-1 text-xs">
+            <Button size="sm" variant="outline" onClick={onCancelEditBirthWeight} className=" py-1 text-xs">
               Cancel
             </Button>
           </div>
@@ -430,7 +430,7 @@ export const createHistoricalSupplementStatusColumns = (
                 onStartEditBirthWeight(row.index, row.original.date_completed || null);
               }
             }}
-            className="px-2 py-1"
+            className=" py-1"
             title="Update supplement status"
           >
             Update

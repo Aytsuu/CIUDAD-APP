@@ -73,7 +73,7 @@ export const NutritionStatusTable: React.FC<NutritionStatusTableProps> = ({
                 <TouchableOpacity
                   key={record.chhist_id}
                   className={`flex-row px-3 py-2 border-b border-gray-100 ${isCurrentRecord ? 'bg-blue-50' : ''}`}
-                  onPress={() => console.log('Nutrition Status:', { record })}
+                  // onPress={() => console.log('Nutrition Status:', { record })}
                 >
                   <View className="min-w-[120px] flex-1">
                     <Text className={dataTextStyle} numberOfLines={1}>

@@ -10,7 +10,6 @@ import { LoadingState } from '@/components/ui/loading-state';
 import { formatDate } from '@/helpers/dateHelpers';
 import { useDebounce } from '@/hooks/use-debounce';
 import { PaginationControls } from '../admin/components/pagination-layout';
-import { StatusBadge } from '../admin/components/status-badge';
 import { MedStatusBadge, MedTabBar, MedTabType, TabBar } from '../admin/components/tab-bar';
 
 // Types
@@ -59,10 +58,12 @@ const getUserMedicineRequests = async (
 
       if (['declined', 'cancelled'].includes(normalizedStatus)) normalizedStatus = 'cancelled';
       if (['fulfilled', 'completed'].includes(normalizedStatus)) normalizedStatus = 'completed';
-      if (['confirmed', 'ready_for_pickup'].includes(normalizedStatus)) normalizedStatus = 'confirmed';
-      if (['pending', 'referred_to_doctor'].includes(normalizedStatus)) normalizedStatus = 'pending';
+      if (['confirmed'].includes(normalizedStatus)) normalizedStatus = 'confirmed';
+      if (['pending'].includes(normalizedStatus)) normalizedStatus = 'pending';
       if (['rejected'].includes(normalizedStatus)) normalizedStatus = 'rejected';
-
+      if (['referred'].includes(normalizedStatus)) normalizedStatus = 'referred';
+      
+      
       return {
         medreqitem_id: item.medreqitem_id,
         medreqitem_qty: item.medreqitem_qty,
@@ -263,7 +264,7 @@ const MedicineRequestTracker: React.FC = () => {
       status: getStatusForTab(activeTab),
     }),
     enabled: !!user?.rp && isAuthenticated,
-    staleTime: 0, // always considered stale
+    staleTime: 5000, // always considered stale
     refetchInterval: 3000, // every 3 seconds (adjust as needed)
     refetchIntervalInBackground: true, // keeps polling even if tab is inactive
   });
@@ -402,7 +403,6 @@ const MedicineRequestTracker: React.FC = () => {
           </View>
         )}
 
-        {/* Reminder for To Pick Up Tab */}
         {activeTab === 'confirmed' && (
           <View className="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 mx-4 my-2 rounded-xl">
             <Text className="text-blue-800 text-sm font-medium">

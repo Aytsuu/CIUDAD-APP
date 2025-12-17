@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router";
-import { useHouseholdData } from "../../family-profling/queries/profilingFetchQueries";
+import { useHouseholdsList } from "@/pages/record/profiling/queries/profilingFetchQueries"; 
 
 export default function DemographicForm({
   form,
@@ -27,7 +27,7 @@ export default function DemographicForm({
   const selectedHouseholdId = form.watch("demographicInfo.householdNo");
 
   // Fetch household data when household is selected
-  const { isLoading: isLoadingHousehold } = useHouseholdData(selectedHouseholdId);
+  const { isLoading: isLoadingHousehold } = useHouseholdsList(selectedHouseholdId);
 
   const submit = async () => {
     const formIsValid = await form.trigger("demographicInfo");

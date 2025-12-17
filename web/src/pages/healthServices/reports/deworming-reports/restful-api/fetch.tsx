@@ -6,7 +6,7 @@ export const getDewormingYears = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<DewormingYearsResponse> => {
+): Promise<DewormingYearsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (searchQuery) params.append('search', searchQuery);
@@ -16,8 +16,10 @@ export const getDewormingYears = async (
     const response = await api2.get<DewormingYearsResponse>(`/reports/deworming-records/yearly/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching deworming years:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching deworming years:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -27,7 +29,7 @@ export const getDewormingRecords = async (
   pageSize: number,
   round?: string,
   searchQuery?: string
-): Promise<DewormingDetailResponse> => {
+): Promise<DewormingDetailResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     params.append('page', page.toString());
@@ -38,7 +40,9 @@ export const getDewormingRecords = async (
     const response = await api2.get<DewormingDetailResponse>(`/reports/deworming-reports/${year}/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching deworming records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching deworming records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };

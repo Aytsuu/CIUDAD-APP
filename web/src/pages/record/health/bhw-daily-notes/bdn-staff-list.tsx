@@ -1,6 +1,7 @@
 import { capitalize } from "@/helpers/capitalize";
-import sanroqueLogoimg from "@/assets/images/sanroque_logo.jpg";
 import { useMaternalStaff } from "@/pages/healthServices/maternal/queries/maternalFetchQueries"
+import sanRoqueLogoNoBg from "./image/sanroque_logo_nobg.png"
+
 
 export default function BHWStaffList() {
    const { data: staffList } = useMaternalStaff();
@@ -15,7 +16,7 @@ export default function BHWStaffList() {
          <div 
             className="absolute right-0  opacity-50 pointer-events-none w-48 h-48 bg-cover bg-center"
             style={{
-               backgroundImage: `url(${sanroqueLogoimg})`,
+               backgroundImage: `url(${sanRoqueLogoNoBg})`,
             }}
          />
          

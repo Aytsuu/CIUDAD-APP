@@ -12,7 +12,7 @@ import { useCallback, useState } from "react";
 export default function MyPrenatalAppointments() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'completed' | 'cancelled' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'missed' | 'approved' | 'completed' | 'cancelled' | 'rejected'>('all');
   const [refreshing, setRefreshing] = useState(false);
   
   // Cancel dialog state
@@ -32,7 +32,8 @@ export default function MyPrenatalAppointments() {
     approved: 0,
     cancelled: 0,
     completed: 0,
-    rejected: 0
+    rejected: 0,
+    missed: 0
   };
 
   // Refresh functionality
@@ -91,6 +92,13 @@ export default function MyPrenatalAppointments() {
           <View className="flex-row items-center bg-red-50 border border-red-200 px-2 py-1 rounded-full">
             <AlertCircle size={12} color="#dc2626" />
             <Text className="ml-1 text-xs font-medium text-red-700">Rejected</Text>
+          </View>
+        );
+         case 'missed':
+        return (
+          <View className="flex-row items-center bg-red-50 border border-red-200 px-2 py-1 rounded-full">
+            <AlertCircle size={12} color="#dc2626" />
+            <Text className="ml-1 text-xs font-medium text-red-700">Missed</Text>
           </View>
         );
       default:
@@ -259,6 +267,7 @@ export default function MyPrenatalAppointments() {
               { key: 'completed', label: 'Completed', count: statusCounts.completed },
               { key: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled },
               { key: 'rejected', label: 'Rejected', count: statusCounts.rejected },
+              { key: 'missed', label: 'Missed', count: statusCounts.missed },
             ].map((tab) => (
               <TouchableOpacity
                 key={tab.key}

@@ -66,7 +66,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry,
+          isNearExpiry: item.isNearExpiry
         });
       }
     });
@@ -92,7 +92,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry,
+          isNearExpiry: item.isNearExpiry
         });
       }
     });
@@ -118,7 +118,7 @@ export function InventoryAlertsSidebar() {
           details,
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry,
+          isNearExpiry: item.isNearExpiry
         });
       }
     });
@@ -142,7 +142,7 @@ export function InventoryAlertsSidebar() {
           details: item.category || "",
           isOutOfStock: item.isOutOfStock,
           isLowStock: item.isLowStock,
-          isNearExpiry: item.isNearExpiry,
+          isNearExpiry: item.isNearExpiry
         });
       }
     });
@@ -152,20 +152,32 @@ export function InventoryAlertsSidebar() {
       const priority: Record<StockStatus, number> = {
         out_of_stock: 3,
         low_stock: 2,
-        near_expiry: 1,
+        near_expiry: 1
       };
       return priority[b.status] - priority[a.status];
     });
   };
 
   const allAlertItems = getCombinedAlertItems();
-  const itemsToShow = allAlertItems.slice(0, 10);
+  // Show only 2 alerts per type
+  const groupedByType: Record<ItemType, StockAlertItem[]> = {
+    antigen: [],
+    medicine: [],
+    commodity: [],
+    firstaid: []
+  };
+  allAlertItems.forEach((item) => {
+    if (groupedByType[item.type]) {
+      groupedByType[item.type].push(item);
+    }
+  });
+  const itemsToShow = [...groupedByType.antigen.slice(0, 2), ...groupedByType.medicine.slice(0, 2), ...groupedByType.commodity.slice(0, 2), ...groupedByType.firstaid.slice(0, 2)];
 
   // Calculate total counts - count all statuses independently
   const totalCounts = {
     out_of_stock: allAlertItems.filter((item) => item.isOutOfStock).length,
     low_stock: allAlertItems.filter((item) => item.isLowStock).length,
-    near_expiry: allAlertItems.filter((item) => item.isNearExpiry).length,
+    near_expiry: allAlertItems.filter((item) => item.isNearExpiry).length
   };
 
   // Count by type
@@ -173,7 +185,7 @@ export function InventoryAlertsSidebar() {
     antigen: allAlertItems.filter((item) => item.type === "antigen").length,
     medicine: allAlertItems.filter((item) => item.type === "medicine").length,
     commodity: allAlertItems.filter((item) => item.type === "commodity").length,
-    firstaid: allAlertItems.filter((item) => item.type === "firstaid").length,
+    firstaid: allAlertItems.filter((item) => item.type === "firstaid").length
   };
 
   const getStatusIcon = (status: StockStatus) => {
@@ -282,7 +294,7 @@ export function InventoryAlertsSidebar() {
       return new Date(dateString).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
-        year: "numeric",
+        year: "numeric"
       });
     } catch {
       return "Invalid Date";
@@ -311,7 +323,16 @@ export function InventoryAlertsSidebar() {
   const hasAlerts = totalCounts.out_of_stock > 0 || totalCounts.low_stock > 0 || totalCounts.near_expiry > 0;
 
   return (
-    <Card className="rounded-lg shadow-sm border-0">
+    <Card className="rounded-t mt-4 ">
+          <div className="px-6 py-4 border-b border-gray-100 rounded-t-xl bg-primary">
+                          <div className="flex items-center  justify-between">
+                            <div>
+      <h1 className="text-lg font-bold text-white  ">Inventory Alerts</h1>
+                              {/* <h3 className="text-lg font-bold text-white">{component.title}</h3> */}
+                              <p className="text-xs text-white mt-1">Latest inventory alerts</p>
+                            </div>
+                          </div>
+                        </div>
       <CardHeader className="pb-3 space-y-2">
         <div className="flex flex-wrap gap-2">
           {totalCounts.out_of_stock > 0 && (
@@ -354,16 +375,10 @@ export function InventoryAlertsSidebar() {
                       <div className="flex-shrink-0 mt-0.5">{getStatusIcon(item.status)}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                           <div className="flex flex-row items-center gap-1 min-w-0">
-                            <h4 className="text-sm font-semibold  items-center text-gray-900 truncate leading-tight">
-                              {item.name}
-                            </h4>
+                          <div className="flex flex-row items-center gap-1 min-w-0">
+                            <h4 className="text-sm font-semibold  items-center text-gray-900 truncate leading-tight">{item.name}</h4>
                             {/* Item details */}
-                            {item.details && (
-                              <p className="text-[11px] text-gray-600 mt-0.5 leading-relaxed truncate">
-                                {item.details}
-                              </p>
-                            )}
+                            {item.details && <p className="text-[11px] text-gray-600 mt-0.5 leading-relaxed truncate">{item.details}</p>}
                           </div>
 
                           <Badge variant="outline" className={`text-[10px] px-1.5 py-0.5 flex-shrink-0 font-medium ${getTypeColor(item.type)}`}>
@@ -400,9 +415,9 @@ export function InventoryAlertsSidebar() {
             <div className="pt-3 border-t border-gray-100 mt-3">
               <DropdownMenu open={showViewAllDropdown} onOpenChange={setShowViewAllDropdown}>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="link" className="w-full flex items-center justify-between text-sm font-medium text-blue-600 hover:text-blue-700">
+                  <Button variant="link" className="w-full flex items-center justify-between text-sm font-700 ">
                     <span className="flex items-center gap-2">
-                      View All Stock Alerts ({allAlertItems.length}){allAlertItems.length > 10 && <span className="text-gray-400 text-xs">• Showing 10 of {allAlertItems.length}</span>}
+                      View All Stock Alerts ({allAlertItems.length}){allAlertItems.length > 8 && <span className="text-gray-400 text-xs">• Showing 2 per type of {allAlertItems.length}</span>}
                     </span>
                     <ChevronDown className="h-4 w-4 ml-2" />
                   </Button>

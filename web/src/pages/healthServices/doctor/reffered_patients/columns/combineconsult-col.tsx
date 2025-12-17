@@ -11,16 +11,16 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "record_type",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Record Type <ArrowUpDown size={15} />
         </div>
       ),
-      cell: ({ row }) => <div className="text-sm min-w-[120px] capitalize text-center">{row.original.record_type.replace("-", " ")}</div>
+      cell: ({ row }) => <div className="text-sm min-w-[120px] capitalize">{row.original.record_type.replace("-", " ")}</div>
     },
     {
       accessorKey: "patient_info",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Patient Info <ArrowUpDown size={15} />
         </div>
       ),
@@ -117,7 +117,7 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "address",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Address <ArrowUpDown size={15} />
         </div>
       ),
@@ -136,13 +136,15 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
 
         // Debug logging (remove after testing)
         if (!address || !address.full_address) {
-          console.log("❌ Address not found for record:", {
-            record_type: row.original.record_type,
-            data_structure: row.original.data,
-            attempted_path: row.original.record_type === "child-health" 
-              ? "chrec_details.patrec_details.address"
-              : "patrec_details.patient_details.address"
-          });
+          if (process.env.NODE_ENV === 'development') {
+            console.log("❌ Address not found for record:", {
+              record_type: row.original.record_type,
+              data_structure: row.original.data,
+              attempted_path: row.original.record_type === "child-health" 
+                ? "chrec_details.patrec_details.address"
+                : "patrec_details.patient_details.address"
+            });
+          }
         }
 
         return <div className="w-[200px] break-words text-sm">{address?.full_address || "No address provided"}</div>;
@@ -151,7 +153,7 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
     {
       accessorKey: "created_at",
       header: ({ column }) => (
-        <div className="flex w-full justify-center items-center gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <div className="flex w-full gap-2 cursor-pointer" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Created At <ArrowUpDown size={15} />
         </div>
       ),
@@ -209,7 +211,7 @@ export const useCombinedConsultationColumns = (): ColumnDef<any>[] => {
         }
 
         return (
-          <div className="flex justify-center gap-2">
+          <div className="flex gap-2">
             <ViewButton
               onClick={() => {
                 navigate(row.original.record_type === "child-health" ? "/referred-patients/child" : "/referred-patients/adult", {

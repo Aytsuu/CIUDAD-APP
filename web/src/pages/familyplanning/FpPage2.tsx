@@ -28,7 +28,7 @@ const fetchIllnesses = async (illCodePrefix?: string): Promise<Illness[]> => {
     const response = await api2.get("/familyplanning/illnesses/", params)
     return response.data
   } catch (error) {
-    console.error("Error fetching illnesses:", error)
+    // console.error("Error fetching illnesses:", error)
     throw error
   }
 }
@@ -103,7 +103,8 @@ const { setValue, getValues } = form
           }
         })
         .catch((error) => {
-          console.error("Error fetching last pregnancy data:", error)
+          //  console.error("Error fetching last pregnancy data:", error)
+          {process.env.NODE_ENV === 'development' && console.error(error)}  
         })
     }
   }, [formData.pat_id, form])

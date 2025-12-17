@@ -6,7 +6,7 @@ export const getVaccineMonths = async (
   pageSize: number,
   year?: string,
   searchQuery?: string
-): Promise<VaccineMonthsResponse> => {
+): Promise<VaccineMonthsResponse | undefined> => {
   try {
     const params = new URLSearchParams();
     if (year && year !== 'all') params.append('year', year);
@@ -17,8 +17,10 @@ export const getVaccineMonths = async (
     const response = await api2.get<VaccineMonthsResponse>(`/inventory/vaccine/summaries/?${params.toString()}`);
     return response.data;
   } catch (error) {
-    console.error("Error fetching vaccine months:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching vaccine months:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
 
@@ -27,7 +29,7 @@ export const getMonthlyVaccineRecords = async (
   page: number,
   pageSize: number,
   searchQuery?: string
-): Promise<VaccineMonthlyDetailResponse> => {
+): Promise<VaccineMonthlyDetailResponse | undefined> => {
   try {
     const response = await api2.get<VaccineMonthlyDetailResponse>(`/inventory/vaccine/records/${month}/`, {
       params: {
@@ -38,7 +40,9 @@ export const getMonthlyVaccineRecords = async (
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching monthly vaccine records:", error);
-    throw error;
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error fetching monthly vaccine records:", error);
+    }
+    // Do not throw in production; only log in development
   }
 };
