@@ -55,7 +55,7 @@ jobs:
 
           # --- Poll for Ready State ---
           echo "Waiting for branch to be ready..."
-          MAX_ATTEMPTS=30  # 10 minutes (60 * 10s)
+          MAX_ATTEMPTS=30
           ATTEMPT=0
           
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
@@ -99,7 +99,6 @@ jobs:
             echo "user: $DB_USER"
             echo "pass: $DB_PASS"
             echo "host: $DB_HOST"
-            echo "port: 6543"
 
             echo "db_host=$DB_HOST" >> $GITHUB_OUTPUT
             echo "db_user=$DB_USER" >> $GITHUB_OUTPUT
