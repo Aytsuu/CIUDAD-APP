@@ -111,6 +111,15 @@ jobs:
             exit 1
           fi
 
+      - name: Download Seed Data
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          # Run downlaoder
+          python download_seed_data.py
+
+
       - name: Run Migrations
         env:
           DB_HOST: ${{ steps.db_url.outputs.db_host }}
@@ -135,6 +144,7 @@ jobs:
           else
             echo "Seed script not found. Skipping..."
           fi
+          
   server2-dev-db:
     runs-on: ubuntu-latest
     if: startsWith(github.head_ref, 'dual-server/')
@@ -243,6 +253,14 @@ jobs:
             echo "URL format: $FULL_POOLER_URL"
             exit 1
           fi
+
+      - name: Download Seed Data
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
+        run: |
+          # Run downlaoder
+          python download_seed_data.py
 
       - name: Run Migrations
         env:
