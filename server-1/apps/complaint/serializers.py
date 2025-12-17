@@ -7,7 +7,7 @@ from apps.profiling.serializers.resident_profile_serializers import ResidentProf
 from apps.administration.serializers.staff_serializers import StaffMinimalSerializer
 from apps.administration.models import Staff, Position
 from apps.profiling.models import ResidentProfile, Personal 
-from .models import (Accused, Complainant, Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, ComplaintRecipient)
+from .models import (Accused, Complainant, Complaint, ComplaintComplainant, ComplaintAccused, Complaint_File, Complaint_History)
 
 # utility
 from utils.supabase_client import upload_to_storage
@@ -37,6 +37,55 @@ class ComplainantSerializer(serializers.ModelSerializer):
             return ResidentProfileBaseSerializer(obj.rp_id).data
         return None
     
+class ComplaintHistorySerializer(serializers.ModelSerializer):  
+    staff = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Complaint_History
+        fields = ['comp_hist', 'comp_hist_action', 'comp_hist_details', 'comp_hist_timestamp', 'staff']
+        read_only = True
+
+    def get_staff(self, obj):
+        """Get staff details with personal information"""
+        if not obj.staff:
+            return None
+        
+        try:
+            staff = obj.staff
+            
+            resident_profile = staff.rp
+            
+            if not resident_profile:
+                return {
+                    'staff_id': staff.staff_id,
+                    'staff_name': "No resident profile found",
+                    'staff_position': None,
+                }
+            
+            # Get personal data from ResidentProfile's per field
+            personal = resident_profile.per
+            
+            # Staff Name
+            if personal:
+                staff_name = f"{personal.per_fname} {personal.per_lname}"
+            else:
+                staff_name = "Personal data not found"
+            
+            # Staff Position - get from staff's pos field
+            staff_position = staff.pos
+            
+            return {
+                'staff_id': staff.staff_id,
+                'staff_name': staff_name or "Name not found",
+                'staff_position': staff_position.pos_title if staff_position else None,
+            }
+            
+        except Exception as e:
+            return {
+                'error': str(e),
+                'staff_id': obj.staff.staff_id if obj.staff else None,
+            }
+
 class ComplaintFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Complaint_File
@@ -104,6 +153,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
     accused = serializers.SerializerMethodField()
     complaint_files = ComplaintFileSerializer(source='files', many=True, read_only=True)
     staff = serializers.SerializerMethodField()
+    comp_history = ComplaintHistorySerializer(many=True, read_only=True)
     
     class Meta:
         model = Complaint
@@ -122,6 +172,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
             'complaint_files',
             'comp_status',
             'staff',
+            'comp_history',
         ]
         read_only_fields = ['comp_id', 'comp_created_at', 'complainant', 'accused_persons', 'complaint_files']
     
@@ -274,64 +325,40 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Complaint
-        fields = [
-            'comp_status',
-            'comp_rejection_reason',
-            'comp_cancel_reason',
-            'staff_id',
-        ]
+        fields = ['comp_status', 'comp_rejection_reason', 'comp_cancel_reason', 'staff_id']
         extra_kwargs = {
             'comp_rejection_reason': {'required': False, 'allow_blank': True},
             'comp_cancel_reason': {'required': False, 'allow_blank': True},
-            'staff_id': {'required': False, 'allow_null': True}
         }
     
     def validate(self, data):
-        """Validate status transitions and required fields"""
+        """Simple validation - only check required fields"""
         comp_status = data.get('comp_status')
         comp_rejection_reason = data.get('comp_rejection_reason', '').strip()
         comp_cancel_reason = data.get('comp_cancel_reason', '').strip()
-        staff_id = data.get('staff_id')
         
-        # Rejection requires a reason
-        if comp_status == 'Rejected':
-            if not comp_rejection_reason:
-                raise serializers.ValidationError({
-                    'comp_rejection_reason': 'Rejection reason is required when rejecting a complaint.'
-                })
+        # Only require reasons if status is explicitly set to Rejected/Cancelled
+        if comp_status == 'Rejected' and not comp_rejection_reason:
+            raise serializers.ValidationError({
+                'comp_rejection_reason': 'Rejection reason is required.'
+            })
         
-        # Cancellation requires a reason
-        if comp_status == 'Cancelled':
-            if not comp_cancel_reason:
-                raise serializers.ValidationError({
-                    'comp_cancel_reason': 'Cancellation reason is required when cancelling a complaint.'
-                })
-        
-        # Accepted status requires staff_id
-        if comp_status == 'Accepted':
-            if not staff_id:
-                raise serializers.ValidationError({
-                    'staff_id': 'Staff ID is required when accepting a complaint.'
-                })
-        
-        # Raised status requires staff_id
-        if comp_status == 'Raised':
-            if not staff_id:
-                raise serializers.ValidationError({
-                    'staff_id': 'Staff ID is required when raising a complaint.'
-                })
+        if comp_status == 'Cancelled' and not comp_cancel_reason:
+            raise serializers.ValidationError({
+                'comp_cancel_reason': 'Cancellation reason is required.'
+            })
         
         return data
     
     def update(self, instance, validated_data):
         staff_id = validated_data.pop('staff_id', None)
-
-        # Update main fields
-        instance.comp_status = validated_data.get('comp_status', instance.comp_status)
-        instance.comp_rejection_reason = validated_data.get('comp_rejection_reason', instance.comp_rejection_reason)
-        instance.comp_cancel_reason = validated_data.get('comp_cancel_reason', instance.comp_cancel_reason)
-
-        # ✅ Properly set staff instance if provided
+        
+        # Update fields
+        for field in ['comp_status', 'comp_rejection_reason', 'comp_cancel_reason']:
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+        
+        # Update staff if staff_id provided
         if staff_id is not None:
             from apps.administration.models import Staff
             try:
@@ -339,7 +366,7 @@ class ComplaintUpdateSerializer(serializers.ModelSerializer):
                 instance.staff = staff_instance
             except Staff.DoesNotExist:
                 raise serializers.ValidationError({'staff_id': 'Invalid staff ID'})
-
+        
         instance.save()
         return instance
 

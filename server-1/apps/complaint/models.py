@@ -55,6 +55,7 @@ class Complaint(models.Model):
     comp_updated_at = models.DateTimeField(auto_now=True)
     class Meta:
         db_table = 'complaint'
+        ordering = ['comp_created_at']
 
     def save(self, *args, **kwargs):
         if not self.comp_id:
@@ -111,24 +112,28 @@ class Complaint_File(models.Model):
         
     def __str__(self):
         return f"{self.comp_file_name} (Case #{self.comp.comp_id})"
-
-class ComplaintRecipient(models.Model):
-    comp_rec_id = models.BigAutoField(primary_key=True)
-    comp = models.ForeignKey(Complaint, on_delete=models.CASCADE, related_name="complaint_recipients")
-    recipient = models.ForeignKey('account.Account', on_delete=models.CASCADE, related_name="complaint_notifications")
-    status = models.CharField(max_length=50, default='pending',
-        choices=[('pending', 'Pending'), ('reviewed', 'Reviewed'), ('actioned', 'Actioned')])
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    
+class Complaint_History(models.Model):
+    comp_hist = models.BigAutoField(primary_key=True)
+    comp = models.ForeignKey(
+        Complaint,
+        on_delete=models.CASCADE,
+        related_name='comp_history',
+    )
+    comp_hist_action = models.CharField(max_length=255, blank=True, null=True)
+    comp_hist_details = models.JSONField(default=dict, blank=True)
+    comp_hist_timestamp = models.DateTimeField(auto_now_add=True)
+    staff = models.ForeignKey( 'administration.Staff',on_delete=models.SET_NULL, null=True, blank=True, related_name='complaint_history')
 
     class Meta:
-        db_table = 'complaint_recipient'
-        ordering = ['-created_at']
+        db_table = 'complaint_history'
         indexes = [
-            models.Index(fields=['status']),
-            models.Index(fields=['recipient']),
             models.Index(fields=['comp']),
+            models.Index(fields=['comp_hist_timestamp']),
+            models.Index(fields=['staff']),
         ]
+        ordering = ['comp_hist_timestamp'] 
 
     def __str__(self):
-        return f"Recipient {self.recipient.username} for Complaint #{self.comp.comp_id} ({self.status})"
+        staff_name = self.staff.get_full_name() if self.staff else "System"
+        return f"{self.comp_hist_action or 'Update'} on Case #{self.comp.comp_id} by {staff_name} at {self.comp_hist_timestamp}"

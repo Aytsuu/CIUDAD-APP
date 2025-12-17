@@ -2,7 +2,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TrendingUp, TrendingDown, BarChart3, AlertCircle } from "lucide-react";
+import { BarChart3, AlertCircle } from "lucide-react";
 import { useGetComplaintChartAnalytics } from "./complaint-analytics-queries";
 import { useLoading } from "@/context/LoadingContext";
 import React from "react";
@@ -30,7 +30,6 @@ export default function ComplaintSectionCharts() {
     ? Math.round(((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100)
     : 0;
   
-  const isIncreasing = trendPercentage > 0;
   const peakDay = complaintChartAnalytics.reduce((max: any, current: any) => 
     (current.complaint > (max?.complaint || 0)) ? current : max, 
     complaintChartAnalytics[0]

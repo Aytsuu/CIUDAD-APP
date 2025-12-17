@@ -75,6 +75,18 @@ export default function ComplaintSidebar() {
 
   return (
     <Card className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm mb-4">
+      <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
+              Blotter Request
+            </h3>
+            <p className="text-xs text-gray-600 mt-1">
+              Latest Blotter requests
+            </p>
+          </div>
+        </div>
+      </div>
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (

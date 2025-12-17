@@ -57,8 +57,6 @@ export default function ComplaintRequest() {
     [pendingComplaints]
   );
 
-  // Since we're already filtering for Pending, status filter may not be needed
-  // But we include it in case you want to use it for sub-statuses later
   const availableStatuses = useMemo(
     () => getUniqueStatuses(pendingComplaints),
     [pendingComplaints]
@@ -108,13 +106,13 @@ export default function ComplaintRequest() {
         availableStatuses={availableStatuses}
         buttons={{
           filter: true,
-          request: false, // Current page is already "Request"
+          request: false, 
           newReport: false,
-          rejected: true, // Show rejected button
-          cancelled: true, // Show cancelled button
+          rejected: true, 
+          cancelled: true, 
           rejectedCount: statusCounts.rejected,
           cancelledCount: statusCounts.cancelled,
-          requestCount: statusCounts.pending, // Show pending count
+          requestCount: statusCounts.pending,
         }}
       />
 

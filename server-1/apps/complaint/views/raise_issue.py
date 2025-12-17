@@ -9,8 +9,8 @@ from django.utils import timezone
 from django.db import transaction
 from django.db.models import Max
 
-# Model
-from apps.complaint.models import Complaint
+# Models
+from apps.complaint.models import Complaint, Complaint_History
 from apps.clerk.models import ServiceChargePaymentRequest
 from apps.treasurer.models import Purpose_And_Rates
 from apps.notification.utils import create_notification
@@ -21,13 +21,17 @@ import logging
 import re
 
 logger = logging.getLogger(__name__)
- 
+
 
 class ServiceChargeRequestCreateView(APIView):
     @transaction.atomic
     def post(self, request, comp_id):
         try:
             complaint = Complaint.objects.get(comp_id=comp_id)
+            
+            # Track old status
+            old_status = complaint.comp_status
+            
             purpose = Purpose_And_Rates.objects.filter(pr_purpose="Summon").first()
             if not purpose:
                 logger.error("Purpose 'Summon' not found")
@@ -63,13 +67,32 @@ class ServiceChargeRequestCreateView(APIView):
                 comp_id=complaint,
             )
             
-            Complaint.objects.filter(comp_id=comp_id).update(comp_status="Raised")
+            # Update complaint status to Raised
+            complaint.comp_status = "Raised"
+            complaint.save()
+            
+            action = f"Status changed from {old_status} to Raised (Service Charge Created)"
+            
+            Complaint_History.objects.create(
+                comp=complaint,
+                comp_hist_action=action,
+                comp_hist_details={
+                    'old_status': old_status,
+                    'new_status': "Raised",
+                    'action': "Service charge payment request created",
+                    'pay_id': pay_id,
+                    'updated_by': username,
+                    'timestamp': timezone.now().isoformat()
+                },
+                staff=request.user.staff if hasattr(request.user, 'staff') else None
+            )
             
             # Get all staff with ADMIN position
             admin_staff = Staff.objects.filter(pos__pos_title="ADMIN", staff_type="BARANGAY STAFF").select_related("rp")
             
             recipients = [staff.rp for staff in admin_staff if staff.rp]
             
+            # Uncomment if you want to send notifications
             # if recipients:
             #     create_notification(
             #         title="Blotter Request Raised",
@@ -86,7 +109,8 @@ class ServiceChargeRequestCreateView(APIView):
                 'status': 'success',
                 'message': 'Service charge payment request created successfully',
                 'comp_status': 'Raised',
-                'pay_id': pay_id
+                'pay_id': pay_id,
+                'history_added': True
             }, status=status.HTTP_201_CREATED)
             
         except Complaint.DoesNotExist:

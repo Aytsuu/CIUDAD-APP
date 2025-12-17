@@ -101,7 +101,7 @@ export function getUniqueStatuses(complaints: Complaint[]): string[] {
   const statuses = new Set(
     complaints
       .map((c) => c.comp_status)
-      .filter((status): status is string => Boolean(status))
+      .filter((status): status is Exclude<typeof status, undefined> => status !== undefined && status !== null)
   );
   return Array.from(statuses).sort();
 }

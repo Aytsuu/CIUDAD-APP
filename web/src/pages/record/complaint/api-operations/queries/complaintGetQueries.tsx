@@ -25,6 +25,10 @@ export const useGetComplaintById = (comp_id: string) =>
       }
     },
     enabled: !!comp_id,
+    refetchOnMount: 'always',
+    staleTime: 0,
+    retry: 2,
+    refetchOnWindowFocus: true,
   });
 
 export const useGetArchivedComplaints = () =>
