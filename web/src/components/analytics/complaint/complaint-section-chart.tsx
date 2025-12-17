@@ -74,9 +74,9 @@ export default function ComplaintSectionCharts() {
       <CardHeader className="border-b border-gray-100 bg-white p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <CardTitle className="text-xl font-bold text-gray-900">Complaint Cases Overview</CardTitle>
+            <CardTitle className="text-xl font-bold text-gray-900">Blotter Cases Overview</CardTitle>
             <CardDescription className="text-sm text-gray-600 mt-1">
-              Tracking complaint cases over the last 3 months
+              Tracking blotter cases over the last 3 months
             </CardDescription>
           </div>
         </div>
@@ -211,7 +211,7 @@ export default function ComplaintSectionCharts() {
                         }}
                         formatter={(value) => [
                           <span className="font-semibold">{value} cases</span>, 
-                          "Complaints"
+                          "Blotter"
                         ]}
                       />
                     }

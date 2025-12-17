@@ -128,7 +128,7 @@ export default function ComplaintSidebar() {
                       <div className="flex items-center gap-3 text-xs text-gray-500">
                         <span>{formatTimeAgo(complaint.created_at || complaint.comp_created_at)}</span>
                         <p className="text-orange-500 font-semibold">
-                          Pending Complaint
+                          Pending Blotter
                         </p>
                       </div>
 
@@ -161,10 +161,10 @@ export default function ComplaintSidebar() {
               <CheckCircle className="w-8 h-8 text-blue-500" />
             </div>
             <h3 className="text-sm font-medium text-blue-700 mb-1">
-              No pending complaints
+              No pending blotter
             </h3>
             <p className="text-sm text-gray-500">
-              Pending complaints will appear here
+              Pending blotter will appear here
             </p>
           </div>
         )}

@@ -72,7 +72,7 @@ export interface Complaint {
   comp_rejection_reason: string | null;
   comp_updated_at: string;
   comp_cancel_reason: string | null;
-  comp_status: "Pending" | "Accepted" | "Rejected" | "Raised" | "Cancelled";
+  comp_status: "Pending" | "Accepted" | "Rejected" | "Raised" | "Cancelled" | "Archived";
   staff: Staff | null;
   complainant: Complainant[];
   accused: Accused[];

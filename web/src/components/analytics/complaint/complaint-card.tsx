@@ -38,7 +38,7 @@ export const useComplaintSectionCards = () => {
   return {
     total: (
       <TotalComplaintCard 
-        title="Total Complaints" 
+        title="Total Blotter" 
         value={totalComplaints} 
         isLoading={isLoading}
       />
