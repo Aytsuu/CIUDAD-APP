@@ -138,6 +138,7 @@ jobs:
           fi
   server2-dev-db:
     runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'dual-server/')
     defaults:
       run:
         working-directory: ./server-2
