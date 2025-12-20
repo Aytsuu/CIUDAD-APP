@@ -2,7 +2,7 @@ name: Setup Supabase Preview
 on:
   pull_request:
     branches: [master]
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, closed]
 
 jobs:
   server1-dev-db:
@@ -147,5 +147,8 @@ jobs:
           
       - name: Close Preview
         if: github.event.action == 'closed'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
-          supabase branches delete "${{ github.head_ref }}"
+          supabase branches delete "${{ github.head_ref }}" --project-ref "$PROJECT_REF"
