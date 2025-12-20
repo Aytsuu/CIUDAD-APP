@@ -6,7 +6,6 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'server-2/apps/**/migrations/**'
-      - 'server-2/apps/**/models.py'
 
 jobs:
   migration:
@@ -33,7 +32,7 @@ jobs:
         run: |
           
           # Poll for branch ready state
-          BRANCH_NAME = master
+          BRANCH_NAME = main
           MAX_ATTEMPTS = 30
           ATTEMPTS = 0
 

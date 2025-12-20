@@ -33,7 +33,7 @@ jobs:
         run: |
           
           # Poll for branch ready state
-          BRANCH_NAME = master
+          BRANCH_NAME = main
           MAX_ATTEMPTS = 30
           ATTEMPTS = 0
 
