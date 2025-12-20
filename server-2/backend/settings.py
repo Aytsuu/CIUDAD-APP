@@ -126,10 +126,6 @@ ASGI_APPLICATION = 'backend.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'OPTIONS': {
-            'connect_timeout': 5,
-            'sslmode': config('DB_SSL_MODE', default='require'),
-        },
         'NAME': config('DB_NAME', default='my_default_db'),
         'USER': config('DB_USER', default='my_default_user'),
         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),

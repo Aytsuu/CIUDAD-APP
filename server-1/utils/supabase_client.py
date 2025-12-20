@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 supabase: Client = create_client(
     config('SUPABASE_URL', default='my_supabase_url'), 
-    config('SUPABASE_ANON_KEY', default='my_supabase_anon_key'),
+    config('SUPABASE_SERVICE_ROLE_KEY', default='my_service_role_key'),
 )
 
 def get_realtime_channel():
