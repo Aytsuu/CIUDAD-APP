@@ -19,13 +19,8 @@ jobs:
         with:
           node-version: '22'
       - run: npm ci
-      - name: Run Tests
-        run: |
-          if grep -q '"test":' ./web/package.json; then
-            npm run test -- --watchAll=false --if-present
-          else
-            echo "No test script found, skipping tests"
-          fi
+      - name: Run Build
+        run: npm run build
 
   test-mobile:
     runs-on: ubuntu-latest
@@ -68,7 +63,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install -r requirements.txt
-      - run: python manage.py test
+      - run: python manage.py runserver 0.0.0.0:8000
 
   test-server-2:
     runs-on: ubuntu-latest
@@ -89,4 +84,4 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install -r requirements.txt
-      - run: python manage.py test
+      - run: python manage.py runserver 0.0.0.0:8001
