@@ -144,3 +144,8 @@ jobs:
           else
             echo "Seed script not found. Skipping..."
           fi
+          
+      - name: Close Preview
+        if: ${{ github.event.action == 'closed' }}
+        run: |
+          supabase branches delete "${{ github.head_ref }}"
