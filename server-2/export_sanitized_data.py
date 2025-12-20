@@ -28,6 +28,30 @@ fake = Faker()
 # Define which models to export and how to sanitize them
 EXPORT_CONFIG = {
     # Format: 'app.Model': {config}
+    'administration.Staff': {
+        'limit': None,
+        'sanitize': {}
+    },
+    'healthProfiling.ResidentProfile': {
+        'limit': None,
+        'sanitize': {}
+    },
+    'healthProfiling.Personal': {
+        'limit': None,
+        'sanitize': {}
+    },
+    'healthProfiling.PersonalAddress': {
+        'limit': None,
+        'sanitize': {}
+    },
+    'healthProfiling.Address': {
+        'limit': None,
+        'sanitize': {}
+    },
+    'healthProfiling.Sitio': {
+        'limit': None,
+        'sanitize': {}
+    },
 }
 
 def export_model(model_name):
