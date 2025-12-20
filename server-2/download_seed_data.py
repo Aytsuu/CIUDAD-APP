@@ -14,11 +14,11 @@ DOWNLOADABLE_FILES = [
   'administration_assignment.json',
   'administration_feature.json',
   'administration_position.json',
-  'profiling_residentprofile.json',
-  'profiling_personal.json',
-  'profiling_personaladdress.json',
-  'profiling_address.json',
-  'profiling_sitio.json',
+  'healthprofiling_residentprofile.json',
+  'healthprofiling_personal.json',
+  'healthprofiling_personaladdress.json',
+  'healthprofiling_address.json',
+  'healthprofiling_sitio.json',
 ]
 
 def main():
