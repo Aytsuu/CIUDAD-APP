@@ -3,22 +3,9 @@ name: Production Server 2 Migration Workflow
 on:
   pull_request:
     branches: main
-    types: [opened]
+    types: [opened, synchronize, reopened]
     paths:
-      - './server-2/apps/administration/migrations/**'
-      - './server-1/apps/animalbites/migrations/**'
-      - './server-1/apps/childhealthservices/migrations/**'
-      - './server-1/apps/familyplanning/migrations/**'
-      - './server-1/apps/firstaid/migrations/**'
-      - './server-1/apps/healthProfiling/migrations/**'
-      - './server-1/apps/inventory/migrations/**'
-      - './server-1/apps/maternal/migrations/**'
-      - './server-1/apps/medicalConsultation/migrations/**'
-      - './server-1/apps/medicineservices/migrations/**'
-      - './server-1/apps/patientrecords/migrations/**'
-      - './server-1/apps/reports/migrations/**'
-      - './server-1/apps/servicescheduler/migrations/**'
-      - './server-1/apps/vaccination/migrations/**'
+      - 'server-2/apps/**/migrations/**'
 
 jobs:
   migration:
@@ -45,7 +32,7 @@ jobs:
         run: |
           
           # Poll for branch ready state
-          BRANCH_NAME = master
+          BRANCH_NAME = main
           MAX_ATTEMPTS = 30
           ATTEMPTS = 0
 

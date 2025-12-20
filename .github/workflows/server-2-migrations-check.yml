@@ -1,0 +1,66 @@
+name: Django Migrations Check -- Server 2
+
+on:
+  pull_request:
+    branches: master
+    types: [opened, synchronize, reopened]
+    paths: 
+      - 'server-2/apps/**/migrations/**'
+      - 'server-2/apps/**/models.py'
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server-2
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: pip
+      
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Check and Run Migrations
+        env:
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: password
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_SSL_MODE: disable
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY2 }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET2 }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY2 }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
+        run: |
+          # Checking
+          echo "Checking migrations..."
+          python manage.py makemigrations --check --dry-run
+
+          # Running 
+          echo "Running migrations..."
+          python manage.py migrate

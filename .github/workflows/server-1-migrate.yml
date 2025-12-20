@@ -3,23 +3,10 @@ name: Production Server 1 Migration Workflow
 on:
   pull_request:
     branches: main
-    types: [opened]
+    types: [opened, synchronize, reopened]
     paths: 
-      - './server-1/apps/account/migrations/**'
-      - './server-1/apps/administration/migrations/**'
-      - './server-1/apps/act_log/migrations/**'
-      - './server-1/apps/clerk/migrations/**'
-      - './server-1/apps/complaint/migrations/**'
-      - './server-1/apps/council/migrations/**'
-      - './server-1/apps/donation/migrations/**'
-      - './server-1/apps/gad/migrations/**'
-      - './server-1/apps/landing/migrations/**'
-      - './server-1/apps/notification/migrations/**'
-      - './server-1/apps/profiling/migrations/**'
-      - './server-1/apps/report/migrations/**'
-      - './server-1/apps/treasurer/migrations/**'
-      - './server-1/apps/waste/migrations/**'
-
+      - 'server-1/apps/**/migrations/**'
+      
 jobs:
   migration:
     runs-on: ubuntu-latest
@@ -46,7 +33,7 @@ jobs:
         run: |
           
           # Poll for branch ready state
-          BRANCH_NAME = master
+          BRANCH_NAME = main
           MAX_ATTEMPTS = 30
           ATTEMPTS = 0
 
