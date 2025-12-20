@@ -19,16 +19,19 @@ jobs:
           version: latest
 
       - name: Setup Python
+        if: github.event.action != 'closed'
         uses: actions/setup-python@v4
         with:
           python-version: '3.13'
           cache: 'pip'
 
       - name: Install Dependencies
+        if: github.event.action != 'closed'
         run: |
           pip install -r requirements.txt
 
       - name: Get Branch DB URL
+        if: github.event.action != 'closed'
         id: db_url2
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -115,6 +118,7 @@ jobs:
           fi
 
       - name: Download Seed Data
+        if: github.event.action != 'closed'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
@@ -123,6 +127,7 @@ jobs:
           python download_seed_data.py
 
       - name: Run Migrations
+        if: github.event.action != 'closed'
         env:
           DB_HOST: ${{ steps.db_url2.outputs.db_host2 }}
           DB_USER: ${{ steps.db_url2.outputs.db_user2 }}
