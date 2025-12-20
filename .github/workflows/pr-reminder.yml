@@ -23,20 +23,4 @@ jobs:
               issue_number: context.payload.pull_request.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `BEFORE SUBMITTING PULL REQUEST
-
-              ---- ADD CONDITION TO ONLY SHOW LOGS ON DEVELOPMENT OR DELETE CONSOLE.LOG IF NOT NECESSARY---- 
-              SAMPLE 1 (COMPONENTS): 
-                export default function HelloWorld() {
-                  {process.env.NODE_ENV === 'development' && console.log("HELLO WORLD!")}  <--- DEVELOPMENT MODE ONLY
-                  return
-                }
-              
-              SAMPLE 2 (QUERIES):
-                try {
-
-                } catch (error) {
-                  {process.env.NODE_ENV === 'development' && console.error(error)}  <--- DEVELOPMENT MODE ONLY
-                }
-
-              `})
+              body: `No reminder yet.`})
