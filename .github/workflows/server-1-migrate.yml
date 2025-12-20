@@ -1,9 +1,8 @@
 name: Production Server 1 Migration Workflow
 
 on:
-  pull_request:
+  push:
     branches: main
-    types: [opened, synchronize, reopened]
     paths: 
       - 'server-1/apps/**/migrations/**'
       
