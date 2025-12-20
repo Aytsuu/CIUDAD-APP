@@ -18,8 +18,8 @@ export default function About({data} : {
   const cardInView = useInView(cardsRef, { once: true })
 
   return (
-    <div className="relative w-full h-full bg-white overflow-hidden">
-      {/* Background Map */}
+    <div className="relative w-full h-full bg-white overflow-hidden"> z
+      {/* Background Map */} 
       <img
         src={BackgroundPHMap}
         className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[90%] lg:w-[35%] opacity-10 pointer-events-none"
