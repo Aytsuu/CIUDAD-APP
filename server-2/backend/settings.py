@@ -128,7 +128,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'OPTIONS': {
             'connect_timeout': 5,
-            'sslmode': 'require',
+            'sslmode': config('DB_SSL_MODE', default='require'),
         },
         'NAME': config('DB_NAME', default='my_default_db'),
         'USER': config('DB_USER', default='my_default_user'),

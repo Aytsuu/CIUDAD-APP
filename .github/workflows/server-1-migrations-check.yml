@@ -1,0 +1,74 @@
+name: Django Migrations Check -- Server 1
+
+on:
+  pull_request:
+    branches: master
+    types: [opened]
+    paths: 
+      - './server-1/apps/account/migrations/**'
+      - './server-1/apps/administration/migrations/**'
+      - './server-1/apps/act_log/migrations/**'
+      - './server-1/apps/clerk/migrations/**'
+      - './server-1/apps/complaint/migrations/**'
+      - './server-1/apps/council/migrations/**'
+      - './server-1/apps/donation/migrations/**'
+      - './server-1/apps/gad/migrations/**'
+      - './server-1/apps/landing/migrations/**'
+      - './server-1/apps/notification/migrations/**'
+      - './server-1/apps/profiling/migrations/**'
+      - './server-1/apps/report/migrations/**'
+      - './server-1/apps/treasurer/migrations/**'
+      - './server-1/apps/waste/migrations/**'
+
+jobs:
+  check-migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5s
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: pip
+      
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Check Migrations
+        env:
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: password
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_SSL_MODE: disable
+        run: |
+          python manage.py makemigrations --check --dry-run
+
+      - name: Run Migrations
+        env:
+          DB_NAME: test_db
+          DB_USER: test_user
+          DB_PASSWORD: password
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_SSL_MODE: disable
+        run: |
+          python manage.py migrate
