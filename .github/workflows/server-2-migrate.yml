@@ -2,7 +2,7 @@ name: Production Server 2 Migration Workflow
 
 on:
   pull_request:
-    branches: master
+    branches: main
     types: [opened, synchronize, reopened]
     paths:
       - '.server-2/apps/**/migrations/**'
