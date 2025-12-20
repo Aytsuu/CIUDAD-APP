@@ -10,19 +10,15 @@ logger = logging.getLogger(__name__)
 
 # Initialize file names
 DOWNLOADABLE_FILES = [
-  'account_account.json',
   'administration_staff.json',
   'administration_assignment.json',
   'administration_feature.json',
   'administration_position.json',
-  'profiling_voter.json',
   'profiling_residentprofile.json',
   'profiling_personal.json',
   'profiling_personaladdress.json',
   'profiling_address.json',
   'profiling_sitio.json',
-  'profiling_businessrespondent.json',
-  'profiling_business.json'
 ]
 
 def main():
