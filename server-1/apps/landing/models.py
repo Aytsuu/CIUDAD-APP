@@ -11,6 +11,7 @@ class LandingPage(models.Model):
   mission = models.TextField()
   vision = models.TextField()
   values = models.TextField()
+  test_attr = models.CharField(max_length=50, default='TEST')
 
   class Meta:
     db_table = "landingpage"
