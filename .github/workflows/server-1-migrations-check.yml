@@ -5,7 +5,8 @@ on:
     branches: master
     types: [opened, synchronize, reopened]
     paths: 
-      - './server-1/apps/**/migrations/**'
+      - 'server-1/apps/**/migrations/**'
+      - 'server-1/apps/**/models.py'
 
 jobs:
   check-migrations:
