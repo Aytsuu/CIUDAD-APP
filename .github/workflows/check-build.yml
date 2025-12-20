@@ -63,7 +63,6 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install -r requirements.txt
-      - run: python manage.py runserver 0.0.0.0:8000
 
   test-server-2:
     runs-on: ubuntu-latest
@@ -84,4 +83,3 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install -r requirements.txt
-      - run: python manage.py runserver 0.0.0.0:8001
