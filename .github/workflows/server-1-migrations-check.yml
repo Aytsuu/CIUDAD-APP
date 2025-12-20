@@ -5,20 +5,7 @@ on:
     branches: master
     types: [opened]
     paths: 
-      - './server-1/apps/account/migrations/**'
-      - './server-1/apps/administration/migrations/**'
-      - './server-1/apps/act_log/migrations/**'
-      - './server-1/apps/clerk/migrations/**'
-      - './server-1/apps/complaint/migrations/**'
-      - './server-1/apps/council/migrations/**'
-      - './server-1/apps/donation/migrations/**'
-      - './server-1/apps/gad/migrations/**'
-      - './server-1/apps/landing/migrations/**'
-      - './server-1/apps/notification/migrations/**'
-      - './server-1/apps/profiling/migrations/**'
-      - './server-1/apps/report/migrations/**'
-      - './server-1/apps/treasurer/migrations/**'
-      - './server-1/apps/waste/migrations/**'
+      - './server-1/apps/**/migrations/**'
 
 jobs:
   check-migrations:
