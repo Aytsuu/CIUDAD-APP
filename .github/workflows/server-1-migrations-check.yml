@@ -42,7 +42,7 @@ jobs:
         run: |
           pip install -r requirements.txt
       
-      - name: Check Migrations
+      - name: Check and Run Migrations
         env:
           DB_NAME: test_db
           DB_USER: test_user
@@ -50,16 +50,19 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_SSL_MODE: disable
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         run: |
+          # Checking
+          echo "Checking migrations..."
           python manage.py makemigrations --check --dry-run
 
-      - name: Run Migrations
-        env:
-          DB_NAME: test_db
-          DB_USER: test_user
-          DB_PASSWORD: password
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_SSL_MODE: disable
-        run: |
+          # Running 
+          echo "Running migrations..."
           python manage.py migrate
