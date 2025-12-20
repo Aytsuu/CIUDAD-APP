@@ -1,4 +1,4 @@
-name: Django Migrations Check -- Server 1
+name: Django Migrations Check -- Server 2
 
 on:
   pull_request:

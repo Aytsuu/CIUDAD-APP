@@ -158,4 +158,3 @@ jobs:
         run: |
           supabase branches delete "${{ github.head_ref }}" --project-ref "$PROJECT_REF"
         
-
