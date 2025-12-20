@@ -6,6 +6,7 @@ on:
     types: [opened, synchronize, reopened]
     paths: 
       - 'server-2/apps/**/migrations/**'
+      - 'server-2/apps/**/models.py'
 
 jobs:
   check-migrations:
