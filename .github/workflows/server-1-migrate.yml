@@ -5,8 +5,8 @@ on:
     branches: main
     types: [opened]
     paths: 
-      - './server-1/apps/**/migrations/**'
-
+      - './apps/**/migrations/**'
+      
 jobs:
   migration:
     runs-on: ubuntu-latest
