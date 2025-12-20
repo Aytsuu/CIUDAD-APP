@@ -3,7 +3,7 @@ name: Django Migrations Check -- Server 2
 on:
   pull_request:
     branches: master
-    types: [opened]
+    types: [opened, synchronize, reopened]
     paths: 
       - './server-2/apps/**/migrations/**'
 
