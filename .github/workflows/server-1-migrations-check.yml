@@ -11,6 +11,9 @@ on:
 jobs:
   check-migrations:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server-1
     services:
       postgres:
         image: postgres:15
