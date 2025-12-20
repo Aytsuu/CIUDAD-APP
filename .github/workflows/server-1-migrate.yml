@@ -6,7 +6,7 @@ on:
     types: [opened]
     paths: 
       - './server-1/apps/**/migrations/**'
-
+      
 jobs:
   migration:
     runs-on: ubuntu-latest
