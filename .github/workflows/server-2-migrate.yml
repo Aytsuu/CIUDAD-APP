@@ -1,0 +1,42 @@
+name: Production Server 2 Migration Workflow
+
+on:
+  push:
+    branches: main
+    paths:
+      - 'server-2/apps/**/migrations/**'
+
+jobs:
+  migration:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server-2
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Migrate Schema
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Migrations
+        env:
+          DB_HOST: ${{ secrets.DB_HOST2 }}
+          DB_USER: ${{ secrets.DB_USER2 }}
+          DB_PORT: ${{ secrets.DB_PORT2 }}
+          DB_NAME: ${{ secrets.DB_NAME2 }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD2 }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY2 }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET2 }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY2 }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
+        run: |
+          # Apply Schema (Django)
+          python manage.py migrate

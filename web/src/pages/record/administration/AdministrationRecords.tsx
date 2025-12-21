@@ -85,8 +85,8 @@ export default function AdministrationRecords() {
     });
   };
 
+  // ================== RENDER ==================
   return (
-    // ----------------- RENDER --------------------
     <MainLayoutComponent
       title="Administrative Records"
       description="Manage and view staff information"

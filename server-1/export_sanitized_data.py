@@ -6,11 +6,11 @@ python export_sanitized_data.py
 import os
 import json
 import sys
-import shutil
 import logging
-from datetime import datetime
 from faker import Faker
+from django.apps import apps
 from django.core.serializers.json import DjangoJSONEncoder
+from utils.supabase_client import supabase
 
 logger = logging.getLogger(__name__)
 
@@ -18,71 +18,64 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 import django
 django.setup()
 
-from django.apps import apps
-from django.core import serializers
-from django.db import connection
-
 fake = Faker()
 
-# Define which models to export and how to sanitize them
-EXPORT_CONFIG = {
-    # Format: 'app.Model': {config}
+# List of App Labels to include in the export
+TARGET_APPS = [
+    'account',
+    'administration',
+    'profiling',
+    'report',
+    'landing',
+]
+
+# Only define models that need SPECIFIC sanitization or limits here
+# Everything else will default to limit=None, sanitize={}
+SANITIZATION_OVERRIDES = {
     'account.Account': {
-        'limit': None,
         'sanitize': {
             'email': lambda: fake.email(),
             'phone': lambda: fake.numerify('09#########'),
         }
     },
-    'administration.Staff': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Assignment': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Feature': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Position': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Voter': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.ResidentProfile': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Personal': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.PersonalAddress': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Address': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Sitio': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.BusinessRespondent': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Business': {
-        'limit': None,
-        'sanitize': {}
-    },
 }
+
+def get_export_config():
+    """
+    Dynamically builds the EXPORT_CONFIG dictionary.
+    Merges default settings with specific overrides.
+    """
+    config = {}
+
+    for app_label in TARGET_APPS:
+        try:
+            app_config = apps.get_app_config(app_label)
+            # Get all models for this app
+            for model in app_config.get_models():
+                # specific format: 'app_label.ModelName'
+                model_key = f"{app_label}.{model.__name__}"
+                
+                # Default Config
+                model_config = {
+                    'limit': None,
+                    'sanitize': {}
+                }
+
+                # Apply Overrides if they exist
+                if model_key in SANITIZATION_OVERRIDES:
+                    # Update (merge) the dictionary so we don't lose defaults
+                    override = SANITIZATION_OVERRIDES[model_key]
+                    model_config.update(override)
+
+                config[model_key] = model_config
+
+        except LookupError:
+            logger.warning(f"⚠️ App '{app_label}' not found. Skipping.")
+    
+    return config
+
+# Generate the config once
+EXPORT_CONFIG = get_export_config()
 
 def export_model(model_name):
     """
@@ -137,43 +130,35 @@ def export_model(model_name):
         }
         formatted_data.append(fixture_item)
 
+    logger.info(f'{model_name} retrieved: {queryset.count()}')
+
     if count == 0:
         return None
     
-    logger.info(f'{model_name} retrieved: {queryset.count()}')
     return json.dumps(formatted_data, cls=DjangoJSONEncoder, indent=2)
 
 def main():
-    """Exporting Sanitized Data from Production"""
-    
-    output_dir = 'seed_data'
-    
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-
-    os.makedirs(output_dir, exist_ok=True)
-    
-    all_data = {}
+    """Export Sanitized Data from Production and Store in Supabase Storage"""
     
     for model_name in EXPORT_CONFIG.keys():
         json_data = export_model(model_name)
         if json_data:
             # Save individual file
             filename = model_name.replace('.', '_').lower() + '.json'
-            filepath = os.path.join(output_dir, filename)
-            
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(json_data)
-            
-            all_data[model_name] = json_data
-    
-    # Create combined file
-    combined_file = os.path.join(output_dir, 'all_data.json')
-    with open(combined_file, 'w', encoding='utf-8') as f:
-        json.dump(all_data, f, indent=2)
-    
-    logger.info(f"✅ Data exported to {output_dir}/")
 
+            file_bytes = json_data.encode(encoding='utf-8')
+            supabase.storage.from_('seed-artifacts').upload(
+                path=filename,
+                file=file_bytes,
+                file_options={
+                    'content-type': 'application/json',
+                    'cache-control': '3600',
+                    'upsert': 'true'
+                }
+            )
+
+            logger.info(f"✅ Uploaded {filename}")
+    
 if __name__ == '__main__':
     # Check for Faker
     try:

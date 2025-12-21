@@ -306,8 +306,7 @@ LOGGING = {
 # ========================
 # SCHEDULER
 # ========================
-SCHEDULER_AUTOSTART = True
-# SCHEDULER_AUTOSTART = not DEBUG # for production
+SCHEDULER_AUTOSTART = not DEBUG
 
 CACHES = {
     "default": {

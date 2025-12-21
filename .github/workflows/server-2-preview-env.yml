@@ -1,0 +1,207 @@
+name: Setup Supabase Preview
+on:
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, reopened, closed]
+
+jobs: 
+  server2-dev-db:
+    runs-on: ubuntu-latest
+    if: startsWith(github.head_ref, 'dual-server/')
+    defaults:
+      run:
+        working-directory: ./server-2
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Setup Python
+        if: github.event.action != 'closed'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        if: github.event.action != 'closed'
+        run: |
+          pip install -r requirements.txt
+
+      - name: Get Branch DB URL
+        if: github.event.action != 'closed'
+        id: db_url2
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID2 }}
+        run: |
+          BRANCH_NAME=${{ github.head_ref }}
+          echo "Target Branch: $BRANCH_NAME"
+
+          # Delete existing branch if it exists
+          echo "Checking if branch exists..."
+          if supabase branches list --project-ref "$PROJECT_REF" --output json | jq -e ".[] | select(.name == \"$BRANCH_NAME\")" > /dev/null; then
+            echo "Branch exists, deleting..."
+            supabase branches delete "$BRANCH_NAME" --project-ref "$PROJECT_REF"
+            echo "Waiting for deletion to complete..."
+            sleep 5
+          fi
+
+          # --- Create or Get Branch ---
+          set +e 
+          echo "Creating branch (or confirming it exists)..."
+          CREATE_OUTPUT=$(supabase branches create "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json 2>&1)
+          CREATE_EXIT_CODE=$?
+          set -e
+
+          if [ $CREATE_EXIT_CODE -eq 0 ]; then
+            echo "✅ Branch created successfully"
+          elif echo "$CREATE_OUTPUT" | grep -q "409"; then
+            echo "ℹ️  Branch already exists, continuing..."
+          else
+            echo "❌ Unexpected error creating branch:"
+            echo "$CREATE_OUTPUT"
+            exit 1
+          fi
+
+          # --- Poll for Ready State ---
+          echo "Waiting for branch to be ready..."
+          MAX_ATTEMPTS=30  # 10 minutes (60 * 10s)
+          ATTEMPT=0
+          
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            
+            # Get branch details
+            BRANCH_INFO=$(supabase branches get "$BRANCH_NAME" --project-ref "$PROJECT_REF" --output json 2>/dev/null || echo '{}')
+            
+            # Check if we have connection URLs (indicates branch is ready)
+            POSTGRES_URL=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL // "null"')
+            POSTGRES_URL_NON_POOLING=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL_NON_POOLING // "null"')
+            
+            # Branch is ready when we have connection URLs
+            if [[ "$POSTGRES_URL" != "null" ]] && [[ -n "$POSTGRES_URL" ]] && [[ "$POSTGRES_URL" != "***"* ]]; then
+              echo "✅ Branch is ready!"
+              break
+            fi
+            
+            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+              echo "❌ Timeout: Branch did not become ready in 5 minutes"
+              echo "Full info: $BRANCH_INFO"
+              exit 1
+            fi
+            
+            sleep 10
+          done
+
+          # --- Extract Connection Details ---
+          # Use the pooler URL (better for CI/CD)
+          FULL_POOLER_URL=$(echo "$BRANCH_INFO" | jq -r '.POSTGRES_URL')
+          echo "$FULL_POOLER_URL"
+          
+          # Extract components from the connection URL
+          # Format: postgresql://user:pass@host:port/dbname
+          if [[ "$FULL_POOLER_URL" =~ postgresql://([^:]+):([^@]+)@([^:]+):([^/]+)/([^?]+) ]]; then
+            DB_USER="${BASH_REMATCH[1]}"
+            DB_PASS="${BASH_REMATCH[2]}"
+            DB_HOST="${BASH_REMATCH[3]}"
+            DB_PORT="${BASH_REMATCH[4]}"
+            DB_NAME="${BASH_REMATCH[5]}"
+
+            echo "user: $DB_USER"
+            echo "pass: $DB_PASS"
+            echo "host: $DB_HOST"
+            echo "port: 6543"
+
+            echo "db_host2=$DB_HOST" >> $GITHUB_OUTPUT
+            echo "db_user2=$DB_USER" >> $GITHUB_OUTPUT
+            echo "db_port2=$DB_PORT" >> $GITHUB_OUTPUT
+            echo "db_name2=$DB_NAME" >> $GITHUB_OUTPUT
+            echo "db_password2=$DB_PASS" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Failed to parse connection URL"
+            echo "URL format: $FULL_POOLER_URL"
+            exit 1
+          fi
+      
+      - name: Download Seed Data
+        if: github.event.action != 'closed'
+        env:
+          DB_HOST: ${{ steps.db_url2.outputs.db_host2 }}
+          DB_USER: ${{ steps.db_url2.outputs.db_user2 }}
+          DB_PORT: ${{ steps.db_url2.outputs.db_port2 }}
+          DB_NAME: ${{ steps.db_url2.outputs.db_name2 }}
+          DB_PASSWORD: ${{ steps.db_url2.outputs.db_password2 }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY2 }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET2 }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY2 }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
+        run: |
+          # Run downlaoder
+          python download_seed_data.py
+
+      - name: Run Migrations
+        if: github.event.action != 'closed'
+        env:
+          DB_HOST: ${{ steps.db_url2.outputs.db_host2 }}
+          DB_USER: ${{ steps.db_url2.outputs.db_user2 }}
+          DB_PORT: ${{ steps.db_url2.outputs.db_port2 }}
+          DB_NAME: ${{ steps.db_url2.outputs.db_name2 }}
+          DB_PASSWORD: ${{ steps.db_url2.outputs.db_password2 }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL2 }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY2 }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY2 }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET2 }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY2 }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
+        run: |
+          # Apply Schema (Django)
+          echo "Deploying migrations to Production ($DB_HOST)..."
+          
+          # Turn off 'set -e' so the script doesn't exit immediately if migrate fails
+          set +e
+          
+          # Run migrate and capture both Output and Exit Code
+          OUTPUT=$(python manage.py migrate 2>&1)
+          EXIT_CODE=$?
+          
+          # Turn 'set -e' back on for safety
+          set -e
+          
+          # Check results
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "$OUTPUT"
+            echo "Migration successful."
+          else
+            # Check if the error is specifically "already exists"
+            if echo "$OUTPUT" | grep -q "already exists"; then
+              echo "Applying migrations with --fake..."
+              python manage.py migrate --fake
+            else
+              # If it's a different error (e.g., connection failed), fail the job
+              echo "$OUTPUT"
+              echo "Migration failed with an unexpected error."
+              exit 1
+            fi
+          fi
+
+          # Load sanitized data
+          if [ -f "load_seed_data.py" ]; then
+            echo "Loading fresh seed data..."
+            python load_seed_data.py
+          else
+            echo "Seed script not found. Skipping..."
+          fi
+
+      - name: Close Preview
+        if: github.event.action == 'closed'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID2 }}
+        run: |
+          supabase branches delete "${{ github.head_ref }}" --project-ref "$PROJECT_REF"
+        

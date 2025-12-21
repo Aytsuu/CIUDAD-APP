@@ -6,7 +6,9 @@ import os
 import sys
 import json
 import logging
+from django.apps import apps
 from pathlib import Path
+from utils.supabase_client import supabase
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,35 @@ django.setup()
 
 from django.core import serializers
 from django.db import transaction, connection
+
+TARGET_APPS = [
+  'account',
+  'administration',
+  'profiling',
+  'report',
+  'landing',
+]
+
+def get_file_list():
+  """ Dynamically generate list of file names. """
+
+  files = []
+
+  for app_label in TARGET_APPS:
+    try:
+      app_config = apps.get_app_config(app_label)
+      # Get all models for this app
+      for model in app_config.get_models():
+        # Format file name and append to the list
+        model_key = f"{app_label.lower()}_{model.__name__.lower()}.json"
+
+        if supabase.storage.from_('seed-artifacts').exists(model_key):
+            files.append(model_key)
+            
+    except LookupError:
+      logger.error(f"App with label {app_label} not found.")
+
+  return files
 
 def check_if_seeded():
     """Check if database already has seed data"""
@@ -63,11 +94,11 @@ def load_json_fixture(filepath):
             count += 1
 
             if len(batch) >= BATCH_SIZE:
-                Model.objects.bulk_create(batch)
+                Model.objects.bulk_create(batch, ignore_conflicts=True)
                 batch = []
         
         if len(batch) > 0 and Model:
-            Model.objects.bulk_create(batch)
+            Model.objects.bulk_create(batch, ignore_conflicts=True)
 
         return count
     except Exception as e:
@@ -90,21 +121,24 @@ def load_seed_data():
         return
     
     # Load files in dependency order
-    load_order = [
-        'administration_feature.json',
-        'administration_position.json',
-        'administration_staff.json',
-        'profiling_voter.json',
-        'profiling_sitio.json',
-        'profiling_address.json',
-        'profiling_personaladdress.json',
-        'profiling_personal.json',
-        'profiling_residentprofile.json',
-        'profiling_businessrespondent.json',
-        'account_account.json',
-        'administration_assignment.json',
-        'profiling_business.json',
-    ]
+    load_order = get_file_list()
+    # load_order = [
+    #     'administration_feature.json',
+    #     'administration_position.json',
+    #     'administration_staff.json',
+    #     'profiling_voter.json',
+    #     'profiling_sitio.json',
+    #     'profiling_address.json',
+    #     'profiling_personaladdress.json',
+    #     'profiling_personal.json',
+    #     'profiling_residentprofile.json',
+    #     'profiling_businessrespondent.json',
+    #     'account_account.json',
+    #     'administration_assignment.json',
+    #     'profiling_business.json',
+    #     'landing_landingpage.json',
+    #     'landing_landingcarouselfile.json'
+    # ]
     
     total_loaded = 0
     
