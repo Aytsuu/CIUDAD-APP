@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import logging
+from django.apps import apps
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,32 @@ django.setup()
 
 from django.core import serializers
 from django.db import transaction, connection
+
+TARGET_APPS = [
+  'account',
+  'administration',
+  'profiling',
+  'report',
+  'landing',
+]
+
+def get_file_list():
+  """ Dynamically generate list of file names. """
+
+  files = []
+
+  for app_label in TARGET_APPS:
+    try:
+      app_config = apps.get_app_config(app_label)
+      # Get all models for this app
+      for model in app_config.get_models():
+        # Format file name and append to the list
+        model_key = f"{app_label.lower()}_{model.__name__.lower()}"
+        files.append(model_key)
+    except LookupError:
+      logger.error(f"App with label {app_label} not found.")
+
+  return files
 
 def check_if_seeded():
     """Check if database already has seed data"""
@@ -104,6 +131,8 @@ def load_seed_data():
         'account_account.json',
         'administration_assignment.json',
         'profiling_business.json',
+        'landing_landingpage.json',
+        'landing_landingcarouselfile.json'
     ]
     
     total_loaded = 0
