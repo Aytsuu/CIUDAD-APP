@@ -147,15 +147,24 @@ def reset_all_sequence():
     """
 
     all_models = []
+    filtered_models = []
 
     # Collect all models from installed apps
     for app_config in apps.get_app_configs():
-        # Extract models
+        # Extract models and insert to all models list
         all_models.extend(app_config.get_models())
+
+    # Filter models with data (exclude empty models)
+    for model in all_models:
+        if model._meta.app_label in TARGET_APPS:
+            model_key = f"{model._meta.app_label}_{model.__name__.lower()}.json"
+            
+            if supabase.storage.from_('seed-artifacts').exists(model_key):
+                filtered_models.append(model)
     
 
     # SQL commands to reset sequences for these apps
-    sql_commands = connection.ops.sequence_reset_sql(no_style(), all_models)
+    sql_commands = connection.ops.sequence_reset_sql(no_style(), filtered_models)
 
     if sql_commands:
         with connection.cursor() as cursor:
