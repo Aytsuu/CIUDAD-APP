@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='recipient',
-            index=models.Index(fields=['acc', 'notif'], name='recipient_acc_id_c62ce1_idx'),
+            index=models.Index(fields=['acc', 'notif'], name='recipient_acc_c62ce1_idx'),
         ),
     ]
