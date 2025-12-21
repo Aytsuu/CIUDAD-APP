@@ -153,7 +153,34 @@ jobs:
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         run: |
           # Apply Schema (Django)
-          python manage.py migrate --fake-initial
+          echo "Deploying migrations to Production ($DB_HOST)..."
+          
+          # Turn off 'set -e' so the script doesn't exit immediately if migrate fails
+          set +e
+          
+          # Run migrate and capture both Output and Exit Code
+          OUTPUT=$(python manage.py migrate 2>&1)
+          EXIT_CODE=$?
+          
+          # Turn 'set -e' back on for safety
+          set -e
+          
+          # Check results
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "$OUTPUT"
+            echo "Migration successful."
+          else
+            # Check if the error is specifically "already exists"
+            if echo "$OUTPUT" | grep -q "already exists"; then
+              echo "Applying migrations with --fake..."
+              python manage.py migrate --fake
+            else
+              # If it's a different error (e.g., connection failed), fail the job
+              echo "$OUTPUT"
+              echo "Migration failed with an unexpected error."
+              exit 1
+            fi
+          fi
 
           if [ -f "load_seed_data.py" ]; then
             python load_seed_data.py
