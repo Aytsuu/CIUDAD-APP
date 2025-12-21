@@ -7,6 +7,8 @@ import sys
 import json
 import logging
 from django.apps import apps
+from django.db import connection
+from django.core.management.color import no_style
 from pathlib import Path
 from utils.supabase_client import supabase
 
@@ -122,23 +124,6 @@ def load_seed_data():
     
     # Load files in dependency order
     load_order = get_file_list()
-    # load_order = [
-    #     'administration_feature.json',
-    #     'administration_position.json',
-    #     'administration_staff.json',
-    #     'profiling_voter.json',
-    #     'profiling_sitio.json',
-    #     'profiling_address.json',
-    #     'profiling_personaladdress.json',
-    #     'profiling_personal.json',
-    #     'profiling_residentprofile.json',
-    #     'profiling_businessrespondent.json',
-    #     'account_account.json',
-    #     'administration_assignment.json',
-    #     'profiling_business.json',
-    #     'landing_landingpage.json',
-    #     'landing_landingcarouselfile.json'
-    # ]
     
     total_loaded = 0
     
@@ -158,9 +143,30 @@ def load_seed_data():
 
     logger.info(f"✅ Loaded {total_loaded} total records")
 
+def reset_all_sequence():
+    """
+    Docstring for reset_all_sequence
+    """
+
+    # Get all installed apps
+    valid_apps = [app_config for app_config in apps.app_configs()]
+
+    # SQL commands to reset the sequences of these apps
+    sql_commands = connection.ops.sequence_reset_sql(no_style(), valid_apps)
+
+    if sql_commands:
+        with connection.cursor() as cursor:
+            for sql in sql_commands:
+                cursor.execute(sql)
+            logger('Fixed sequences')
+    else:
+        logger.info("No sequences needed resetting")
+
+
 if __name__ == '__main__':
     try:
         load_seed_data()
+        reset_all_sequence()
     except Exception as e:
         logger.error(f"❌ Error: {e}")
         import traceback

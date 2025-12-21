@@ -100,12 +100,7 @@ jobs:
             DB_HOST="${BASH_REMATCH[3]}"
             DB_PORT="${BASH_REMATCH[4]}"
             DB_NAME="${BASH_REMATCH[5]}"
-
-            echo "user: $DB_USER"
-            echo "pass: $DB_PASS"
-            echo "host: $DB_HOST"
-            echo "port: 6543"
-
+            
             echo "db_host2=$DB_HOST" >> $GITHUB_OUTPUT
             echo "db_user2=$DB_USER" >> $GITHUB_OUTPUT
             echo "db_port2=$DB_PORT" >> $GITHUB_OUTPUT
