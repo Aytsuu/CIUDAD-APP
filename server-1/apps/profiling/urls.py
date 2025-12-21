@@ -15,7 +15,6 @@ from .views.voter_views import *
 
 urlpatterns = [
     # All record
-    # path("all/", AllRecordTableView.as_view(), name="all-record"),
     path("complete/registration/", CompleteRegistrationView.as_view(), name="complete-registration"),
 
     #Voter Urls
@@ -36,7 +35,6 @@ urlpatterns = [
     path("personal/update/<int:pk>/", PersonalUpdateView.as_view(), name="personal-update"),
     path("personal/create/", PersonalCreateView.as_view(), name="create-personal"),
     path("personal/history/", PersonalHistoryView.as_view(), name="personal-history"),
-    # path("personal/modification-list/", PersonalModificationRequestsView.as_view(), name="personal-modification-request-list"),
 
     # Family Urls
     path("family/update/<str:fam_id>/", FamilyUpdateView.as_view(), name="update-family-details"),
