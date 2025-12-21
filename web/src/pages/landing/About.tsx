@@ -3,6 +3,9 @@ import BackgroundPHMap from "@/assets/background/background-ph-map.svg";
 import SanRoqueMap from "./SanRoqueMap";
 import { useInView } from "framer-motion";
 
+export const AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
+export const AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
 export default function About({data} : {
   data: Record<string, any>
 }) {
