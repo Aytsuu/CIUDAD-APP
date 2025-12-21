@@ -114,17 +114,7 @@ jobs:
             exit 1
           fi
 
-      - name: Download Seed Data
-        if: github.event.action != 'closed'
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          # Run downlaoder
-          python download_seed_data.py
-
-
-      - name: Run Migrations
+      - name: Download Seed Data and Run Migrations
         if: github.event.action != 'closed'
         env:
           DB_HOST: ${{ steps.db_url.outputs.db_host }}
@@ -141,6 +131,9 @@ jobs:
           EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         run: |
+          # Run downlaoder
+          python download_seed_data.py
+
           # Apply Schema (Django)
           python manage.py migrate
 
