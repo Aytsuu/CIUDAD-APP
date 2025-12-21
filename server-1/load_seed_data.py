@@ -117,23 +117,24 @@ def load_seed_data():
         return
     
     # Load files in dependency order
-    load_order = [
-        'administration_feature.json',
-        'administration_position.json',
-        'administration_staff.json',
-        'profiling_voter.json',
-        'profiling_sitio.json',
-        'profiling_address.json',
-        'profiling_personaladdress.json',
-        'profiling_personal.json',
-        'profiling_residentprofile.json',
-        'profiling_businessrespondent.json',
-        'account_account.json',
-        'administration_assignment.json',
-        'profiling_business.json',
-        'landing_landingpage.json',
-        'landing_landingcarouselfile.json'
-    ]
+    load_order = get_file_list()
+    # load_order = [
+    #     'administration_feature.json',
+    #     'administration_position.json',
+    #     'administration_staff.json',
+    #     'profiling_voter.json',
+    #     'profiling_sitio.json',
+    #     'profiling_address.json',
+    #     'profiling_personaladdress.json',
+    #     'profiling_personal.json',
+    #     'profiling_residentprofile.json',
+    #     'profiling_businessrespondent.json',
+    #     'account_account.json',
+    #     'administration_assignment.json',
+    #     'profiling_business.json',
+    #     'landing_landingpage.json',
+    #     'landing_landingcarouselfile.json'
+    # ]
     
     total_loaded = 0
     
