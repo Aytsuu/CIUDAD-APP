@@ -159,7 +159,7 @@ def reset_all_sequence():
     # Filter models with data (exclude empty models)
     for model in all_models:
         if model._meta.app_label in TARGET_APPS:
-            model_key = f"{model._meta.app_label}_{model.__name__.lower()}.json"
+            model_key = f"{model._meta.app_label.lower()}_{model.__name__.lower()}.json"
             
             if supabase.storage.from_('seed-artifacts').exists(model_key):
                 filtered_models.append(model)
