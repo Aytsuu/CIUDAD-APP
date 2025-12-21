@@ -104,6 +104,7 @@ jobs:
             echo "preview_host: $DB_HOST"
             echo "preview_user: $DB_PASS"
             echo "preview_access_key: $DB_PASS"
+            echo "preview_port: 5432"
             
             echo "db_host2=$DB_HOST" >> $GITHUB_OUTPUT
             echo "db_user2=$DB_USER" >> $GITHUB_OUTPUT
