@@ -101,6 +101,10 @@ jobs:
             DB_PORT="${BASH_REMATCH[4]}"
             DB_NAME="${BASH_REMATCH[5]}"
             
+            echo "preview_host: $DB_HOST"
+            echo "preview_user: $DB_PASS"
+            echo "preview_access_key: $DB_PASS"
+            
             echo "db_host2=$DB_HOST" >> $GITHUB_OUTPUT
             echo "db_user2=$DB_USER" >> $GITHUB_OUTPUT
             echo "db_port2=$DB_PORT" >> $GITHUB_OUTPUT
