@@ -32,7 +32,7 @@ def get_file_list():
       # Get all models for this app
       for model in app_config.get_models():
         # Format file name and append to the list
-        model_key = f"{app_label.lower()}_{model.__name__.lower()}"
+        model_key = f"{app_label.lower()}_{model.__name__.lower()}.json"
         files.append(model_key)
     except LookupError:
       logger.error(f"App with label {app_label} not found.")
