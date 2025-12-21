@@ -41,7 +41,7 @@ jobs:
           # --- Delete Branch ---
           echo "Checking if branch exists..."
 
-          if supabase branches list --project-ref "$PROJECT_REF" --output json | jq -e ".[] select(.name == \"$BRANCH_NAME\")" > /dev/null; then
+          if supabase branches list --project-ref "$PROJECT_REF" --output json | jq -e ".[] | select(.name == \"$BRANCH_NAME\")" > /dev/null; then
             supabase branches delete "$BRANCH_NAME" --project-ref "$PROJECT_REF"
             sleep 5
           fi
