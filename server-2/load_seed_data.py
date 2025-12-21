@@ -91,11 +91,11 @@ def load_json_fixture(filepath):
             count += 1
 
             if len(batch) >= BATCH_SIZE:
-                Model.objects.bulk_create(batch)
+                Model.objects.bulk_create(batch, ignore_conflicts=True)
                 batch = []
         
         if len(batch) > 0 and Model:
-            Model.objects.bulk_create(batch)
+            Model.objects.bulk_create(batch, ignore_conflicts=True)
 
         return count
     except Exception as e:
