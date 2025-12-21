@@ -151,7 +151,7 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID2 }}
         run: |
           # Apply Schema (Django)
-          python manage.py migrate
+          python manage.py migrate --fake-initial
 
           if [ -f "load_seed_data.py" ]; then
             python load_seed_data.py
