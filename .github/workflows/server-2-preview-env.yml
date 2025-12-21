@@ -119,7 +119,7 @@ jobs:
             DB_NAME="${BASH_REMATCH[5]}"
             
             echo "preview_host: $DB_HOST"
-            echo "preview_user: $DB_PASS"
+            echo "preview_user: $DB_USER"
             echo "preview_access_key: $DB_PASS"
             echo "preview_port: 5432"
             
