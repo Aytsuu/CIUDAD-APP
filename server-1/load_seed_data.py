@@ -171,7 +171,7 @@ def reset_all_sequence():
         with connection.cursor() as cursor:
             for sql in sql_commands:
                 cursor.execute(sql)
-            logger('Fixed sequences')
+            logger.info('Fixed sequences')
     else:
         logger.info("No sequences needed resetting")
 
