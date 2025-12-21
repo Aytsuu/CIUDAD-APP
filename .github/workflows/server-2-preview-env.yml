@@ -30,6 +30,23 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Clear Existing Branch DB
+        if: github.event.action == 'opened'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID2 }}
+        run: |
+          BRANCH_NAME=${{ github.head_ref }}
+          echo "Target Branch: $BRANCH_NAME"
+          
+          # --- Delete Branch ---
+          echo "Checking if branch exists..."
+
+          if supabase branches list --project-ref "$PROJECT_REF" --output json | jq -e ".[] select(.name == \"$BRANCH_NAME\")" > /dev/null; then
+            supabase branches delete "$BRANCH_NAME" --project-ref "$PROJECT_REF"
+            sleep 5
+          fi
+
       - name: Get Branch DB URL
         if: github.event.action != 'closed'
         id: db_url2
