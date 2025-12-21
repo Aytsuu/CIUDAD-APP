@@ -148,11 +148,15 @@ def reset_all_sequence():
     Docstring for reset_all_sequence
     """
 
-    # Get all installed apps
-    valid_apps = [app_config for app_config in apps.get_app_configs()]
+    all_models = []
+
+    # Collect all models from installed apps
+    for app_config in apps.get_app_configs():
+        # Extract models and insert to all models list
+        all_models.extend(app_config.get_models())
 
     # SQL commands to reset the sequences of these apps
-    sql_commands = connection.ops.sequence_reset_sql(no_style(), valid_apps)
+    sql_commands = connection.ops.sequence_reset_sql(no_style(), all_models)
 
     if sql_commands:
         with connection.cursor() as cursor:
