@@ -144,12 +144,6 @@ def load_seed_data():
             else:
                 logger.error(f"⚠️  Not found: {filename}")
         
-        # Load any remaining files not in load_order
-        for filepath in seed_dir.glob('*.json'):
-            if filepath.name not in load_order and filepath.name != 'all_data.json':
-                count = load_json_fixture(filepath)
-                total_loaded += count
-        
         # Mark as seeded
         mark_as_seeded()
 

@@ -39,15 +39,6 @@ jobs:
           BRANCH_NAME=${{ github.head_ref }}
           echo "Target Branch: $BRANCH_NAME"
 
-          # Delete existing branch if it exists
-          echo "Checking if branch exists..."
-          if supabase branches list --project-ref "$PROJECT_REF" --output json | jq -e ".[] | select(.name == \"$BRANCH_NAME\")" > /dev/null; then
-            echo "Branch exists, deleting..."
-            supabase branches delete "$BRANCH_NAME" --project-ref "$PROJECT_REF"
-            echo "Waiting for deletion to complete..."
-            sleep 5
-          fi
-
           # --- Create or Get Branch ---
           set +e 
           echo "Creating branch (or confirming it exists)..."
