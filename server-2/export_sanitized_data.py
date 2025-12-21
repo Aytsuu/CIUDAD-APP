@@ -25,46 +25,54 @@ from django.db import connection
 
 fake = Faker()
 
-# Define which models to export and how to sanitize them
-EXPORT_CONFIG = {
-    # Format: 'app.Model': {config}
-    'administration.Staff': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Assignment': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Feature': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Position': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'healthProfiling.ResidentProfile': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'healthProfiling.Personal': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'healthProfiling.PersonalAddress': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'healthProfiling.Address': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'healthProfiling.Sitio': {
-        'limit': None,
-        'sanitize': {}
-    },
+# List of all apps
+TARGET_APPS = [
+    'administration',
+    'healthProfiling'
+]
+
+# Define models that need SPECIFIC sanitization
+SANITIZATION_OVERRIDES = {
+
 }
+
+def get_export_config():
+    """
+    Dynamically builds the EXPORT_CONFIG dictionary.
+    Merges default settings with specific overrides.
+    """
+
+    config = {}
+
+    for app_label in TARGET_APPS:
+        try:
+            app_config = apps.get_app_config(app_label)
+            
+            for model in app_config.get_models():
+                model_key = f"{app_label}.{model.__name__}"
+                
+                # Default config
+                model_config = {
+                    'limit': None,
+                    'sanitize': {}
+                }
+
+                # Apply overrides if they exist
+                if model_key in SANITIZATION_OVERRIDES:
+                    # Update the dictionary so we don't lose defaults
+                    override = SANITIZATION_OVERRIDES[model_key]
+                    model_config.update(override)
+                
+                config[model_key] = model_config
+
+        except LookupError:
+            logger.error(f"App config with label {app_label} not found.")
+    
+    return config
+
+
+# Generate the config once
+EXPORT_CONFIG = get_export_config()
 
 def export_model(model_name):
     """

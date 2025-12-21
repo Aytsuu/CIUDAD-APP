@@ -25,65 +25,62 @@ from django.db import connection
 
 fake = Faker()
 
-# Define which models to export and how to sanitize them
-EXPORT_CONFIG = {
-    # Format: 'app.Model': {config}
+# List of App Labels to include in the export
+TARGET_APPS = [
+    'account',
+    'administration',
+    'profiling',
+    'report',
+    'landing',
+]
+
+# Only define models that need SPECIFIC sanitization or limits here
+# Everything else will default to limit=None, sanitize={}
+SANITIZATION_OVERRIDES = {
     'account.Account': {
-        'limit': None,
         'sanitize': {
             'email': lambda: fake.email(),
             'phone': lambda: fake.numerify('09#########'),
         }
     },
-    'administration.Staff': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Assignment': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Feature': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'administration.Position': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Voter': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.ResidentProfile': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Personal': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.PersonalAddress': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Address': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Sitio': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.BusinessRespondent': {
-        'limit': None,
-        'sanitize': {}
-    },
-    'profiling.Business': {
-        'limit': None,
-        'sanitize': {}
-    },
 }
+
+def get_export_config():
+    """
+    Dynamically builds the EXPORT_CONFIG dictionary.
+    Merges default settings with specific overrides.
+    """
+    config = {}
+
+    for app_label in TARGET_APPS:
+        try:
+            app_config = apps.get_app_config(app_label)
+            # Get all models for this app
+            for model in app_config.get_models():
+                # specific format: 'app_label.ModelName'
+                model_key = f"{app_label}.{model.__name__}"
+                
+                # Default Config
+                model_config = {
+                    'limit': None,
+                    'sanitize': {}
+                }
+
+                # Apply Overrides if they exist
+                if model_key in SANITIZATION_OVERRIDES:
+                    # Update (merge) the dictionary so we don't lose defaults
+                    override = SANITIZATION_OVERRIDES[model_key]
+                    model_config.update(override)
+
+                config[model_key] = model_config
+
+        except LookupError:
+            logger.warning(f"⚠️ App '{app_label}' not found. Skipping.")
+    
+    return config
+
+# Generate the config once
+EXPORT_CONFIG = get_export_config()
 
 def export_model(model_name):
     """
