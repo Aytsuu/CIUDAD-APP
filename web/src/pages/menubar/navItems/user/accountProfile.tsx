@@ -20,7 +20,6 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import HeaderUserSkeleton from "./user-skeleton";
-import { Badge } from "@/components/ui/badge";
 
 export default function AccountProfile(): JSX.Element {
   const { user, logout } = useAuth();

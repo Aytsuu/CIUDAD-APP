@@ -15,21 +15,6 @@ export default function ComplaintSectionCharts() {
   const totalComplaints = complaintChartAnalytics.reduce((acc: number, data: any) => acc + (data.complaint || 0), 0);
   const averageComplaints = complaintChartAnalytics.length > 0 ? Math.round(totalComplaints / complaintChartAnalytics.length) : 0;
   
-  // Calculate trend
-  const midPoint = Math.floor(complaintChartAnalytics.length / 2);
-  const firstHalf = complaintChartAnalytics.slice(0, midPoint);
-  const secondHalf = complaintChartAnalytics.slice(midPoint);
-  
-  const firstHalfTotal = firstHalf.reduce((acc: number, data: any) => acc + (data.complaint || 0), 0);
-  const secondHalfTotal = secondHalf.reduce((acc: number, data: any) => acc + (data.complaint || 0), 0);
-  
-  const firstHalfAvg = firstHalf.length > 0 ? firstHalfTotal / firstHalf.length : 0;
-  const secondHalfAvg = secondHalf.length > 0 ? secondHalfTotal / secondHalf.length : 0;
-  
-  const trendPercentage = firstHalfAvg > 0 
-    ? Math.round(((secondHalfAvg - firstHalfAvg) / firstHalfAvg) * 100)
-    : 0;
-  
   const peakDay = complaintChartAnalytics.reduce((max: any, current: any) => 
     (current.complaint > (max?.complaint || 0)) ? current : max, 
     complaintChartAnalytics[0]

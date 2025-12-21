@@ -18,7 +18,7 @@ import {
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import { MediaUpload, MediaUploadType } from "@/components/ui/media-upload";
 import Loading from "@/components/ui/loading";
-import { Complainant, Accused, ComplaintFile, ComplaintHistory, Complaint } from "./complaint-type";
+import { Complainant, Accused, ComplaintFile, ComplaintHistory } from "./complaint-type";
 import { useGetComplaintById } from "./api-operations/queries/complaintGetQueries";
 import { useUpdateComplaint } from "./api-operations/queries/complaintUpdateQueries";
 import { usePostRaiseIssue } from "./api-operations/queries/complaintPostQueries";
@@ -389,7 +389,7 @@ export function ComplaintViewRecord() {
     const allActions: TimelineAction[] = [initialAction];
 
     // Process history entries
-    historyEntries.forEach((entry: ComplaintHistory, idx: number) => {
+    historyEntries.forEach((entry: ComplaintHistory) => {
       const actionText = entry.comp_hist_action || "Complaint updated";
       const newStatus = extractStatusFromAction(actionText, entry.comp_hist_details);
       

@@ -3,7 +3,6 @@ import { useIdle } from "./context/IdleContext";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
