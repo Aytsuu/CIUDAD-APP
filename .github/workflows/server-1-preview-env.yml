@@ -115,6 +115,7 @@ jobs:
           fi
       
       - name: Download Seed Data
+        if: github.event.action != 'closed'
         env:
           DB_HOST: ${{ steps.db_url.outputs.db_host }}
           DB_USER: ${{ steps.db_url.outputs.db_user }}

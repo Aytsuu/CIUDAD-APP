@@ -6,7 +6,6 @@ import {
   addFamily,
   addFamilyComposition,
   addHousehold,
-  // addPersonal,
   addPersonalAddress,
   addResidentAndPersonal,
 } from "../restful-api/profiingPostAPI";
@@ -25,13 +24,6 @@ export const useAddAllProfile = () => {
     }
   })
 }
-
-// export const useAddPersonal = () => {
-//   return useMutation({
-//     mutationFn: (data: Record<string, any>) => addPersonal(data),
-//     onSuccess: () => {}
-//   })
-// }
 
 export const useAddAddress = () => {
   return useMutation({
