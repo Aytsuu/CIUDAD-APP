@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt
       
       - name: Clear Existing Branch DB
-        if: github.event.action == 'opened'
+        if: github.event.action == 'opened' || github.event.action == 'reopened'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_ID }}
