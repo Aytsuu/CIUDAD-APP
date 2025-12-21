@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 class NotificationConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
@@ -13,4 +14,5 @@ class NotificationConfig(AppConfig):
             if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
                 return
 
-        start_scheduler()
+            if settings.SCHEDULER_AUTOSTART:
+                start_scheduler()

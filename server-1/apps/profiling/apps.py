@@ -21,9 +21,9 @@ class ProfilingConfig(AppConfig):
             if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
                 return
             
-        if settings.SCHEDULER_AUTOSTART: 
-            self.start_scheduler()
-            self.start_tesseract()
+            if settings.SCHEDULER_AUTOSTART: 
+                self.start_scheduler()
+                self.start_tesseract()
 
     def start_scheduler(self):
         """Initialize and start the background scheduler"""
