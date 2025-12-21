@@ -9,6 +9,10 @@ from utils.supabase_client import supabase
 
 logger = logging.getLogger(__name__)
 
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+import django
+django.setup()
+
 TARGET_APPS = [
   'account',
   'administration',
