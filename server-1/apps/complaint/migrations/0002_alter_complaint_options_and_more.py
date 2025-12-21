@@ -16,10 +16,6 @@ class Migration(migrations.Migration):
             name='complaint',
             options={'ordering': ['comp_created_at']},
         ),
-        migrations.RemoveField(
-            model_name='complaint_history',
-            name='comp_hist_updated_by',
-        ),
         migrations.AddField(
             model_name='complaint_history',
             name='staff',
