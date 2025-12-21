@@ -1,6 +1,6 @@
 import { LayoutWithBack } from "@/components/ui/layout/layout-with-back";
 import ProgressWithIcon from "@/components/ui/progressWithIcon";
-import { CircleUserRound, HousePlus, Store, UserRoundPlus, UsersRound } from "lucide-react";
+import { Badge, CircleUserRound, HousePlus, Store, UserRoundPlus, UsersRound } from "lucide-react";
 import React from "react";
 import ResidentCreateForm from "./form/ResidentCreateForm";
 import AccountRegistrationLayout from "../../account/AccountRegisterLayout";
@@ -24,6 +24,8 @@ import { useDeleteRequest } from "../queries/profilingDeleteQueries";
 import { useUpdateAccount } from "../queries/profilingUpdateQueries";
 import { capitalizeAllFields } from "@/helpers/capitalize";
 import { BeforeUnloadDialog, useBeforeUnload } from "@/components/ui/before-unload-dialog";
+import { Origin } from "../ProfilingEnums";
+import AssignPosition from "../../administration/AssignPosition";
 
 export default function RegistrationLayout() {
   // --------------- STATE INITIALIZATION ------------------
@@ -67,12 +69,17 @@ export default function RegistrationLayout() {
     handleCancelLeave,
   } = useBeforeUnload(hasUnsavedChanges);
 
+  const isStaffCreate = params?.origin == Origin.Administration
+
   const registrationSteps = [
-    { id: 1, label: "Account", minProgress: 20, icon: CircleUserRound, onClick: (id: number) => handleProgressSelection(id) },
-    { id: 2, label: "Resident", minProgress: 40, icon: UserRoundPlus, onClick: (id: number) => handleProgressSelection(id) },
-    { id: 3, label: "House", minProgress: 60, icon: HousePlus, onClick: (id: number) => handleProgressSelection(id) },
-    { id: 4, label: "Family", minProgress: 80, icon: UsersRound, onClick: (id: number) => handleProgressSelection(id) },
-    { id: 5, label: "Business", minProgress: 100, icon: Store, onClick: (id: number) => handleProgressSelection(id) }
+    ...(isStaffCreate ? [{
+      id: 1, label: "Position", minProgress: 20, icon: Badge, onClick: (id: number) => handleProgressSelection(id)
+    }] : []),
+    { id: isStaffCreate ? 2 : 1, label: "Account", minProgress: isStaffCreate ? 40 : 20, icon: CircleUserRound, onClick: (id: number) => handleProgressSelection(id) },
+    { id: isStaffCreate ? 3 : 2, label: "Resident", minProgress: isStaffCreate ? 60 : 40, icon: UserRoundPlus, onClick: (id: number) => handleProgressSelection(id) },
+    { id: isStaffCreate ? 4 : 3, label: "House", minProgress: isStaffCreate ? 80 : 60, icon: HousePlus, onClick: (id: number) => handleProgressSelection(id) },
+    { id: isStaffCreate ? 5 : 4, label: "Family", minProgress: isStaffCreate ? 90 : 80, icon: UsersRound, onClick: (id: number) => handleProgressSelection(id) },
+    { id: isStaffCreate ? 6 : 5, label: "Business", minProgress: 100, icon: Store, onClick: (id: number) => handleProgressSelection(id) }
   ];
 
   const requestSteps = [
@@ -91,7 +98,7 @@ export default function RegistrationLayout() {
 
   // Calculate progress based on current step
   const calculateProgress = React.useCallback(() => {
-    for (const step of (params?.origin == 'create' ? registrationSteps : requestSteps)) {
+    for (const step of (["create", "administration"].includes(params?.origin) ? registrationSteps : requestSteps)) {
       if(currentStep == step.id) {
         return step.minProgress;
       }
@@ -105,7 +112,6 @@ export default function RegistrationLayout() {
     for(const step of newList) {
       const nextStep = currentStep + stepCounter
       if(nextStep !== step) {
-        console.log(nextStep)
         setCurrentStep(nextStep)
         return;
       }
@@ -131,10 +137,10 @@ export default function RegistrationLayout() {
     livingSoloSchema: Record<string, any>,
     familySchema: Record<string, any>,
     business: Record<string, any>,
+    position: Record<string, any>,
     files: Record<string, any>[]
   ) => {
 
-    console.log(accountSchema)
     try {
       // Insertion Query
       await addAllProfile({
@@ -144,6 +150,7 @@ export default function RegistrationLayout() {
         ...(!notLivingSolo && {livingSolo: livingSoloSchema}),
         ...(!noFamily && {family: familySchema}),
         ...(!noBusiness && {business: {...business, bus_status: 'Active', files: files}}),
+        ...(isStaffCreate && {position}),
         staff: user?.staff?.staff_id
       })
       
@@ -218,15 +225,16 @@ export default function RegistrationLayout() {
       houseSchema,
       livingSoloSchema,
       familySchema,
-      businessSchema
+      businessSchema,
+      positionAssignmentSchema
     } = values;
 
     // Exclude incomplete profile
-    const noAccount   = ![...completed].includes(1);
+    const noAccount   = ![...completed].includes(isStaffCreate ? 2 : 1);
     const notLivingSolo = isEmpty(livingSoloSchema);
     const noFamily    = isEmpty(familySchema);
-    const noHouse     = ![...completed].includes(3);
-    const noBusiness  = ![...completed].includes(5);
+    const noHouse     = ![...completed].includes(isStaffCreate ? 4 : 3);
+    const noBusiness  = ![...completed].includes(isStaffCreate ? 6 : 5);
 
     const {per_id, ...personal} = personalSchema
     const {files, ...business} = businessSchema
@@ -252,6 +260,7 @@ export default function RegistrationLayout() {
           {...livingSoloSchema, householdNo: livingSoloSchema?.householdNo?.split(" ")[0]},
           familySchema,
           capitalizeAllFields(business),
+          {pos_id: positionAssignmentSchema.assignPosition, staff_type: user?.staff?.staff_type },
           newFiles
         )
         break;
@@ -275,7 +284,7 @@ export default function RegistrationLayout() {
 
   const create = (
     <>
-      {currentStep !== 6 && (
+      {currentStep !== (isStaffCreate ? 7 : 6) && (
         <ProgressWithIcon
           progress={calculateProgress()}
           steps={registrationSteps}
@@ -283,52 +292,65 @@ export default function RegistrationLayout() {
         />
       )}
       <div className="mt-6">
-        {currentStep === 1 && (
-          <AccountRegistrationLayout 
+        {currentStep === 1 && isStaffCreate && (
+          <AssignPosition 
             tab_params={{
               isRegistrationTab: true,
               next: (compeleteness: boolean) => {
                 if(compeleteness) setCompleted((prev) => new Set([...prev, 1]));
-                else setCompleted((prev) => new Set([...prev].filter((id) => id !== 1)))
-                setProgress()
-              },
-              form: registrationForm
-            }}
-          />
-        )}
-        {currentStep === 2 && (
-          <ResidentCreateForm 
-            params={{
-              isRegistrationTab: true,
-              next: (compeleteness: boolean) => {
-                if(compeleteness) setCompleted((prev) => new Set([...prev, 2]));
                 setProgress()
               },  
               form: registrationForm
             }}
           />
         )}
-        {currentStep === 3 && (
-          <HouseholdFormLayout 
+
+        {currentStep === (isStaffCreate ? 2 : 1) && (
+          <AccountRegistrationLayout 
             tab_params={{
               isRegistrationTab: true,
               next: (compeleteness: boolean) => {
-                if(compeleteness) setCompleted((prev) => new Set([...prev, 3]));
-                else setCompleted((prev) => new Set([...prev].filter((id) => id !== 3)))
+                if(compeleteness) setCompleted((prev) => new Set([...prev, (isStaffCreate ? 2 : 1)]));
+                else setCompleted((prev) => new Set([...prev].filter((id) => id !== (isStaffCreate ? 2 : 1))))
                 setProgress()
               },
               form: registrationForm
             }}
           />
         )}
-        {currentStep === 4 && (
+        {currentStep === (isStaffCreate ? 3 : 2) && (
+          <ResidentCreateForm 
+            params={{
+              isRegistrationTab: true,
+              next: (compeleteness: boolean) => {
+                if(compeleteness) setCompleted((prev) => new Set([...prev, (isStaffCreate ? 3 : 2)]));
+                setProgress()
+              },  
+              form: registrationForm
+            }}
+          />
+        )}
+        {currentStep === (isStaffCreate ? 4 : 3) && (
+          <HouseholdFormLayout 
+            tab_params={{
+              isRegistrationTab: true,
+              next: (compeleteness: boolean) => {
+                if(compeleteness) setCompleted((prev) => new Set([...prev, (isStaffCreate ? 4 : 3)]));
+                else setCompleted((prev) => new Set([...prev].filter((id) => id !== (isStaffCreate ? 4 : 3))))
+                setProgress()
+              },
+              form: registrationForm
+            }}
+          />
+        )}
+        {currentStep === (isStaffCreate ? 5 : 4) && (
           <div className="flex justify-center">
               {!hasFamily ? (
                 <SoloFormLayout 
                   tab_params={{
                     isRegistrationTab: true,
                     next: (compeleteness: boolean) => {
-                      if(compeleteness) setCompleted((prev) => new Set([...prev, 4]));
+                      if(compeleteness) setCompleted((prev) => new Set([...prev, (isStaffCreate ? 5 : 4)]));
                       setProgress()
                     },
                     setHasFamily: (value: boolean) => {
@@ -342,7 +364,7 @@ export default function RegistrationLayout() {
                 <RegisterToExistingFam 
                   tab_params={{
                     next: (compeleteness: boolean) => {
-                      if(compeleteness) setCompleted((prev) => new Set([...prev, 4]));
+                      if(compeleteness) setCompleted((prev) => new Set([...prev, (isStaffCreate ? 5 : 4)]));
                       setProgress()
                     },
                     setHasFamily: (value: boolean) => {
@@ -355,21 +377,21 @@ export default function RegistrationLayout() {
               )}
           </div>
         )}
-        {currentStep === 5 && (
+        {currentStep === (isStaffCreate ? 6 : 5) && (
           <BusinessFormLayout 
             tab_params={{
               isRegistrationTab: true,
               type: "create",
               next: (compeleteness: boolean) => {
-                if(compeleteness) setCompleted((prev) => new Set([...prev, 5]));
-                else setCompleted((prev) => new Set([...prev].filter((id) => id !== 5)))
+                if(compeleteness) setCompleted((prev) => new Set([...prev, (isStaffCreate ? 6 : 5)]));
+                else setCompleted((prev) => new Set([...prev].filter((id) => id !== (isStaffCreate ? 6 : 5))))
                 setProgress()
               },
               form: registrationForm  
             }}
           />
         )}
-        {currentStep === 6 && ( // Completion page with animation
+        {currentStep === (isStaffCreate ? 7 : 6) && ( // Completion page with animation
           <RegistrationCompletion 
             params={{
               steps: registrationSteps,
@@ -487,7 +509,7 @@ export default function RegistrationLayout() {
       title={params?.title}
       description={params?.description}
     >
-      {params?.origin === "create" ? create : approve}
+      {["create", "administration"].includes(params?.origin) ? create : approve}
       
       {/* Before Unload Dialog */}
       <BeforeUnloadDialog

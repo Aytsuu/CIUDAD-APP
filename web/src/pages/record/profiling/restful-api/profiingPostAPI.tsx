@@ -2,30 +2,6 @@ import { api } from "@/api/api";
 import { formatDate } from "@/helpers/dateHelper";
 import { capitalize } from "@/helpers/capitalize";
 
-// POST request for personal        
-// export const addPersonal = async (data: Record<string, any>) => {
-  
-//   try {
-//     const new_data = {
-//       per_lname: data.per_lname,
-//       per_fname: data.per_fname,
-//       per_mname: data.per_mname || null,
-//       per_suffix: data.per_suffix || null,
-//       per_dob: formatDate(data.per_dob),
-//       per_sex: data.per_sex,
-//       per_status: data.per_status,
-//       per_edAttainment: data.per_edAttainment || null,
-//       per_religion: data.per_religion,
-//       per_contact: data.per_contact,
-//     }
-//     const res = await api.post("profiling/personal/create/", new_data);
-
-//     return res.data;
-//   } catch (err) {
-//  ;
-//     throw err;
-//   }
-// };
 
 // POST request for address
 export const addAddress =  async (data: Record<string, any>[]) => {

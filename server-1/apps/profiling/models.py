@@ -53,7 +53,7 @@ class Personal(AbstractModels):
     per_status = models.CharField(max_length=100)
     per_edAttainment = models.CharField(max_length=100, null=True, blank=True)
     per_religion = models.CharField(max_length=100)
-    per_contact = models.CharField(max_length=20)  
+    per_contact = models.CharField(max_length=20, null=True, blank=True)  
     per_disability = models.CharField(max_length=100, null=True, blank=True)
     per_is_deceased = models.BooleanField(default=False)
 
@@ -78,32 +78,6 @@ class Personal(AbstractModels):
         if self.per_suffix:
             name_parts.append(self.per_suffix)
         return ', '.join(name_parts)
-
-# DEPRECATED (NO LONGER NEEDED) -----
-class PersonalModification(AbstractModels):
-    pm_id = models.BigAutoField(primary_key=True)
-    pm_lname = models.CharField(max_length=50, null=True)
-    pm_fname = models.CharField(max_length=50, null=True)
-    pm_mname = models.CharField(max_length=50, null=True)
-    pm_suffix = models.CharField(max_length=50, null=True)
-    pm_dob = models.DateField(null=True)
-    pm_sex = models.CharField(max_length=50, null=True)
-    pm_status = models.CharField(max_length=50, null=True)
-    pm_edAttainment = models.CharField(max_length=50, null=True)
-    pm_religion = models.CharField(max_length=50, null=True)
-    pm_contact = models.CharField(max_length=50, null=True)
-    per = models.ForeignKey(Personal, on_delete=models.CASCADE, related_name="personal_modification")
-
-    class Meta:
-        db_table = 'personal_modification'
-
-class PersonalAddressModification(models.Model):
-    pam_id = models.BigAutoField(primary_key=True)
-    pm = models.ForeignKey(PersonalModification, on_delete=models.CASCADE, related_name="modified_addresses")
-    add = models.ForeignKey(Address, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = "personal_address_modification"
 
 class PersonalAddress(models.Model):
     pa_id = models.BigAutoField(primary_key=True)

@@ -22,7 +22,7 @@ export const Footer = ({data, homeRef, aboutRef, mobileAppRef, announcementRef, 
           <p className="text-gray-300">
             Connecting communities through digital innovation and transparent
             governance
-          </p>
+          </p> 
         </div>
 
         {/* Quick Links */}

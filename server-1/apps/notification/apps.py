@@ -1,4 +1,7 @@
 from django.apps import AppConfig
+from django.conf import settings
+import os
+import sys
 
 class NotificationConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
@@ -9,8 +12,6 @@ class NotificationConfig(AppConfig):
         import sys
 
         # Check if we're running a management command that shouldn't trigger scheduler
-        if 'manage.py' in sys.argv[0]:
-            if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
-                return
-
-        start_scheduler()
+        if settings.SCHEDULER_AUTOSTART: 
+            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
+                start_scheduler()

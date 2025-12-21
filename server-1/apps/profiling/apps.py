@@ -3,6 +3,8 @@ from django.conf import settings
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import logging
+import os
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -16,14 +18,10 @@ class ProfilingConfig(AppConfig):
         import sys
 
         # Check if we're running a management command that shouldn't trigger scheduler
-        if 'manage.py' in sys.argv[0]:
-            # Get the management command being run
-            if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
-                return
-            
         if settings.SCHEDULER_AUTOSTART: 
-            self.start_scheduler()
-            self.start_tesseract()
+            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
+                self.start_scheduler()
+                self.start_tesseract()
 
     def start_scheduler(self):
         """Initialize and start the background scheduler"""

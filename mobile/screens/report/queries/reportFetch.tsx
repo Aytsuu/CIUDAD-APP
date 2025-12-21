@@ -40,29 +40,40 @@ export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
   });
 };
 
-export const useGetIncidentReport = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, get_tracker?: boolean, severity?: string) => {
+export const useGetIncidentReport = (
+  page: number,
+  pageSize: number,
+  searchQuery: string,
+  isArchive: boolean,
+  get_tracker?: boolean,
+  severity?: string,
+  verified?: boolean,
+  status?: string
+) => {
   return useQuery({
-    queryKey: ['activeIRs', page, pageSize, searchQuery, isArchive, severity],
+    queryKey: ["incidentReports", page, pageSize, searchQuery, isArchive, severity, verified, status],
     queryFn: async () => {
       try {
-        const res = await api.get('report/ir/list/table/', {
+        const res = await api.get("report/ir/list/table/", {
           params: {
             page,
             page_size: pageSize,
             search: searchQuery,
             is_archive: isArchive,
             get_tracker,
-            severity
-          }
+            severity,
+            verified,
+            status,
+          },
         });
         return res.data;
-       } catch (err) {
+      } catch (err) {
         throw err;
-       }
+      }
     },
-    staleTime: 5000
-  })
-}
+    staleTime: 5000,
+  });
+};
 
 export const useGetIRHistory = (page: number, pageSize: number, searchQuery: string, isArchive: boolean, rp_id: string) => {
   return useQuery({

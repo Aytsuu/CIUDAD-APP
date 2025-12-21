@@ -6,15 +6,21 @@ import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 const recordMenuItem = [
   {
+    title: "Resident",
+    description: "",
+    route: "/(report)/resident/records",
+    user: [User.resident, User.brgyStaff],
+  },
+  {
     title: "Incident",
     description: "",
     route: "/(report)/incident/records",
     user: [User.resident, User.brgyStaff],
   },
   {
-    title: "Acknowledgement",
+    title: "Action",
     description: "",
-    route: "/(report)/acknowledgement/records",
+    route: "/(report)/action/records",
     user: [User.brgyStaff],
   },
   {

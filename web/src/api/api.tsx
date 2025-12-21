@@ -13,7 +13,7 @@ export const api = axios.create({
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
-});
+}); 
 
 // export const api = axios.create({
 //   baseURL: "http://localhost:8000",

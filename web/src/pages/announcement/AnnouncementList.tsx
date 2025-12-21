@@ -11,7 +11,7 @@ import { MainLayoutComponent } from "@/components/ui/layout/main-layout-componen
 import { useDebounce } from "@/hooks/use-debounce";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { formatDate, formatTimeAgo, formatTimeUntil } from "@/helpers/dateHelper";
+import { formatDate, formatTimeAgo, formatTimeUntil} from "@/helpers/dateHelper";
 import { Badge } from "@/components/ui/badge";
 import { MediaGallery } from "@/components/ui/media-gallery";
 import { capitalize } from "@/helpers/capitalize";
@@ -70,6 +70,10 @@ function AnnouncementTracker() {
       parseInt(raw) > 7 && raw.split("")[raw.length - 1] == "d";
 
     return isPastWeek ? formatDate(posted, "short") : timeAgo;
+  };
+
+  const getDateTimeFormat = (dateString: string) => {
+    return <time dateTime={dateString}>{formatDate(dateString, "short")}</time>;
   };
 
   return (
@@ -340,8 +344,13 @@ function AnnouncementTracker() {
                       </div>              
                       <Label className="text-md mb-4">
                         {selected.ann_title}
+                        <p className="text-sm font-medium text-gray-600">This announcement was created at {getDateTimeFormat(selected.ann_start_at)}</p>
+                        <p className="text-sm font-medium text-gray-600">This announcement will start at {getDateTimeFormat(selected.ann_event_start)}</p>
+                        <p className ="mb-6 text-sm font-medium text-gray-600">This announcement will end at {getDateTimeFormat(selected.ann_event_end)}</p>
                       </Label>
+                    
                       <p className="mb-6">{selected.ann_details}</p>
+                    
                       <MediaGallery
                         mediaFiles={selected.files}
                         emptyState={<div></div>}

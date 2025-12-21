@@ -2,12 +2,13 @@ from supabase import create_client, Client
 from django.conf import settings
 import base64
 import logging
+from decouple import config
 
 logger = logging.getLogger(__name__)
 
 supabase: Client = create_client(
-    settings.SUPABASE_URL, 
-    settings.SUPABASE_ANON_KEY,
+    config('SUPABASE_URL', default='my_supabase_url'), 
+    config('SUPABASE_SERVICE_ROLE_KEY', default='my_service_role_key'),
 )
 
 def get_realtime_channel():

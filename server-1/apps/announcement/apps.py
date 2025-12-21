@@ -15,12 +15,9 @@ class AnnouncementConfig(AppConfig):
         # Prevent duplicate schedulers in autoreload
         import sys
 
-        if 'manage.py' in sys.argv[0]:
-            if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
-                return
- 
-        if settings.SCHEDULER_AUTOSTART:
-            self.start_scheduler()
+        if settings.SCHEDULER_AUTOSTART: 
+            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
+                self.start_scheduler()
 
     def start_scheduler(self):
         """Initialize and start the background scheduler"""

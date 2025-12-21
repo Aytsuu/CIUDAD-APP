@@ -1,56 +1,60 @@
 import React from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { personalInfoSchema } from "@/form-schema/profiling-schema";
 import { positionAssignmentSchema } from "@/form-schema/administration-schema";
-import { useForm, UseFormReturn } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button/button";
 import { generateDefaultValues } from "@/helpers/generateDefaultValues";
-import { Loader2, UserPlus } from "lucide-react";
+import {
+  Badge,
+  Loader2,
+  MoveRight,
+  UserPlus,
+} from "lucide-react";
 import { Form } from "@/components/ui/form/form";
 import { FormSelect } from "@/components/ui/form/form-select";
 import { useAuth } from "@/context/AuthContext";
-
-// Import hooks for dual database operations (handled by APIs)
 import { usePositions } from "./queries/administrationFetchQueries";
 import { formatPositions } from "./AdministrationFormats";
 import { useAddStaff } from "./queries/administrationAddQueries";
-import { useAddAllProfile } from "../profiling/queries/profilingAddQueries";
+// import { useAddAllProfile } from "../profiling/queries/profilingAddQueries"; <--- Remove associated query
 import { showErrorToast, showSuccessToast } from "@/components/ui/toast";
-import { capitalizeAllFields } from "@/helpers/capitalize";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function AssignPosition({
-  personalInfoform,
-  addresses,
-  close,
+  tab_params,
 }: {
-  personalInfoform: UseFormReturn<z.infer<typeof personalInfoSchema>>;
-  addresses: any;
-  close: () => void;
+  tab_params: Record<string, any>;
 }) {
   // ============= STATE INITIALIZATION ===============
   const { user } = useAuth();
-  
+
   // Use regular database for positions (primary source)
-  const {data: positions, isLoading: isLoadingPositions} = usePositions(
+  const { data: positions, isLoading: isLoadingPositions } = usePositions(
     user?.staff?.staff_type
   );
-  
-  // Hooks for dual database operations (APIs handle both databases)
-  const { mutateAsync: addAllProfile } = useAddAllProfile();
-  const {mutateAsync: addStaff} = useAddStaff();
-  
+
+  const { mutateAsync: addStaff } = useAddStaff();
+
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
-  const defaultValues = generateDefaultValues(positionAssignmentSchema)
+  const defaultValues = generateDefaultValues(positionAssignmentSchema);
   const form = useForm<z.infer<typeof positionAssignmentSchema>>({
     resolver: zodResolver(positionAssignmentSchema),
     defaultValues,
   });
 
   // Get resident info for preview
-  const residentInfo = personalInfoform.getValues();
+  const residentInfo = tab_params.personalInfoform?.getValues();
 
   // ==================== HANDLERS ====================
+  const handleContinue = async () => {
+    const formIsValid = await tab_params.form.trigger(["positionAssignmentSchema.assignPosition"]);
+    if (!formIsValid) return;
+
+    tab_params.next(true);
+  };
+
   const submit = async () => {
     setIsSubmitting(true);
 
@@ -61,54 +65,27 @@ export default function AssignPosition({
         setIsSubmitting(false);
         return;
       }
-      
-      const residentId = personalInfoform.getValues().per_id?.split(" ")[0];
+
+      const residentId = tab_params.personalInfoform
+        ?.getValues()
+        .per_id?.split(" ")[0];
       const positionId = form.getValues().assignPosition;
-      const staffType = user?.staff?.staff_type
+      const staffType = user?.staff?.staff_type;
 
-      // If resident exists, assign position 
-      if (residentId && residentId !== "undefined") {
-        
-        // Assign staff position 
-        await addStaff({
-          residentId: residentId, 
-          positionId: positionId, 
-          staffId: user?.staff?.staff_id || "",
-          staffType: staffType?.toLowerCase() == "barangay staff" ? "BARANGAY STAFF" : "HEALTH STAFF"
+      // Assign staff position
+      await addStaff({
+        residentId: residentId ?? "",
+        positionId: positionId,
+        staffId: user?.staff?.staff_id || "",
+        staffType:
+          staffType?.toLowerCase() == "barangay staff"
+            ? "BARANGAY STAFF"
+            : "HEALTH STAFF",
+      });
 
-        });
-
-        deliverFeedback();
-
-      } else {
-        // Register resident first, then assign position (APIs handle dual database operations)
-        personalInfoform.setValue("per_addresses", addresses)
-        const personalInfo = personalInfoform.getValues();
-        const {per_id, ...personal} = capitalizeAllFields(personalInfo)
-
-        if (!personal) {
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Register resident (API handles both databases)
-        const resident = await addAllProfile({
-          personal: personal,
-          staff: user?.staff?.staff_id
-        });
-
-        // Then assign position (API handles both databases)
-        await addStaff({
-          residentId: resident.rp_id, 
-          positionId: positionId,
-          staffId: user?.staff?.staff_id || "",
-          staffType: staffType?.toLowerCase() == "barangay staff" ? "BARANGAY STAFF" : "HEALTH STAFF"
-        });
-
-        deliverFeedback();
-      }
+      deliverFeedback();
     } catch (error) {
-      showErrorToast('An error occurred while processing the request');
+      showErrorToast("An error occurred while processing the request");
       setIsSubmitting(false);
     }
   };
@@ -116,14 +93,12 @@ export default function AssignPosition({
   const deliverFeedback = () => {
     // Clear forms
     form.setValue("assignPosition", "");
-    personalInfoform.reset();
-    close();
+    tab_params.personalInfoform?.reset();
+    if (close) close();
     setIsSubmitting(false);
-    
+
     // Show success message
-    showSuccessToast(
-      'Position assigned successfully!'
-    );
+    showSuccessToast("Position assigned successfully!");
   };
 
   if (isLoadingPositions) {
@@ -132,7 +107,54 @@ export default function AssignPosition({
         <div className="relative">
           <Loader2 className="h-12 w-12 animate-spin text-buttonBlue" />
         </div>
-        <p className="mt-4 text-sm font-medium text-gray-700">Loading positions...</p>
+        <p className="mt-4 text-sm font-medium text-gray-700">
+          Loading positions...
+        </p>
+      </div>
+    );
+  }
+
+  if (tab_params.isRegistrationTab) {
+    return (
+      <div className="w-full flex justify-center px-4">
+        <Card className="w-full max-w-2xl max-h-[700px] shadow-none overflow-y-auto">
+          <CardHeader className="text-center pb-6">
+            <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+              <Badge className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Position Assignment</h2>
+            <p className="max-w-xl mx-auto leading-relaxed">
+              Select a position to be assigned
+            </p>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <Separator />
+
+            {/* Form Content */}
+            <div className="bg-white rounded-lg p-6 border border-gray-100">
+              <Form {...tab_params.form}>
+                <form className="space-y-8">
+                  <FormSelect
+                    control={tab_params.form.control}
+                    name="positionAssignmentSchema.assignPosition"
+                    label="Select Position"
+                    options={formatPositions(
+                      positions.filter((pos: any) => !pos.is_maxed)
+                    )}
+                  />
+                </form>
+              </Form>
+            </div>
+
+            {/* Action Button */}
+            <div className="flex justify-end">
+              <Button onClick={handleContinue}>
+                Next <MoveRight />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -146,7 +168,9 @@ export default function AssignPosition({
             <UserPlus className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Position Assignment</h2>
+            <h2 className="text-xl font-bold text-white">
+              Position Assignment
+            </h2>
             <p className="text-blue-100 text-sm">
               Assign position to existing resident
             </p>
@@ -157,21 +181,27 @@ export default function AssignPosition({
       {/* Content Section */}
       <div className="p-8">
         {/* Resident Info Preview */}
-        {(residentInfo.per_fname || residentInfo.per_lname) && (
+        {(residentInfo?.per_fname || residentInfo?.per_lname) && (
           <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
             <div className="flex items-start space-x-4">
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-2">Resident Information</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">
+                  Resident Information
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="font-medium text-gray-600">Name:</span>
                     <span className="ml-2 text-gray-900">
-                      {`${residentInfo.per_fname.toUpperCase() || ''} ${residentInfo.per_lname.toUpperCase() || ''}`.trim() || 'Not specified'}
+                      {`${residentInfo.per_fname.toUpperCase() || ""} ${
+                        residentInfo.per_lname.toUpperCase() || ""
+                      }`.trim() || "Not specified"}
                     </span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Status:</span>
-                    <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800`}>
+                    <span
+                      className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800`}
+                    >
                       Existing Resident
                     </span>
                   </div>
@@ -191,14 +221,14 @@ export default function AssignPosition({
             }}
             className="space-y-8"
           >
-
-          <FormSelect
-            control={form.control}
-            name="assignPosition"
-            label="Select Position"
-            options={formatPositions(positions.filter((pos: any) => !pos.is_maxed))}
-            readOnly={false}
-          />
+            <FormSelect
+              control={form.control}
+              name="assignPosition"
+              label="Select Position"
+              options={formatPositions(
+                positions.filter((pos: any) => !pos.is_maxed)
+              )}
+            />
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
@@ -211,13 +241,10 @@ export default function AssignPosition({
               >
                 Cancel
               </Button>
-              
+
               <div className="flex-1">
                 {!isSubmitting ? (
-                  <Button 
-                    type="submit" 
-                    className="w-full h-12"
-                  >
+                  <Button type="submit" className="w-full h-12">
                     <UserPlus className="h-4 w-4 mr-2" />
                     Assign Position
                   </Button>

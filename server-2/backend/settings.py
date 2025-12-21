@@ -1,7 +1,3 @@
-# # ---------------------------------------------------
-# # PRODUCTION SERVER
-# # ---------------------------------------------------
-
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
@@ -89,14 +85,7 @@ INSTALLED_APPS = [
     "simple_history",
 
 ]
-SCHEDULER_AUTOSTART = True
-
-SCHEDULER_AUTOSTART = True
-
-# REST_FRAMEWORK = {
-#     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-#     'PAGE_SIZE': 10,  # default page size
-# }
+SCHEDULER_AUTOSTART = not DEBUG
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 
@@ -141,10 +130,6 @@ ASGI_APPLICATION = 'backend.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'OPTIONS': {
-            'connect_timeout': 5,
-            'sslmode': 'require',
-        },
         'NAME': config('DB_NAME', default='my_default_db'),
         'USER': config('DB_USER', default='my_default_user'),
         'PASSWORD': config('DB_PASSWORD', default='my_default_password'),
@@ -204,7 +189,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     "https://ciudad-app-server-2.onrender.com",
-    "http://127.0.0.1:5173",  # Add this for Vite sometimes
+    "http://127.0.0.1:5173", 
 ]
 
 ALLOWED_HOSTS = [
@@ -215,7 +200,7 @@ ALLOWED_HOSTS = [
     '192.168.1.15'
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False)
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [

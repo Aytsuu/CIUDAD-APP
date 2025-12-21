@@ -114,7 +114,7 @@
     "tiptap-extension-resize-image": "^1.2.1",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz",
     "zod": "^3.25.76"
   },
   "devDependencies": {

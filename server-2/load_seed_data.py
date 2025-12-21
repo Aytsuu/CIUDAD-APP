@@ -7,6 +7,10 @@ import sys
 import json
 import logging
 from pathlib import Path
+from django.db import connection
+from django.core.management.color import no_style
+from django.apps import apps
+from utils.supabase_client import supabase
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +20,32 @@ django.setup()
 
 from django.core import serializers
 from django.db import transaction, connection
+
+TARGET_APPS = [
+    'administration',
+    'healthProfiling'
+]
+
+def get_file_list():
+  """ Dynamically generate list of file names. """
+
+  files = []
+
+  for app_label in TARGET_APPS:
+    try:
+      app_config = apps.get_app_config(app_label)
+      # Get all models for this app
+      for model in app_config.get_models():
+        # Format file name and append to the list
+        model_key = f"{app_label.lower()}_{model.__name__.lower()}.json"
+
+        if supabase.storage.from_('seed-artifacts').exists(model_key):
+            files.append(model_key)
+            
+    except LookupError:
+      logger.error(f"App with label {app_label} not found.")
+
+  return files
 
 def check_if_seeded():
     """Check if database already has seed data"""
@@ -63,11 +93,11 @@ def load_json_fixture(filepath):
             count += 1
 
             if len(batch) >= BATCH_SIZE:
-                Model.objects.bulk_create(batch)
+                Model.objects.bulk_create(batch, ignore_conflicts=True)
                 batch = []
         
         if len(batch) > 0 and Model:
-            Model.objects.bulk_create(batch)
+            Model.objects.bulk_create(batch, ignore_conflicts=True)
 
         return count
     except Exception as e:
@@ -90,9 +120,7 @@ def load_seed_data():
         return
     
     # Load files in dependency order
-    load_order = [
- 
-    ]
+    load_order = get_file_list()
     
     total_loaded = 0
     
@@ -107,20 +135,49 @@ def load_seed_data():
             else:
                 logger.error(f"⚠️  Not found: {filename}")
         
-        # Load any remaining files not in load_order
-        for filepath in seed_dir.glob('*.json'):
-            if filepath.name not in load_order and filepath.name != 'all_data.json':
-                count = load_json_fixture(filepath)
-                total_loaded += count
-        
         # Mark as seeded
         mark_as_seeded()
 
     logger.info(f"✅ Loaded {total_loaded} total records")
 
+def reset_all_sequence():
+    """
+    Fixes 'duplicate key value' errors by updating the database counters
+    to match the highest ID currently in existing tables.
+    """
+
+    all_models = []
+    filtered_models = []
+
+    # Collect all models from installed apps
+    for app_config in apps.get_app_configs():
+        # Extract models and insert to all models list
+        all_models.extend(app_config.get_models())
+
+    # Filter models with data (exclude empty models)
+    for model in all_models:
+        if model._meta.app_label in TARGET_APPS:
+            model_key = f"{model._meta.app_label.lower()}_{model.__name__.lower()}.json"
+            
+            if supabase.storage.from_('seed-artifacts').exists(model_key):
+                filtered_models.append(model)
+    
+
+    # SQL commands to reset sequences for these apps
+    sql_commands = connection.ops.sequence_reset_sql(no_style(), filtered_models)
+
+    if sql_commands:
+        with connection.cursor() as cursor:
+            for sql in sql_commands:
+                cursor.execute(sql)
+            logger.info("Fixed sequences")
+    else:
+        logger.info("No sequences needed resetting")
+
 if __name__ == '__main__':
     try:
         load_seed_data()
+        reset_all_sequence()
     except Exception as e:
         logger.error(f"❌ Error: {e}")
         import traceback

@@ -1,15 +1,10 @@
 
 import { ScrollView, TouchableOpacity, Text, View, Image } from "react-native";
-import PageLayout from "../_PageLayout";
 import React from "react";
 import MapView, { Region, PROVIDER_GOOGLE } from "react-native-maps";
 import { DEFAULT_REGION } from "./configs";
 import { DrawerView } from "@/components/ui/drawer";
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
-import {
-  useConvertCoordinatesToAddress,
-  useGetIncidentReport,
-} from "../report/queries/reportFetch";
 import { capitalize } from "@/helpers/capitalize";
 import { CustomMarker } from "./marker";
 import { formatTimeAgo } from "@/helpers/dateHelpers";
@@ -18,6 +13,8 @@ import { Phone } from "@/lib/icons/Phone";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertTriangle } from "@/lib/icons/AlertTriangle";
+import PageLayout from "@/screens/_PageLayout";
+import { useGetIncidentReport, useConvertCoordinatesToAddress } from "../queries/reportFetch";
 
 export default () => {
   const insets = useSafeAreaInsets();
