@@ -113,9 +113,8 @@ jobs:
             echo "URL format: $FULL_POOLER_URL"
             exit 1
           fi
-
-      - name: Download Seed Data and Run Migrations
-        if: github.event.action != 'closed'
+      
+      - name: Download Seed Data
         env:
           DB_HOST: ${{ steps.db_url.outputs.db_host }}
           DB_USER: ${{ steps.db_url.outputs.db_user }}
@@ -134,6 +133,24 @@ jobs:
           # Run downlaoder
           python download_seed_data.py
 
+
+      - name: Run Migrations
+        if: github.event.action != 'closed'
+        env:
+          DB_HOST: ${{ steps.db_url.outputs.db_host }}
+          DB_USER: ${{ steps.db_url.outputs.db_user }}
+          DB_PORT: ${{ steps.db_url.outputs.db_port }}
+          DB_NAME: ${{ steps.db_url.outputs.db_name }}
+          DB_PASSWORD: ${{ steps.db_url.outputs.db_password }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+          EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
+        run: |
           # Apply Schema (Django)
           python manage.py migrate
 
