@@ -8,6 +8,7 @@ import json
 import logging
 from django.apps import apps
 from pathlib import Path
+from utils.supabase_client import supabase
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,10 @@ def get_file_list():
       for model in app_config.get_models():
         # Format file name and append to the list
         model_key = f"{app_label.lower()}_{model.__name__.lower()}.json"
-        files.append(model_key)
+
+        if supabase.storage.from_('seed-artifacts').exists(model_key):
+            files.append(model_key)
+            
     except LookupError:
       logger.error(f"App with label {app_label} not found.")
 

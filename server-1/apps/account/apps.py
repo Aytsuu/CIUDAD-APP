@@ -3,6 +3,8 @@ from django.conf import settings
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import logging
+import sys
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -11,13 +13,8 @@ class AccountConfig(AppConfig):
     name = 'apps.account'
 
     def ready(self):
-        import sys
-
-        if 'manage.py' in sys.argv[0]:
-            if len(sys.argv) > 1 and sys.argv[1] in ['migrate', 'makemigrations', 'showmigrations']:
-                return
-
-            if settings.SCHEDULER_AUTOSTART: 
+        if settings.SCHEDULER_AUTOSTART: 
+            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
                 self.start_scheduler()
 
     def start_scheduler(self):
