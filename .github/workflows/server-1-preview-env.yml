@@ -153,7 +153,7 @@ jobs:
           EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
         run: |
           # Apply Schema (Django)
-          python manage.py migrate
+          python manage.py migrate --fake-initial
 
           if [ -f "load_seed_data.py" ]; then
             python load_seed_data.py
