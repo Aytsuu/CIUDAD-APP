@@ -182,7 +182,12 @@ jobs:
             fi
           fi
 
+          # Load sanitized data
           if [ -f "load_seed_data.py" ]; then
+            echo "Flushing existing cloned data..."
+            python manage.py flush --no-input  # <--- ADD THIS LINE
+
+            echo "Loading fresh seed data..."
             python load_seed_data.py
           else
             echo "Seed script not found. Skipping..."
