@@ -54,8 +54,10 @@ def main():
     
     logger.info(f'Downloading {file}...')
     # Download file
-    data = supabase.storage.from_('seed-artifacts').download(file)
-    decode_json = data.decode(encoding='utf-8')
+
+    if supabase.storage.from_('seed-artifacts').exists(file):
+      data = supabase.storage.from_('seed-artifacts').download(file)
+      decode_json = data.decode(encoding='utf-8')
 
     # Store to local folder /seed_data
     if data:
