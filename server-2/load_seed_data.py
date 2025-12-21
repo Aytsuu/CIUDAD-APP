@@ -156,6 +156,8 @@ def reset_all_sequence():
 
     # Filter models with data (exclude empty models)
     for model in all_models:
+        logger.info(f'model app_label: {model._meta.app_label}')
+        logger.info([app.lower() for app in TARGET_APPS])
         if model._meta.app_label in [app.lower() for app in TARGET_APPS]:
             model_key = f"{model._meta.app_label}_{model.__name__.lower()}.json"
             
