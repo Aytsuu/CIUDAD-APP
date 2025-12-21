@@ -149,7 +149,7 @@ def reset_all_sequence():
     """
 
     # Get all installed apps
-    valid_apps = [app_config for app_config in apps.app_configs()]
+    valid_apps = [app_config for app_config in apps.get_app_configs()]
 
     # SQL commands to reset the sequences of these apps
     sql_commands = connection.ops.sequence_reset_sql(no_style(), valid_apps)
