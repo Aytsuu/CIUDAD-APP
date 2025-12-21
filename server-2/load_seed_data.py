@@ -7,6 +7,7 @@ import sys
 import json
 import logging
 from pathlib import Path
+from django.apps import apps
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,29 @@ django.setup()
 
 from django.core import serializers
 from django.db import transaction, connection
+
+TARGET_APPS = [
+    'administration',
+    'healthProfiling'
+]
+
+def get_file_list():
+  """ Dynamically generate list of file names. """
+
+  files = []
+
+  for app_label in TARGET_APPS:
+    try:
+      app_config = apps.get_app_config(app_label)
+      # Get all models for this app
+      for model in app_config.get_models():
+        # Format file name and append to the list
+        model_key = f"{app_label.lower()}_{model.__name__.lower()}.json"
+        files.append(model_key)
+    except LookupError:
+      logger.error(f"App with label {app_label} not found.")
+
+  return files
 
 def check_if_seeded():
     """Check if database already has seed data"""
@@ -90,17 +114,18 @@ def load_seed_data():
         return
     
     # Load files in dependency order
-    load_order = [
-        'administration_feature.json',
-        'administration_position.json',
-        'administration_staff.json',
-        'profiling_sitio.json',
-        'profiling_address.json',
-        'profiling_personaladdress.json',
-        'profiling_personal.json',
-        'profiling_residentprofile.json',
-        'administration_assignment.json',
-    ]
+    load_order = get_file_list()
+    # load_order = [
+    #     'administration_feature.json',
+    #     'administration_position.json',
+    #     'administration_staff.json',
+    #     'profiling_sitio.json',
+    #     'profiling_address.json',
+    #     'profiling_personaladdress.json',
+    #     'profiling_personal.json',
+    #     'profiling_residentprofile.json',
+    #     'administration_assignment.json',
+    # ]
     
     total_loaded = 0
     

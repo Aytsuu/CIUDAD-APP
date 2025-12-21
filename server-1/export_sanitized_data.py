@@ -6,10 +6,9 @@ python export_sanitized_data.py
 import os
 import json
 import sys
-import shutil
 import logging
-from datetime import datetime
 from faker import Faker
+from django.apps import apps
 from django.core.serializers.json import DjangoJSONEncoder
 from utils.supabase_client import supabase
 
@@ -18,10 +17,6 @@ logger = logging.getLogger(__name__)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 import django
 django.setup()
-
-from django.apps import apps
-from django.core import serializers
-from django.db import connection
 
 fake = Faker()
 
@@ -135,10 +130,11 @@ def export_model(model_name):
         }
         formatted_data.append(fixture_item)
 
+    logger.info(f'{model_name} retrieved: {queryset.count()}')
+
     if count == 0:
         return None
     
-    logger.info(f'{model_name} retrieved: {queryset.count()}')
     return json.dumps(formatted_data, cls=DjangoJSONEncoder, indent=2)
 
 def main():
