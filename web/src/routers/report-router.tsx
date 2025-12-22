@@ -65,6 +65,10 @@ export const report_router = [
     element: <ReportDocument/>
   },
   {
+    path: '/report/weekly-accomplishment/document',
+    element: <ReportDocument/>
+  },
+  {
     path: '/report/weekly-accomplishment/missing-report/create',
     element: <CreateMissingWeeks/>
   }
