@@ -341,7 +341,7 @@ export default function WeeklyAR() {
                                                   className="flex gap-2 cursor-pointer"
                                                   onClick={() => {
                                                     navigate(
-                                                      "/report/acknowledgement/document",
+                                                      "document",
                                                       {
                                                         state: {
                                                           params: {
