@@ -10,6 +10,7 @@ class Position(AbstractModels):
     pos_category = models.CharField(max_length=100)
     pos_is_predefined = models.BooleanField(default=False)
     staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='positions', null=True)
+    asdad = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'position'
