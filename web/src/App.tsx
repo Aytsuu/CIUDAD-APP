@@ -20,7 +20,7 @@ const router = createBrowserRouter([
   ...landing_router,
   ...main_router,
   { path: "*", element: <NotFound /> },
-]);
+]); 
 
 function AppContent() {
   const { logout, isAuthenticated } = useAuth();
