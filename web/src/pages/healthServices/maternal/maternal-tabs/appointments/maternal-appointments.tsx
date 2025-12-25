@@ -191,7 +191,7 @@ export default function MaternalAppointmentsMain() {
             {selectedTab === "missed" && (
               <div className="bg-white rounded-lg border">
                 <DataTable
-                  columns={appointmentColumnsWithReason}
+                  columns={appointmentColumns}
                   data={filterData(missedAppointmentsData)}
                   maxHeight="600px"
                 />

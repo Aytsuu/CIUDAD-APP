@@ -69,8 +69,8 @@ export default function AdministrationRecords() {
     setSearchParams({ page: String(page) });
   };
 
+  // ================== RENDER ==================
   return (
-    // ----------------- RENDER --------------------
     <MainLayoutComponent
       title="Administrative Records"
       description="Manage and view staff information"

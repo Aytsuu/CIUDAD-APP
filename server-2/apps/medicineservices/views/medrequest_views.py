@@ -12,16 +12,21 @@ from apps.administration.models import Staff, Position
 import logging                                    
 from django.utils import timezone
 
+try:
+    from .utils import create_notification
+except ImportError:
+    # Fallback or error handling if the path is different
+    import sys
+    print("CRITICAL: Could not import create_notification from backend.firebase.notifications.utils")
+    
 logger = logging.getLogger(__name__)
 
 def send_cancellation_notification_to_staff(medicine_request_item, reason):
     try:
-        notifier = NotificationQueries()
-        
-        # Get the main request from the item
+        # Get the main request
         medicine_request = medicine_request_item.medreq_id
         
-        # --- Get Resident's Name ---
+        # Resident Name Logic
         resident_name = "Resident"
         if medicine_request.rp_id and medicine_request.rp_id.per:
             resident_name = f"{medicine_request.rp_id.per.per_fname} {medicine_request.rp_id.per.per_lname}"
@@ -29,49 +34,52 @@ def send_cancellation_notification_to_staff(medicine_request_item, reason):
             per = medicine_request.patrec.pat_id.rp_id.per
             resident_name = f"{per.per_fname} {per.per_lname}"
         
-        # Get Medicine Name
         medicine_name = medicine_request_item.med.med_name
             
-        # --- Get Staff Recipients (Admin & BHW) ---
+        # --- CRITICAL CHANGE: Get Account Objects, NOT Strings ---
+        # We need the actual Account objects because we are calling the internal function directly
         staff_to_notify = Staff.objects.filter(
             staff_type="HEALTH STAFF",
-            pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS','MIDWIFE']
-        ).select_related('rp')
+            pos__pos_title__in=['ADMIN', 'BARANGAY HEALTH WORKERS', 'MIDWIFE']
+        ).select_related('rp__account') # Optimize query
         
-        staff_recipients = [str(staff.rp.rp_id) for staff in staff_to_notify if staff.rp and staff.rp.rp_id]
-        logger.info(f"Staff recipients for cancelled medicine request: {staff_recipients}")
+        # Collect valid accounts
+        recipient_accounts = []
+        for staff in staff_to_notify:
+            if staff.rp and hasattr(staff.rp, 'account') and staff.rp.account:
+                recipient_accounts.append(staff.rp.account)
 
-        if staff_recipients:
+        logger.info(f"Staff accounts found for cancellation: {len(recipient_accounts)}")
+
+        if recipient_accounts:
             title = 'Medicine Request Cancelled'
             message = f'{resident_name} has cancelled their request for {medicine_name}. Reason: {reason}'
             
-            success = notifier.create_notification(
+            # --- DIRECT FUNCTION CALL (No requests.post, No Deadlock) ---
+            notification = create_notification(
                 title=title,
                 message=message,
-                recipients=staff_recipients,
-                notif_type="MEDICINE_STAFF_CANCELLED", # Custom type
-                web_route="/services/medicine/requests/cancelled", # Or your admin-facing route
+                recipients=recipient_accounts, # Pass the objects directly
+                notif_type="MEDICINE_STAFF_CANCELLED",
+                web_route="/services/medicine/requests/cancelled",
                 web_params={},
                 mobile_route="", 
                 mobile_params={},
             )
             
-            if success:
-                logger.info(f"Cancellation notification sent to staff for item {medicine_request_item.medreqitem_id}")
+            if notification:
+                logger.info(f"Cancellation notification sent directly for item {medicine_request_item.medreqitem_id}")
+                return True
             else:
-                logger.error(f"Failed to send cancellation notification to staff for item {medicine_request_item.medreqitem_id}")
-            
-            return success
+                logger.error("Internal create_notification returned None")
+                return False
         
-        else:
-            logger.warning("No staff recipients found for medicine cancellation notification.")
-            return False
+        return False
 
     except Exception as e:
-        logger.error(f"Error sending medicine cancellation notification to staff: {str(e)}")
+        logger.error(f"Error sending medicine cancellation notification: {str(e)}")
         return False
-    
-    
+
 def send_new_medicine_request_notification_to_staff(medicine_request):
     """
     Notifies staff (Admin, BHW) about a new pending medicine request.
@@ -128,7 +136,7 @@ def send_new_medicine_request_notification_to_staff(medicine_request):
     except Exception as e:
         logger.error(f"Error sending new medicine request notification to staff: {str(e)}")
         return False
-        
+    
 class UserMedicineRequestsView(generics.ListAPIView):
     serializer_class = MedicineRequestSerializer
     pagination_class = StandardResultsPagination

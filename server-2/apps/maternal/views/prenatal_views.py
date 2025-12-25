@@ -91,7 +91,7 @@ def send_prenatal_status_notification(appointment, new_status, reason=None, noti
                 status_messages_staff = {
                     'pending': { 
                         'title': 'New Prenatal Appointment Request',
-                        'message': f'{resident_name} has requested a new prenatal appointment for {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "an unspecified date"}. Please review and approve/reject.'
+                        'message': f'{resident_name} has requested a new appointment for {appointment.requested_date.strftime("%B %d, %Y") if appointment.requested_date else "an unspecified date"}. Please review and approve/reject.'
                     },
                     'missed': {
                         'title': 'Missed Prenatal Appointment',

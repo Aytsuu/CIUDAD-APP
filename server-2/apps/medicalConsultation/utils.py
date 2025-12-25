@@ -233,7 +233,7 @@ def send_appointment_status_notifications(appointment, status: str):
         elif status == "confirmed":
             title = "Appointment Request Approved"
             message = (
-                f"Your appointment request for {scheduled} has been confirmed\nSee you."
+                f"Your appointment request for {scheduled} has been confirmed. See you."
             )
             notif_type = "CONFIRMED"
             # web_route = "/services/medical-consultation/appointments/confirmed"

@@ -61,7 +61,7 @@ export const appointmentColumns: ColumnDef<Appointment>[] = [
     cell: ({ row }) => {
       const appointment = row.original
       return (
-         <div className="flex flex-col justify-center">
+         <div className="flex flex-col">
             <span className="font-medium text-sm leading-tight">{appointment.patientName}</span>
             <span className="text-muted-foreground text-xs">
                {appointment.gender}, {appointment.age} years old
@@ -306,7 +306,7 @@ export const createPendingAppointmentColumns = (
     cell: ({ row }) => {
       const appointment = row.original
       return (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center gap-2">
           <Button
             size="sm"
             variant="outline"
