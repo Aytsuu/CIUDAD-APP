@@ -33,8 +33,16 @@ import { SelectLayout } from "@/components/ui/select-layout";
 import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { capitalize } from "@/helpers/capitalize";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react-native";
 
-export default function WeeklyAcknowledgementReports() {
+export default () => {
   // ============ STATE INITIALIZATION ============
   const router = useRouter();
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
@@ -161,24 +169,24 @@ export default function WeeklyAcknowledgementReports() {
               {formatDate(item.created_at, "long")}
             </Text>
             <View className="flex-row flex-wrap gap-2">
-              {item.war_composition?.map((comp:any, index: number) => (
-                <Text key={index} className="text-primaryBlue text-xs">AR-{comp.ar.id}</Text>
+              {item.war_composition?.map((comp: any, index: number) => (
+                <Text key={index} className="text-primaryBlue text-xs">
+                  AR-{comp.ar.id}
+                </Text>
               ))}
             </View>
           </View>
         </View>
         <View>
           <Badge className={`${getStatusColor(item.status)}`}>
-              <Text
-                className={`text-xs font-medium ${
-                  item.status === "Signed"
-                    ? "text-green-700"
-                    : "text-yellow-700"
-                }`}
-              >
-                {capitalize(item.status)}
-              </Text>
-            </Badge>
+            <Text
+              className={`text-xs font-medium ${
+                item.status === "Signed" ? "text-green-700" : "text-yellow-700"
+              }`}
+            >
+              {capitalize(item.status)}
+            </Text>
+          </Badge>
         </View>
       </TouchableOpacity>
     );
@@ -201,7 +209,7 @@ export default function WeeklyAcknowledgementReports() {
         <AccordionItem value={month} className="border-0">
           <AccordionTrigger className="">
             <View className="flex-row justify-between items-center flex-1">
-              <Text className="text-gray-700 font-semibold text-sm">
+              <Text className="text-gray-700 font-primary-medium text-sm">
                 {month} {selectedYear}
               </Text>
               <View className="bg-blue-100 px-2 py-1 rounded-full mr-4">
@@ -236,6 +244,8 @@ export default function WeeklyAcknowledgementReports() {
     return <LoadingState />;
   }
 
+  console.log(formattedYearOpts)
+
   // ============ MAIN RENDER ============
   return (
     <PageLayout
@@ -247,24 +257,32 @@ export default function WeeklyAcknowledgementReports() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Weekly</Text>}
-      rightAction={<View className="w-10 h-10" />}
+      headerTitle={
+        <Text className="text-gray-900 text-[13px] font-primary-medium">
+          Weekly
+        </Text>
+      }
+      rightAction={
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex-row items-center">
+            <View className="px-4 h-10 flex-row items-center rounded-lg justify-between bg-primaryBlue">
+              <Text className="text-sm font-primary-medium text-white">
+                {selectedYear}
+              </Text>
+            </View>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="mt-2 border-gray-300 bg-gray-100">
+            {formattedYearOpts.map((item) => (
+              <DropdownMenuItem onPress={() => setSelectedYear(Number.parseInt(item.value))}>
+                <Text className="text-xs">{item.label}</Text>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      }
       wrapScroll={false}
     >
       <View className="flex-1 px-6">
-        <View className="py-2">
-          <SelectLayout
-            selectedValue={selectedYear.toString()}
-            onSelect={(value) => setSelectedYear(Number.parseInt(value.value))}
-            options={formattedYearOpts}
-          />
-        </View>
-
-        {!isRefreshing && (
-          <Text className="text-xs text-gray-500 mt-2 mb-3">{`Showing ${totalReports} weekly ${
-            totalReports === 1 ? "report" : "reports"
-          }`}</Text>
-        )}
         {isFetching && isRefreshing && <LoadingState />}
 
         {!isRefreshing && (
@@ -309,4 +327,4 @@ export default function WeeklyAcknowledgementReports() {
       </View>
     </PageLayout>
   );
-}
+};

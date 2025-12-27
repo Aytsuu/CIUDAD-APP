@@ -179,7 +179,7 @@ export default () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">
+      headerTitle={<Text className="text-gray-900 text-[13px] font-primary-medium">
         My Business
       </Text>}
       rightAction={

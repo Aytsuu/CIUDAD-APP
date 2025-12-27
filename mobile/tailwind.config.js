@@ -13,10 +13,11 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        PoppinsRegular: ["PoppinsRegular", "sans-serif"],
-        PoppinsMedium: ["PoppinsMedium", "sans-serif"],
-        PoppinsSemiBold: ["PoppinsSemiBold", "sans-serif"],
-        Geist: ["Geist"]
+        'primary': ['GeneralSans-Regular'],
+        'primary-light': ['GeneralSans-Light'],
+        'primary-medium': ['GeneralSans-Medium'],
+        'primary-semibold': ['GeneralSans-Semibold'],
+        'primary-bold': ['GeneralSans-Bold'],
       },
       colors: {
         border: 'hsl(var(--border))',

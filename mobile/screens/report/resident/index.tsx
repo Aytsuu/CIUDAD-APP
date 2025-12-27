@@ -17,10 +17,21 @@ import PageLayout from "@/screens/_PageLayout";
 import { LoadingState } from "@/components/ui/loading-state";
 import { formatDate } from "@/helpers/dateHelpers";
 import { AlertTriangle } from "@/lib/icons/AlertTriangle";
+import { Funnel } from "@/lib/icons/Funnel";
+import { FilterPlaceholder } from "@/components/ui/filter-placeholder";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { capitalize } from "@/helpers/capitalize";
+import { ChevronDown } from "@/lib/icons/ChevronDown";
 
 const INITIAL_PAGE_SIZE = 15;
 
-export default () => {
+export default function ResidentReports() {
   // ============ STATE INITIALIZATION ============
   const [searchInputVal, setSearchInputVal] = React.useState<string>("");
   const [searchQuery, setSearchQuery] = React.useState<string>("");
@@ -28,12 +39,14 @@ export default () => {
   const [pageSize, setPageSize] = React.useState<number>(INITIAL_PAGE_SIZE);
   const [isRefreshing, setIsRefreshing] = React.useState<boolean>(false);
   const [showSearch, setShowSearch] = React.useState<boolean>(false);
+  const [showFiltering, setShowFiltering] = React.useState<boolean>(false);
   const [isScrolling, setIsScrolling] = React.useState<boolean>(false);
   const [isLoadMore, setIsLoadMore] = React.useState<boolean>(false);
   const [isInitialRender, setIsInitialRender] = React.useState<boolean>(true);
   const [activeTab, setActiveTab] = React.useState<"active" | "archive">(
     "active"
   );
+  const [severity, setSeverity] = React.useState<string>("all");
   const scrollTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   const {
@@ -45,7 +58,10 @@ export default () => {
     currentPage,
     pageSize,
     searchQuery,
-    activeTab === "archive"
+    activeTab === "archive",
+    false,
+    severity,
+    false
   );
 
   const reports = incidentReportData?.results || [];
@@ -106,47 +122,94 @@ export default () => {
     setPageSize(INITIAL_PAGE_SIZE);
   };
 
+  const handleDefaultFiltering = () => {
+    setSeverity("all");
+  };
+
   // ============ RENDER HELPERS ============
-  const severity_color_bg: Record<string, any> = {
+  const severity_color_text: Record<string, any> = {
     LOW: "text-green-500",
-    MEDIUM: "text-yellow-500",
+    MEDIUM: "text-amber-500",
     HIGH: "text-red-500",
+  };
+
+  const severity_color_bg: Record<string, any> = {
+    LOW: "bg-green-500",
+    MEDIUM: "bg-orange-500",
+    HIGH: "bg-red-500",
   };
 
   const ItemCard = React.memo(({ item }: { item: Record<string, any> }) => {
     return (
       <TouchableOpacity
         onPress={() => {
-          router.push({ 
-            pathname: "/(report)/incident/details", 
-            params: { report: JSON.stringify(item) }
+          router.push({
+            pathname: "/(report)/incident/details",
+            params: { report: JSON.stringify(item) },
           });
         }}
         activeOpacity={0.7}
       >
-        <View className="flex-row justify-between items-center bg-white border-t border-gray-100 py-5">
+        <View className="flex-row justify-between items-center bg-white border-t border-gray-100 py-8">
           <View className="flex-1 flex-row justify-between items-center">
-            <View className="flex-shrink pr-4" style={{ maxWidth: "70%" }}>
+            <View
+              className="flex-shrink pr-4 gap-2"
+              style={{ maxWidth: "70%" }}
+            >
               <View className="flex-row gap-4">
                 <Text
-                  className="text-gray-700 font-medium text-md"
+                  className="text-gray-700 text-sm"
+                  style={{
+                    fontFamily: "GeneralSans-Semibold",
+                  }}
                   numberOfLines={1}
                 >
                   {item.ir_type}
                 </Text>
               </View>
 
-              <Text
-                className="text-muted-foreground text-xs mt-1"
-                numberOfLines={1}
-              >
-                {item.ir_area} • {formatDate(item.ir_date, "short")}
-              </Text>
+              <View className="flex-row items-center gap-2">
+                <Text className="text-xs font-primary-medium text-muted-foreground">
+                  Severity:
+                </Text>
+                <Text
+                  className={`${
+                    severity_color_text[item.ir_severity]
+                  } font-primary-medium text-xs`}
+                >
+                  {capitalize(item.ir_severity)}
+                </Text>
+              </View>
+
+              <View className="flex-row items-center gap-2">
+                <Text className="text-xs font-primary-medium text-muted-foreground">
+                  Area:
+                </Text>
+                <Text
+                  className={`text-gray-700 font-primary-medium text-xs`}
+                  numberOfLines={1}
+                >
+                  {item.ir_area}
+                </Text>
+              </View>
+
+              <View className="flex-row items-center gap-2">
+                <Text className="text-xs font-primary-medium text-muted-foreground">
+                  Date Reported:
+                </Text>
+                <Text className={`text-gray-700 font-primary-medium text-xs`}>
+                  {formatDate(item.ir_date, "long")}
+                </Text>
+              </View>
             </View>
-            <AlertTriangle
-              size={20}
-              className={`${severity_color_bg[item.ir_severity]} mr-5`}
-            />
+
+            <View
+              className={`mr-5 flex-row items-center justify-center rounded-lg p-2 ${
+                severity_color_bg[item.ir_severity]
+              }`}
+            >
+              <AlertTriangle size={16} className="text-white" />
+            </View>
           </View>
 
           <View className="ml-4">
@@ -178,15 +241,31 @@ export default () => {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">Resident Reports</Text>
+        <Text className="text-gray-900 text-[13px] font-primary-medium">
+          Resident Reports
+        </Text>
       }
       rightAction={
-        <TouchableOpacity
-          onPress={() => setShowSearch(!showSearch)}
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
-        >
-          <Search size={22} className="text-gray-700" />
-        </TouchableOpacity>
+        <View className="flex-row gap-2">
+          <TouchableOpacity
+            onPress={() => {
+              setShowSearch(false);
+              setShowFiltering(!showFiltering);
+            }}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Funnel size={20} className="text-gray-700" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setShowSearch(!showSearch);
+              setShowFiltering(false);
+            }}
+            className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          >
+            <Search size={22} className="text-gray-700" />
+          </TouchableOpacity>
+        </View>
       }
       wrapScroll={false}
     >
@@ -199,16 +278,54 @@ export default () => {
         />
       )}
 
+      {showFiltering && (
+        <FilterPlaceholder setDefault={handleDefaultFiltering}>
+          <View className="flex-wrap">
+            <View className="flex-row items-center">
+              <Text className="text-sm text-gray-500 font-primary-medium">
+                Severity:
+              </Text>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="flex-row items-center">
+                  <View className="h-9 px-4 bg-white flex-row items-center justify-between">
+                    <Text className="text-sm font-primary-medium text-gray-700">
+                      {capitalize(severity)}
+                    </Text>
+                  </View>
+                  <ChevronDown size={16} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="mt-2 border-gray-300 bg-gray-100">
+                  <DropdownMenuItem onPress={() => setSeverity("all")}>
+                    <Text className="text-xs">All</Text>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-gray-300" />
+                  <DropdownMenuItem onPress={() => setSeverity("low")}>
+                    <Text className="text-xs">Low</Text>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-gray-300" />
+                  <DropdownMenuItem onPress={() => setSeverity("medium")}>
+                    <Text className="text-xs">Medium</Text>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onPress={() => setSeverity("high")}>
+                    <Text className="text-xs">High</Text>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </View>
+          </View>
+        </FilterPlaceholder>
+      )}
+
       {/* Tab Buttons */}
-      <View className="flex-row px-6 pt-2 pb-3 gap-2">
+      <View className="flex-row pt-2 pb-3">
         <TouchableOpacity
-          className={`flex-1 py-2 rounded-lg ${
+          className={`flex-1 py-2 ${
             activeTab === "active" ? "bg-primaryBlue" : "bg-gray-100"
           }`}
           onPress={() => handleTabChange("active")}
         >
           <Text
-            className={`text-center font-medium text-sm ${
+            className={`text-center font-primary-medium text-sm ${
               activeTab === "active" ? "text-white" : "text-gray-600"
             }`}
           >
@@ -217,17 +334,17 @@ export default () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          className={`flex-1 py-2 rounded-lg ${
+          className={`flex-1 py-2 ${
             activeTab === "archive" ? "bg-primaryBlue" : "bg-gray-100"
           }`}
           onPress={() => handleTabChange("archive")}
         >
           <Text
-            className={`text-center font-medium text-sm ${
+            className={`text-center font-primary-medium text-sm ${
               activeTab === "archive" ? "text-white" : "text-gray-600"
             }`}
           >
-            Archived
+            Archive
           </Text>
         </TouchableOpacity>
       </View>

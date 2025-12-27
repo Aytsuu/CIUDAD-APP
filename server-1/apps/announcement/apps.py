@@ -1,8 +1,10 @@
 from django.apps import AppConfig
 from django.conf import settings
 from django.utils import timezone
+from django.db.models.signals import post_migrate
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging
+import fcntl
 import os
 
 logger = logging.getLogger(__name__)
@@ -12,14 +14,22 @@ class AnnouncementConfig(AppConfig):
     name = 'apps.announcement'
 
     def ready(self):
-        # Prevent duplicate schedulers in autoreload
-        import sys
+        if os.environ.get("SCHEDULER_AUTOSTART") != 'True':
+            return
 
-        if settings.SCHEDULER_AUTOSTART: 
-            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
-                self.start_scheduler()
+        lock_file_path = '/tmp/announcement_scheduler.lock'
 
-    def start_scheduler(self):
+        try:
+            self.fp = open(lock_file_path, 'wb')
+            fcntl.flock(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            
+            logger.info("Announcement Scheduler starting...")
+            self.start_scheduler()
+        except OSError:
+            # Another worker already has the lock
+            logger.error("Scheduler already running in another worker. Skipping.")
+
+    def start_scheduler(self, **kwargs):
         """Initialize and start the background scheduler"""
         try:
             from .tasks import update_ann_status

@@ -49,7 +49,7 @@ export default () => {
   return (
     <PageLayout
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">My Requests</Text>
+        <Text className="text-gray-900 text-[13px] font-primary-medium">My Requests</Text>
       }
     >
       <View className="flex-1 px-6 py-4">

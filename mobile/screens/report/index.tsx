@@ -126,7 +126,7 @@ export default () => {
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="text-white font-medium text-[13px]">Report</Text>
+          <Text className="text-white font-medium text-[13px] font-primary-medium">Report</Text>
         }
         rightAction={<View className="w-10 h-10" />}
         backgroundColor="bg-primaryBlue"
@@ -137,10 +137,10 @@ export default () => {
           <View className="pb-8">
             {/* Header */}
             <View className="pt-6 px-6 pb-6">
-              <Text className="text-xl font-medium text-white">
+              <Text className="text-xl font-semibold text-white">
                 File a Report
               </Text>
-              <Text className="text-sm text-white/90">
+              <Text className="text-sm font-primary-medium text-white/90">
                 Share your concern to the barangay San Roque (CIUDAD)
               </Text>
             </View>

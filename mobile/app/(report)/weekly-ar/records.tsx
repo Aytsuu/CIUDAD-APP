@@ -1,5 +1,5 @@
-import WeeklyAr from "@/screens/report/weekly-ar";
+import WeeklyAR from "@/screens/report/weekly-ar";
 
 export default () => {
-  return <WeeklyAr />
+  return <WeeklyAR />
 }

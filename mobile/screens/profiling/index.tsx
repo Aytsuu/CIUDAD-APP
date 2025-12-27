@@ -53,7 +53,7 @@ export default () => {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-gray-900 text-[13px]">Profiling</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px] font-primary-medium">Profiling</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="flex-1 px-6 py-4">

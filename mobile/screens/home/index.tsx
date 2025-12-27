@@ -86,7 +86,7 @@ export default function HomeScreen() {
             item.icon
           )}
         </View>
-        <Text className="text-xs font-medium text-gray-900 text-center leading-4">
+        <Text className="text-xs font-primary-medium text-gray-900 text-center leading-4">
           {isToggleButton
             ? showMoreFeatures
               ? "Show Less"
@@ -167,7 +167,7 @@ export default function HomeScreen() {
               className="w-10 h-10 rounded-full"
               style={{ backgroundColor: "#f3f4f6" }}
             />
-            <Text className="text-md text-gray-700 font- mb-2">
+            <Text className="text-md font-primary-medium text-gray-700 font- mb-2">
               Hi,{" "}
               {capitalize(
                 user?.rp
@@ -214,7 +214,7 @@ export default function HomeScreen() {
               <Text className="text-lg font-semibold text-gray-900">
                 Features
               </Text>
-              <Text className="text-sm text-gray-600">
+              <Text className="text-sm font-primary text-gray-600">
                 Quick access to your tools
               </Text>
             </View>

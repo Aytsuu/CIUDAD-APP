@@ -198,7 +198,7 @@ export default function BusinessRecords() {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">Business Records</Text>
+        <Text className="text-gray-900 text-[13px] font-primary-medium">Business Records</Text>
       }
       rightAction={
         <TouchableOpacity

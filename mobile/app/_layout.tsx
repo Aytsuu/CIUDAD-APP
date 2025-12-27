@@ -35,11 +35,11 @@ export default function RootLayout() {
   const [appIsReady, setAppIsReady] = useState(false);
 
   const [fontsLoaded] = useFonts({
-    'Geist': require('../assets/fonts/Geist.ttf'),
-    'Poppins-Regular': require('../assets/fonts/Poppins-Regular.ttf'),
-    'Poppins-Medium': require('../assets/fonts/Poppins-Medium.ttf'),
-    'Poppins-SemiBold': require('../assets/fonts/Poppins-SemiBold.ttf'),
-    'Poppins-Bold': require('../assets/fonts/Poppins-Bold.ttf'),
+    'GeneralSans-Light': require('../assets/fonts/GeneralSans-Light.otf'),
+    'GeneralSans-Regular': require('../assets/fonts/GeneralSans-Regular.otf'),
+    'GeneralSans-Medium': require('../assets/fonts/GeneralSans-Medium.otf'),
+    'GeneralSans-Semibold': require('../assets/fonts/GeneralSans-Semibold.otf'),
+    'GeneralSans-Bold': require('../assets/fonts/GeneralSans-Bold.otf'),
   });
 
   useEffect(() => {

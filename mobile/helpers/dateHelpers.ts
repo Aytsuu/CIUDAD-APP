@@ -78,19 +78,21 @@ export const monthNameToNumber = (month: string) => {
   return idx === -1 ? null : idx + 1;
 };
 
-// Get long date format and 12 hour time format 
+// Get long date format and 12 hour time format
 // Example: 2025-06-11 01:20:00 --> returns JUNE 11, 2025 (01:20 AM)
-export const getDateTimeFormat = (dateString: string, withTime: boolean = false) => {
+export const getDateTimeFormat = (dateString: string, timeOnly?: boolean) => {
   const date = new Date(dateString);
-  const formattedDate = date.toLocaleDateString("default", { month: 'long', day: 'numeric', year: 'numeric'}); 
-
-  if(withTime){
-    const formattedTime = date.toLocaleTimeString("default", { hour: '2-digit', minute: '2-digit'});
-    return `${formattedDate} (${formattedTime})`;
-  }
-
-  return `${formattedDate}`;
-}
+  const formattedDate = date.toLocaleDateString("default", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const formattedTime = date.toLocaleTimeString("default", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return !timeOnly ? `${formattedDate} (${formattedTime})` : formattedTime;
+};
 
 // Returns an arry of months ["January", "February", ... "December"]
 export const getMonths = Array.from({ length: 12 }, (_, i) =>

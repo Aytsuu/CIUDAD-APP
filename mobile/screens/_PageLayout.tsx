@@ -1,6 +1,6 @@
 import { ChevronDown } from "@/lib/icons/ChevronDown"
 import React, { useState, useRef, useCallback } from "react"
-import { View, TouchableOpacity, Dimensions, ScrollView } from "react-native"
+import { View, TouchableOpacity, Dimensions, ScrollView, RefreshControlProps } from "react-native"
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window')
@@ -28,6 +28,7 @@ interface PageLayoutProps {
   showScrollIndicator?: boolean
   scrollIndicatorColor?: string
   scrollIndicatorPosition?: 'right' | 'center'
+  refreshControl?: React.ReactElement<RefreshControlProps, string>
 }
 
 export default function PageLayout({
@@ -45,6 +46,7 @@ export default function PageLayout({
   showScrollIndicator = true,
   scrollIndicatorColor = 'bg-black/30',
   scrollIndicatorPosition = 'right',
+  refreshControl,
 }: PageLayoutProps) {
   const scrollViewRef = useRef<ScrollView>(null)
   const [isScrollable, setIsScrollable] = useState(false)
@@ -102,7 +104,7 @@ export default function PageLayout({
   const insets = useSafeAreaInsets();
 
   // Determine if footer should be shown
-  const shouldShowFooter = showFooter || !!footer
+  const shouldShowFooter = showFooter && !!footer
 
   // Handle scroll events
   const handleScroll = useCallback((event: any) => {
@@ -249,6 +251,7 @@ export default function PageLayout({
           showsHorizontalScrollIndicator={false}
           overScrollMode="never"
           keyboardShouldPersistTaps="handled"
+          refreshControl={refreshControl}
         >
           {children}
         </ScrollView>

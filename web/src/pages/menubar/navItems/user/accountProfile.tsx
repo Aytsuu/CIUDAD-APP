@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import sanRoqueLogo from "@/assets/images/sanRoqueLogo.svg";
 import HeaderUserSkeleton from "./user-skeleton";
+import { capitalize } from "@/helpers/capitalize";
 
 export default function AccountProfile(): JSX.Element {
   const { user, logout } = useAuth();
@@ -102,10 +103,10 @@ export default function AccountProfile(): JSX.Element {
           />
           <div className="flex-col">
             <h2 className="hidden sm:block text-sm font-medium">
-              {`${user?.personal?.per_fname} ${user?.personal?.per_lname}`}
+              {capitalize(`${user?.personal?.per_fname} ${user?.personal?.per_lname}`)}
             </h2>
             <p className="text-xs text-start">
-              {user?.staff?.pos}
+              {capitalize(user?.staff?.pos)}
             </p>
           </div>
         </PopoverTrigger>

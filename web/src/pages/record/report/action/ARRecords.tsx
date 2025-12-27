@@ -6,7 +6,7 @@ import { Check, FileText, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button/button";
 import { ARColumns } from "../ReportColumns";
 import {
-  useGetAcknowledgementReport,
+  useGetActionReport,
   useGetWeeklyAR,
 } from "../queries/reportFetch";
 import { LoadButton } from "@/components/ui/button/load-button";
@@ -50,7 +50,7 @@ export default function ARRecords() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const debouncedPageSize = useDebounce(pageSize, 100);
   const { data: arReports, isLoading: isLoadingArReports } =
-    useGetAcknowledgementReport(
+    useGetActionReport(
       currentPage,
       debouncedPageSize,
       debouncedSearchQuery,

@@ -1,4 +1,3 @@
-
 import { ScrollView, TouchableOpacity, Text, View, Image } from "react-native";
 import React from "react";
 import MapView, { Region, PROVIDER_GOOGLE } from "react-native-maps";
@@ -14,7 +13,10 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AlertTriangle } from "@/lib/icons/AlertTriangle";
 import PageLayout from "@/screens/_PageLayout";
-import { useGetIncidentReport, useConvertCoordinatesToAddress } from "../queries/reportFetch";
+import {
+  useGetIncidentReport,
+  useConvertCoordinatesToAddress,
+} from "../queries/reportFetch";
 
 export default () => {
   const insets = useSafeAreaInsets();
@@ -109,9 +111,9 @@ export default () => {
         </MapView>
 
         {/* Floating Back Button */}
-        <View 
+        <View
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: insets.top + 16,
             left: 16,
             zIndex: 999,
@@ -151,10 +153,7 @@ export default () => {
                   <TouchableOpacity onPress={handleDeselect}>
                     <ChevronLeft size={24} className="text-gray-700" />
                   </TouchableOpacity>
-                  <Text
-                    className="text-lg text-gray-700 font-medium"
-                    numberOfLines={1}
-                  >
+                  <Text className="text-base text-gray-700 font-primary-medium">
                     Viewing Report
                   </Text>
                 </View>
@@ -166,10 +165,10 @@ export default () => {
           ) : (
             <>
               <View className="mb-6">
-                <Text className="text-lg text-gray-700 font-medium">
+                <Text className="text-base text-gray-700 font-primary-medium">
                   Securado Reports
                 </Text>
-                <Text className="text-sm text-muted-foreground">
+                <Text className="text-sm text-muted-foreground font-primary">
                   Drag to view or hide all tracker reports
                 </Text>
               </View>
@@ -179,30 +178,32 @@ export default () => {
           <BottomSheetScrollView
             contentContainerStyle={{
               paddingBottom: 10,
-              gap: 14,
+              gap: 12,
             }}
             showsVerticalScrollIndicator={false}
           >
             {report ? (
               <>
-                <View className="mb-4">
+                <View className="mb-6">
                   <Text
-                    className="text-xl text-primaryBlue font-medium"
-                    numberOfLines={2}
+                    className="text-lg text-primaryBlue"
+                    style={{
+                      fontFamily: "GeneralSans-Semibold",
+                    }}
                   >
                     {report?.ir_track_user_name}
                   </Text>
                   <View className="flex-row items-center gap-2">
                     <Phone size={14} className="text-gray-600" />
-                    <Text className="text-sm text-gray-600" numberOfLines={1}>
+                    <Text className="text-sm text-gray-600 font-primary-medium">
                       {report?.ir_track_user_contact}
                     </Text>
                   </View>
                   <View className="flex-1 mt-4">
-                    <Text className="text-sm text-gray-400 flex-shrink-0">
+                    <Text className="text-sm text-gray-400 flex-shrink-0 font-primary">
                       description:
                     </Text>
-                    <Text className="text-sm flex-1 flex-wrap">
+                    <Text className="text-sm flex-1 flex-wrap font-primary-medium">
                       {report?.ir_add_details}
                     </Text>
                   </View>
@@ -218,10 +219,10 @@ export default () => {
                   />
 
                   <View className="flex-1 gap-1 flex-shrink">
-                    <Text className="text-primaryBlue font-medium text-base">
+                    <Text className="text-primaryBlue font-primary-medium text-sm">
                       Device Location
                     </Text>
-                    <Text className="text-sm text-gray-800 flex-wrap">
+                    <Text className="text-xs font-primary text-gray-800 flex-wrap">
                       {deviceLocation?.display_name || "Loading..."}
                     </Text>
                   </View>
@@ -237,10 +238,10 @@ export default () => {
                   />
 
                   <View className="flex-1 gap-1 flex-shrink">
-                    <Text className="text-primaryBlue font-medium text-base">
+                    <Text className="text-primaryBlue font-primary-medium text-sm">
                       User Location
                     </Text>
-                    <Text className="text-sm text-gray-800 flex-wrap">
+                    <Text className="text-xs font-primary text-gray-800 flex-wrap">
                       {userLocation?.display_name || "Loading..."}
                     </Text>
                   </View>
@@ -252,10 +253,13 @@ export default () => {
                   key={report.id || index}
                   activeOpacity={0.7}
                   onPress={() => goToDevice(report)}
-                  className="flex-1 flex-row items-center gap-2"
+                  className="flex-1 flex-row items-center gap-3"
                 >
-                  <AlertTriangle size={16} className="text-red-500"/>
-                  <Text className="text-md text-red-500" numberOfLines={2}>
+                  <AlertTriangle size={16} className="text-red-500" />
+                  <Text
+                    className="text-sm text-red-500 font-primary-medium"
+                    numberOfLines={1}
+                  >
                     Report of {capitalize(report.ir_track_user_name)}
                   </Text>
                 </TouchableOpacity>

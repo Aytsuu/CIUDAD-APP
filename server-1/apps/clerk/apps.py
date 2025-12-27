@@ -1,10 +1,12 @@
 from django.apps import AppConfig
 from django.conf import settings
+from django.db.models.signals import post_migrate
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import logging
 import os
 import sys
+import fcntl
 
 logger = logging.getLogger(__name__)
 
@@ -14,13 +16,23 @@ class ClerkConfig(AppConfig):
     
     def ready(self):
         import apps.clerk.signals
-        import sys
         from apps.clerk.signals import initialize_quarterly_hearing_reminders
         
-        if settings.SCHEDULER_AUTOSTART: 
-            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
-                initialize_quarterly_hearing_reminders()
-                self.start_scheduler()
+        if os.environ.get('SCHEDULER_AUTOSTART') != 'True':
+            return
+
+        lock_file_path = '/tmp/clerk_scheduler.lock'
+
+        try:
+            self.fp = open(lock_file_path, 'wb')
+            fcntl.flock(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            
+            logger.info("Clerk Scheduler starting...")
+            initialize_quarterly_hearing_reminders()
+            self.start_scheduler()
+        except OSError:
+            logger.error("Scheduler already running in another worker. Skipping.")
+    
     
     def start_scheduler(self):
         """Initialize and start the background scheduler for auto-declining overdue requests"""

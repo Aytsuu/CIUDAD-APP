@@ -10,7 +10,7 @@ export default () => {
 
   return (
     <PageLayout
-      headerTitle={<Text className="text-gray-900 text-[13px]">Inbox</Text>}
+      headerTitle={<Text className="text-gray-900 text-[13px] font-primary-medium">Inbox</Text>}
     >
       <View className="flex-1 px-6">
         {/* Announcement Card */}
@@ -30,7 +30,7 @@ export default () => {
                   Announcement
                 </Text>
 
-                <Text className="text-gray-500 text-sm mt-1">
+                <Text className="text-gray-500 font-primary text-sm">
                   Latest updates and news
                 </Text>
               </View>
@@ -59,7 +59,7 @@ export default () => {
                   Notification
                 </Text>
 
-                <Text className="text-gray-500 text-sm mt-1">
+                <Text className="text-gray-500 font-primary text-sm">
                   Personal alerts and reminders
                 </Text>
               </View>

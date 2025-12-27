@@ -15,7 +15,7 @@ export default function About() {
           <ChevronLeft size={24} className="text-gray-700" />
         </TouchableOpacity>
       }
-      headerTitle={<Text className="text-black text-[13px]">About</Text>}
+      headerTitle={<Text className="text-black text-[13px] font-primary-medium">About</Text>}
       rightAction={<View className="w-10 h-10" />}
     >
       <View className="px-6 space-y-6">
@@ -25,11 +25,11 @@ export default function About() {
             <Ciudad width={80} height={30}/>
           </View>
           <Text
-            className="text-sm text-gray-700 leading-relaxed"
+            className="text-sm text-gray-700 leading-relaxed font-primary"
             style={{ textAlign: "justify" }}
           >
             Official digital platform developed for{" "}
-            <Text className="font-medium">
+            <Text className="font-primary-medium">
               Barangay San Roque (Ciudad), Cebu City
             </Text>
             , with the objective of enhancing public service delivery through
@@ -39,7 +39,7 @@ export default function About() {
           </Text>
 
           <Text
-            className="text-sm text-gray-700 leading-relaxed mt-3"
+            className="text-sm text-gray-700 leading-relaxed mt-3 font-primary"
             style={{ textAlign: "justify" }}
           >
             Through this system, residents are able to:
@@ -47,25 +47,25 @@ export default function About() {
 
           <View className="mt-2 ml-4 space-y-1">
             <Text
-              className="text-sm text-gray-700 font-medium"
+              className="text-sm text-gray-700 font-primary-medium"
               style={{ textAlign: "justify" }}
             >
               • Secure certificates and clearances online;
             </Text>
             <Text
-              className="text-sm text-gray-700 font-medium"
+              className="text-sm text-gray-700 font-primary-medium"
               style={{ textAlign: "justify" }}
             >
               • Report incidents and submit blotter reports;
             </Text>
             <Text
-              className="text-sm text-gray-700 font-medium"
+              className="text-sm text-gray-700 font-primary-medium"
               style={{ textAlign: "justify" }}
             >
               • Request for medicine online;
             </Text>
             <Text
-              className="text-sm text-gray-700 font-medium"
+              className="text-sm text-gray-700 font-primary-medium"
               style={{ textAlign: "justify" }}
             >
               • Schedule for health consultation; and etc.
@@ -73,7 +73,7 @@ export default function About() {
           </View>
 
           <Text
-            className="text-sm text-gray-700 leading-relaxed mt-3"
+            className="text-sm text-gray-700 font-primary leading-relaxed mt-3"
             style={{ textAlign: "justify" }}
           >
             By transitioning these services to a digital platform, Ciudad
@@ -82,12 +82,12 @@ export default function About() {
           </Text>
 
           <Text
-            className="text-sm text-gray-700 leading-relaxed mt-3"
+            className="text-sm text-gray-700 font-primary leading-relaxed mt-3"
             style={{ textAlign: "justify" }}
           >
             This initiative strengthens the connection between residents and
             barangay personnel, fostering better communication, accountability,
-            and responsiveness. <Text className="font-medium">Ciudad</Text>{" "}
+            and responsiveness. <Text className="font-primary-medium">Ciudad</Text>{" "}
             stands as part of Barangay San Roque’s commitment to modernize
             governance and deliver services that are accessible, timely, and
             citizen-focused.
@@ -100,11 +100,11 @@ export default function About() {
             Mission
           </Text>
           <Text
-            className="text-sm text-gray-700 leading-relaxed"
+            className="text-sm font-primary text-gray-700 leading-relaxed"
             style={{ textAlign: "justify" }}
           >
             To provide the residents of{" "}
-            <Text className="font-medium">Barangay San Roque (Ciudad)</Text>{" "}
+            <Text className="font-primary-medium">Barangay San Roque (Ciudad)</Text>{" "}
             with a secure, reliable, and efficient digital platform that
             streamlines access to essential services, promotes transparency, and
             strengthens the partnership between the community and local
@@ -118,11 +118,11 @@ export default function About() {
             Vision
           </Text>
           <Text
-            className="text-sm text-gray-700 leading-relaxed"
+            className="text-sm font-primary text-gray-700 leading-relaxed"
             style={{ textAlign: "justify" }}
           >
             A connected and progressive{" "}
-            <Text className="font-medium">Barangay San Roque (Ciudad)</Text>{" "}
+            <Text className="font-primary-medium">Barangay San Roque (Ciudad)</Text>{" "}
             where digital innovation enhances governance, empowers residents,
             and ensures that public services are delivered with efficiency,
             integrity, and accountability.

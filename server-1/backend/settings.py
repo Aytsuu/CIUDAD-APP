@@ -305,7 +305,7 @@ LOGGING = {
 # ========================
 # SCHEDULER
 # ========================
-SCHEDULER_AUTOSTART = not DEBUG
+SCHEDULER_AUTOSTART = config('SCHEDULER_AUTOSTART', default=True)
 
 CACHES = {
     "default": {

@@ -76,7 +76,7 @@ export const useGetIRInfo = (ir_id: string) => {
   });
 };
 
-export const useGetAcknowledgementReport = (
+export const useGetActionReport = (
   page: number,
   pageSize: number,
   searchQuery: string,

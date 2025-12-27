@@ -17,6 +17,7 @@ import { Drawer } from "@/components/ui/drawer-deprecated";
 import React from "react";
 import { DrawerTrigger, DrawerView } from "@/components/ui/drawer";
 import BottomSheet from "@gorhom/bottom-sheet";
+import { capitalize } from "@/helpers/capitalize";
 
 export default () => {
   const { user, isLoading, logout } = useAuth();
@@ -25,12 +26,6 @@ export default () => {
   const bottomSheetRef = React.useRef<BottomSheet>(null);
 
   const menuItems = [
-    {
-      name: "About",
-      icon: InformationCircle,
-      addIcon: Ciudad,
-      route: "/(account)/about",
-    },
     {
       name: "Personal Information",
       icon: UserLock,
@@ -47,6 +42,12 @@ export default () => {
       icon: House,
       route: "/(account)/house",
       excludeFromBusiness: true,
+    },
+    {
+      name: "About",
+      icon: InformationCircle,
+      addIcon: Ciudad,
+      route: "/(account)/about",
     },
     {
       name: "Settings",
@@ -68,7 +69,7 @@ export default () => {
   return (
     <>
       <PageLayout
-        headerTitle={<Text className="text-gray-900 text-[13px]">Account</Text>}
+        headerTitle={<Text className="text-gray-900 text-[13px] font-primary-medium" >Account</Text>}
         rightAction={
           <View className="w-10 h-10 flex-row items-center">
             {user?.staff && (
@@ -79,8 +80,8 @@ export default () => {
           </View>
         }
       >
-        <View className="flex-1 px-6 py-2">
-          <View className="flex-row border-b border-gray-100 pb-3 gap-4">
+        <View className="flex-1 py-2">
+          <View className="flex-row border-b px-6 border-gray-100 pb-3 gap-4">
             <View className="relative">
               <Image
                 source={
@@ -93,7 +94,7 @@ export default () => {
               />
             </View>
             <View>
-              <Text className="text-lg text-gray-700 font-PoppinsMedium mb-2">
+              <Text className="text-base text-gray-700 font-primary-medium mb-2">
                 Hi,{" "}
                 {user?.rp
                   ? user?.personal?.per_fname
@@ -101,9 +102,11 @@ export default () => {
                   ? user?.personal?.br_fname
                   : user?.personal?.per_fname}
               </Text>
-              <Text className="text-sm text-gray-500">{user?.phone}</Text>
+              <Text className="text-sm font-primary text-gray-500">
+                {'+639' + user?.phone.slice(2)}
+              </Text>
               {user?.email ? (
-                <Text className="text-sm text-gray-500">{user?.email}</Text>
+                <Text className="text-sm font-primary text-gray-500">{user?.email}</Text>
               ) : (
                 <TouchableOpacity
                   onPress={() =>
@@ -113,14 +116,17 @@ export default () => {
                   <Text className="text-primaryBlue text-sm">Add email</Text>
                 </TouchableOpacity>
               )}
-              {(user?.rp || user?.br) && (
-                  <Text className="text-sm text-primaryBlue font-medium">
-                    ID: {user?.rp || user?.br}
-                  </Text>
-                )}
             </View>
           </View>
-          <View className="flex-1 gap-3 mt-5">
+          
+          {user?.rp && (
+            <View className="flex-row py-2 justify-center items-center bg-primaryBlue gap-2">
+              <Text className="text-white opacity-80 text-sm font-primary-medium">Resident ID:</Text>
+              <Text className="text-white text-sm font-primary-medium">{user?.rp}</Text>
+            </View>
+          )}
+
+          <View className="flex-1 gap-3 mt-5 px-6">
             {menuItems.map((item: any, index: number) => {
               if (user?.br && item.excludeFromBusiness) return;
               return (
@@ -132,7 +138,7 @@ export default () => {
                 >
                   <View className="flex-row items-center gap-2">
                     <item.icon width={35} height={20} />
-                    <Text className="text-[13px] text-gray-800">
+                    <Text className="text-[13px] font-primary-medium text-gray-800">
                       {item.name}
                     </Text>
                     {item.addIcon && <item.addIcon width={40} height={20} />}
@@ -150,7 +156,7 @@ export default () => {
                 >
                   <View className="flex-row items-center gap-2 py-3">
                     <Logout width={35} height={20} />
-                    <Text className="text-[14px] text-gray-800">Sign Out</Text>
+                    <Text className="text-[13px] font-primary-medium text-gray-800">Sign Out</Text>
                   </View>
                   <ChevronRight className="text-primaryBlue" />
                 </TouchableOpacity>
@@ -160,6 +166,7 @@ export default () => {
               variant="destructive"
               onPress={handleSignOut}
             />
+            
             <Drawer
               visible={showStaffCard}
               onClose={() => setShowStaffCard(false)}
@@ -169,15 +176,6 @@ export default () => {
           </View>
         </View>
       </PageLayout>
-      <DrawerView
-        bottomSheetRef={bottomSheetRef}
-        snapPoints={["10%"]}
-        customHeader
-      >
-        <View>
-          <Text className="mx-auto">Coming Soon</Text>
-        </View>
-      </DrawerView>
     </>
   );
 };

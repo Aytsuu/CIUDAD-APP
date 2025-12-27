@@ -13,11 +13,11 @@ export default () => {
   // =================== RENDER HELPER ===================
   const InfoRow = ({ label, value }: { label: string; value: string }) => (
     <View className="flex-1 py-4 border-b border-gray-100">
-      <Text className="text-gray-600 text-xs flex-1">{label}</Text>
+      <Text className="text-gray-600 text-xs font-primary flex-1 mb-1">{label}</Text>
       <Text
         className={`${
           value ? "text-gray-800" : "text-gray-400"
-        } text-sm font-medium flex-1`}
+        } text-sm font-primary-medium flex-1`}
       >
         {value || "Not specified"}
       </Text>
@@ -51,22 +51,8 @@ export default () => {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-black text-[13px]">Personal Information</Text>
+        <Text className="text-black text-[13px] font-primary-medium">Personal Information</Text>
       }
-      // rightAction={
-      //   <TouchableOpacity
-      //     className="w-10 h-10 rounded-full bg-primaryBlue items-center justify-center"
-      //     onPress={() => router.push({
-      //       pathname: "/(account)/personal/update",
-      //       params: {
-      //         data: JSON.stringify(personalData) 
-      //       }
-      //     })}
-      //     activeOpacity={0.90}
-      //   >
-      //     <Pen className="text-white" size={16}/>
-      //   </TouchableOpacity>
-      // }
       showScrollIndicator={false}
     >
       <View className="flex-1 px-6">

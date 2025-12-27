@@ -246,7 +246,7 @@ export const IRColumns = (): ColumnDef<IRReport>[] => [
           color: "bg-yellow-50 text-yellow-600",
           icon: Clock,
         },
-        "in-progress": {
+        "in progress": {
           color: "bg-blue-50 text-blue-600",
           icon: Activity,
         },

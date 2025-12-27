@@ -1,8 +1,10 @@
 from django.apps import AppConfig
 from django.conf import settings
+from django.db.models.signals import post_migrate
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import logging
+import fcntl
 import sys
 import os
 
@@ -13,9 +15,21 @@ class AccountConfig(AppConfig):
     name = 'apps.account'
 
     def ready(self):
-        if settings.SCHEDULER_AUTOSTART: 
-            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
-                self.start_scheduler()
+        
+        if os.environ.get('SCHEDULER_AUTOSTART') != 'True':
+            return
+        
+        lock_file_path = '/tmp/account_scheduler.lock'
+
+        try:
+            self.fp = open(lock_file_path, 'wb')
+            fcntl.flock(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+            logger.info("Account Scheduler starting...")
+            self.start_scheduler()
+        except OSError:
+            # Another worker already has the lock
+           logger.error("Scheduler already running in another worker. Skipping.")
 
     def start_scheduler(self):
         """Initialize and start the background scheduler"""

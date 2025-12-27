@@ -123,7 +123,7 @@ export default function ResidentRecords() {
                   >
                     {fullName}
                   </Text>
-                  <Text className="text-gray-500 text-sm">
+                  <Text className="text-gray-500 font-primary text-sm">
                     ID: {item.rp_id}
                   </Text>
                 </View>
@@ -167,7 +167,7 @@ export default function ResidentRecords() {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">Resident Records</Text>
+        <Text className="text-gray-900 text-[13px] font-primary-medium">Resident Records</Text>
       }
       rightAction={
         <TouchableOpacity

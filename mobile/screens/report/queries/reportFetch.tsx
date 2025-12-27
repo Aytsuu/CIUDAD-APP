@@ -36,7 +36,24 @@ export const useConvertCoordinatesToAddress = (lat: number, lng: number) => {
       }
     },
     staleTime: 5000,
-    retry: false
+    retry: false,
+    enabled: !!lat && !!lng
+  });
+};
+
+export const useGetIRInfo = (ir_id: string) => {
+  return useQuery({
+    queryKey: ["IRInfo", ir_id],
+    queryFn: async () => {
+      try {
+        const res = await api.get(`report/ir/${ir_id}/info/`);
+        return res.data;
+      } catch (err) {
+        throw err;
+      }
+    },
+    staleTime: 5000,
+    enabled: !!ir_id,
   });
 };
 
@@ -98,27 +115,32 @@ export const useGetIRHistory = (page: number, pageSize: number, searchQuery: str
   })
 }
 
-export const useGetAcknowledgementReport = (page: number, pageSize: number, searchQuery: string) => {
+export const useGetActionReport = (
+  page: number,
+  pageSize: number,
+  searchQuery: string,
+  status?: string
+) => {
   return useQuery({
-    queryKey: ['arReports', page, pageSize, searchQuery],
+    queryKey: ["arReports", page, pageSize, searchQuery, status],
     queryFn: async () => {
       try {
-        const res = await api.get('report/ar/list/table/', {
+        const res = await api.get("report/ar/list/table/", {
           params: {
             page,
             page_size: pageSize,
-            search: searchQuery
-          }
+            search: searchQuery,
+            status,
+          },
         });
         return res.data;
       } catch (err) {
-        console.error(err);
         throw err;
       }
     },
-    staleTime: 5000
-  })
-}
+    staleTime: 5000,
+  });
+};
 
 export const useGetWeeklyAR = () => {
   return useQuery({

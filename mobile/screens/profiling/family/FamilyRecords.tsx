@@ -212,7 +212,7 @@ export default function FamilyRecords() {
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">Family Records</Text>
+        <Text className="text-gray-900 text-[13px] font-primary-medium">Family Records</Text>
       }
       rightAction={
         <TouchableOpacity

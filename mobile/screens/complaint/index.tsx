@@ -902,7 +902,7 @@ export default function ComplaintLists() {
           </TouchableOpacity>
         }
         headerTitle={
-          <Text className="text-md font-PoppinsRegular text-gray-900">
+          <Text className="text-md font-primary-medium text-gray-900">
             Blotter
           </Text>
         }

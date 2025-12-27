@@ -6,30 +6,35 @@ import {
   TouchableOpacity,
   View,
   Text,
-  FlatList,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
 } from "react-native";
 import { useGetResidentFamily } from "./queries/accountGetQueries";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useGetFamilyMembers } from "../profiling/queries/profilingGetQueries";
-import { Home, Users } from "lucide-react-native";
+import { Users } from "lucide-react-native";
 import { formatDate } from "@/helpers/dateHelpers";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import React from "react";
+import FamilyIcon from "@/assets/icons/essentials/family-icon.svg";
+
+const tabs = [
+  { id: 1, name: "General" },
+  { id: 2, name: "Parents" },
+  { id: 3, name: "Dependents" },
+];
 
 export default () => {
   const { user } = useAuth();
+  const [currentTab, setCurrentTab] = React.useState<number>(1);
+  const [refreshing, setRefreshing] = React.useState(false);
+
   const {
     data: familyData,
     isLoading: isLoadingFam,
     refetch: refetchFamily,
   } = useGetResidentFamily(user?.rp as string);
+  
   const {
     data: familyMembers,
     isLoading: isLoadingMembers,
@@ -37,11 +42,17 @@ export default () => {
   } = useGetFamilyMembers(familyData?.fam_id);
 
   const members = familyMembers?.results || [];
-  const totalMembers = familyMembers?.count || 0;
+  const parents = members.filter((member: any) =>
+    ["mother", "father"].includes(member.fc_role.toLowerCase())
+  );
+  const dependents = members.filter(
+    (member: any) => member.fc_role == "DEPENDENT"
+  );
 
-  const handleRefresh = () => {
-    refetchFamily();
-    refetchMembers();
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetchFamily(), refetchMembers()]);
+    setRefreshing(false);
   };
 
   const InfoRow = ({
@@ -51,194 +62,291 @@ export default () => {
     label: string;
     value: string | number;
   }) => (
-    <View className="py-3 border-b border-gray-100">
-      <Text className="text-gray-500 text-xs mb-1">{label}</Text>
-      <Text className="text-gray-900 text-sm">{value}</Text>
+    <View className="flex-row justify-between items-center py-4 border-b border-gray-50">
+      <Text className="text-gray-500 text-xs font-primary-medium flex-shrink">
+        {label}
+      </Text>
+      <Text className="text-gray-900 text-xs font-primary-medium text-right flex-1 ml-4">
+        {value}
+      </Text>
     </View>
   );
 
   const MemberCard = ({ member }: { member: any }) => (
-    <View className="py-3 border-b border-gray-100">
-      <View className="flex-row justify-between items-start mb-2">
-        <View className="flex-1">
-          <Text className="text-gray-900 font-medium text-sm">
-            {member.name}
-          </Text>
-          <Text className="text-blue-600 text-xs mt-0.5">{member.fc_role}</Text>
-        </View>
-        <Text className="text-gray-400 text-xs">{member.rp_id}</Text>
+    <View className="mb-4 bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      {/* Header */}
+      <View className="bg-blue-100 px-4 py-3 border-b border-gray-100">
+        <Text className="text-gray-900 font-primary-medium text-xs">
+          {member.name}
+        </Text>
       </View>
-      <View className="flex-row gap-4">
-        <Text className="text-gray-600 text-xs">{member.sex}</Text>
-        <Text className="text-gray-600 text-xs">{member.status}</Text>
-        {member.dob && (
-          <Text className="text-gray-600 text-xs">
-            {formatDate(member.dob, "short")}
+
+      {/* Info Rows */}
+      <View className="px-4">
+        <View className="flex-row justify-between items-center py-3 border-b border-gray-50">
+          <Text className="text-gray-600 text-xs font-primary-medium">
+            Role
           </Text>
+          <Text className="text-gray-900 text-xs font-primary-medium">
+            {member.fc_role}
+          </Text>
+        </View>
+
+        <View className="flex-row justify-between items-center py-3 border-b border-gray-50">
+          <Text className="text-gray-600 text-xs font-primary-medium">
+            Resident ID
+          </Text>
+          <Text className="text-gray-900 text-xs font-primary-medium font-mono">
+            {member.rp_id}
+          </Text>
+        </View>
+
+        {!["MOTHER", "FATHER"].includes(member.fc_role) && (
+          <>
+            <View className="flex-row justify-between items-center py-3 border-b border-gray-50">
+              <Text className="text-gray-600 text-xs font-primary-medium">
+                Sex
+              </Text>
+              <Text className="text-gray-900 text-xs font-primary-medium">
+                {member.sex}
+              </Text>
+            </View>
+            <View className="flex-row justify-between items-center py-3 border-b border-gray-50">
+              <Text className="text-gray-600 text-xs font-primary-medium">
+                Status
+              </Text>
+              <Text className="text-gray-900 text-xs font-primary-medium">
+                {member.status}
+              </Text>
+            </View>
+          </>
+        )}
+
+        {member.dob && (
+          <View className="flex-row justify-between items-center py-3">
+            <Text className="text-gray-600 text-xs font-primary-medium">
+              Date of Birth
+            </Text>
+            <Text className="text-gray-900 text-xs font-primary-medium">
+              {formatDate(member.dob, "short")}
+            </Text>
+          </View>
         )}
       </View>
     </View>
   );
 
-  const Details = React.memo(({ item }: { item: Record<string, any> }) => (
-    <View className="px-6">
-      {/* Family Header */}
-      <View className="pt-4 pb-6 border-b border-gray-100">
-        <View className="flex-row items-center mb-3">
-          <Home size={20} color="#3b82f6" />
-          <Text className="text-gray-900 font-semibold text-lg ml-2">
-            {item.fam_id}
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-2">
-          <View className="bg-primaryBlue px-3 py-1 rounded-full">
-            <Text className="text-white text-xs">
-              {item.members} {item.members === 1 ? "member" : "members"}
-            </Text>
-          </View>
-          <View
-            className={`${
-              item.fam_indigenous === "YES" ? "bg-orange-500" : "bg-gray-200"
-            } px-3 py-1 rounded-full`}
-          >
-            <Text
-              className={`${
-                item.fam_indigenous === "YES" ? "text-white" : "text-gray-600"
-              } text-xs`}
-            >
-              {item.fam_indigenous === "YES" ? "Indigenous" : "Not Indigenous"}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Basic Information */}
-      <View className="py-4">
-        <Text className="text-gray-900 font-medium text-sm mb-3">
-          Family Details
-        </Text>
-        <InfoRow label="Family ID" value={item.fam_id} />
-        <InfoRow label="Household Number" value={item.household_no} />
-        <InfoRow
-          label="Location"
-          value={`SITIO ${item.sitio}${
-            item.street !== "N/A" ? `, ${item.street}` : ""
-          }`}
-        />
-        <InfoRow label="Building Status" value={item.fam_building || "N/A"} />
-        {item.fam_date_registered && (
-          <View className="py-3">
-            <Text className="text-gray-500 text-xs mb-1">Date Registered</Text>
-            <Text className="text-gray-900 text-sm">
-              {formatDate(item.fam_date_registered, "long")}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Family Heads */}
-      {(item.father || item.mother || item.guardian) && (
-        <View className="py-4">
-          <Text className="text-gray-900 font-medium text-sm mb-3">
-            Family Heads
-          </Text>
-          {item.father && <InfoRow label="Father" value={item.father} />}
-          {item.mother && <InfoRow label="Mother" value={item.mother} />}
-          {item.guardian && <InfoRow label="Guardian" value={item.guardian} />}
-        </View>
-      )}
-
-      {/* Family Members */}
-      {members.length > 0 && (
-        <View>
-          <Accordion type="single" className="border-0">
-            <AccordionItem value="family-members" className="border-0">
-              <AccordionTrigger className="py-3">
-                <View className="flex-row justify-between items-center flex-1 mr-2">
-                  <View className="flex-row items-center">
-                    <Users size={16} color="#374151" />
-                    <Text className="text-gray-900 font-medium text-sm ml-2">
-                      Family Members
-                    </Text>
-                  </View>
-                  {!isLoadingMembers && totalMembers > 0 && (
-                    <Text className="text-gray-500 text-xs">{totalMembers}</Text>
-                  )}
-                </View>
-              </AccordionTrigger>
-              <AccordionContent className="pb-4">
-                {isLoadingMembers ? (
-                  <View className="items-center py-8">
-                    <ActivityIndicator size="small" color="#3B82F6" />
-                    <Text className="text-gray-500 text-xs mt-2">
-                      Loading members...
-                    </Text>
-                  </View>
-                ) : members.length > 0 ? (
-                  <View className="max-h-96">
-                    {members.map((member: any, index: number) => (
-                      <MemberCard key={member.rp_id || index} member={member} />
-                    ))}
-                  </View>
-                ) : (
-                  <View className="items-center py-8">
-                    <Users size={40} color="#D1D5DB" />
-                    <Text className="text-gray-400 text-xs mt-3">
-                      No family members found
-                    </Text>
-                  </View>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </View>
-      )}
-    </View>
-  ));
-
   if (isLoadingFam) {
     return <LoadingState />;
+  }
+
+  if (!familyData) {
+    return (
+      <PageLayout
+        leftAction={
+          <TouchableOpacity
+            className="w-10 h-10 items-center justify-center"
+            onPress={() => router.back()}
+          >
+            <ChevronLeft size={24} className="text-white" />
+          </TouchableOpacity>
+        }
+        headerTitle={
+          <Text className="text-white text-[13px] font-primary-medium">
+            Family Information
+          </Text>
+        }
+        rightAction={<View className="w-10 h-10" />}
+        wrapScroll={false}
+        backgroundColor="bg-blue-600"
+      >
+        <View className="items-center justify-center py-12">
+          <Text className="text-white text-sm">No family registered</Text>
+        </View>
+      </PageLayout>
+    );
   }
 
   return (
     <PageLayout
       leftAction={
         <TouchableOpacity
-          className="w-10 h-10 rounded-full bg-gray-50 items-center justify-center"
+          className="w-10 h-10 items-center justify-center"
           onPress={() => router.back()}
         >
-          <ChevronLeft size={24} className="text-gray-700" />
+          <ChevronLeft size={24} className="text-white" />
         </TouchableOpacity>
       }
       headerTitle={
-        <Text className="text-gray-900 text-[13px]">Family Information</Text>
+        <Text className="text-white text-[13px] font-primary-medium">
+          Family Information
+        </Text>
       }
       rightAction={<View className="w-10 h-10" />}
       wrapScroll={false}
+      backgroundColor="bg-blue-600"
     >
-      <FlatList
-        maxToRenderPerBatch={1}
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        overScrollMode="never"
-        windowSize={1}
-        removeClippedSubviews
-        data={familyData ? [familyData] : []}
-        renderItem={({ item }) => <Details item={item} />}
-        keyExtractor={(item, index) => `family-${index}`}
-        refreshControl={
-          <RefreshControl
-            refreshing={false}
-            onRefresh={handleRefresh}
-            colors={["#0084f0"]}
-          />
-        }
-        ListEmptyComponent={
-          <View className="items-center justify-center py-12">
-            <Text className="text-gray-500 text-sm">No family registered</Text>
+      <View className="flex-1">
+        {/* Fixed Family Header - Blue Background */}
+        <View className="pt-4 pb-6 bg-blue-600">
+          <View className="items-center">
+            <View className="p-4 rounded-full bg-blue-500 shadow-lg mb-4">
+              <FamilyIcon width={35} height={35} />
+            </View>
+            <View className="gap-2">
+              <Text className="text-white text-base font-primary-medium border-b border-white">
+                {familyData.fam_id}
+              </Text>
+              <Text className="text-xs text-white opacity-60 text-center font-primary-medium">
+                Family ID
+              </Text>
+            </View>
           </View>
-        }
-      />
+        </View>
+
+        {/* Fixed Tabs */}
+        <View className="bg-white">
+          <View className="flex-row border-b border-gray-100">
+            {tabs.map((tab: Record<string, any>) => (
+              <TouchableOpacity
+                key={tab.id}
+                className={`py-3 px-4 ${
+                  currentTab === tab.id && "border-b-2 border-primaryBlue"
+                }`}
+                onPress={() => setCurrentTab(tab.id)}
+              >
+                <Text
+                  className={`text-xs font-primary-medium ${
+                    currentTab === tab.id ? "text-primaryBlue" : "text-gray-600"
+                  }`}
+                >
+                  {tab.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Scrollable Tab Content */}
+        <View className="flex-1 bg-white">
+          {currentTab === 1 && (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              overScrollMode="never"
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  colors={["#0084f0"]}
+                />
+              }
+            >
+              <View className="px-6 py-4">
+                <InfoRow label="Family ID" value={familyData.fam_id} />
+                <InfoRow label="Household ID" value={familyData.household_no} />
+                <InfoRow
+                  label="Location"
+                  value={`SITIO ${familyData.sitio}${
+                    familyData.street !== "N/A" ? `, ${familyData.street}` : ""
+                  }`}
+                />
+                <InfoRow
+                  label="Building Status"
+                  value={familyData.fam_building || "N/A"}
+                />
+                <InfoRow
+                  label="Indigenous"
+                  value={familyData.fam_indigenous === "YES" ? "Yes" : "No"}
+                />
+                <InfoRow
+                  label="Date Registered"
+                  value={
+                    formatDate(
+                      familyData.fam_date_registered,
+                      "long"
+                    )?.toUpperCase() as string
+                  }
+                />
+              </View>
+            </ScrollView>
+          )}
+
+          {currentTab === 2 && (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              overScrollMode="never"
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  colors={["#0084f0"]}
+                />
+              }
+            >
+              <View className="px-6">
+                {isLoadingMembers ? (
+                  <View className="items-center py-8">
+                    <ActivityIndicator size="small" color="#3B82F6" />
+                    <Text className="text-gray-500 text-xs mt-2">
+                      Loading parents...
+                    </Text>
+                  </View>
+                ) : parents.length > 0 ? (
+                  <View className="py-4">
+                    {parents.map((member: any, index: number) => (
+                      <MemberCard key={member.rp_id || index} member={member} />
+                    ))}
+                  </View>
+                ) : (
+                  <View className="items-center py-12">
+                    <Users size={40} color="#D1D5DB" />
+                    <Text className="text-gray-400 text-xs mt-3">
+                      No parents found
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          )}
+
+          {currentTab === 3 && (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  colors={["#0084f0"]}
+                />
+              }
+            >
+              <View className="px-6">
+                {isLoadingMembers ? (
+                  <View className="items-center py-8">
+                    <ActivityIndicator size="small" color="#3B82F6" />
+                    <Text className="text-gray-500 text-xs mt-2">
+                      Loading dependents...
+                    </Text>
+                  </View>
+                ) : dependents.length > 0 ? (
+                  <View className="py-4">
+                    {dependents.map((member: any, index: number) => (
+                      <MemberCard key={member.rp_id || index} member={member} />
+                    ))}
+                  </View>
+                ) : (
+                  <View className="items-center py-12">
+                    <Users size={40} color="#D1D5DB" />
+                    <Text className="text-gray-400 text-xs mt-3">
+                      No dependents found
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          )}
+        </View>
+      </View>
     </PageLayout>
   );
 };

@@ -1,10 +1,12 @@
 from django.apps import AppConfig
 from django.conf import settings
+from django.db.models.signals import post_migrate
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
 import logging
 import os
 import sys
+import fcntl
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +17,28 @@ class ProfilingConfig(AppConfig):
     def ready(self):
         # Start scheduler only when Django is fully loaded
         import apps.profiling.signals
-        import sys
-
         # Check if we're running a management command that shouldn't trigger scheduler
-        if settings.SCHEDULER_AUTOSTART: 
-            if os.environ.get('RUN_SCHEDULER') == 'True' or 'runserver' in sys.argv:
-                self.start_scheduler()
-                self.start_tesseract()
+        if os.environ.get('SCHEDULER_AUTOSTART') != 'True':
+            return
+
+        # 2. Use a file lock to ensure only ONE Gunicorn worker starts this
+        # Render's ephemeral storage is shared across workers in the same instance
+        lock_file_path = '/tmp/profiling_scheduler.lock'
+        
+        try:
+            self.fp = open(lock_file_path, 'wb')
+            # Attempt to get an exclusive lock (non-blocking)
+            fcntl.flock(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            
+            # If we reach here, this worker "won" the lock
+            logger.info("Worker starting Scheduler & Tesseract...")
+            self.start_scheduler()
+            self.start_tesseract()
+            
+        except OSError:
+            # Another worker already has the lock
+            logger.error("Scheduler already running in another worker. Skipping.")
+
 
     def start_scheduler(self):
         """Initialize and start the background scheduler"""
